@@ -1,7 +1,7 @@
 package edu.stanford.slac.elog_plus.api.v1.controller;
 
-import edu.stanford.slac.elogplus.api.v1.dto.*;
-import edu.stanford.slac.elogplus.service.LogService;
+import edu.stanford.slac.elog_plus.api.v1.dto.*;
+import edu.stanford.slac.elog_plus.service.LogService;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;

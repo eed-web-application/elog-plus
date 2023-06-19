@@ -8,10 +8,22 @@ server:
     mbeanregistry:
       enabled: true
 
+spring:
+  application:
+    name: 'elog-plus'
+  data:
+    mongodb:
+      uri: mongodb://elogs:elogs@${DB_HOST:localhost}:27017/elogs?authSource=elogs
+
 edu:
   stanford:
     slac:
-      elog_plus:
+      elogs-plus:
+        minio:
+          url: ${MINIO_URL:http://${MINIO_HOST:localhost}:9000}
+          key: ${MINIO_KEY:minio}
+          secret: ${MINIO_SECRET:minio123}
+          bucket: ${MINIO_BUCKET_NAME:elog}
 
 management:
   endpoints:
@@ -21,10 +33,6 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
-
-spring:
-  application:
-    name: 'elog-plus' 
 
 # swagger-ui custom path
 springdoc:

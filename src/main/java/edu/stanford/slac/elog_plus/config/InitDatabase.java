@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @Configuration
 @EnableTransactionManagement
 @EnableMongoAuditing
-@EnableMongoRepositories(basePackages = "edu.stanford.slac.elogplus")
+@EnableMongoRepositories(basePackages = "edu.stanford.slac.elog_plus")
 public class InitDatabase {
     @Bean
     @Primary

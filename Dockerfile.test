@@ -1,0 +1,4 @@
+FROM scr.svc.stanford.edu/eed-development/devops/build-image/build-java/build-java19-alpine:latest
+WORKDIR /opt
+ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.9.0/wait /opt
+RUN chmod +x /opt/wait

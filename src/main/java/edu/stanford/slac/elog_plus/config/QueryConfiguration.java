@@ -1,6 +1,6 @@
 package edu.stanford.slac.elog_plus.config;
 
-import edu.stanford.slac.elogplus.api.v1.dto.QueryParameterConfigurationDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.QueryParameterConfigurationDTO;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

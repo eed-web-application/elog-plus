@@ -34,14 +34,6 @@ services:
     networks:
       - back-tier
 
-  ui:
-    image: scr.svc.stanford.edu/developr/elogging-app:latest
-    pull_policy: always
-    ports:
-      - "8082:80"
-    networks:
-      - back-tier
-
 networks:
   back-tier: {}
 

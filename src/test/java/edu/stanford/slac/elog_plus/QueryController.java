@@ -60,8 +60,6 @@ public class QueryController {
                 );
     }
 
-
-
     @Test
     public void emptyParameterQuery() throws Exception {
         var queryResult = submitSearch(QueryParameterDTO

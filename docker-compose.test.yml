@@ -1,15 +1,19 @@
+name: elog_plus
 services:
   test:
-    image: scr.svc.stanford.edu/eed-development/devops/build-image/build-java/build-java19-alpine:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.test
     environment:
       - MINIO_HOST=minio
       - DB_HOST=mongodb-primary
       - WAIT_LOGGER_LEVEL=debug
       - WAIT_TIMEOUT=90
       - WAIT_HOSTS=mongodb-primary:27017, minio:9000
-    command: /opt/test/execute-test.sh
+    command: >
+      sh -c "/opt/wait && /opt/app/gradlew -b /opt/app/build.gradle -Dorg.gradle.jvmargs=-Xmx4g test"
     volumes:
-      - ./:/opt/test
+      - ./:/opt/app
     networks:
       - back-tier
     depends_on:

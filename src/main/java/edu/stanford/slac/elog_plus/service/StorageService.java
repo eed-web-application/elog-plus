@@ -1,6 +1,6 @@
 package edu.stanford.slac.elog_plus.service;
 
-import edu.stanford.slac.elogplus.config.MinioProperties;
+import edu.stanford.slac.elog_plus.config.MinioProperties;
 import io.minio.GetObjectArgs;
 import io.minio.GetObjectResponse;
 import io.minio.MinioClient;
@@ -12,8 +12,8 @@ import org.springframework.stereotype.Service;
 import java.io.InputStream;
 import java.nio.file.Path;
 
-import static edu.stanford.slac.elogplus.exception.Utility.assertion;
-import static edu.stanford.slac.elogplus.exception.Utility.wrapCatch;
+import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
+import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
 
 @Service
 @AllArgsConstructor

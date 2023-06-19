@@ -1,6 +1,6 @@
 package edu.stanford.slac.elog_plus.model;
 
-import edu.stanford.slac.elogplus.api.v1.dto.QueryPagedResultDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.QueryPagedResultDTO;
 import org.springframework.data.domain.Page;
 
 public class PageResultMapper {

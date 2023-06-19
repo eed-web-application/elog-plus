@@ -1,7 +1,7 @@
 package edu.stanford.slac.elog_plus.api.v1.mapper;
 
-import edu.stanford.slac.elogplus.api.v1.dto.LogDTO;
-import edu.stanford.slac.elogplus.model.Log;
+import edu.stanford.slac.elog_plus.api.v1.dto.LogDTO;
+import edu.stanford.slac.elog_plus.model.Log;
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
 import org.mapstruct.factory.Mappers;
