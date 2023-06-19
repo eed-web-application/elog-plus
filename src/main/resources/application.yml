@@ -1,0 +1,34 @@
+logging:
+  level:
+    edu.stanford.slac.elog_plus: DEBUG
+    org.springdoc: debug
+
+server:
+  tomcat:
+    mbeanregistry:
+      enabled: true
+
+edu:
+  stanford:
+    slac:
+      elog_plus:
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+spring:
+  application:
+    name: 'elog-plus' 
+
+# swagger-ui custom path
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /api-docs

@@ -1,0 +1,13 @@
+name: BuildAndTest
+on: 
+    push:
+        branches:
+        - main
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+jobs:
+    build:
+        uses: eed-web-application/elog-plus-deployment/.github/workflows/build-test-create.yml@main
+        secrets: inherit
+

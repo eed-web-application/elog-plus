@@ -1,0 +1,79 @@
+package edu.stanford.slac.elog_plus.exception;
+
+import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
+@ResponseStatus(value = HttpStatus.OK, reason = "ControllerLogicException")
+public class ControllerLogicException extends RuntimeException {
+    private int errorCode = 0;
+    private String errorMessage;
+    private String errorDomain;
+
+    public ControllerLogicException() {
+    }
+
+    public ControllerLogicException(int errorCode, String errorMessage, String errorDomain) {
+        super(String.format("%d-%s-%s", errorCode, errorMessage, errorDomain));
+        this.errorCode = errorCode;
+        this.errorMessage = errorMessage;
+        this.errorDomain = errorDomain;
+    }
+
+    public ControllerLogicException(int errorCode, String errorMessage, String errorDomain, Throwable cause) {
+        super(String.format("%d-%s-%s", errorCode, errorMessage, errorDomain), cause);
+        this.errorCode = errorCode;
+        this.errorMessage = errorMessage;
+        this.errorDomain = errorDomain;
+    }
+
+    public ApiResultResponse<Object> toApiResultResponse() {
+        return ApiResultResponse.of(this.errorCode, this.errorMessage, this.errorDomain);
+    }
+
+    static public <T> ControllerLogicException fromApiresultResponse(ApiResultResponse<T> apiResultResponse) {
+        return new ControllerLogicException(apiResultResponse.getErrorCode(),
+                apiResultResponse.getErrorMessage(),
+                apiResultResponse.getErrorDomain());
+    }
+
+    static public <T> ApiResultResponse<T> toApiResultResponse(ControllerLogicException logicException) {
+        ApiResultResponse<T> result = new ApiResultResponse<>();
+        result.setErrorCode(logicException.getErrorCode());
+        result.setErrorMessage(logicException.getErrorMessage());
+        result.setErrorDomain(logicException.getErrorDomain());
+        return result;
+    }
+
+    public int getErrorCode() {
+        return errorCode;
+    }
+
+    public void setErrorCode(int errorCode) {
+        this.errorCode = errorCode;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
+
+    public String getErrorDomain() {
+        return errorDomain;
+    }
+
+    public void setErrorDomain(String errorDomain) {
+        this.errorDomain = errorDomain;
+    }
+
+    static public ControllerLogicException of(int errorCode, String errorMessage, String errorDomain) {
+        return new ControllerLogicException(errorCode, errorMessage, errorDomain);
+    }
+
+    static public ControllerLogicException of(int errorCode, String errorMessage, String errorDomain, Throwable cause) {
+        return new ControllerLogicException(errorCode, errorMessage, errorDomain, cause);
+    }
+}
