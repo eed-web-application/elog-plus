@@ -1,0 +1,51 @@
+name: elog_plus
+services:
+  mongodb-primary:
+    image: bitnami/mongodb:6.0.4
+    restart: on-failure
+    environment:
+      - MONGODB_ROOT_USER=admin
+      - MONGODB_ROOT_PASSWORD=admin
+      - MONGODB_DATABASE=elogs
+      - MONGODB_USERNAME=elogs
+      - MONGODB_PASSWORD=elogs
+      - MONGODB_REPLICA_SET_MODE=primary
+      - MONGODB_ADVERTISED_HOSTNAME=mongodb-primary
+      - MONGODB_REPLICA_SET_KEY=replicasetkey123
+    ports:
+      - "27017:27017"
+    volumes:
+      - db-data:/bitnami/mongodb
+    networks:
+      - back-tier
+
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+      - minio-config:/root/.minio
+    environment:
+      - MINIO_ROOT_USER=minio
+      - MINIO_ROOT_PASSWORD=minio123
+    command: server --console-address ":9001" /data
+    networks:
+      - back-tier
+
+  ui:
+    image: scr.svc.stanford.edu/developr/elogging-app:latest
+    pull_policy: always
+    ports:
+      - "8082:80"
+    networks:
+      - back-tier
+
+networks:
+  back-tier: {}
+
+volumes:
+  db-data:
+  minio-data:
+  minio-config:

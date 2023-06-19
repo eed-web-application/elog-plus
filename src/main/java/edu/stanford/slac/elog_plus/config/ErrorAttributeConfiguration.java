@@ -1,6 +1,6 @@
 package edu.stanford.slac.elog_plus.config;
 
-import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
+import edu.stanford.slac.elogplus.exception.ControllerLogicException;
 import org.springframework.boot.web.error.ErrorAttributeOptions;
 import org.springframework.boot.web.servlet.error.DefaultErrorAttributes;
 import org.springframework.boot.web.servlet.error.ErrorAttributes;
