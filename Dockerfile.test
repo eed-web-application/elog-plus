@@ -2,4 +2,6 @@ FROM eclipse-temurin:19-jdk-jammy
 WORKDIR /opt
 ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.9.0/wait /opt
 RUN chmod +x /opt/wait
-COPY . /opt/app
+COPY src /opt/app
+COPY gradle /opt/app
+COPY lombok.config /opt/app
