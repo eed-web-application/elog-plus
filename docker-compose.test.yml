@@ -11,7 +11,7 @@ services:
       - WAIT_TIMEOUT=90
       - WAIT_HOSTS=mongodb-primary:27017, minio:9000
     command: >
-      sh -c "/opt/wait && /opt/app/gradlew -b /opt/app/build.gradle -Dorg.gradle.jvmargs=-Xmx4g test"
+      sh -c "java --version && /opt/wait && /opt/app/gradlew  -b /opt/app/build.gradle clean test"
     volumes:
       - ./:/opt/app
     networks:
