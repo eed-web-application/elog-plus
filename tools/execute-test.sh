@@ -15,6 +15,7 @@ if [ -z "${file_array[*]}" ]; then
   echo "No files found"
 else
   # Call your command with all the file paths as arguments
-  docker compose "${file_array[@]}" up --attach test  --exit-code-from test
+  echo 'execute => docker compose "${file_array[@]}" up --attach test  --exit-code-from test'
+  docker compose "${file_array[@]}" up  test  --exit-code-from test
 fi
 
