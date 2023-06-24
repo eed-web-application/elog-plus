@@ -22,6 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -75,12 +76,21 @@ public class QueryController {
     }
 
     @Test
-    public void searchByGetCheckPaging() throws Exception {
+    public void searchByGetCheckPagingWithEmptyResult() throws Exception {
         var queryResult = submitSearchByGet(1, 5, Collections.emptyList());
         AssertionsForClassTypes.assertThat(queryResult).isNotNull();
         AssertionsForClassTypes.assertThat(queryResult.getErrorCode()).isEqualTo(0);
         AssertionsForClassTypes.assertThat(queryResult.getPayload()).isNotNull();
-        AssertionsForClassTypes.assertThat(queryResult.getPayload().getContent().size()).isEqualTo(5);
+        AssertionsForClassTypes.assertThat(queryResult.getPayload().getContent().size()).isEqualTo(0);
+    }
+
+    @Test
+    public void searchByGetAndLogbookCheckPagingWithEmptyResult() throws Exception {
+        var queryResult = submitSearchByGet(1, 5, List.of("MCC"));
+        AssertionsForClassTypes.assertThat(queryResult).isNotNull();
+        AssertionsForClassTypes.assertThat(queryResult.getErrorCode()).isEqualTo(0);
+        AssertionsForClassTypes.assertThat(queryResult.getPayload()).isNotNull();
+        AssertionsForClassTypes.assertThat(queryResult.getPayload().getContent().size()).isEqualTo(0);
     }
 
     private ApiResultResponse<QueryPagedResultDTO<LogDTO>> submitSearchByPost(QueryParameterDTO queryParameter) throws Exception {
@@ -107,17 +117,31 @@ public class QueryController {
             int page,
             int size,
             List<String> logbook) throws Exception {
-        String[] lbArray = new String[logbook.size()];
-        logbook.toArray(lbArray);
-        MvcResult result = mockMvc.perform(
-                        get("/v1/search")
-                                .param("page", String.valueOf(page))
-                                .param("size", String.valueOf(size))
-                                .param("logbook", lbArray)
-                                .accept(MediaType.APPLICATION_JSON)
-                )
-                .andExpect(status().isOk())
-                .andReturn();
+        MvcResult result;
+        if(logbook.size()==0) {
+            result = mockMvc.perform(
+                            get("/v1/search")
+                                    .param("page", String.valueOf(page))
+                                    .param("size", String.valueOf(size))
+                                    .param("logbook", "")
+                                    .accept(MediaType.APPLICATION_JSON)
+                    )
+                    .andExpect(status().isOk())
+                    .andReturn();
+        } else {
+            String[] lbArray = new String[logbook.size()];
+            logbook.toArray(lbArray);
+            result = mockMvc.perform(
+                            get("/v1/search")
+                                    .param("page", String.valueOf(page))
+                                    .param("size", String.valueOf(size))
+                                    .param("logbook", lbArray)
+                                    .accept(MediaType.APPLICATION_JSON)
+                    )
+                    .andExpect(status().isOk())
+                    .andReturn();
+        }
+
         return new ObjectMapper().readValue(
                 result.getResponse().getContentAsString(),
                 new TypeReference<>() {

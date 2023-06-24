@@ -29,15 +29,13 @@ public class QueryController {
     }
 
     @GetMapping(
-            params = {"page", "size", "logbook", "date_to"},
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(description = "Perform the query on all ELOG data")
     public ApiResultResponse<QueryPagedResultDTO<LogDTO>> globalSearch(
             @RequestParam("page") int page,
             @RequestParam("size") int size,
-            @RequestParam("logbook") List<String> logBook,
-            @RequestParam("date_to") LocalDateTime to) {
+            @RequestParam("logbook") List<String> logBook) {
         return ApiResultResponse.of(
                 logService.searchAll(
                         QueryParameterDTO
@@ -45,7 +43,6 @@ public class QueryController {
                                 .page(page)
                                 .rowPerPage(size)
                                 .logBook(logBook)
-                                .to(to)
                                 .build()
                 )
         );
