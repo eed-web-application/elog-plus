@@ -49,8 +49,8 @@ public class AttachmentsController {
             path = "/{attachmentId}",
             produces = {MediaType.APPLICATION_OCTET_STREAM_VALUE}
     )
-    @Operation(summary = "Create a new attachment")
-    public ResponseEntity<Resource> newAttachment(
+    @Operation(summary = "Load an attachment using an unique attachment id")
+    public ResponseEntity<Resource> loadAttachment(
             @PathVariable String attachmentId
     ) throws Exception {
         FileObjectDescription desc = FileObjectDescription.builder().build();
