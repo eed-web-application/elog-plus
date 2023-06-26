@@ -21,6 +21,10 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static java.util.Arrays.asList;
@@ -62,7 +66,7 @@ public class QueryController {
 
     @Test
     public void emptyParameterQuery() throws Exception {
-        var queryResult = submitSearch(QueryParameterDTO
+        var queryResult = submitSearchByPost(QueryParameterDTO
                 .builder()
                 .build()
         );
@@ -71,7 +75,25 @@ public class QueryController {
         AssertionsForClassTypes.assertThat(queryResult.getPayload()).isNotNull();
     }
 
-    private ApiResultResponse<QueryPagedResultDTO<LogDTO>> submitSearch(QueryParameterDTO queryParameter) throws Exception {
+    @Test
+    public void searchByGetCheckPagingWithEmptyResult() throws Exception {
+        var queryResult = submitSearchByGet(1, 5, Collections.emptyList());
+        AssertionsForClassTypes.assertThat(queryResult).isNotNull();
+        AssertionsForClassTypes.assertThat(queryResult.getErrorCode()).isEqualTo(0);
+        AssertionsForClassTypes.assertThat(queryResult.getPayload()).isNotNull();
+        AssertionsForClassTypes.assertThat(queryResult.getPayload().getContent().size()).isEqualTo(0);
+    }
+
+    @Test
+    public void searchByGetAndLogbookCheckPagingWithEmptyResult() throws Exception {
+        var queryResult = submitSearchByGet(1, 5, List.of("MCC"));
+        AssertionsForClassTypes.assertThat(queryResult).isNotNull();
+        AssertionsForClassTypes.assertThat(queryResult.getErrorCode()).isEqualTo(0);
+        AssertionsForClassTypes.assertThat(queryResult.getPayload()).isNotNull();
+        AssertionsForClassTypes.assertThat(queryResult.getPayload().getContent().size()).isEqualTo(0);
+    }
+
+    private ApiResultResponse<QueryPagedResultDTO<LogDTO>> submitSearchByPost(QueryParameterDTO queryParameter) throws Exception {
         MvcResult result = mockMvc.perform(
                         post("/v1/search")
                                 .content(
@@ -85,11 +107,45 @@ public class QueryController {
                 .andExpect(status().isOk())
                 .andReturn();
 
-        ApiResultResponse<QueryPagedResultDTO<LogDTO>> queryResult = new ObjectMapper().readValue(
+        return new ObjectMapper().readValue(
                 result.getResponse().getContentAsString(),
                 new TypeReference<>() {
                 });
-        return queryResult;
+    }
+
+    private ApiResultResponse<QueryPagedResultDTO<LogDTO>> submitSearchByGet(
+            int page,
+            int size,
+            List<String> logbook) throws Exception {
+        MvcResult result;
+        if(logbook.size()==0) {
+            result = mockMvc.perform(
+                            get("/v1/search")
+                                    .param("page", String.valueOf(page))
+                                    .param("size", String.valueOf(size))
+                                    .param("logbook", "")
+                                    .accept(MediaType.APPLICATION_JSON)
+                    )
+                    .andExpect(status().isOk())
+                    .andReturn();
+        } else {
+            String[] lbArray = new String[logbook.size()];
+            logbook.toArray(lbArray);
+            result = mockMvc.perform(
+                            get("/v1/search")
+                                    .param("page", String.valueOf(page))
+                                    .param("size", String.valueOf(size))
+                                    .param("logbook", lbArray)
+                                    .accept(MediaType.APPLICATION_JSON)
+                    )
+                    .andExpect(status().isOk())
+                    .andReturn();
+        }
+
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
     }
 
     private ApiResultResponse<QueryParameterConfigurationDTO> getQueryParameter() throws Exception {
