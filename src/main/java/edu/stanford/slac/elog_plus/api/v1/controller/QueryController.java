@@ -14,14 +14,14 @@ import java.util.List;
 import static java.util.Arrays.asList;
 
 @RestController()
-@RequestMapping("/v1/search")
+@RequestMapping("/v1/logs")
 @AllArgsConstructor
-@Schema(description = "Main set of api for the query on the elog data")
+@Schema(description = "Main set of api for the query on the log data")
 public class QueryController {
     private LogService logService;
     private QueryParameterConfigurationDTO queryParameterConfigurationDTO;
     @PostMapping( produces = {MediaType.APPLICATION_JSON_VALUE})
-    @Operation(description = "Perform the query on all ELOG data")
+    @Operation(description = "Perform the query on all log data")
     public ApiResultResponse<QueryPagedResultDTO<LogDTO>> globalSearch(@RequestBody QueryParameterDTO parameterDTO) {
         return ApiResultResponse.of(
                 logService.searchAll(parameterDTO)
@@ -29,9 +29,10 @@ public class QueryController {
     }
 
     @GetMapping(
+
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @Operation(description = "Perform the query on all ELOG data")
+    @Operation(description = "Perform the query on all log data")
     public ApiResultResponse<QueryPagedResultDTO<LogDTO>> globalSearch(
             @RequestParam("page") int page,
             @RequestParam("size") int size,
@@ -45,14 +46,6 @@ public class QueryController {
                                 .logBook(logBook)
                                 .build()
                 )
-        );
-    }
-
-
-    @GetMapping("/parameter")
-    public ApiResultResponse<QueryParameterConfigurationDTO> getQueryParameter() {
-        return ApiResultResponse.of(
-                queryParameterConfigurationDTO
         );
     }
 }

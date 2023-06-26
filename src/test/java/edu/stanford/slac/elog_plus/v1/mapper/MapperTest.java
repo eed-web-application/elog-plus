@@ -1,4 +1,4 @@
-package edu.stanford.slac.elog_plus;
+package edu.stanford.slac.elog_plus.v1.mapper;
 
 import edu.stanford.slac.elog_plus.api.v1.mapper.LogMapper;
 import edu.stanford.slac.elog_plus.model.Log;
@@ -16,7 +16,7 @@ import org.springframework.test.context.ActiveProfiles;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles(profiles = "test")
-public class DTOTest {
+public class MapperTest {
     @Test
     public void logDTOAuthorName() throws Exception {
         var log = Log.builder()
@@ -25,12 +25,5 @@ public class DTOTest {
                 .build();
         var logDto = LogMapper.INSTANCE.fromModel(log);
         AssertionsForClassTypes.assertThat(logDto.author()).isEqualTo("firstName lastName");
-//        AssertionsForClassTypes.assertThat(queryParameter).isNotNull();
-//        AssertionsForClassTypes.assertThat(queryParameter.getErrorCode()).isEqualTo(0);
-//        AssertionsForClassTypes.assertThat(queryParameter.getPayload()).isNotNull();
-//        AssertionsForClassTypes.assertThat(queryParameter.getPayload().logbook().size())
-//                .isEqualTo(
-//                        queryParameterConfigurationDTO.logbook().size()
-//                );
     }
 }

@@ -1,4 +1,4 @@
-package edu.stanford.slac.elog_plus.service;
+package edu.stanford.slac.elog_plus.service.v0;
 
 import edu.stanford.slac.elog_plus.config.MinioProperties;
 import io.minio.GetObjectArgs;
