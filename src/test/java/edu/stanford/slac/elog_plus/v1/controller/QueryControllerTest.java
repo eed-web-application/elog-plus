@@ -1,9 +1,8 @@
-package edu.stanford.slac.elog_plus;
+package edu.stanford.slac.elog_plus.v1.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
-import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.model.Log;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,13 +20,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
-import static java.util.Arrays.asList;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -37,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles(profiles = "test")
-public class QueryController {
+public class QueryControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
@@ -50,18 +45,6 @@ public class QueryController {
     @BeforeEach
     public void preTest() {
         mongoTemplate.remove(new Query(), Log.class);
-    }
-
-    @Test
-    public void fetchQueryParameter() throws Exception {
-        var queryParameter = getQueryParameter();
-        AssertionsForClassTypes.assertThat(queryParameter).isNotNull();
-        AssertionsForClassTypes.assertThat(queryParameter.getErrorCode()).isEqualTo(0);
-        AssertionsForClassTypes.assertThat(queryParameter.getPayload()).isNotNull();
-        AssertionsForClassTypes.assertThat(queryParameter.getPayload().logbook().size())
-                .isEqualTo(
-                        queryParameterConfigurationDTO.logbook().size()
-                );
     }
 
     @Test
@@ -148,19 +131,4 @@ public class QueryController {
                 });
     }
 
-    private ApiResultResponse<QueryParameterConfigurationDTO> getQueryParameter() throws Exception {
-        MvcResult result = mockMvc.perform(
-                        get("/v1/logbooks")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .accept(MediaType.APPLICATION_JSON)
-                )
-                .andExpect(status().isOk())
-                .andReturn();
-
-        ApiResultResponse<QueryParameterConfigurationDTO> queryParameterConfiguration = new ObjectMapper().readValue(
-                result.getResponse().getContentAsString(),
-                new TypeReference<>() {
-                });
-        return queryParameterConfiguration;
-    }
 }

@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/v1/logbooks")
 @AllArgsConstructor
 @Schema(description = "Set of api that work on the logbooks")
-public class Logbooks {
+public class LogbooksController {
     private QueryParameterConfigurationDTO queryParameterConfigurationDTO;
 
     @GetMapping(
