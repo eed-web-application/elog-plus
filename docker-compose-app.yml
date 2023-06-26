@@ -1,6 +1,6 @@
 name: elog_plus
 services:
-  test:
+  app:
     build:
       context: .
       dockerfile: Dockerfile.test

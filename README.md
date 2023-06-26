@@ -10,4 +10,4 @@ docker compose -f docker-compose.yml -f docker-compose-test.yml up --attach test
 
 
 ## Execute application locally usign docker compose
-docker compose -f docker-compose.yml -f docker-compose.test.yml up
+docker compose -f docker-compose.yml -f docker-compose-app.yml up
