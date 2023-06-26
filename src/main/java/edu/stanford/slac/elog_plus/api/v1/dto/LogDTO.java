@@ -7,6 +7,7 @@ import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Schema(description = "Identify the single elog record")
 public record LogDTO(
@@ -19,10 +20,11 @@ public record LogDTO(
         String logbook,
         String priority,
         String segment,
-        String tags,
+        List<String> tags,
         String title,
         String text,
         String author,
+        List<String> attachments,
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)
         LocalDateTime logDate,

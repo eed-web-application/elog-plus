@@ -1,5 +1,6 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
+import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
 import edu.stanford.slac.elog_plus.model.Attachment;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,7 +43,7 @@ public class AttachmentControllerTest {
 
     @Test
     public void createAttachment() throws Exception {
-        String newAttachmentID = testHelperService.newAttachment(
+        ApiResultResponse<String> newAttachmentID = testHelperService.newAttachment(
                 mockMvc,
                 new MockMultipartFile(
                         "uploadFile",
@@ -54,7 +55,7 @@ public class AttachmentControllerTest {
 
         Attachment retrivedAttachment = mongoTemplate.findOne(
                 new Query().addCriteria(
-                        Criteria.where("id").is(newAttachmentID)
+                        Criteria.where("id").is(newAttachmentID.getPayload())
                 ),
                 Attachment.class
         );
@@ -64,7 +65,7 @@ public class AttachmentControllerTest {
 
     @Test
     public void downloadAttachment() throws Exception {
-        String newAttachmentID = testHelperService.newAttachment(
+        ApiResultResponse<String> newAttachmentID = testHelperService.newAttachment(
                 mockMvc,
                 new MockMultipartFile(
                         "uploadFile",
@@ -76,7 +77,7 @@ public class AttachmentControllerTest {
 
         testHelperService.checkDownloadedFile(
                 mockMvc,
-                newAttachmentID,
+                newAttachmentID.getPayload(),
                 MediaType.APPLICATION_PDF_VALUE,
                 "<<pdf data>>".getBytes(StandardCharsets.UTF_8).length
         );

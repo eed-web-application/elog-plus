@@ -8,23 +8,20 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
-
-import static java.util.Arrays.asList;
 
 @RestController()
 @RequestMapping("/v1/logs")
 @AllArgsConstructor
 @Schema(description = "Main set of api for the query on the log data")
-public class QueryController {
+public class LogsController {
     private LogService logService;
     private QueryParameterConfigurationDTO queryParameterConfigurationDTO;
     @PostMapping( produces = {MediaType.APPLICATION_JSON_VALUE})
     @Operation(description = "Perform the query on all log data")
-    public ApiResultResponse<QueryPagedResultDTO<LogDTO>> globalSearch(@RequestBody QueryParameterDTO parameterDTO) {
+    public ApiResultResponse<String> newLog(@RequestBody NewLogDTO newLog) {
         return ApiResultResponse.of(
-                logService.searchAll(parameterDTO)
+                logService.createNew(newLog)
         );
     }
 

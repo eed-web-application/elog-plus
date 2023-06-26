@@ -1,6 +1,7 @@
 package edu.stanford.slac.elog_plus.api.v1.mapper;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.LogDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.NewLogDTO;
 import edu.stanford.slac.elog_plus.model.Log;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -12,4 +13,8 @@ public interface LogMapper {
     LogMapper INSTANCE = Mappers.getMapper(LogMapper.class);
     @Mapping( target = "author", expression = "java(log.getFirstName() + \" \" + log.getLastName())")
     LogDTO fromModel(Log log);
+
+    Log fromDTO(NewLogDTO newLogDto);
+
+    Log fromDTO(NewLogDTO newLogDTO, String firstName, String lastName, String userName);
 }
