@@ -22,6 +22,7 @@ public record LogDTO(
         String tags,
         String title,
         String text,
+        String author,
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)
         LocalDateTime logDate,
