@@ -2,3 +2,6 @@ build
 /.idea/
 /bin
 /.gradle
+dump.zip
+dump/elogs/log.bson
+dump/elogs/log.metadata.json
