@@ -95,7 +95,7 @@ public class QueryController {
 
     private ApiResultResponse<QueryPagedResultDTO<LogDTO>> submitSearchByPost(QueryParameterDTO queryParameter) throws Exception {
         MvcResult result = mockMvc.perform(
-                        post("/v1/search")
+                        post("/v1/logs")
                                 .content(
                                         new ObjectMapper().writeValueAsString(
                                                 queryParameter
@@ -120,7 +120,7 @@ public class QueryController {
         MvcResult result;
         if(logbook.size()==0) {
             result = mockMvc.perform(
-                            get("/v1/search")
+                            get("/v1/logs")
                                     .param("page", String.valueOf(page))
                                     .param("size", String.valueOf(size))
                                     .param("logbook", "")
@@ -132,7 +132,7 @@ public class QueryController {
             String[] lbArray = new String[logbook.size()];
             logbook.toArray(lbArray);
             result = mockMvc.perform(
-                            get("/v1/search")
+                            get("/v1/logs")
                                     .param("page", String.valueOf(page))
                                     .param("size", String.valueOf(size))
                                     .param("logbook", lbArray)
@@ -150,7 +150,7 @@ public class QueryController {
 
     private ApiResultResponse<QueryParameterConfigurationDTO> getQueryParameter() throws Exception {
         MvcResult result = mockMvc.perform(
-                        get("/v1/search/parameter")
+                        get("/v1/logbooks")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .accept(MediaType.APPLICATION_JSON)
                 )
