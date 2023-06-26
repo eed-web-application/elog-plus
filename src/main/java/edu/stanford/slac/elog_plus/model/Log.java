@@ -31,6 +31,12 @@ public class Log {
     private String title;
     @Field("TEXT")
     private String text;
+    @Field("LASTNAME")
+    private String lastName;
+    @Field("FIRSTNAME")
+    private String firstName;
+    @Field("USERNAME")
+    private String userName;
     @Field("FILE_PS")
     private String filePs;
     @Field("FILE_PREVIEW")
