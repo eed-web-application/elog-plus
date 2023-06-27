@@ -10,6 +10,7 @@ import edu.stanford.slac.elog_plus.repository.LogRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
@@ -42,7 +43,7 @@ public class LogService {
      * @param newLogDTO is a new log information
      * @return the id of the newly created log
      */
-    @Transactional
+    @Transactional(propagation = Propagation.NESTED)
     public String createNew(NewLogDTO newLogDTO) {
         Faker faker = new Faker();
         Log newLog = LogMapper.INSTANCE.fromDTO(newLogDTO, faker.name().firstName(), faker.name().lastName(), faker.name().username());
@@ -55,7 +56,6 @@ public class LogService {
         );
 
         // other check
-
         Log finalNewLog = newLog;
         newLog =
                 wrapCatch(
@@ -69,14 +69,67 @@ public class LogService {
 
     }
 
+    /**
+     * return the full log
+     *
+     * @param id the unique identifier of the log
+     * @return the full log description
+     */
     public LogDTO getFullLog(String id) {
-        Optional<Log> foundLog = logRepository.findById(id);
+        Optional<Log> foundLog =
+                wrapCatch(
+                        () -> logRepository.findById(id),
+                        -1,
+                        "LogService::getFullLog"
+                );
         assertion(
                 foundLog::isPresent,
-                -1,
+                -2,
                 "The log has not been found",
                 "LogService::getFullLog"
         );
         return LogMapper.INSTANCE.fromModel(foundLog.get());
+    }
+
+    /**
+     * Create a new supersede of the log
+     *
+     * @param id     the identifier of the log to supersede
+     * @param newLog the content of the new supersede log
+     * @return the id of the new supersede log
+     */
+    @Transactional
+    public String createNewSupersede(String id, NewLogDTO newLog) {
+        Optional<Log> supersededLog =
+                wrapCatch(
+                        () -> logRepository.findById(id),
+                        -1,
+                        "LogService::createNewSupersede"
+                );
+        assertion(
+                supersededLog::isPresent,
+                -2,
+                "The log to supersede has not been found",
+                "LogService::getFullLog"
+        );
+        Log l = supersededLog.get();
+        assertion(
+                () -> (l.getSupersedeBy() == null ||
+                        l.getSupersedeBy().isEmpty())
+                ,
+                -3,
+                "The log has already a supersede",
+                "LogService::getFullLog"
+        );
+        //create supersede
+        String newLogID = createNew(newLog);
+        // update supersede
+        l.setSupersedeBy(newLogID);
+        wrapCatch(
+                () -> logRepository.save(l),
+                -4,
+                "LogService::createNewSupersede"
+        );
+        return newLogID;
     }
 }

@@ -1,8 +1,10 @@
 package edu.stanford.slac.elog_plus.v1.service;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
+import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.model.Log;
 import edu.stanford.slac.elog_plus.service.LogService;
+import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -19,6 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @AutoConfigureMockMvc
 @SpringBootTest()
@@ -80,5 +83,93 @@ public class LogServiceTest {
                         () -> logService.getFullLog(newLogID)
                 );
         assertThat(fullLog.id()).isEqualTo(newLogID);
+    }
+
+    @Test
+    public void testSupersedeOK() {
+        String supersededLogID =
+                assertDoesNotThrow(
+                        () -> logService.createNew(
+                                NewLogDTO
+                                        .builder()
+                                        .logbook("MCC")
+                                        .text("This is a log for test")
+                                        .title("A very wonderful log")
+                                        .build()
+                        )
+                );
+
+        String newLogID =
+                assertDoesNotThrow(
+                        () -> logService.createNewSupersede(
+                                supersededLogID,
+                                NewLogDTO
+                                        .builder()
+                                        .logbook("MCC")
+                                        .text("This is a log for test")
+                                        .title("A very wonderful log updated for supersede")
+                                        .build()
+                        )
+                );
+
+        LogDTO supersededLog = assertDoesNotThrow(
+                () -> logService.getFullLog(supersededLogID)
+        );
+
+        assertThat(supersededLog).isNotNull();
+        assertThat(supersededLog.supersedeBy()).isEqualTo(newLogID);
+
+        LogDTO fullLog = assertDoesNotThrow(
+                () -> logService.getFullLog(newLogID)
+        );
+
+        assertThat(fullLog).isNotNull();
+        assertThat(fullLog.id()).isEqualTo(newLogID);
+    }
+
+    @Test
+    public void testSupersedeErrorOnDoubleSuperseding() {
+        String supersededLogID =
+                assertDoesNotThrow(
+                        () -> logService.createNew(
+                                NewLogDTO
+                                        .builder()
+                                        .logbook("MCC")
+                                        .text("This is a log for test")
+                                        .title("A very wonderful log")
+                                        .build()
+                        )
+                );
+        assertThat(supersededLogID).isNotNull();
+
+        String newLogID =
+                assertDoesNotThrow(
+                        () -> logService.createNewSupersede(
+                                supersededLogID,
+                                NewLogDTO
+                                        .builder()
+                                        .logbook("MCC")
+                                        .text("This is a log for test")
+                                        .title("A very wonderful log updated for supersede")
+                                        .build()
+                        )
+                );
+        assertThat(newLogID).isNotNull();
+
+        ControllerLogicException exception =
+                assertThrows(
+                        ControllerLogicException.class,
+                        () -> logService.createNewSupersede(
+                                supersededLogID,
+                                NewLogDTO
+                                        .builder()
+                                        .logbook("MCC")
+                                        .text("This is a log for test")
+                                        .title("A very wonderful log updated for supersede one more time")
+                                        .build()
+                        )
+                );
+
+        assertThat(exception.getErrorCode()).isEqualTo(-3);
     }
 }

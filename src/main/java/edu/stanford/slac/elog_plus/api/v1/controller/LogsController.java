@@ -25,6 +25,17 @@ public class LogsController {
         );
     }
 
+    @PostMapping(
+            path = "/{id}/supersede",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @Operation(description = "Create a new supersede for the log identified by the id")
+    public ApiResultResponse<String> newSupersedeLog(@PathVariable String id, @RequestBody NewLogDTO newLog) {
+        return ApiResultResponse.of(
+                logService.createNewSupersede(id, newLog)
+        );
+    }
+
     @GetMapping(
             path = "/{id}",
             produces = {MediaType.APPLICATION_JSON_VALUE}

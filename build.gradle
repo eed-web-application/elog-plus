@@ -32,7 +32,8 @@ dependencies {
             'io.swagger.core.v3:swagger-annotations:2.2.8',
             'org.mapstruct:mapstruct:1.5.3.Final',
             'io.minio:minio:8.2.2',
-            'com.github.javafaker:javafaker:1.0.2'
+            'com.github.javafaker:javafaker:1.0.2',
+            'com.fasterxml.jackson.core:jackson-databind'
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'

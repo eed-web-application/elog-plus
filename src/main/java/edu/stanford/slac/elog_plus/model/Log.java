@@ -3,6 +3,7 @@ package edu.stanford.slac.elog_plus.model;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
@@ -19,7 +20,7 @@ import java.util.List;
 public class Log {
     @Id
     private String id;
-    private String followedBy;
+    private String supersedeBy;
     @Field("ENTRY_TYPE")
     private String entryType;
     @Field("LOGBOOK")
@@ -53,4 +54,6 @@ public class Log {
     @CreatedDate
     @Field("PROGDATE")
     private LocalDateTime progDate;
+    @Version
+    private Integer version;
 }
