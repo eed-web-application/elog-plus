@@ -13,7 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
 import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
@@ -131,5 +133,78 @@ public class LogService {
                 "LogService::createNewSupersede"
         );
         return newLogID;
+    }
+
+    /**
+     * Create a new follow-up for a specific log
+     *
+     * @param id     the id for the log the need to be followed
+     * @param newLog the content of the new follow-up log
+     * @return the id of the new follow-up log
+     */
+    @Transactional
+    public String createNewFollowUp(String id, NewLogDTO newLog) {
+        Optional<Log> rootLog =
+                wrapCatch(
+                        () -> logRepository.findById(id),
+                        -1,
+                        "LogService::createNewFollowUp"
+                );
+        assertion(
+                rootLog::isPresent,
+                -2,
+                "The log to follow-up has not been found",
+                "LogService::createNewFollowUp"
+        );
+        Log l = rootLog.get();
+        String newFollowUpLogID = createNew(newLog);
+        // update supersede
+        l.getFollowUp().add(newFollowUpLogID);
+        wrapCatch(
+                () -> logRepository.save(l),
+                -4,
+                "LogService::createNewSupersede"
+        );
+        return "";
+    }
+
+    /**
+     * Return all the follow-up log for a specific one
+     *
+     * @param id the id of the log parent of the follow-up
+     * @return the list of all the followup of the specific log identified by the id
+     */
+    public List<SearchResultLogDTO> getAllFollowUpForALog(String id) {
+        Optional<Log> rootLog =
+                wrapCatch(
+                        () -> logRepository.findById(id),
+                        -1,
+                        "LogService::getAllFollowUpForALog"
+                );
+        assertion(
+                rootLog::isPresent,
+                -2,
+                "The log has not been found",
+                "LogService::getAllFollowUpForALog"
+        );
+
+        assertion(
+                () -> (rootLog.get().getFollowUp().size() > 0),
+                -3,
+                "The log has not been found",
+                "LogService::getAllFollowUpForALog"
+        );
+        List<Log> followUp =
+                wrapCatch(
+                        () -> logRepository.findAllByIdIn(rootLog.get().getFollowUp()),
+                        -1,
+                        "LogService::getAllFollowUpForALog"
+                );
+        return followUp
+                .stream()
+                .map(
+                        LogMapper.INSTANCE::toSearchResultFromDTO
+                )
+                .collect(Collectors.toList());
     }
 }

@@ -8,6 +8,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Getter
@@ -39,8 +41,12 @@ public class Log {
     private String firstName;
     @Field("USERNAME")
     private String userName;
-    private List<String> tags;
-    private List<String> attachments;
+    @Builder.Default
+    private List<String> tags = new ArrayList<>();
+    @Builder.Default
+    private List<String> attachments = new ArrayList<>();
+    @Builder.Default
+    private List<String> followUp = new ArrayList<>();
     @Field("FILE_PS")
     private String filePs;
     @Field("FILE_PREVIEW")
