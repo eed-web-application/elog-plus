@@ -16,8 +16,8 @@ import java.util.List;
 @Schema(description = "Main set of api for the query on the log data")
 public class LogsController {
     private LogService logService;
-    private QueryParameterConfigurationDTO queryParameterConfigurationDTO;
-    @PostMapping( produces = {MediaType.APPLICATION_JSON_VALUE})
+
+    @PostMapping(produces = {MediaType.APPLICATION_JSON_VALUE})
     @Operation(description = "Perform the query on all log data")
     public ApiResultResponse<String> newLog(@RequestBody NewLogDTO newLog) {
         return ApiResultResponse.of(
@@ -26,11 +26,22 @@ public class LogsController {
     }
 
     @GetMapping(
+            path = "/{id}",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @Operation(description = "Return the full log information")
+    public ApiResultResponse<LogDTO> newLog(@PathVariable String id) {
+        return ApiResultResponse.of(
+                logService.getFullLog(id)
+        );
+    }
+
+    @GetMapping(
 
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(description = "Perform the query on all log data")
-    public ApiResultResponse<QueryPagedResultDTO<LogDTO>> globalSearch(
+    public ApiResultResponse<QueryPagedResultDTO<SearchResultLogDTO>> globalSearch(
             @RequestParam("page") int page,
             @RequestParam("size") int size,
             @RequestParam("logbook") List<String> logBook) {
