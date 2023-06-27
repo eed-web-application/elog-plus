@@ -3,6 +3,7 @@ package edu.stanford.slac.elog_plus.v1.controller;
 import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
 import edu.stanford.slac.elog_plus.api.v1.dto.LogDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.NewLogDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.SearchResultLogDTO;
 import edu.stanford.slac.elog_plus.model.Log;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,7 +47,7 @@ public class LogsControllerTest {
 
     @Test
     public void searchByGetCheckPagingWithEmptyResult() throws Exception {
-        var queryResult = testHelperService.submitSearchByGet(mockMvc, 1, 5, Collections.emptyList());
+        var queryResult = testHelperService.submitSearchByGet(mockMvc, 0, 5, Collections.emptyList());
         AssertionsForClassTypes.assertThat(queryResult).isNotNull();
         AssertionsForClassTypes.assertThat(queryResult.getErrorCode()).isEqualTo(0);
         AssertionsForClassTypes.assertThat(queryResult.getPayload()).isNotNull();
@@ -55,7 +56,7 @@ public class LogsControllerTest {
 
     @Test
     public void searchByGetAndLogbookCheckPagingWithEmptyResult() throws Exception {
-        var queryResult = testHelperService.submitSearchByGet(mockMvc, 1, 5, List.of("MCC"));
+        var queryResult = testHelperService.submitSearchByGet(mockMvc, 0, 5, List.of("MCC"));
         AssertionsForClassTypes.assertThat(queryResult).isNotNull();
         AssertionsForClassTypes.assertThat(queryResult.getErrorCode()).isEqualTo(0);
         AssertionsForClassTypes.assertThat(queryResult.getPayload()).isNotNull();
@@ -156,6 +157,68 @@ public class LogsControllerTest {
 
         assertThat(oldFull.getErrorCode()).isEqualTo(0);
         assertThat(oldFull.getPayload().supersedeBy()).isEqualTo(newSupersedeLogIDResult.getPayload());
+
+        // the search api now should return only the new log and not the superseded on
+        var queryResult = testHelperService.submitSearchByGet(mockMvc, 0, 5, Collections.emptyList());
+        AssertionsForClassTypes.assertThat(queryResult).isNotNull();
+        AssertionsForClassTypes.assertThat(queryResult.getPayload().getContent().size()).isEqualTo(1);
     }
 
+
+    @Test
+    public void createNewSFollowUpLogsAndFetch() throws Exception {
+        ApiResultResponse<String> newLogIDResult =
+                assertDoesNotThrow(
+                        () ->
+                                testHelperService.createNewLog(
+                                        mockMvc,
+                                        NewLogDTO
+                                                .builder()
+                                                .logbook("MCC")
+                                                .text("This is a log for test")
+                                                .title("A very wonderful log")
+                                                .build()
+                                )
+                );
+
+        AssertionsForClassTypes.assertThat(newLogIDResult).isNotNull();
+        AssertionsForClassTypes.assertThat(newLogIDResult.getErrorCode()).isEqualTo(0);
+
+        //create follow-up
+        ApiResultResponse<String> newFULogIDOneResult =assertDoesNotThrow(
+                () -> testHelperService.createNewFollowUpLog(
+                        mockMvc,
+                        newLogIDResult.getPayload(),
+                        NewLogDTO
+                                .builder()
+                                .logbook("MCC")
+                                .text("This is a log for test")
+                                .title("A very wonderful followup log one")
+                                .build()
+                )
+        );
+
+        //create follow-up
+        ApiResultResponse<String> newFULogIDTwoResult =assertDoesNotThrow(
+                () -> testHelperService.createNewFollowUpLog(
+                        mockMvc,
+                        newLogIDResult.getPayload(),
+                        NewLogDTO
+                                .builder()
+                                .logbook("MCC")
+                                .text("This is a log for test")
+                                .title("A very wonderful followup log one")
+                                .build()
+                )
+        );
+
+        ApiResultResponse<List<SearchResultLogDTO>> foundFollowUp = assertDoesNotThrow(
+                () -> testHelperService.getAllFollowUpLog(
+                        mockMvc,
+                        newLogIDResult.getPayload()
+                )
+        );
+        assertThat(foundFollowUp.getErrorCode()).isEqualTo(0);
+        assertThat(foundFollowUp.getPayload().size()).isEqualTo(2);
+    }
 }
