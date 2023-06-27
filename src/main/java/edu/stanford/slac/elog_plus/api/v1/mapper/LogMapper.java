@@ -12,8 +12,11 @@ import org.mapstruct.factory.Mappers;
 @Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface LogMapper {
     LogMapper INSTANCE = Mappers.getMapper(LogMapper.class);
+
     @Mapping( target = "author", expression = "java(log.getFirstName() + \" \" + log.getLastName())")
     LogDTO fromModel(Log log);
+
+    @Mapping( target = "author", expression = "java(log.getFirstName() + \" \" + log.getLastName())")
     SearchResultLogDTO toSearchResultFromDTO(Log log);
 
     Log fromDTO(NewLogDTO newLogDTO, String firstName, String lastName, String userName);

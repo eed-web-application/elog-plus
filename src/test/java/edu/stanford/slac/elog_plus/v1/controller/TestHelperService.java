@@ -74,6 +74,29 @@ public class TestHelperService {
                 });
     }
 
+    public ApiResultResponse<String> createNewSupersedeLog(MockMvc mockMvc, String supersededLogId, NewLogDTO newLog) throws Exception {
+        MvcResult result = mockMvc.perform(
+                        post("/v1/logs/{id}/supersede", supersededLogId)
+                                .content(
+                                        new ObjectMapper().writeValueAsString(
+                                                newLog
+                                        )
+                                )
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .accept(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk())
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
+
     public ApiResultResponse<LogDTO> getFullLog(MockMvc mockMvc, String id) throws Exception {
         MvcResult result = mockMvc.perform(
                         get("/v1/logs/{id}", id)

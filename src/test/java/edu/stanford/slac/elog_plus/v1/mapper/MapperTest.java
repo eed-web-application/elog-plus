@@ -34,6 +34,16 @@ public class MapperTest {
     }
 
     @Test
+    public void searchResultLogDTOAuthorName() throws Exception {
+        var log = Log.builder()
+                .firstName("firstName")
+                .lastName("lastName")
+                .build();
+        var logDto = LogMapper.INSTANCE.toSearchResultFromDTO(log);
+        AssertionsForClassTypes.assertThat(logDto.author()).isEqualTo("firstName lastName");
+    }
+
+    @Test
     public void newLogDTOToModel() throws Exception {
         var newLog = NewLogDTO
                 .builder()
