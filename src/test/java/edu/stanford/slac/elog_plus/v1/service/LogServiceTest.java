@@ -1,9 +1,6 @@
 package edu.stanford.slac.elog_plus.v1.service;
 
-import edu.stanford.slac.elog_plus.api.v1.dto.LogDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.NewLogDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.QueryPagedResultDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.QueryParameterDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.model.Log;
 import edu.stanford.slac.elog_plus.service.LogService;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,7 +47,7 @@ public class LogServiceTest {
                         .build()
         );
 
-        QueryPagedResultDTO<LogDTO> queryResult =
+        QueryPagedResultDTO<SearchResultLogDTO> queryResult =
                 assertDoesNotThrow(
                         () -> logService.searchAll(
                                 QueryParameterDTO
@@ -62,5 +59,26 @@ public class LogServiceTest {
 
         assertThat(queryResult.getTotalElements()).isEqualTo(1);
         assertThat(queryResult.getContent().get(0).id()).isEqualTo(newLogID);
+    }
+
+    @Test
+    public void testFetchFullLog() {
+        String newLogID =
+                assertDoesNotThrow(
+                        () -> logService.createNew(
+                                NewLogDTO
+                                        .builder()
+                                        .logbook("MCC")
+                                        .text("This is a log for test")
+                                        .title("A very wonderful log")
+                                        .build()
+                        )
+                );
+
+        LogDTO fullLog =
+                assertDoesNotThrow(
+                        () -> logService.getFullLog(newLogID)
+                );
+        assertThat(fullLog.id()).isEqualTo(newLogID);
     }
 }

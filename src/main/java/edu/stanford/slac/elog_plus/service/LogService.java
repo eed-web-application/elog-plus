@@ -12,6 +12,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
 import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
 
@@ -21,7 +23,7 @@ public class LogService {
     final private LogRepository logRepository;
     final private QueryParameterConfigurationDTO queryParameterConfigurationDTO;
 
-    public QueryPagedResultDTO<LogDTO> searchAll(QueryParameterDTO queryParameter) {
+    public QueryPagedResultDTO<SearchResultLogDTO> searchAll(QueryParameterDTO queryParameter) {
         Page<Log> found = logRepository.searchAll(
                 QueryParameterMapper.INSTANCE.fromDTO(
                         queryParameter
@@ -29,7 +31,7 @@ public class LogService {
         );
         return QueryResultMapper.from(
                 found.map(
-                        LogMapper.INSTANCE::fromModel
+                        LogMapper.INSTANCE::toSearchResultFromDTO
                 )
         );
     }
@@ -65,5 +67,16 @@ public class LogService {
                 );
         return newLog.getId();
 
+    }
+
+    public LogDTO getFullLog(String id) {
+        Optional<Log> foundLog = logRepository.findById(id);
+        assertion(
+                foundLog::isPresent,
+                -1,
+                "The log has not been found",
+                "LogService::getFullLog"
+        );
+        return LogMapper.INSTANCE.fromModel(foundLog.get());
     }
 }

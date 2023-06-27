@@ -68,11 +68,27 @@ public class TestHelperService {
         if (someException.isPresent()) {
             throw someException.get();
         }
-        ApiResultResponse<String> res = new ObjectMapper().readValue(
+        return new ObjectMapper().readValue(
                 result.getResponse().getContentAsString(),
                 new TypeReference<>() {
                 });
-        return res;
+    }
+
+    public ApiResultResponse<LogDTO> getFullLog(MockMvc mockMvc, String id) throws Exception {
+        MvcResult result = mockMvc.perform(
+                        get("/v1/logs/{id}", id)
+                                .accept(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk())
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
     }
 
     public ApiResultResponse<QueryPagedResultDTO<LogDTO>> submitSearchByGet(

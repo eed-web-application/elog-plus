@@ -1,6 +1,7 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
+import edu.stanford.slac.elog_plus.api.v1.dto.LogDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.NewLogDTO;
 import edu.stanford.slac.elog_plus.model.Log;
 import org.assertj.core.api.AssertionsForClassTypes;
@@ -81,5 +82,35 @@ public class LogsControllerTest {
 
         var queryResult = testHelperService.submitSearchByGet(mockMvc, 0, 5, List.of("MCC"));
         AssertionsForClassTypes.assertThat(queryResult.getPayload().getContent().size()).isEqualTo(1);
+    }
+
+
+
+    @Test
+    public void fetchFullLog() {
+        ApiResultResponse<String> newLogID =
+                assertDoesNotThrow(
+                        () ->
+                                testHelperService.createNewLog(
+                                        mockMvc,
+                                        NewLogDTO
+                                                .builder()
+                                                .logbook("MCC")
+                                                .text("This is a log for test")
+                                                .title("A very wonderful log")
+                                                .build()
+                                )
+                );
+        AssertionsForClassTypes.assertThat(newLogID.getErrorCode()).isEqualTo(0);
+
+        ApiResultResponse<LogDTO> fullLog = assertDoesNotThrow(
+                () ->
+                        testHelperService.getFullLog(
+                                mockMvc,
+                                newLogID.getPayload()
+                        )
+        );
+        AssertionsForClassTypes.assertThat(newLogID.getErrorCode()).isEqualTo(0);
+        AssertionsForClassTypes.assertThat(fullLog.getPayload().id()).isEqualTo(newLogID.getPayload());
     }
 }
