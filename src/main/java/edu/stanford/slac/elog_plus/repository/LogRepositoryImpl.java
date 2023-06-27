@@ -40,7 +40,7 @@ public class LogRepositoryImpl implements LogRepositoryCustom {
                 .with(
                         pageable
                 );
-
+        query.addCriteria(Criteria.where("supersedeBy").exists(false));
         if (allCriteria.size() > 0) {
             query.addCriteria(new Criteria().orOperator(
                             allCriteria
