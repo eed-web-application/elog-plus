@@ -19,7 +19,7 @@ import java.util.List;
 public class Log {
     @Id
     private String id;
-    private String followedBy;
+    private String supersededBy;
     @Field("ENTRY_TYPE")
     private String entryType;
     @Field("LOGBOOK")

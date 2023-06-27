@@ -42,7 +42,8 @@ public class LogRepositoryImpl implements LogRepositoryCustom {
                 );
 
         if (allCriteria.size() > 0) {
-            query.addCriteria(new Criteria().orOperator(
+            query.addCriteria(new Criteria().orOperator
+                    (
                             allCriteria
                     )
             );
