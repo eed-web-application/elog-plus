@@ -4,11 +4,13 @@ import com.github.javafaker.Faker;
 import edu.stanford.slac.elog_plus.api.v1.dto.NewLogDTO;
 import edu.stanford.slac.elog_plus.api.v1.mapper.LogMapper;
 import edu.stanford.slac.elog_plus.model.Log;
+import edu.stanford.slac.elog_plus.service.AttachmentService;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -23,13 +25,15 @@ import static java.util.Arrays.asList;
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles(profiles = "test")
 public class MapperTest {
+    @Autowired
+    AttachmentService attachmentService;
     @Test
     public void logDTOAuthorName() throws Exception {
         var log = Log.builder()
                 .firstName("firstName")
                 .lastName("lastName")
                 .build();
-        var logDto = LogMapper.INSTANCE.fromModel(log);
+        var logDto = LogMapper.INSTANCE.fromModel(log, attachmentService);
         AssertionsForClassTypes.assertThat(logDto.author()).isEqualTo("firstName lastName");
     }
 
@@ -39,7 +43,7 @@ public class MapperTest {
                 .firstName("firstName")
                 .lastName("lastName")
                 .build();
-        var logDto = LogMapper.INSTANCE.toSearchResultFromDTO(log);
+        var logDto = LogMapper.INSTANCE.toSearchResultFromDTO(log, attachmentService);
         AssertionsForClassTypes.assertThat(logDto.author()).isEqualTo("firstName lastName");
     }
 

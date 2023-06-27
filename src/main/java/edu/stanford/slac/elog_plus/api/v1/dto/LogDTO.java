@@ -1,5 +1,7 @@
 package edu.stanford.slac.elog_plus.api.v1.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
@@ -9,7 +11,8 @@ import org.springframework.data.annotation.Version;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "Identify the single elog record")
 public record LogDTO(
         @Schema(description = "record primary key")
@@ -26,7 +29,7 @@ public record LogDTO(
         String title,
         String text,
         String author,
-        List<String> attachments,
+        List<AttachmentDTO> attachments,
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)
         LocalDateTime logDate,

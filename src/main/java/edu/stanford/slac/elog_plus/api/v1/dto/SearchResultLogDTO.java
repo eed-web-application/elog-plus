@@ -20,9 +20,11 @@ public record SearchResultLogDTO (
     String logbook,
     String priority,
     String segment,
-    List<String> tags,
     String title,
     String author,
+    List<String> tags,
+
+    List<AttachmentDTO> attachments,
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     LocalDateTime logDate

@@ -1,5 +1,7 @@
 package edu.stanford.slac.elog_plus.service;
 
+import edu.stanford.slac.elog_plus.api.v1.dto.AttachmentDTO;
+import edu.stanford.slac.elog_plus.api.v1.mapper.AttachmentMapper;
 import edu.stanford.slac.elog_plus.model.Attachment;
 import edu.stanford.slac.elog_plus.model.FileObjectDescription;
 import edu.stanford.slac.elog_plus.repository.AttachmentRepository;
@@ -51,7 +53,7 @@ public class AttachmentService {
      * @param id
      * @param attachment
      */
-    public void getAttachment(String id, FileObjectDescription attachment) {
+    public void getAttachmentContent(String id, FileObjectDescription attachment) {
         // fetch
         Optional<Attachment> foundAttachment = wrapCatch(
                 () -> attachmentRepository.findById(id),
@@ -77,5 +79,24 @@ public class AttachmentService {
                 -1,
                 "AttachmentService::getAttachment"
         );
+    }
+
+    public AttachmentDTO getAttachment(String id) {
+        // fetch
+        Optional<Attachment> foundAttachment = wrapCatch(
+                () -> attachmentRepository.findById(id),
+                -1,
+                "AttachmentService::getAttachment"
+        );
+
+        //check
+        assertion(
+                foundAttachment::isPresent,
+                -2,
+                "Attachment not found",
+                "AttachmentService::getAttachment"
+        );
+
+       return AttachmentMapper.INSTANCE.fromModel(foundAttachment.get());
     }
 }
