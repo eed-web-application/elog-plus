@@ -24,6 +24,7 @@ import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
 @AllArgsConstructor
 public class LogService {
     final private LogRepository logRepository;
+    final private AttachmentService attachmentService;
     final private QueryParameterConfigurationDTO queryParameterConfigurationDTO;
 
     public QueryPagedResultDTO<SearchResultLogDTO> searchAll(QueryParameterDTO queryParameter) {
@@ -34,7 +35,9 @@ public class LogService {
         );
         return QueryResultMapper.from(
                 found.map(
-                        LogMapper.INSTANCE::toSearchResultFromDTO
+                        log -> {
+                            return LogMapper.INSTANCE.toSearchResultFromDTO(log, attachmentService);
+                        }
                 )
         );
     }
@@ -90,7 +93,7 @@ public class LogService {
                 "The log has not been found",
                 "LogService::getFullLog"
         );
-        return LogMapper.INSTANCE.fromModel(foundLog.get());
+        return LogMapper.INSTANCE.fromModel(foundLog.get(), attachmentService);
     }
 
     /**
@@ -203,7 +206,7 @@ public class LogService {
         return followUp
                 .stream()
                 .map(
-                        LogMapper.INSTANCE::toSearchResultFromDTO
+                       l-> LogMapper.INSTANCE.toSearchResultFromDTO(l, attachmentService)
                 )
                 .collect(Collectors.toList());
     }

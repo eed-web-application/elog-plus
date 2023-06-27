@@ -3,7 +3,6 @@ package edu.stanford.slac.elog_plus.api.v1.controller;
 import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
 import edu.stanford.slac.elog_plus.model.FileObjectDescription;
 import edu.stanford.slac.elog_plus.service.AttachmentService;
-import edu.stanford.slac.elog_plus.service.v0.StorageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -54,7 +53,7 @@ public class AttachmentsController {
             @PathVariable String attachmentId
     ) throws Exception {
         FileObjectDescription desc = FileObjectDescription.builder().build();
-        attachmentService.getAttachment(attachmentId, desc);
+        attachmentService.getAttachmentContent(attachmentId, desc);
         InputStreamResource resource = new InputStreamResource(desc.getIs());
         MediaType mediaType = MediaType.valueOf(desc.getContentType());
         HttpHeaders headers = new HttpHeaders();

@@ -19,6 +19,7 @@ public class Attachment {
     String id;
     String fileName;
     String contentType;
+    String hasPreview;
     @CreatedDate
     private LocalDateTime creationData;
 }
