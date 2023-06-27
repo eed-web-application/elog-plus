@@ -40,9 +40,13 @@ public class LogRepositoryImpl implements LogRepositoryCustom {
                 .with(
                         pageable
                 );
-        allCriteria.stream().forEach(
-                (c)->query.addCriteria(c)
-        );
+
+        if (allCriteria.size() > 0) {
+            query.addCriteria(new Criteria().orOperator(
+                            allCriteria
+                    )
+            );
+        }
         List<Log> found = mongoTemplate.find(query, Log.class);
         return PageableExecutionUtils.getPage(
                 found,

@@ -1,11 +1,13 @@
 package edu.stanford.slac.elog_plus.model;
 
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -17,6 +19,7 @@ import java.time.LocalDateTime;
 public class Log {
     @Id
     private String id;
+    private String followedBy;
     @Field("ENTRY_TYPE")
     private String entryType;
     @Field("LOGBOOK")
@@ -25,8 +28,6 @@ public class Log {
     private String priority;
     @Field("SEGMENT")
     private String segment;
-    @Field("TAGS")
-    private String tags;
     @Field("TITLE")
     private String title;
     @Field("TEXT")
@@ -37,14 +38,19 @@ public class Log {
     private String firstName;
     @Field("USERNAME")
     private String userName;
+    private List<String> tags;
+    private List<String> attachments;
     @Field("FILE_PS")
     private String filePs;
     @Field("FILE_PREVIEW")
     private String filePreview;
+    @CreatedDate
     @Field("LOGDATE")
     private LocalDateTime logDate;
+    @CreatedDate
     @Field("COMMITDATE")
     private LocalDateTime commitDate;
+    @CreatedDate
     @Field("PROGDATE")
     private LocalDateTime progDate;
 }
