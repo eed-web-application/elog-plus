@@ -9,4 +9,6 @@ import java.util.List;
 
 public interface LogRepository extends MongoRepository<Log, String>, LogRepositoryCustom {
     Page<Log> findByLogbookIn(List<String> logbook, Pageable pageable);
+
+    List<Log> findAllByIdIn(List<String> ids);
 }

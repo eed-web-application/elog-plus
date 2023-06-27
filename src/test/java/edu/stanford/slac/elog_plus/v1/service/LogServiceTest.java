@@ -4,7 +4,6 @@ import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.model.Log;
 import edu.stanford.slac.elog_plus.service.LogService;
-import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -83,6 +82,24 @@ public class LogServiceTest {
                         () -> logService.getFullLog(newLogID)
                 );
         assertThat(fullLog.id()).isEqualTo(newLogID);
+    }
+
+    @Test
+    public void testSupersedeCreationFailOnWrongRootLog() {
+        ControllerLogicException exception = assertThrows(
+                ControllerLogicException.class,
+                () -> logService.createNewSupersede(
+                        "bad id",
+                        NewLogDTO
+                                .builder()
+                                .logbook("MCC")
+                                .text("This is a log for test")
+                                .title("A very wonderful log")
+                                .build()
+                )
+        );
+
+        assertThat(exception.getErrorCode()).isEqualTo(-2);
     }
 
     @Test
@@ -169,7 +186,78 @@ public class LogServiceTest {
                                         .build()
                         )
                 );
-
         assertThat(exception.getErrorCode()).isEqualTo(-3);
+    }
+
+    @Test
+    public void testFollowUpCreationFailOnWrongRootLog() {
+        ControllerLogicException exception = assertThrows(
+                ControllerLogicException.class,
+                () -> logService.createNewFollowUp(
+                        "bad root id",
+                        NewLogDTO
+                                .builder()
+                                .logbook("MCC")
+                                .text("This is a log for test")
+                                .title("A very wonderful log")
+                                .build()
+                )
+        );
+
+        assertThat(exception.getErrorCode()).isEqualTo(-2);
+    }
+
+    @Test
+    public void testFollowUpCreation() {
+        String rootLogID =
+                assertDoesNotThrow(
+                        () -> logService.createNew(
+                                NewLogDTO
+                                        .builder()
+                                        .logbook("MCC")
+                                        .text("This is a log for test")
+                                        .title("A very wonderful log")
+                                        .build()
+                        )
+                );
+        assertThat(rootLogID).isNotNull();
+
+        String newFollowUpOneID =
+                assertDoesNotThrow(
+                        () -> logService.createNewFollowUp(
+                                rootLogID,
+                                NewLogDTO
+                                        .builder()
+                                        .logbook("MCC")
+                                        .text("This is a log for test")
+                                        .title("A very wonderful log updated for followUp one")
+                                        .build()
+                        )
+                );
+        assertThat(newFollowUpOneID).isNotNull();
+
+        String newFollowUpTwoID =
+                assertDoesNotThrow(
+                        () -> logService.createNewFollowUp(
+                                rootLogID,
+                                NewLogDTO
+                                        .builder()
+                                        .logbook("MCC")
+                                        .text("This is a log for test")
+                                        .title("A very wonderful log updated for followUp two")
+                                        .build()
+                        )
+                );
+        assertThat(newFollowUpTwoID).isNotNull();
+
+        List<SearchResultLogDTO> followUpLogsFound =
+                assertDoesNotThrow(
+                        () -> logService.getAllFollowUpForALog(
+                                rootLogID
+                        )
+                );
+
+        assertThat(followUpLogsFound).isNotNull();
+        assertThat(followUpLogsFound.size()).isEqualTo(2);
     }
 }

@@ -36,6 +36,28 @@ public class LogsController {
         );
     }
 
+    @PostMapping(
+            path = "/{id}/follow-up",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @Operation(description = "Create a new follow-up log for the the log identified by the id")
+    public ApiResultResponse<String> newFollowUpLog(@PathVariable String id, @RequestBody NewLogDTO newLog) {
+        return ApiResultResponse.of(
+                logService.createNewFollowUp(id, newLog)
+        );
+    }
+
+    @GetMapping(
+            path = "/{id}/follow-up",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @Operation(description = "Return all the follow-up logs for a specific log identified by the id")
+    public ApiResultResponse<List<SearchResultLogDTO>> getAllFollowUpLog(@PathVariable String id) {
+        return ApiResultResponse.of(
+                logService.getAllFollowUpForALog(id)
+        );
+    }
+
     @GetMapping(
             path = "/{id}",
             produces = {MediaType.APPLICATION_JSON_VALUE}
@@ -47,12 +69,14 @@ public class LogsController {
         );
     }
 
+
+
     @GetMapping(
 
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(description = "Perform the query on all log data")
-    public ApiResultResponse<QueryPagedResultDTO<SearchResultLogDTO>> globalSearch(
+    public ApiResultResponse<QueryPagedResultDTO<SearchResultLogDTO>> search(
             @RequestParam("page") int page,
             @RequestParam("size") int size,
             @RequestParam("logbook") List<String> logBook) {
