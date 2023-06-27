@@ -9,9 +9,6 @@ import edu.stanford.slac.elog_plus.model.Log;
 import edu.stanford.slac.elog_plus.repository.LogRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
