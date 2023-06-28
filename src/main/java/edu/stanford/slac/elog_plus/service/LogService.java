@@ -162,7 +162,7 @@ public class LogService {
         Log l = rootLog.get();
         String newFollowupLogID = createNew(newLog);
         // update supersede
-        l.getFollowUp().add(newFollowUpLogID);
+        l.getFollowUp().add(newFollowupLogID);
         wrapCatch(
                 () -> logRepository.save(l),
                 -4,
