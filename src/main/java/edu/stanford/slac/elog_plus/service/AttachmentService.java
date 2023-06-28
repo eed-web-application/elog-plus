@@ -90,6 +90,36 @@ public class AttachmentService {
         return attachment;
     }
 
+    public FileObjectDescription getPreviewContent(String id) {
+        FileObjectDescription attachment = FileObjectDescription.builder().build();
+        // fetch
+        Optional<Attachment> foundAttachment = wrapCatch(
+                () -> attachmentRepository.findById(id),
+                -1,
+                "AttachmentService::getAttachment"
+        );
+
+        //check
+        assertion(
+                foundAttachment::isPresent,
+                -2,
+                "Attachment not found",
+                "AttachmentService::getAttachment"
+        );
+
+        // retrieve stored file
+        attachment.setFileName(foundAttachment.get().getFileName());
+        wrapCatch(
+                () -> {
+                    storageRepository.getFile(foundAttachment.get().getPreviewID(), attachment);
+                    return null;
+                },
+                -1,
+                "AttachmentService::getAttachment"
+        );
+        return attachment;
+    }
+
     public AttachmentDTO getAttachment(String id) {
         // fetch
         Optional<Attachment> foundAttachment = wrapCatch(

@@ -1,7 +1,10 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
+import edu.stanford.slac.elog_plus.api.v1.dto.LogDTO;
 import edu.stanford.slac.elog_plus.model.Attachment;
+import edu.stanford.slac.elog_plus.service.AttachmentService;
+import edu.stanford.slac.elog_plus.v1.service.DocumentGenerationService;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,7 +22,12 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.await;
 
 @AutoConfigureMockMvc
 @SpringBootTest()
@@ -35,6 +43,12 @@ public class AttachmentControllerTest {
 
     @Autowired
     private TestHelperService testHelperService;
+
+    @Autowired
+    AttachmentService attachmentService;
+
+    @Autowired
+    DocumentGenerationService documentGenerationService;
 
     @BeforeEach
     public void preTest() {
@@ -78,8 +92,44 @@ public class AttachmentControllerTest {
         testHelperService.checkDownloadedFile(
                 mockMvc,
                 newAttachmentID.getPayload(),
-                MediaType.APPLICATION_PDF_VALUE,
-                "<<pdf data>>".getBytes(StandardCharsets.UTF_8).length
+                MediaType.APPLICATION_PDF_VALUE
         );
+    }
+
+    @Test
+    public void downloadAttachmentAndPreview() throws Exception {
+        try (InputStream is = documentGenerationService.getTestPng()) {
+            ApiResultResponse<String> newAttachmentID = testHelperService.newAttachment(
+                    mockMvc,
+                    new MockMultipartFile(
+                            "uploadFile",
+                            "test.png",
+                            MediaType.IMAGE_PNG_VALUE,
+                            is
+                    )
+            );
+
+            testHelperService.checkDownloadedFile(
+                    mockMvc,
+                    newAttachmentID.getPayload(),
+                    MediaType.IMAGE_PNG_VALUE
+            );
+
+            await().atMost(10, SECONDS).pollDelay(500, MILLISECONDS).until(
+                    () -> {
+                        String processingState = attachmentService.getPreviewProcessingState(newAttachmentID.getPayload());
+                        return processingState.compareTo(
+                                        Attachment.PreviewProcessingState.Completed.name()
+                                )==0;
+                    }
+            );
+
+            testHelperService.checkDownloadedPreview(
+                    mockMvc,
+                    newAttachmentID.getPayload(),
+                    MediaType.IMAGE_JPEG_VALUE
+            );
+        }
+
     }
 }

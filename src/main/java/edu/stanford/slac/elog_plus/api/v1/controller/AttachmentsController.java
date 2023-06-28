@@ -40,19 +40,42 @@ public class AttachmentsController {
                 .build();
 
         return ApiResultResponse.of(
-                attachmentService.createAttachment(desc,false)
+                attachmentService.createAttachment(desc,true)
         );
     }
 
     @GetMapping(
-            path = "/{attachmentId}",
-            produces = {MediaType.APPLICATION_OCTET_STREAM_VALUE}
+            path = "/{id}/download"
+            //produces = {MediaType.APPLICATION_OCTET_STREAM_VALUE}
     )
     @Operation(summary = "Load an attachment using an unique attachment id")
-    public ResponseEntity<Resource> loadAttachment(
-            @PathVariable String attachmentId
+    public ResponseEntity<Resource> download(
+            @PathVariable String id
     ) throws Exception {
-        FileObjectDescription desc =  attachmentService.getAttachmentContent(attachmentId);
+        FileObjectDescription desc =  attachmentService.getAttachmentContent(id);
+        InputStreamResource resource = new InputStreamResource(desc.getIs());
+        MediaType mediaType = MediaType.valueOf(desc.getContentType());
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(mediaType);
+        ContentDisposition disposition = ContentDisposition
+                // 3.2
+                .inline() // or .attachment()
+                // 3.1
+                .filename(desc.getFileName())
+                .build();
+        headers.setContentDisposition(disposition);
+        return new ResponseEntity<>(resource, headers, HttpStatus.OK);
+    }
+
+    @GetMapping(
+            path = "/{id}/preview.jpg"
+            //produces = {MediaType.APPLICATION_OCTET_STREAM_VALUE}
+    )
+    @Operation(summary = "Load an attachment using an unique attachment id")
+    public ResponseEntity<Resource> downloadPreview(
+            @PathVariable String id
+    ) throws Exception {
+        FileObjectDescription desc =  attachmentService.getPreviewContent(id);
         InputStreamResource resource = new InputStreamResource(desc.getIs());
         MediaType mediaType = MediaType.valueOf(desc.getContentType());
         HttpHeaders headers = new HttpHeaders();

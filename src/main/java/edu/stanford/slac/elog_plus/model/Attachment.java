@@ -23,13 +23,13 @@ public class Attachment {
         Completed
     }
     @Id
-    String id;
-    String fileName;
-    String contentType;
-    String hasPreview;
-    String previewID;
+    private String id;
+    private String fileName;
+    private String contentType;
+    private String hasPreview;
+    private String previewID;
     @Builder.Default
-    PreviewProcessingState previewState = PreviewProcessingState.Waiting;
+    private PreviewProcessingState previewState = PreviewProcessingState.Waiting;
     @CreatedDate
     private LocalDateTime creationData;
 }
