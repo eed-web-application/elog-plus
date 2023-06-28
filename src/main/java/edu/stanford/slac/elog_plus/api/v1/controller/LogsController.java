@@ -41,7 +41,7 @@ public class LogsController {
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(description = "Create a new follow-up log for the the log identified by the id")
-    public ApiResultResponse<String> newFollowUpLog(@PathVariable String id, @RequestBody NewLogDTO newLog) {
+    public ApiResultResponse<String> newFollowupLog(@PathVariable String id, @RequestBody NewLogDTO newLog) {
         return ApiResultResponse.of(
                 logService.createNewFollowUp(id, newLog)
         );
