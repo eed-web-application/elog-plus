@@ -160,15 +160,15 @@ public class LogService {
                 "LogService::createNewFollowUp"
         );
         Log l = rootLog.get();
-        String newFollowUpLogID = createNew(newLog);
+        String newFollowupLogID = createNew(newLog);
         // update supersede
-        l.getFollowUp().add(newFollowUpLogID);
+        l.getFollowUp().add(newFollowupLogID);
         wrapCatch(
                 () -> logRepository.save(l),
                 -4,
                 "LogService::createNewSupersede"
         );
-        return "";
+        return newFollowupLogID;
     }
 
     /**
