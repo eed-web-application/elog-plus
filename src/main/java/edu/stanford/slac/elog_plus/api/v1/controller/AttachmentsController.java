@@ -40,7 +40,7 @@ public class AttachmentsController {
                 .build();
 
         return ApiResultResponse.of(
-                attachmentService.createAttachment(desc)
+                attachmentService.createAttachment(desc,false)
         );
     }
 
@@ -52,8 +52,7 @@ public class AttachmentsController {
     public ResponseEntity<Resource> loadAttachment(
             @PathVariable String attachmentId
     ) throws Exception {
-        FileObjectDescription desc = FileObjectDescription.builder().build();
-        attachmentService.getAttachmentContent(attachmentId, desc);
+        FileObjectDescription desc =  attachmentService.getAttachmentContent(attachmentId);
         InputStreamResource resource = new InputStreamResource(desc.getIs());
         MediaType mediaType = MediaType.valueOf(desc.getContentType());
         HttpHeaders headers = new HttpHeaders();

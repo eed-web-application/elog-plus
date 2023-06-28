@@ -6,7 +6,6 @@ import edu.stanford.slac.elog_plus.model.FileObjectDescription;
 import edu.stanford.slac.elog_plus.model.Log;
 import edu.stanford.slac.elog_plus.service.AttachmentService;
 import edu.stanford.slac.elog_plus.service.LogService;
-import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -282,7 +281,8 @@ public class LogServiceTest {
                                                         "<<pdf data>>".getBytes(StandardCharsets.UTF_8)
                                                 )
                                         )
-                                        .build()
+                                        .build(),
+                                false
                         )
                 );
         assertThat(attachmentID).isNotNull();
@@ -324,7 +324,8 @@ public class LogServiceTest {
                                                         "<<pdf data>>".getBytes(StandardCharsets.UTF_8)
                                                 )
                                         )
-                                        .build()
+                                        .build(),
+                                false
                         )
                 );
         assertThat(attachmentID).isNotNull();

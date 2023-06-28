@@ -15,11 +15,21 @@ import java.time.LocalDateTime;
 @ToString
 @Document()
 public class Attachment {
+    public enum PreviewProcessingState{
+        Waiting,
+        Processing,
+        Error,
+        PreviewNotAvailable,
+        Completed
+    }
     @Id
     String id;
     String fileName;
     String contentType;
     String hasPreview;
+    String previewID;
+    @Builder.Default
+    PreviewProcessingState previewState = PreviewProcessingState.Waiting;
     @CreatedDate
     private LocalDateTime creationData;
 }
