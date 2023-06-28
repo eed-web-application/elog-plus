@@ -33,14 +33,18 @@ dependencies {
             'org.mapstruct:mapstruct:1.5.3.Final',
             'io.minio:minio:8.2.2',
             'com.github.javafaker:javafaker:1.0.2',
-            'com.fasterxml.jackson.core:jackson-databind'
+            'com.fasterxml.jackson.core:jackson-databind',
+            'org.springframework.kafka:spring-kafka:3.0.8',
+            'net.coobird:thumbnailator:[0.4, 0.5)'
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.3.Final'
 
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.awaitility:awaitility:4.0.3'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test',
+            'org.awaitility:awaitility:4.0.3',
+            'org.apache.pdfbox:pdfbox:2.0.28'
+
 }
 
 tasks.named('test') {

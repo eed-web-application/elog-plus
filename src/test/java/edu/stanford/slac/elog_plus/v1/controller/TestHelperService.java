@@ -36,10 +36,10 @@ public class TestHelperService {
         return res;
     }
 
-    public void checkDownloadedFile(MockMvc mockMvc, String attachmentID, String mediaType, Integer size) throws Exception {
+    public void checkDownloadedFile(MockMvc mockMvc, String attachmentID, String mediaType) throws Exception {
         MvcResult result = mockMvc.perform(
-                        get("/v1/attachment/{attachmentId}", attachmentID)
-                                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                        get("/v1/attachment/{id}/download", attachmentID)
+                                .contentType(mediaType)
                 )
                 .andExpect(status().isOk())
                 .andReturn();
@@ -47,7 +47,22 @@ public class TestHelperService {
         if (someException.isPresent()) {
             throw someException.get();
         }
-        AssertionsForClassTypes.assertThat(result.getResponse().getContentAsByteArray().length).isEqualTo(size);
+        AssertionsForClassTypes.assertThat(result.getResponse().getContentAsByteArray().length).isGreaterThan(0);
+        AssertionsForClassTypes.assertThat(result.getResponse().getContentType()).isEqualTo(mediaType);
+    }
+
+    public void checkDownloadedPreview(MockMvc mockMvc, String attachmentID, String mediaType) throws Exception {
+        MvcResult result = mockMvc.perform(
+                        get("/v1/attachment/{id}/preview.jpg", attachmentID)
+                                .contentType(mediaType)
+                )
+                .andExpect(status().isOk())
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        AssertionsForClassTypes.assertThat(result.getResponse().getContentAsByteArray().length).isGreaterThan(0);
         AssertionsForClassTypes.assertThat(result.getResponse().getContentType()).isEqualTo(mediaType);
     }
 

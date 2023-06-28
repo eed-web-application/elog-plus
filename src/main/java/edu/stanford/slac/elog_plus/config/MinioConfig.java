@@ -8,34 +8,34 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@EnableConfigurationProperties(MinioProperties.class)
+@EnableConfigurationProperties(AppProperties.class)
 public class MinioConfig {
-    MinioProperties minioProperties;
+    AppProperties appProperties;
 
-    public MinioConfig(MinioProperties minioProperties) {
-        this.minioProperties = minioProperties;
+    public MinioConfig(AppProperties appProperties) {
+        this.appProperties = appProperties;
     }
 
     @Bean
     public MinioClient objectStorageClient() throws Exception {
         MinioClient mc = MinioClient.builder()
-                .endpoint(minioProperties.getUrl())
+                .endpoint(appProperties.getMinio().getUrl())
                 .credentials(
-                        minioProperties.getKey(),
-                        minioProperties.getSecret()
+                        appProperties.getMinio().getKey(),
+                        appProperties.getMinio().getSecret()
                 )
                 .build();
         boolean exists = mc.bucketExists(
                 BucketExistsArgs
                         .builder()
-                        .bucket(minioProperties.getBucket())
+                        .bucket(appProperties.getMinio().getBucket())
                         .build()
         );
         if(!exists) {
             mc.makeBucket(
                     MakeBucketArgs
                             .builder()
-                            .bucket(minioProperties.getBucket())
+                            .bucket(appProperties.getMinio().getBucket())
                             .build());
         }
         return mc;
@@ -44,6 +44,6 @@ public class MinioConfig {
 
     @Bean()
     public MinioProperties objectStorageProperties() {
-        return minioProperties;
+        return appProperties.getMinio();
     }
 }

@@ -48,6 +48,18 @@ public class MapperTest {
     }
 
     @Test
+    public void createModelFromNewLog() {
+        Log newLog = LogMapper.INSTANCE.fromDTO(
+                NewLogDTO.builder().build(),
+                "firstName",
+                "lastName",
+                "userName");
+        AssertionsForClassTypes.assertThat(newLog.getFirstName()).isEqualTo("firstName");
+        AssertionsForClassTypes.assertThat(newLog.getLastName()).isEqualTo("lastName");
+        AssertionsForClassTypes.assertThat(newLog.getUserName()).isEqualTo("userName");
+    }
+
+    @Test
     public void newLogDTOToModel() throws Exception {
         var newLog = NewLogDTO
                 .builder()
