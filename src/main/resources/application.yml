@@ -15,7 +15,7 @@ spring:
     mongodb:
       uri: mongodb://elogs:elogs@${DB_HOST:localhost}:27017/elogs?authSource=elogs
   kafka:
-    bootstrap-servers: localhost:9094
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9094}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
