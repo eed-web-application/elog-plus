@@ -7,6 +7,7 @@ services:
     environment:
       - MINIO_HOST=minio
       - DB_HOST=mongodb-primary
+      - KAFKA_BOOTSTRAP=kafka:9092
       - WAIT_LOGGER_LEVEL=debug
       - WAIT_TIMEOUT=90
       - WAIT_HOSTS=mongodb-primary:27017, minio:9000
