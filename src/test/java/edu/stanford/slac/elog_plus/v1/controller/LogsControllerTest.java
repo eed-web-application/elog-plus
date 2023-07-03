@@ -166,7 +166,7 @@ public class LogsControllerTest {
 
 
     @Test
-    public void createNewSFollowUpLogsAndFetch() throws Exception {
+    public void createNewFollowUpLogsAndFetch() throws Exception {
         ApiResultResponse<String> newLogIDResult =
                 assertDoesNotThrow(
                         () ->
@@ -220,5 +220,30 @@ public class LogsControllerTest {
         );
         assertThat(foundFollowUp.getErrorCode()).isEqualTo(0);
         assertThat(foundFollowUp.getPayload().size()).isEqualTo(2);
+
+        //get full log without followUPs
+        ApiResultResponse<LogDTO> fullLog =assertDoesNotThrow(
+                () -> testHelperService.getFullLog(
+                        mockMvc,
+                        newLogIDResult.getPayload(),
+                        false
+                )
+        );
+
+        assertThat(fullLog.getErrorCode()).isEqualTo(0);
+        assertThat(fullLog.getPayload().followUp()).isNull();
+
+        //get full log without followUPs
+        ApiResultResponse<LogDTO> fullLogWitFollowUps =assertDoesNotThrow(
+                () -> testHelperService.getFullLog(
+                        mockMvc,
+                        newLogIDResult.getPayload(),
+                        true
+                )
+        );
+
+        assertThat(fullLogWitFollowUps.getErrorCode()).isEqualTo(0);
+        assertThat(fullLogWitFollowUps.getPayload().followUp()).isNotNull();
+        assertThat(fullLogWitFollowUps.getPayload().followUp().size()).isEqualTo(2);
     }
 }

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Optional;
 
@@ -155,6 +156,25 @@ public class TestHelperService {
     public ApiResultResponse<LogDTO> getFullLog(MockMvc mockMvc, String id) throws Exception {
         MvcResult result = mockMvc.perform(
                         get("/v1/logs/{id}", id)
+                                .accept(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk())
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
+
+
+    public ApiResultResponse<LogDTO> getFullLog(MockMvc mockMvc, String id, boolean includeFollowUps) throws Exception {
+        MvcResult result = mockMvc.perform(
+                        get("/v1/logs/{id}", id)
+                                .param("includeFollowUps", String.valueOf(includeFollowUps))
                                 .accept(MediaType.APPLICATION_JSON)
                 )
                 .andExpect(status().isOk())

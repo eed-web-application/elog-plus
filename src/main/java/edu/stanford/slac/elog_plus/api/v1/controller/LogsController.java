@@ -3,12 +3,15 @@ package edu.stanford.slac.elog_plus.api.v1.controller;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.service.LogService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
+import javax.swing.text.html.Option;
 import java.util.List;
+import java.util.Optional;
 
 @RestController()
 @RequestMapping("/v1/logs")
@@ -63,9 +66,13 @@ public class LogsController {
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(description = "Return the full log information")
-    public ApiResultResponse<LogDTO> newLog(@PathVariable String id) {
+    public ApiResultResponse<LogDTO> newLog(
+            @PathVariable String id,
+            @Parameter(name = "includeFollowUps", description = "If true the API return all the followUp")
+            @RequestParam("includeFollowUps") Optional<Boolean> includeFollowUps
+    ) {
         return ApiResultResponse.of(
-                logService.getFullLog(id)
+                logService.getFullLog(id, includeFollowUps)
         );
     }
 
