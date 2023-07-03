@@ -86,7 +86,7 @@ public class LogService {
      * @return the full log description
      */
     public LogDTO getFullLog(String id, Optional<Boolean> includeFollowUps) {
-        List<SearchResultLogDTO> followUps = null;
+        LogDTO result = null;
         Optional<Log> foundLog =
                 wrapCatch(
                         () -> logRepository.findById(id),
@@ -99,14 +99,20 @@ public class LogService {
                 "The log has not been found",
                 "LogService::getFullLog"
         );
+
         if(includeFollowUps.isPresent() && includeFollowUps.get()) {
-            followUps = getAllFollowUpForALog(id);
+            result = LogMapper.INSTANCE.fromModelWithFollowUpsAndAttachement(
+                    foundLog.get(),
+                    this,
+                    attachmentService
+            );
+        } else {
+            result = LogMapper.INSTANCE.fromModel(
+                    foundLog.get(),
+                    attachmentService
+            );
         }
-        return LogMapper.INSTANCE.fromModelWithFollowUpsAndAttachement(
-                foundLog.get(),
-                followUps,
-                attachmentService.getAttachment(foundLog.get().getAttachments())
-        );
+        return result;
     }
 
     /**

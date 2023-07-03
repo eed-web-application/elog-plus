@@ -31,7 +31,7 @@ public record LogDTO(
         String author,
         List<AttachmentDTO> attachments,
 
-        List<SearchResultLogDTO> followUps,
+        List<LogDTO> followUp,
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)
         LocalDateTime logDate,

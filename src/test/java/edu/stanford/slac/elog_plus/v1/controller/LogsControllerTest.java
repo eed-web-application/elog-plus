@@ -231,7 +231,7 @@ public class LogsControllerTest {
         );
 
         assertThat(fullLog.getErrorCode()).isEqualTo(0);
-        assertThat(fullLog.getPayload().followUps()).isNull();
+        assertThat(fullLog.getPayload().followUp()).isNull();
 
         //get full log without followUPs
         ApiResultResponse<LogDTO> fullLogWitFollowUps =assertDoesNotThrow(
@@ -243,7 +243,7 @@ public class LogsControllerTest {
         );
 
         assertThat(fullLogWitFollowUps.getErrorCode()).isEqualTo(0);
-        assertThat(fullLogWitFollowUps.getPayload().followUps()).isNotNull();
-        assertThat(fullLogWitFollowUps.getPayload().followUps().size()).isEqualTo(2);
+        assertThat(fullLogWitFollowUps.getPayload().followUp()).isNotNull();
+        assertThat(fullLogWitFollowUps.getPayload().followUp().size()).isEqualTo(2);
     }
 }
