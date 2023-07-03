@@ -30,6 +30,8 @@ public record LogDTO(
         String text,
         String author,
         List<AttachmentDTO> attachments,
+
+        List<SearchResultLogDTO> followUps,
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)
         LocalDateTime logDate,
@@ -38,6 +40,5 @@ public record LogDTO(
         LocalDateTime commitDate,
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)
-        LocalDateTime progDate
-) {
+        LocalDateTime progDate) {
 }

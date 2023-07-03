@@ -22,6 +22,11 @@ public interface LogMapper {
     @Mapping(target = "attachments", source = "attachments", qualifiedByName = "mapAttachments")
     LogDTO fromModel(Log log, @Context AttachmentService attachmentService);
 
+
+    @Mapping(target = "author", expression = "java(log.getFirstName() + \" \" + log.getLastName())")
+    @Mapping(target = "attachments", ignore = true)
+    LogDTO fromModelWithFollowUpsAndAttachement(Log log, List<SearchResultLogDTO> followUps, List<AttachmentDTO> attachments);
+
     @Mapping(target = "author", expression = "java(log.getFirstName() + \" \" + log.getLastName())")
     @Mapping(target = "attachments", source = "attachments", qualifiedByName = "mapAttachments")
     SearchResultLogDTO toSearchResultFromDTO(Log log, @Context AttachmentService attachmentService);
@@ -43,4 +48,7 @@ public interface LogMapper {
     }
 
     Log fromDTO(NewLogDTO newLogDTO, String firstName, String lastName, String userName);
+
+
+
 }

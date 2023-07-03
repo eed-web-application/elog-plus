@@ -12,6 +12,8 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
@@ -137,6 +139,32 @@ public class AttachmentService {
         );
 
        return AttachmentMapper.INSTANCE.fromModel(foundAttachment.get());
+    }
+
+    public List<AttachmentDTO> getAttachment(List<String> ids) {
+        List<AttachmentDTO> result = new ArrayList<>();
+        for (String id:
+             ids) {
+            // fetch
+            Optional<Attachment> foundAttachment = wrapCatch(
+                    () -> attachmentRepository.findById(id),
+                    -1,
+                    "AttachmentService::getAttachment"
+            );
+
+            //check
+            assertion(
+                    foundAttachment::isPresent,
+                    -2,
+                    "Attachment not found",
+                    "AttachmentService::getAttachment"
+            );
+            result.add(
+                    AttachmentMapper.INSTANCE.fromModel(foundAttachment.get())
+            );
+        }
+
+        return result;
     }
 
     /**
