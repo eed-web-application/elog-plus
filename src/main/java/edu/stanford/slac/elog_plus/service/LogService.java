@@ -42,6 +42,20 @@ public class LogService {
         );
     }
 
+    public List<SearchResultLogDTO> searchAll(QueryWithAnchorDTO queryWithAnchorDTO) {
+        List<Log> found = logRepository.searchAll(
+                QueryParameterMapper.INSTANCE.fromDTO(
+                        queryWithAnchorDTO
+                )
+        );
+        return found.stream().map(
+                log -> {
+                    return LogMapper.INSTANCE.toSearchResultFromDTO(log, attachmentService);
+                }
+
+        ).collect(Collectors.toList());
+    }
+
     /**
      * Create a new log entry
      *
@@ -75,7 +89,7 @@ public class LogService {
     }
 
     public LogDTO getFullLog(String id) {
-       return getFullLog(id, Optional.of(false));
+        return getFullLog(id, Optional.of(false));
     }
 
     /**
@@ -100,7 +114,7 @@ public class LogService {
                 "LogService::getFullLog"
         );
 
-        if(includeFollowUps.isPresent() && includeFollowUps.get()) {
+        if (includeFollowUps.isPresent() && includeFollowUps.get()) {
             result = LogMapper.INSTANCE.fromModelWithFollowUpsAndAttachement(
                     foundLog.get(),
                     this,
@@ -225,7 +239,7 @@ public class LogService {
         return followUp
                 .stream()
                 .map(
-                       l-> LogMapper.INSTANCE.toSearchResultFromDTO(l, attachmentService)
+                        l -> LogMapper.INSTANCE.toSearchResultFromDTO(l, attachmentService)
                 )
                 .collect(Collectors.toList());
     }

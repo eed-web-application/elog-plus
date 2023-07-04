@@ -10,8 +10,10 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import java.io.UnsupportedEncodingException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -197,7 +199,7 @@ public class TestHelperService {
         MvcResult result;
         if (logbook.size() == 0) {
             result = mockMvc.perform(
-                            get("/v1/logs")
+                            get("/v1/logs/paging")
                                     .param("page", String.valueOf(page))
                                     .param("size", String.valueOf(size))
                                     .param("logbook", "")
@@ -209,7 +211,7 @@ public class TestHelperService {
             String[] lbArray = new String[logbook.size()];
             logbook.toArray(lbArray);
             result = mockMvc.perform(
-                            get("/v1/logs")
+                            get("/v1/logs/paging")
                                     .param("page", String.valueOf(page))
                                     .param("size", String.valueOf(size))
                                     .param("logbook", lbArray)
@@ -225,4 +227,32 @@ public class TestHelperService {
                 });
     }
 
+    public ApiResultResponse<List<SearchResultLogDTO>> submitSearchByGetWithAnchor(
+            MockMvc mockMvc,
+            Optional<LocalDateTime> anchorDate,
+            Optional<Integer> logsBefore,
+            Optional<Integer> logsAfter,
+            Optional<List<String>> logBook) throws Exception {
+
+        MockHttpServletRequestBuilder getBuilder =
+                get("/v1/logs")
+                        .accept(MediaType.APPLICATION_JSON);
+        anchorDate.ifPresent(localDateTime -> getBuilder.param("anchorDate", String.valueOf(localDateTime)));
+        logsBefore.ifPresent(logBefore -> getBuilder.param("logsBefore", String.valueOf(logBefore)));
+        logsAfter.ifPresent(logAfter -> getBuilder.param("logsAfter", String.valueOf(logAfter)));
+        logBook.ifPresent(logbook -> {
+            String[] lbArray = new String[logbook.size()];
+            logbook.toArray(lbArray);
+            getBuilder.param("logbook", lbArray);
+        });
+        MvcResult result = mockMvc.perform(
+                        getBuilder
+                )
+                .andExpect(status().isOk())
+                .andReturn();
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
 }

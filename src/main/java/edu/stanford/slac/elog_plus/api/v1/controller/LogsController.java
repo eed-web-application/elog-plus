@@ -6,10 +6,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
+import org.springframework.cglib.core.Local;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import javax.swing.text.html.Option;
+import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -79,7 +82,7 @@ public class LogsController {
 
 
     @GetMapping(
-
+            path = "/paging",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(description = "Perform the query on all log data")
@@ -94,6 +97,28 @@ public class LogsController {
                                 .page(page)
                                 .rowPerPage(size)
                                 .logBook(logBook)
+                                .build()
+                )
+        );
+    }
+
+    @GetMapping(
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @Operation(description = "Perform the query on all log data")
+    public ApiResultResponse<List<SearchResultLogDTO>> searchWithPin(
+            @RequestParam("anchorDate") Optional<LocalDateTime> anchorDate,
+            @RequestParam("logsBefore") Optional<Integer> logsBefore,
+            @RequestParam("logsAfter") Optional<Integer> logsAfter,
+            @RequestParam("logbook") Optional<List<String>> logBook) {
+        return ApiResultResponse.of(
+                logService.searchAll(
+                        QueryWithAnchorDTO
+                                .builder()
+                                .anchorDate(anchorDate.orElse(null))
+                                .logsBefore(logsBefore.orElse(0))
+                                .logsAfter(logsAfter.orElse(10))
+                                .logBook(logBook.orElse(Collections.emptyList()))
                                 .build()
                 )
         );

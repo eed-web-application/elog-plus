@@ -20,6 +20,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -356,5 +357,107 @@ public class LogServiceTest {
         assertThat(foundLog.getContent().get(0).attachments().size()).isEqualTo(1);
         assertThat(foundLog.getContent().get(0).attachments().get(0).fileName()).isEqualTo("fileName");
         assertThat(foundLog.getContent().get(0).attachments().get(0).contentType()).isEqualTo("content-type");
+    }
+
+    @Test
+    public void searchLogsByAnchor() {
+        // create some data
+        for (int idx = 0; idx < 100; idx++) {
+            int finalIdx = idx;
+            String newLogID =
+                    assertDoesNotThrow(
+                            () -> logService.createNew(
+                                    NewLogDTO
+                                            .builder()
+                                            .logbook("MCC")
+                                            .text("This is a log for test")
+                                            .title("A very wonderful log")
+                                            .segment(String.valueOf(finalIdx))
+                                            .build()
+                            )
+                    );
+            assertThat(newLogID).isNotNull();
+        }
+
+        // initial search
+        List<SearchResultLogDTO> firstPage = assertDoesNotThrow(
+                () -> logService.searchAll(
+                        QueryWithAnchorDTO
+                                .builder()
+                                .logsAfter(10)
+                                .build()
+                )
+        );
+        assertThat(firstPage).isNotNull();
+        assertThat(firstPage.size()).isEqualTo(10);
+        String lastSegment = null;
+        for (SearchResultLogDTO l:
+            firstPage) {
+            if(lastSegment == null) {
+                lastSegment = l.segment();
+                continue;
+            }
+            assertThat(Integer.valueOf(lastSegment)).isGreaterThan(
+                    Integer.valueOf(l.segment())
+            );
+            lastSegment = l.segment();
+        }
+        var testAnchorDate = firstPage.get(firstPage.size()-1).logDate();
+        // load next page
+        List<SearchResultLogDTO> nextPage = assertDoesNotThrow(
+                () -> logService.searchAll(
+                        QueryWithAnchorDTO
+                                .builder()
+                                .anchorDate(testAnchorDate)
+                                .logsAfter(10)
+                                .build()
+                )
+        );
+
+        assertThat(nextPage).isNotNull();
+        assertThat(nextPage.size()).isEqualTo(10);
+        // check that the first of next page is not the last of the previous
+        assertThat(nextPage.get(0).id()).isNotEqualTo(firstPage.get(firstPage.size()-1).id());
+
+        lastSegment = nextPage.get(0).segment();
+        nextPage.remove(0);
+        for (SearchResultLogDTO l:
+                nextPage) {
+            assertThat(Integer.valueOf(lastSegment)).isGreaterThan(
+                    Integer.valueOf(l.segment())
+            );
+            lastSegment = l.segment();
+        }
+
+        // now get all the record upside and downside
+        List<SearchResultLogDTO> prevPageByPin = assertDoesNotThrow(
+                () -> logService.searchAll(
+                        QueryWithAnchorDTO
+                                .builder()
+                                .anchorDate(testAnchorDate)
+                                .logsBefore(10)
+                                .logsAfter(0)
+                                .build()
+                )
+        );
+        assertThat(prevPageByPin).isNotNull();
+        assertThat(prevPageByPin.size()).isEqualTo(10);
+        assertThat(prevPageByPin).isEqualTo(firstPage);
+
+        List<SearchResultLogDTO> prevAndNextPageByPin = assertDoesNotThrow(
+                () -> logService.searchAll(
+                        QueryWithAnchorDTO
+                                .builder()
+                                .anchorDate(testAnchorDate)
+                                .logsBefore(10)
+                                .logsAfter(10)
+                                .build()
+                )
+        );
+
+        assertThat(prevAndNextPageByPin).isNotNull();
+        assertThat(prevAndNextPageByPin.size()).isEqualTo(20);
+        assertThat(prevAndNextPageByPin).containsAll(firstPage);
+        assertThat(prevAndNextPageByPin).containsAll(nextPage);
     }
 }
