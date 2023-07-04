@@ -9,6 +9,6 @@ import java.util.List;
 
 public interface LogRepositoryCustom {
     Page<Log> searchAll(QueryParameter parameter);
-
     List<Log> searchAll(QueryParameterWithAnchor queryWithAnchorDTO);
+    List<String> getAllTags();
 }

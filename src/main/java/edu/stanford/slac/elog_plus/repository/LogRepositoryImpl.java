@@ -135,4 +135,9 @@ public class LogRepositoryImpl implements LogRepositoryCustom {
         logsBeforeAnchor.addAll(logsAfterAnchor);
         return logsBeforeAnchor;
     }
+
+    @Override
+    public List<String> getAllTags() {
+        return mongoTemplate.findDistinct(new Query(), "tags", Log.class, String.class);
+    }
 }
