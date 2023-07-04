@@ -1,5 +1,6 @@
 package edu.stanford.slac.elog_plus.v1.service;
 
+import com.github.javafaker.Faker;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.model.FileObjectDescription;
@@ -16,6 +17,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.io.ByteArrayInputStream;
@@ -270,13 +272,20 @@ public class LogServiceTest {
 
     @Test
     public void testLogAttachmentOnFullDTO() {
+        Faker f = new Faker();
+        String fileName = f.file().fileName(
+                null,
+                null,
+                "pdf",
+                null
+        );
         String attachmentID =
                 assertDoesNotThrow(
                         () -> attachmentService.createAttachment(
                                 FileObjectDescription
                                         .builder()
-                                        .fileName("fileName")
-                                        .contentType("content-type")
+                                        .fileName(fileName)
+                                        .contentType(MediaType.APPLICATION_PDF_VALUE)
                                         .is(
                                                 new ByteArrayInputStream(
                                                         "<<pdf data>>".getBytes(StandardCharsets.UTF_8)
@@ -307,19 +316,26 @@ public class LogServiceTest {
                 );
         assertThat(foundLog).isNotNull();
         assertThat(foundLog.attachments().size()).isEqualTo(1);
-        assertThat(foundLog.attachments().get(0).fileName()).isEqualTo("fileName");
-        assertThat(foundLog.attachments().get(0).contentType()).isEqualTo("content-type");
+        assertThat(foundLog.attachments().get(0).fileName()).isEqualTo(fileName);
+        assertThat(foundLog.attachments().get(0).contentType()).isEqualTo(MediaType.APPLICATION_PDF_VALUE);
     }
 
     @Test
     public void testLogAttachmentOnSearchDTO() {
+        Faker f = new Faker();
+        String fileName = f.file().fileName(
+                null,
+                null,
+                "pdf",
+                null
+        );
         String attachmentID =
                 assertDoesNotThrow(
                         () -> attachmentService.createAttachment(
                                 FileObjectDescription
                                         .builder()
-                                        .fileName("fileName")
-                                        .contentType("content-type")
+                                        .fileName(fileName)
+                                        .contentType(MediaType.APPLICATION_PDF_VALUE)
                                         .is(
                                                 new ByteArrayInputStream(
                                                         "<<pdf data>>".getBytes(StandardCharsets.UTF_8)
@@ -355,8 +371,8 @@ public class LogServiceTest {
         assertThat(foundLog).isNotNull();
         assertThat(foundLog.getContent().size()).isEqualTo(1);
         assertThat(foundLog.getContent().get(0).attachments().size()).isEqualTo(1);
-        assertThat(foundLog.getContent().get(0).attachments().get(0).fileName()).isEqualTo("fileName");
-        assertThat(foundLog.getContent().get(0).attachments().get(0).contentType()).isEqualTo("content-type");
+        assertThat(foundLog.getContent().get(0).attachments().get(0).fileName()).isEqualTo(fileName);
+        assertThat(foundLog.getContent().get(0).attachments().get(0).contentType()).isEqualTo(MediaType.APPLICATION_PDF_VALUE);
     }
 
     @Test

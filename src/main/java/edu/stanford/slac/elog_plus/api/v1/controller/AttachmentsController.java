@@ -29,7 +29,7 @@ public class AttachmentsController {
         FileObjectDescription desc = FileObjectDescription
                 .builder()
                 .fileName(
-                        uploadFile.getName()
+                        uploadFile.getOriginalFilename()
                 )
                 .contentType(
                         uploadFile.getContentType()

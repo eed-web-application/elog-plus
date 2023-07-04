@@ -1,5 +1,6 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
+import com.github.javafaker.Faker;
 import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
 import edu.stanford.slac.elog_plus.api.v1.dto.LogDTO;
 import edu.stanford.slac.elog_plus.model.Attachment;
@@ -79,11 +80,13 @@ public class AttachmentControllerTest {
 
     @Test
     public void downloadAttachment() throws Exception {
+        Faker f = new Faker();
+        String fileName = f.file().fileName();
         ApiResultResponse<String> newAttachmentID = testHelperService.newAttachment(
                 mockMvc,
                 new MockMultipartFile(
                         "uploadFile",
-                        "contract.pdf",
+                        fileName,
                         MediaType.APPLICATION_PDF_VALUE,
                         "<<pdf data>>".getBytes(StandardCharsets.UTF_8)
                 )
