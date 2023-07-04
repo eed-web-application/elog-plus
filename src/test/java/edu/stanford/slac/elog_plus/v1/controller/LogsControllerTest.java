@@ -360,7 +360,7 @@ public class LogsControllerTest {
                         mockMvc,
                         Optional.of(testAnchorDate),
                         Optional.of(10),
-                        Optional.empty(),
+                        Optional.of(10),
                         Optional.empty()
                 )
         );

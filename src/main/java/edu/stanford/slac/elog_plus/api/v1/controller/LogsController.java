@@ -117,7 +117,7 @@ public class LogsController {
                                 .builder()
                                 .anchorDate(anchorDate.orElse(null))
                                 .logsBefore(logsBefore.orElse(0))
-                                .logsAfter(logsAfter.orElse(10))
+                                .logsAfter(logsAfter.orElse(0))
                                 .logBook(logBook.orElse(Collections.emptyList()))
                                 .build()
                 )
