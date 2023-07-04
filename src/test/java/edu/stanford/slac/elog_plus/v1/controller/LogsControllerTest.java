@@ -1,11 +1,9 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
-import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
-import edu.stanford.slac.elog_plus.api.v1.dto.LogDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.NewLogDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.SearchResultLogDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.model.Log;
 import org.assertj.core.api.AssertionsForClassTypes;
+import org.assertj.core.api.AssertionsForInterfaceTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -21,6 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -46,24 +45,6 @@ public class LogsControllerTest {
     }
 
     @Test
-    public void searchByGetCheckPagingWithEmptyResult() throws Exception {
-        var queryResult = testHelperService.submitSearchByGet(mockMvc, 0, 5, Collections.emptyList());
-        AssertionsForClassTypes.assertThat(queryResult).isNotNull();
-        AssertionsForClassTypes.assertThat(queryResult.getErrorCode()).isEqualTo(0);
-        AssertionsForClassTypes.assertThat(queryResult.getPayload()).isNotNull();
-        AssertionsForClassTypes.assertThat(queryResult.getPayload().getContent().size()).isEqualTo(0);
-    }
-
-    @Test
-    public void searchByGetAndLogbookCheckPagingWithEmptyResult() throws Exception {
-        var queryResult = testHelperService.submitSearchByGet(mockMvc, 0, 5, List.of("MCC"));
-        AssertionsForClassTypes.assertThat(queryResult).isNotNull();
-        AssertionsForClassTypes.assertThat(queryResult.getErrorCode()).isEqualTo(0);
-        AssertionsForClassTypes.assertThat(queryResult.getPayload()).isNotNull();
-        AssertionsForClassTypes.assertThat(queryResult.getPayload().getContent().size()).isEqualTo(0);
-    }
-
-    @Test
     public void createNewLog() throws Exception {
         ApiResultResponse<String> newLogID =
                 assertDoesNotThrow(
@@ -82,7 +63,41 @@ public class LogsControllerTest {
         AssertionsForClassTypes.assertThat(newLogID).isNotNull();
         AssertionsForClassTypes.assertThat(newLogID.getErrorCode()).isEqualTo(0);
 
-        var queryResult = testHelperService.submitSearchByGet(mockMvc, 0, 5, List.of("MCC"));
+        var queryResult = testHelperService.submitSearchByGetWithAnchor(
+                mockMvc,
+                Optional.empty(),
+                Optional.empty(),
+                Optional.of(10),
+                Optional.of(List.of("MCC"))
+        );
+        AssertionsForClassTypes.assertThat(queryResult.getPayload().size()).isEqualTo(1);
+    }
+
+    @Test
+    public void createNewLogAndSearchWithPaging() throws Exception {
+        ApiResultResponse<String> newLogID =
+                assertDoesNotThrow(
+                        () ->
+                                testHelperService.createNewLog(
+                                        mockMvc,
+                                        NewLogDTO
+                                                .builder()
+                                                .logbook("MCC")
+                                                .text("This is a log for test")
+                                                .title("A very wonderful log")
+                                                .build()
+                                )
+                );
+
+        AssertionsForClassTypes.assertThat(newLogID).isNotNull();
+        AssertionsForClassTypes.assertThat(newLogID.getErrorCode()).isEqualTo(0);
+
+        var queryResult = testHelperService.submitSearchByGet(
+                mockMvc,
+                0,
+                10,
+                List.of("MCC")
+        );
         AssertionsForClassTypes.assertThat(queryResult.getPayload().getContent().size()).isEqualTo(1);
     }
 
@@ -245,5 +260,115 @@ public class LogsControllerTest {
         assertThat(fullLogWitFollowUps.getErrorCode()).isEqualTo(0);
         assertThat(fullLogWitFollowUps.getPayload().followUp()).isNotNull();
         assertThat(fullLogWitFollowUps.getPayload().followUp().size()).isEqualTo(2);
+    }
+
+
+    @Test
+    public void searchWithAnchor() {
+        // create some data
+        for (int idx = 0; idx < 100; idx++) {
+            int finalIdx = idx;
+            ApiResultResponse<String> newLogID =
+                    assertDoesNotThrow(
+                            () -> testHelperService.createNewLog(
+                                    mockMvc,
+                                    NewLogDTO
+                                            .builder()
+                                            .logbook("MCC")
+                                            .text("This is a log for test")
+                                            .title("A very wonderful log")
+                                            .segment(String.valueOf(finalIdx))
+                                            .build()
+                            )
+                    );
+            AssertionsForClassTypes.assertThat(newLogID).isNotNull();
+        }
+
+        // initial search
+        ApiResultResponse<List<SearchResultLogDTO>> firstPageResult = assertDoesNotThrow(
+                () -> testHelperService.submitSearchByGetWithAnchor(
+                        mockMvc,
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(10),
+                        Optional.empty()
+                )
+        );
+        AssertionsForInterfaceTypes.assertThat(firstPageResult.getErrorCode()).isEqualTo(0);
+        List<SearchResultLogDTO> firstPage = firstPageResult.getPayload();
+        AssertionsForInterfaceTypes.assertThat(firstPage).isNotNull();
+        AssertionsForClassTypes.assertThat(firstPage.size()).isEqualTo(10);
+        String lastSegment = null;
+        for (SearchResultLogDTO l:
+                firstPage) {
+            if(lastSegment == null) {
+                lastSegment = l.segment();
+                continue;
+            }
+            AssertionsForClassTypes.assertThat(Integer.valueOf(lastSegment)).isGreaterThan(
+                    Integer.valueOf(l.segment())
+            );
+            lastSegment = l.segment();
+        }
+        var testAnchorDate = firstPage.get(firstPage.size()-1).logDate();
+        // load next page
+        ApiResultResponse<List<SearchResultLogDTO>> nextPageResult = assertDoesNotThrow(
+                () -> testHelperService.submitSearchByGetWithAnchor(
+                        mockMvc,
+                        Optional.of(testAnchorDate),
+                        Optional.empty(),
+                        Optional.of(10),
+                        Optional.empty()
+                )
+        );
+        AssertionsForInterfaceTypes.assertThat(nextPageResult.getErrorCode()).isEqualTo(0);
+        List<SearchResultLogDTO> nextPage = nextPageResult.getPayload();
+        AssertionsForInterfaceTypes.assertThat(nextPage).isNotNull();
+        AssertionsForClassTypes.assertThat(nextPage.size()).isEqualTo(10);
+        // check that the first of next page is not the last of the previous
+        AssertionsForClassTypes.assertThat(nextPage.get(0).id()).isNotEqualTo(firstPage.get(firstPage.size()-1).id());
+
+        lastSegment = nextPage.get(0).segment();
+        nextPage.remove(0);
+        for (SearchResultLogDTO l:
+                nextPage) {
+            AssertionsForClassTypes.assertThat(Integer.valueOf(lastSegment)).isGreaterThan(
+                    Integer.valueOf(l.segment())
+            );
+            lastSegment = l.segment();
+        }
+
+        // now get all the record upside and downside
+        ApiResultResponse<List<SearchResultLogDTO>> prevPageByPinResult = assertDoesNotThrow(
+                () -> testHelperService.submitSearchByGetWithAnchor(
+                        mockMvc,
+                        Optional.of(testAnchorDate),
+                        Optional.of(10),
+                        Optional.empty(),
+                        Optional.empty()
+                )
+        );
+        AssertionsForInterfaceTypes.assertThat(prevPageByPinResult.getErrorCode()).isEqualTo(0);
+        List<SearchResultLogDTO> prevPageByPin = prevPageByPinResult.getPayload();
+        AssertionsForInterfaceTypes.assertThat(prevPageByPin).isNotNull();
+        AssertionsForClassTypes.assertThat(prevPageByPin.size()).isEqualTo(10);
+        AssertionsForInterfaceTypes.assertThat(prevPageByPin).isEqualTo(firstPage);
+
+        // test prev and next
+        ApiResultResponse<List<SearchResultLogDTO>> prevAndNextPageByPinResult = assertDoesNotThrow(
+                () -> testHelperService.submitSearchByGetWithAnchor(
+                        mockMvc,
+                        Optional.of(testAnchorDate),
+                        Optional.of(10),
+                        Optional.of(10),
+                        Optional.empty()
+                )
+        );
+        AssertionsForInterfaceTypes.assertThat(prevAndNextPageByPinResult.getErrorCode()).isEqualTo(0);
+        List<SearchResultLogDTO> prevAndNextPageByPin = prevAndNextPageByPinResult.getPayload();
+        AssertionsForInterfaceTypes.assertThat(prevAndNextPageByPin).isNotNull();
+        AssertionsForClassTypes.assertThat(prevAndNextPageByPin.size()).isEqualTo(20);
+        AssertionsForInterfaceTypes.assertThat(prevAndNextPageByPin).containsAll(firstPage);
+        AssertionsForInterfaceTypes.assertThat(prevAndNextPageByPin).containsAll(nextPage);
     }
 }
