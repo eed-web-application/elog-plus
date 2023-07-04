@@ -79,7 +79,16 @@ public class LogsController {
         );
     }
 
-
+    @GetMapping(
+            path = "/tags",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @Operation(description = "Return all tag that has been associated to al the logs.")
+    public ApiResultResponse<List<String>> getAllTags() {
+        return ApiResultResponse.of(
+                logService.getAllTags()
+        );
+    }
 
     @GetMapping(
             path = "/paging",
@@ -106,10 +115,14 @@ public class LogsController {
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(description = "Perform the query on all log data")
-    public ApiResultResponse<List<SearchResultLogDTO>> searchWithPin(
+    public ApiResultResponse<List<SearchResultLogDTO>> search(
+            @Parameter(name = "anchorDate", description = "is the date for which the search is started")
             @RequestParam("anchorDate") Optional<LocalDateTime> anchorDate,
+            @Parameter(name = "logsBefore", description = "the number of the log before the anchor date to return")
             @RequestParam("logsBefore") Optional<Integer> logsBefore,
+            @Parameter(name = "logsAfter", description = "the number of the log after the anchor date to return, thi work also without anchor date [return the first page]")
             @RequestParam("logsAfter") Optional<Integer> logsAfter,
+            @Parameter(name = "logbook", description = "a set of the logbook to include in the search")
             @RequestParam("logbook") Optional<List<String>> logBook) {
         return ApiResultResponse.of(
                 logService.searchAll(

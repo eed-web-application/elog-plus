@@ -255,4 +255,22 @@ public class TestHelperService {
                 new TypeReference<>() {
                 });
     }
+
+    public ApiResultResponse<List<String>> getAllTags(
+            MockMvc mockMvc) throws Exception {
+
+        MockHttpServletRequestBuilder getBuilder =
+                get("/v1/logs/tags")
+                        .accept(MediaType.APPLICATION_JSON);
+
+        MvcResult result = mockMvc.perform(
+                        getBuilder
+                )
+                .andExpect(status().isOk())
+                .andReturn();
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
 }

@@ -243,4 +243,12 @@ public class LogService {
                 )
                 .collect(Collectors.toList());
     }
+
+    public List<String> getAllTags() {
+        return wrapCatch(
+                logRepository::getAllTags,
+                -1,
+                "LogService::getAllTags"
+        );
+    }
 }

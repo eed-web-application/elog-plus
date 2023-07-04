@@ -371,4 +371,66 @@ public class LogsControllerTest {
         AssertionsForInterfaceTypes.assertThat(prevAndNextPageByPin).containsAll(firstPage);
         AssertionsForInterfaceTypes.assertThat(prevAndNextPageByPin).containsAll(nextPage);
     }
+
+    @Test
+    public void testFetchAllTags() {
+        ApiResultResponse<String> newLogID =
+                assertDoesNotThrow(
+                        () ->
+                                testHelperService.createNewLog(
+                                        mockMvc,
+                                        NewLogDTO
+                                                .builder()
+                                                .logbook("MCC")
+                                                .text("This is a log for test")
+                                                .title("A very wonderful log")
+                                                .tags(List.of("tag-1", "tag-2"))
+                                                .build()
+                                )
+                );
+        AssertionsForClassTypes.assertThat(newLogID.getErrorCode()).isEqualTo(0);
+
+        newLogID =
+                assertDoesNotThrow(
+                        () ->
+                                testHelperService.createNewLog(
+                                        mockMvc,
+                                        NewLogDTO
+                                                .builder()
+                                                .logbook("MCC")
+                                                .text("This is a log for test")
+                                                .title("A very wonderful log")
+                                                .tags(List.of("tag-3", "tag-4"))
+                                                .build()
+                                )
+                );
+        AssertionsForClassTypes.assertThat(newLogID.getErrorCode()).isEqualTo(0);
+
+        newLogID =
+                assertDoesNotThrow(
+                        () ->
+                                testHelperService.createNewLog(
+                                        mockMvc,
+                                        NewLogDTO
+                                                .builder()
+                                                .logbook("MCC")
+                                                .text("This is a log for test")
+                                                .title("A very wonderful log")
+                                                .tags(List.of("tag-1", "tag-4"))
+                                                .build()
+                                )
+                );
+        AssertionsForClassTypes.assertThat(newLogID.getErrorCode()).isEqualTo(0);
+
+        ApiResultResponse<List<String>> allTags =
+                assertDoesNotThrow(
+                        () ->
+                                testHelperService.getAllTags(
+                                        mockMvc
+                                )
+                );
+        assertThat(allTags.getErrorCode()).isEqualTo(0);
+        assertThat(allTags.getPayload().size()).isEqualTo(4);
+        assertThat(allTags.getPayload()).containsAll(List.of("tag-1", "tag-2", "tag-3", "tag-4"));
+    }
 }
