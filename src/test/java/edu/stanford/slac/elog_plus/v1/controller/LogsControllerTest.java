@@ -1,6 +1,7 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
+import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.model.Log;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.assertj.core.api.AssertionsForInterfaceTypes;
@@ -23,6 +24,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @AutoConfigureMockMvc
 @SpringBootTest()
@@ -148,7 +150,7 @@ public class LogsControllerTest {
         AssertionsForClassTypes.assertThat(newLogIDResult).isNotNull();
         AssertionsForClassTypes.assertThat(newLogIDResult.getErrorCode()).isEqualTo(0);
         //create supersede
-        ApiResultResponse<String> newSupersedeLogIDResult =assertDoesNotThrow(
+        ApiResultResponse<String> newSupersedeLogIDResult = assertDoesNotThrow(
                 () -> testHelperService.createNewSupersedeLog(
                         mockMvc,
                         newLogIDResult.getPayload(),
@@ -200,7 +202,7 @@ public class LogsControllerTest {
         AssertionsForClassTypes.assertThat(newLogIDResult.getErrorCode()).isEqualTo(0);
 
         //create follow-up
-        ApiResultResponse<String> newFULogIDOneResult =assertDoesNotThrow(
+        ApiResultResponse<String> newFULogIDOneResult = assertDoesNotThrow(
                 () -> testHelperService.createNewFollowUpLog(
                         mockMvc,
                         newLogIDResult.getPayload(),
@@ -214,7 +216,7 @@ public class LogsControllerTest {
         );
 
         //create follow-up
-        ApiResultResponse<String> newFULogIDTwoResult =assertDoesNotThrow(
+        ApiResultResponse<String> newFULogIDTwoResult = assertDoesNotThrow(
                 () -> testHelperService.createNewFollowUpLog(
                         mockMvc,
                         newLogIDResult.getPayload(),
@@ -237,7 +239,7 @@ public class LogsControllerTest {
         assertThat(foundFollowUp.getPayload().size()).isEqualTo(2);
 
         //get full log without followUPs
-        ApiResultResponse<LogDTO> fullLog =assertDoesNotThrow(
+        ApiResultResponse<LogDTO> fullLog = assertDoesNotThrow(
                 () -> testHelperService.getFullLog(
                         mockMvc,
                         newLogIDResult.getPayload(),
@@ -249,7 +251,7 @@ public class LogsControllerTest {
         assertThat(fullLog.getPayload().followUp()).isNull();
 
         //get full log without followUPs
-        ApiResultResponse<LogDTO> fullLogWitFollowUps =assertDoesNotThrow(
+        ApiResultResponse<LogDTO> fullLogWitFollowUps = assertDoesNotThrow(
                 () -> testHelperService.getFullLog(
                         mockMvc,
                         newLogIDResult.getPayload(),
@@ -299,9 +301,9 @@ public class LogsControllerTest {
         AssertionsForInterfaceTypes.assertThat(firstPage).isNotNull();
         AssertionsForClassTypes.assertThat(firstPage.size()).isEqualTo(10);
         String lastSegment = null;
-        for (SearchResultLogDTO l:
+        for (SearchResultLogDTO l :
                 firstPage) {
-            if(lastSegment == null) {
+            if (lastSegment == null) {
                 lastSegment = l.segment();
                 continue;
             }
@@ -310,7 +312,7 @@ public class LogsControllerTest {
             );
             lastSegment = l.segment();
         }
-        var testAnchorDate = firstPage.get(firstPage.size()-1).logDate();
+        var testAnchorDate = firstPage.get(firstPage.size() - 1).logDate();
         // load next page
         ApiResultResponse<List<SearchResultLogDTO>> nextPageResult = assertDoesNotThrow(
                 () -> testHelperService.submitSearchByGetWithAnchor(
@@ -326,11 +328,11 @@ public class LogsControllerTest {
         AssertionsForInterfaceTypes.assertThat(nextPage).isNotNull();
         AssertionsForClassTypes.assertThat(nextPage.size()).isEqualTo(10);
         // check that the first of next page is not the last of the previous
-        AssertionsForClassTypes.assertThat(nextPage.get(0).id()).isNotEqualTo(firstPage.get(firstPage.size()-1).id());
+        AssertionsForClassTypes.assertThat(nextPage.get(0).id()).isNotEqualTo(firstPage.get(firstPage.size() - 1).id());
 
         lastSegment = nextPage.get(0).segment();
         nextPage.remove(0);
-        for (SearchResultLogDTO l:
+        for (SearchResultLogDTO l :
                 nextPage) {
             AssertionsForClassTypes.assertThat(Integer.valueOf(lastSegment)).isGreaterThan(
                     Integer.valueOf(l.segment())
@@ -373,8 +375,50 @@ public class LogsControllerTest {
     }
 
     @Test
-    public void testFetchAllTags() {
-        ApiResultResponse<String> newLogID =
+    public void createLogWithTagFailWithNoSave() {
+        ControllerLogicException exception =
+                assertThrows(
+                        ControllerLogicException.class,
+                        () ->
+                                testHelperService.createNewLog(
+                                        mockMvc,
+                                        NewLogDTO
+                                                .builder()
+                                                .logbook("MCC")
+                                                .text("This is a log for test")
+                                                .title("A very wonderful log")
+                                                .tags(List.of("tag-1", "tag-2"))
+                                                .build()
+                                )
+                );
+        AssertionsForClassTypes.assertThat(exception.getErrorCode()).isEqualTo(-2);
+    }
+
+    @Test
+    public void createLogWithTagOK() {
+        ApiResultResponse<String> tag01Id =
+                assertDoesNotThrow(
+                        () ->
+                                testHelperService.createNewTag(
+                                        mockMvc,
+                                        NewTagDTO
+                                                .builder()
+                                                .name("tag-1")
+                                                .build()
+                                )
+                );
+        ApiResultResponse<String> tag02Id =
+                assertDoesNotThrow(
+                        () ->
+                                testHelperService.createNewTag(
+                                        mockMvc,
+                                        NewTagDTO
+                                                .builder()
+                                                .name("tag-2")
+                                                .build()
+                                )
+                );
+        ApiResultResponse<String> logID =
                 assertDoesNotThrow(
                         () ->
                                 testHelperService.createNewLog(
@@ -388,49 +432,46 @@ public class LogsControllerTest {
                                                 .build()
                                 )
                 );
-        AssertionsForClassTypes.assertThat(newLogID.getErrorCode()).isEqualTo(0);
+        AssertionsForClassTypes.assertThat(logID.getErrorCode()).isEqualTo(0);
+    }
 
-        newLogID =
+    @Test
+    public void getAllTags() {
+        ApiResultResponse<String> tag01Id =
                 assertDoesNotThrow(
                         () ->
-                                testHelperService.createNewLog(
+                                testHelperService.createNewTag(
                                         mockMvc,
-                                        NewLogDTO
+                                        NewTagDTO
                                                 .builder()
-                                                .logbook("MCC")
-                                                .text("This is a log for test")
-                                                .title("A very wonderful log")
-                                                .tags(List.of("tag-3", "tag-4"))
+                                                .name("tag-1")
                                                 .build()
                                 )
                 );
-        AssertionsForClassTypes.assertThat(newLogID.getErrorCode()).isEqualTo(0);
-
-        newLogID =
+        ApiResultResponse<String> tag02Id =
                 assertDoesNotThrow(
                         () ->
-                                testHelperService.createNewLog(
+                                testHelperService.createNewTag(
                                         mockMvc,
-                                        NewLogDTO
+                                        NewTagDTO
                                                 .builder()
-                                                .logbook("MCC")
-                                                .text("This is a log for test")
-                                                .title("A very wonderful log")
-                                                .tags(List.of("tag-1", "tag-4"))
+                                                .name("tag-2")
                                                 .build()
                                 )
                 );
-        AssertionsForClassTypes.assertThat(newLogID.getErrorCode()).isEqualTo(0);
-
-        ApiResultResponse<List<String>> allTags =
+        ApiResultResponse<List<TagDTO>> allTags =
                 assertDoesNotThrow(
                         () ->
                                 testHelperService.getAllTags(
                                         mockMvc
                                 )
                 );
-        assertThat(allTags.getErrorCode()).isEqualTo(0);
-        assertThat(allTags.getPayload().size()).isEqualTo(4);
-        assertThat(allTags.getPayload()).containsAll(List.of("tag-1", "tag-2", "tag-3", "tag-4"));
+        AssertionsForInterfaceTypes.assertThat(
+                        allTags.getPayload()
+                )
+                .extracting("name")
+                .containsAll(
+                        List.of("tag-1", "tag-2")
+                );
     }
 }

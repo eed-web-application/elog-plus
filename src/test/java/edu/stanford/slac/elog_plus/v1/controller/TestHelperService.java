@@ -256,11 +256,34 @@ public class TestHelperService {
                 });
     }
 
-    public ApiResultResponse<List<String>> getAllTags(
+    public ApiResultResponse<String> createNewTag(MockMvc mockMvc, NewTagDTO newTagDTO) throws Exception {
+        MvcResult result = mockMvc.perform(
+                        post("/v1/tags")
+                                .content(
+                                        new ObjectMapper().writeValueAsString(
+                                                newTagDTO
+                                        )
+                                )
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .accept(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk())
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
+
+    public ApiResultResponse<List<TagDTO>> getAllTags(
             MockMvc mockMvc) throws Exception {
 
         MockHttpServletRequestBuilder getBuilder =
-                get("/v1/logs/tags")
+                get("/v1/tags")
                         .accept(MediaType.APPLICATION_JSON);
 
         MvcResult result = mockMvc.perform(

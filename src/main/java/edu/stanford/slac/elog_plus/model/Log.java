@@ -4,6 +4,8 @@ import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Version;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.index.TextIndexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
@@ -26,13 +28,16 @@ public class Log {
     @Field("ENTRY_TYPE")
     private String entryType;
     @Field("LOGBOOK")
+    @Indexed
     private String logbook;
     @Field("PRIORITY")
     private String priority;
     @Field("SEGMENT")
     private String segment;
+    @TextIndexed
     @Field("TITLE")
     private String title;
+    @TextIndexed
     @Field("TEXT")
     private String text;
     @Field("LASTNAME")
@@ -41,16 +46,20 @@ public class Log {
     private String firstName;
     @Field("USERNAME")
     private String userName;
+    @Indexed
     @Builder.Default
     private List<String> tags = new ArrayList<>();
+    @Indexed
     @Builder.Default
     private List<String> attachments = new ArrayList<>();
+    @Indexed
     @Builder.Default
     private List<String> followUp = new ArrayList<>();
     @Field("FILE_PS")
     private String filePs;
     @Field("FILE_PREVIEW")
     private String filePreview;
+    @Indexed
     @CreatedDate
     @Field("LOGDATE")
     private LocalDateTime logDate;
