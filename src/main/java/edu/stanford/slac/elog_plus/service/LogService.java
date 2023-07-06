@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -80,16 +81,19 @@ public class LogService {
         Faker faker = new Faker();
         Log newLog = LogMapper.INSTANCE.fromDTO(newLogDTO, faker.name().firstName(), faker.name().lastName(), faker.name().username());
 
-        List<String> tagsNormalizedNames = newLog
-                .getTags()
-                        .stream()
-                                .map(
-                                        tagService::tagNameNormalization
-                                )
-                                        .toList();
-        newLog.setTags(
-                tagsNormalizedNames
-        );
+        if (newLog.getTags() != null) {
+            List<String> tagsNormalizedNames = newLog
+                    .getTags()
+                    .stream()
+                    .map(
+                            tagService::tagNameNormalization
+                    )
+                    .toList();
+            newLog.setTags(
+                    tagsNormalizedNames
+            );
+        }
+
         //check logbook
         assertion(
                 () -> queryParameterConfigurationDTO.logbook().contains(newLogDTO.logbook()),
@@ -101,8 +105,8 @@ public class LogService {
         newLogDTO
                 .tags()
                 .forEach(
-                        tagName ->{
-                            if(!tagService.existsByName(tagName)) {
+                        tagName -> {
+                            if (!tagService.existsByName(tagName)) {
                                 String error = String.format("The tag %s has not been found", tagName);
                                 throw ControllerLogicException.of(
                                         -2,
