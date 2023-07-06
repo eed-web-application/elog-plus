@@ -41,9 +41,9 @@ dependencies {
     // minio
     implementation 'io.minio:minio:8.2.2'
 
-//    implementation "io.mongock:mongock-bom:5.3.1"
-//    implementation "io.mongock:mongock-springboot:5.3.1"
-//    implementation "io.mongock:mongodb-springdata-v3-driver:5.3.1"
+    implementation 'io.mongock:mongock-bom:5.3.1',
+                    'io.mongock:mongock-springboot-v3:5.3.1',
+                    'io.mongock:mongodb-springdata-v4-driver:5.3.1'
 
 
 
