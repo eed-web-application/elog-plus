@@ -51,3 +51,12 @@ springdoc:
     path: /swagger-ui.html
   api-docs:
     path: /api-docs
+
+mongock:
+  migration-scan-package:
+    - edu.stanford.slac.elog_plus.migration
+  throw-exception-if-cannot-obtain-lock: true #Default true
+  track-ignored: false #Default true
+  transaction-enabled: false
+  runner-type: applicationrunner
+  enabled: true #Default true
