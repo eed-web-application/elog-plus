@@ -2,7 +2,9 @@ package edu.stanford.slac.elog_plus.v1.controller;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
+import edu.stanford.slac.elog_plus.model.Attachment;
 import edu.stanford.slac.elog_plus.model.Log;
+import edu.stanford.slac.elog_plus.model.Tag;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.assertj.core.api.AssertionsForInterfaceTypes;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,6 +46,8 @@ public class LogsControllerTest {
     @BeforeEach
     public void preTest() {
         mongoTemplate.remove(new Query(), Log.class);
+        mongoTemplate.remove(new Query(), Attachment.class);
+        mongoTemplate.remove(new Query(), Tag.class);
     }
 
     @Test
