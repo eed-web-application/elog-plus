@@ -5,16 +5,20 @@ import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.api.v1.mapper.LogMapper;
 import edu.stanford.slac.elog_plus.api.v1.mapper.QueryParameterMapper;
 import edu.stanford.slac.elog_plus.api.v1.mapper.QueryResultMapper;
+import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.model.Log;
 import edu.stanford.slac.elog_plus.repository.LogRepository;
+import edu.stanford.slac.elog_plus.repository.TagRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
 import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
@@ -24,15 +28,21 @@ import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
 @AllArgsConstructor
 public class LogService {
     final private LogRepository logRepository;
+    final private TagService tagService;
     final private AttachmentService attachmentService;
     final private QueryParameterConfigurationDTO queryParameterConfigurationDTO;
 
     public QueryPagedResultDTO<SearchResultLogDTO> searchAll(QueryParameterDTO queryParameter) {
-        Page<Log> found = logRepository.searchAll(
-                QueryParameterMapper.INSTANCE.fromDTO(
-                        queryParameter
-                )
-        );
+        Page<Log> found =
+                wrapCatch(
+                        () -> logRepository.searchAll(
+                                QueryParameterMapper.INSTANCE.fromDTO(
+                                        queryParameter
+                                )
+                        ),
+                        -1,
+                        "LogService::searchAll"
+                );
         return QueryResultMapper.from(
                 found.map(
                         log -> {
@@ -43,10 +53,14 @@ public class LogService {
     }
 
     public List<SearchResultLogDTO> searchAll(QueryWithAnchorDTO queryWithAnchorDTO) {
-        List<Log> found = logRepository.searchAll(
-                QueryParameterMapper.INSTANCE.fromDTO(
-                        queryWithAnchorDTO
-                )
+        List<Log> found = wrapCatch(
+                () -> logRepository.searchAll(
+                        QueryParameterMapper.INSTANCE.fromDTO(
+                                queryWithAnchorDTO
+                        )
+                ),
+                -1,
+                "LogService::searchAll"
         );
         return found.stream().map(
                 log -> {
@@ -66,6 +80,20 @@ public class LogService {
     public String createNew(NewLogDTO newLogDTO) {
         Faker faker = new Faker();
         Log newLog = LogMapper.INSTANCE.fromDTO(newLogDTO, faker.name().firstName(), faker.name().lastName(), faker.name().username());
+
+        if (newLog.getTags() != null) {
+            List<String> tagsNormalizedNames = newLog
+                    .getTags()
+                    .stream()
+                    .map(
+                            tagService::tagNameNormalization
+                    )
+                    .toList();
+            newLog.setTags(
+                    tagsNormalizedNames
+            );
+        }
+
         //check logbook
         assertion(
                 () -> queryParameterConfigurationDTO.logbook().contains(newLogDTO.logbook()),
@@ -73,6 +101,21 @@ public class LogService {
                 "The logbook is not valid",
                 "LogService::createNew"
         );
+
+        newLogDTO
+                .tags()
+                .forEach(
+                        tagName -> {
+                            if (!tagService.existsByName(tagName)) {
+                                String error = String.format("The tag %s has not been found", tagName);
+                                throw ControllerLogicException.of(
+                                        -2,
+                                        "error",
+                                        "LogService::createNew"
+                                );
+                            }
+                        }
+                );
 
         // other check
         Log finalNewLog = newLog;

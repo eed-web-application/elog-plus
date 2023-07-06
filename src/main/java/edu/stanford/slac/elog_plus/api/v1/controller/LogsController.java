@@ -2,6 +2,7 @@ package edu.stanford.slac.elog_plus.api.v1.controller;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.service.LogService;
+import edu.stanford.slac.elog_plus.service.TagService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -22,6 +23,7 @@ import java.util.Optional;
 @Schema(description = "Main set of api for the query on the log data")
 public class LogsController {
     private LogService logService;
+    private TagService tagService;
 
     @PostMapping(produces = {MediaType.APPLICATION_JSON_VALUE})
     @Operation(description = "Perform the query on all log data")
@@ -76,17 +78,6 @@ public class LogsController {
     ) {
         return ApiResultResponse.of(
                 logService.getFullLog(id, includeFollowUps)
-        );
-    }
-
-    @GetMapping(
-            path = "/tags",
-            produces = {MediaType.APPLICATION_JSON_VALUE}
-    )
-    @Operation(description = "Return all tag that has been associated to al the logs.")
-    public ApiResultResponse<List<String>> getAllTags() {
-        return ApiResultResponse.of(
-                logService.getAllTags()
         );
     }
 
