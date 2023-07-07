@@ -28,7 +28,7 @@ public interface LogMapper {
     @Mapping(target = "author", expression = "java(log.getFirstName() + \" \" + log.getLastName())")
     @Mapping(target = "attachments", source = "attachments", qualifiedByName = "mapAttachments")
     @Mapping(target = "followUp", source = "followUp", qualifiedByName = "mapFollowUp")
-    LogDTO fromModelWithFollowUpsAndAttachement(Log log, @Context LogService logService, @Context AttachmentService attachmentService);
+    LogDTO fromModelWithFollowUpsAndAttachment(Log log, @Context LogService logService, @Context AttachmentService attachmentService);
 
     @Mapping(target = "author", expression = "java(log.getFirstName() + \" \" + log.getLastName())")
     @Mapping(target = "attachments", source = "attachments", qualifiedByName = "mapAttachments")

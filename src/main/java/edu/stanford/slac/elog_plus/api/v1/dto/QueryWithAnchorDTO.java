@@ -22,6 +22,10 @@ public record QueryWithAnchorDTO(
 
         Integer logsAfter,
 
+        String textSearch,
+
+        List<String> tags,
+
         @Schema(description = "is the logbook that need to be filtered")
         List<String> logBook,
 

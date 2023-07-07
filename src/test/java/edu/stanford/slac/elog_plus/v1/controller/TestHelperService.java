@@ -232,6 +232,8 @@ public class TestHelperService {
             Optional<LocalDateTime> anchorDate,
             Optional<Integer> logsBefore,
             Optional<Integer> logsAfter,
+            Optional<String> textFilter,
+            Optional<List<String>> tags,
             Optional<List<String>> logBook) throws Exception {
 
         MockHttpServletRequestBuilder getBuilder =
@@ -240,6 +242,12 @@ public class TestHelperService {
         anchorDate.ifPresent(localDateTime -> getBuilder.param("anchorDate", String.valueOf(localDateTime)));
         logsBefore.ifPresent(logBefore -> getBuilder.param("logsBefore", String.valueOf(logBefore)));
         logsAfter.ifPresent(logAfter -> getBuilder.param("logsAfter", String.valueOf(logAfter)));
+        textFilter.ifPresent(tex -> getBuilder.param("textFilter", tex));
+        tags.ifPresent(tl -> {
+            String[] tlArray = new String[tl.size()];
+            tl.toArray(tlArray);
+            getBuilder.param("tags", tlArray);
+        });
         logBook.ifPresent(logbook -> {
             String[] lbArray = new String[logbook.size()];
             logbook.toArray(lbArray);

@@ -19,6 +19,10 @@ public class QueryParameterWithAnchor {
     @Builder.Default
     Integer logsAfter = 10;
     @Builder.Default
+    String textSearch = null;
+    @Builder.Default
+    List<String> tags  = Collections.emptyList();
+    @Builder.Default
     List<String> logBook = Collections.emptyList();
     @Builder.Default
     private LocalDateTime from = null;

@@ -74,6 +74,8 @@ public class LogsControllerTest {
                 Optional.empty(),
                 Optional.empty(),
                 Optional.of(10),
+                Optional.empty(),
+                Optional.empty(),
                 Optional.of(List.of("MCC"))
         );
         AssertionsForClassTypes.assertThat(queryResult.getPayload().size()).isEqualTo(1);
@@ -297,6 +299,8 @@ public class LogsControllerTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.of(10),
+                        Optional.empty(),
+                        Optional.empty(),
                         Optional.empty()
                 )
         );
@@ -324,6 +328,8 @@ public class LogsControllerTest {
                         Optional.of(testAnchorDate),
                         Optional.empty(),
                         Optional.of(10),
+                        Optional.empty(),
+                        Optional.empty(),
                         Optional.empty()
                 )
         );
@@ -351,6 +357,8 @@ public class LogsControllerTest {
                         Optional.of(testAnchorDate),
                         Optional.of(10),
                         Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
                         Optional.empty()
                 )
         );
@@ -367,6 +375,8 @@ public class LogsControllerTest {
                         Optional.of(testAnchorDate),
                         Optional.of(10),
                         Optional.of(10),
+                        Optional.empty(),
+                        Optional.empty(),
                         Optional.empty()
                 )
         );
@@ -376,6 +386,124 @@ public class LogsControllerTest {
         AssertionsForClassTypes.assertThat(prevAndNextPageByPin.size()).isEqualTo(20);
         AssertionsForInterfaceTypes.assertThat(prevAndNextPageByPin).containsAll(firstPage);
         AssertionsForInterfaceTypes.assertThat(prevAndNextPageByPin).containsAll(nextPage);
+    }
+
+    @Test
+    public void searchWithTags() {
+        // create some data
+        for (int idx = 0; idx < 100; idx++) {
+            int finalIdx = idx;
+            ApiResultResponse<String> newTagID = assertDoesNotThrow(
+                    () -> testHelperService.createNewTag(
+                            mockMvc,
+                            NewTagDTO
+                                    .builder()
+                                    .name(String.valueOf(finalIdx))
+                                    .build()
+                    ));
+            assertThat(newTagID).isNotNull();
+            assertThat(newTagID.getErrorCode()).isEqualTo(0);
+
+            newTagID = assertDoesNotThrow(
+                    () -> testHelperService.createNewTag(
+                            mockMvc,
+                            NewTagDTO
+                                    .builder()
+                                    .name(String.valueOf("tags-"+ (100 + finalIdx)))
+                                    .build()
+                    ));
+            assertThat(newTagID).isNotNull();
+            assertThat(newTagID.getErrorCode()).isEqualTo(0);
+
+            ApiResultResponse<String> newLogID =
+                    assertDoesNotThrow(
+                            () -> testHelperService.createNewLog(
+                                    mockMvc,
+                                    NewLogDTO
+                                            .builder()
+                                            .logbook("MCC")
+                                            .text("This is a log for test")
+                                            .title("A very wonderful log")
+                                            .segment(String.valueOf(finalIdx))
+                                            .tags(List.of(String.valueOf(finalIdx), "tags-"+ (100 + finalIdx)))
+                                            .build()
+                            )
+                    );
+            AssertionsForClassTypes.assertThat(newLogID).isNotNull();
+        }
+
+        // initial search
+        ApiResultResponse<List<SearchResultLogDTO>> findTags = assertDoesNotThrow(
+                () -> testHelperService.submitSearchByGetWithAnchor(
+                        mockMvc,
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(10),
+                        Optional.empty(),
+                        Optional.of(List.of("99", "49", "0")),
+                        Optional.empty()
+                )
+        );
+        assertThat(findTags).isNotNull();
+        assertThat(findTags.getPayload().size()).isEqualTo(3);
+        assertThat(findTags.getPayload().get(0).tags()).contains("99");
+        assertThat(findTags.getPayload().get(1).tags()).contains("49");
+        assertThat(findTags.getPayload().get(2).tags()).contains("0");
+
+        findTags = assertDoesNotThrow(
+                () -> testHelperService.submitSearchByGetWithAnchor(
+                        mockMvc,
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(10),
+                        Optional.empty(),
+                        Optional.of(List.of("99", "49", "tags-100")),
+                        Optional.empty()
+                )
+        );
+        AssertionsForInterfaceTypes.assertThat(findTags).isNotNull();
+        assertThat(findTags.getPayload().size()).isEqualTo(3);
+        assertThat(findTags.getPayload().get(0).tags()).contains("99");
+        assertThat(findTags.getPayload().get(1).tags()).contains("49");
+        assertThat(findTags.getPayload().get(2).tags()).contains("0");
+    }
+
+    @Test
+    public void searchWithText() {
+        // create some data
+        for (int idx = 0; idx < 100; idx++) {
+            int finalIdx = idx;
+            ApiResultResponse<String> newLogID =
+                    assertDoesNotThrow(
+                            () -> testHelperService.createNewLog(
+                                    mockMvc,
+                                    NewLogDTO
+                                            .builder()
+                                            .logbook("MCC")
+                                            .text("This is a log for test")
+                                            .segment(String.valueOf(finalIdx))
+                                            .title("A very wonderful log for index="+finalIdx)
+                                            .build()
+                            )
+                    );
+            AssertionsForClassTypes.assertThat(newLogID).isNotNull();
+        }
+
+        // initial search
+        ApiResultResponse<List<SearchResultLogDTO>> findTags = assertDoesNotThrow(
+                () -> testHelperService.submitSearchByGetWithAnchor(
+                        mockMvc,
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(10),
+                        Optional.of("index=0"),
+                        Optional.empty(),
+                        Optional.empty()
+                )
+        );
+        assertThat(findTags).isNotNull();
+        assertThat(findTags.getPayload().size()).isNotEqualTo(0);
+
     }
 
     @Test

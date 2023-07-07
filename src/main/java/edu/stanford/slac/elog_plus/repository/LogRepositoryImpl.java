@@ -12,10 +12,13 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.TextCriteria;
+import org.springframework.data.mongodb.core.query.TextQuery;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Repository
@@ -82,6 +85,15 @@ public class LogRepositoryImpl implements LogRepositoryCustom {
                     )
             );
         }
+
+        if(!queryWithAnchor.getTags().isEmpty()) {
+            allCriteria.add(
+                    Criteria.where("tags").in(
+                            queryWithAnchor.getTags()
+                    )
+            );
+        }
+
         // supersede criteria
         allCriteria.add(
                 Criteria.where("supersedeBy").exists(false)
@@ -95,7 +107,7 @@ public class LogRepositoryImpl implements LogRepositoryCustom {
                         && queryWithAnchor.getLogsBefore() > 0
                         && queryWithAnchor.getAnchorDate() != null
         ) {
-            Query q = new Query();
+            Query q = getDefaultQuery(queryWithAnchor.getTextSearch());
             q.addCriteria(new Criteria().andOperator(
                             allCriteria
                     )
@@ -104,17 +116,18 @@ public class LogRepositoryImpl implements LogRepositoryCustom {
                             .gte(queryWithAnchor.getAnchorDate())
             ).with(
                     Sort.by(
-                            Sort.Direction.DESC, "LOGDATE")
+                            Sort.Direction.ASC, "LOGDATE")
             ).limit(queryWithAnchor.getLogsBefore());
             logsBeforeAnchor.addAll(mongoTemplate.find(
                             q,
                             Log.class
                     )
             );
+            Collections.reverse(logsBeforeAnchor);
         }
 
         if (queryWithAnchor.getLogsAfter() != null && queryWithAnchor.getLogsAfter() > 0) {
-            Query q = new Query();
+            Query q = getDefaultQuery(queryWithAnchor.getTextSearch());
             if (queryWithAnchor.getAnchorDate() != null) {
                 q.addCriteria(
                         Criteria.where("LOGDATE").lt(queryWithAnchor.getAnchorDate())
@@ -132,6 +145,7 @@ public class LogRepositoryImpl implements LogRepositoryCustom {
                     Log.class
             );
         }
+
         logsBeforeAnchor.addAll(logsAfterAnchor);
         return logsBeforeAnchor;
     }
@@ -139,5 +153,16 @@ public class LogRepositoryImpl implements LogRepositoryCustom {
     @Override
     public List<String> getAllTags() {
         return mongoTemplate.findDistinct(new Query(), "tags", Log.class, String.class);
+    }
+
+    private Query getDefaultQuery(String textSearch) {
+        if(textSearch!=null && !textSearch.isEmpty()) {
+            //{$text: {$search:'log' }}
+            return TextQuery.queryText(TextCriteria.forDefaultLanguage()
+                    .matchingAny(textSearch.split(" "))
+            );
+        } else {
+            return new Query();
+        }
     }
 }
