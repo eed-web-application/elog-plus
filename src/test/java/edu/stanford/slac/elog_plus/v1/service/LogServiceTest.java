@@ -376,6 +376,7 @@ public class LogServiceTest {
 
     @Test
     public void searchLogsByAnchor() {
+        String anchorID = null;
         // create some data
         for (int idx = 0; idx < 100; idx++) {
             int finalIdx = idx;
@@ -392,6 +393,9 @@ public class LogServiceTest {
                             )
                     );
             assertThat(newLogID).isNotNull();
+            if(idx == 49) {
+                anchorID = newLogID;
+            }
         }
 
         // initial search
@@ -417,13 +421,13 @@ public class LogServiceTest {
             );
             lastSegment = l.segment();
         }
-        var testAnchorDate = firstPage.get(firstPage.size()-1).logDate();
+        var testAnchorLog = firstPage.get(firstPage.size()-1);
         // load next page
         List<SearchResultLogDTO> nextPage = assertDoesNotThrow(
                 () -> logService.searchAll(
                         QueryWithAnchorDTO
                                 .builder()
-                                .anchorDate(testAnchorDate)
+                                .anchorDate(testAnchorLog.logDate())
                                 .logsAfter(10)
                                 .build()
                 )
@@ -449,7 +453,7 @@ public class LogServiceTest {
                 () -> logService.searchAll(
                         QueryWithAnchorDTO
                                 .builder()
-                                .anchorDate(testAnchorDate)
+                                .anchorDate(testAnchorLog.logDate())
                                 .logsBefore(10)
                                 .logsAfter(0)
                                 .build()
@@ -463,7 +467,7 @@ public class LogServiceTest {
                 () -> logService.searchAll(
                         QueryWithAnchorDTO
                                 .builder()
-                                .anchorDate(testAnchorDate)
+                                .anchorDate(testAnchorLog.logDate())
                                 .logsBefore(10)
                                 .logsAfter(10)
                                 .build()
@@ -474,5 +478,23 @@ public class LogServiceTest {
         assertThat(prevAndNextPageByPin.size()).isEqualTo(20);
         assertThat(prevAndNextPageByPin).containsAll(firstPage);
         assertThat(prevAndNextPageByPin).containsAll(nextPage);
+
+
+        // now search in the middle of the data set
+        LogDTO middleAnchorLog = logService.getFullLog(anchorID);
+        List<SearchResultLogDTO> prevAndNextPageByMiddlePin = assertDoesNotThrow(
+                () -> logService.searchAll(
+                        QueryWithAnchorDTO
+                                .builder()
+                                .anchorDate(middleAnchorLog.logDate())
+                                .logsBefore(10)
+                                .logsAfter(10)
+                                .build()
+                )
+        );
+        assertThat(prevAndNextPageByMiddlePin).isNotNull();
+        assertThat(prevAndNextPageByMiddlePin.size()).isEqualTo(20);
+        assertThat(prevAndNextPageByMiddlePin.get(0).segment()).isEqualTo("58");
+        assertThat(prevAndNextPageByMiddlePin.get(19).segment()).isEqualTo("39");
     }
 }

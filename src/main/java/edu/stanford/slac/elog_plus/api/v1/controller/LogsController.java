@@ -113,6 +113,10 @@ public class LogsController {
             @RequestParam("logsBefore") Optional<Integer> logsBefore,
             @Parameter(name = "logsAfter", description = "the number of the log after the anchor date to return, thi work also without anchor date [return the first page]")
             @RequestParam("logsAfter") Optional<Integer> logsAfter,
+            @Parameter(name = "textFilter", description = "a string to search within title and body of the log")
+            @RequestParam("textFilter") Optional<String> textFilter,
+            @Parameter(name = "tags", description = "a set of tags to filter the data")
+            @RequestParam("tags") Optional<List<String>> tags,
             @Parameter(name = "logbook", description = "a set of the logbook to include in the search")
             @RequestParam("logbook") Optional<List<String>> logBook) {
         return ApiResultResponse.of(
@@ -122,6 +126,8 @@ public class LogsController {
                                 .anchorDate(anchorDate.orElse(null))
                                 .logsBefore(logsBefore.orElse(0))
                                 .logsAfter(logsAfter.orElse(0))
+                                .textSearch(textFilter.orElse(null))
+                                .tags(tags.orElse(Collections.emptyList()))
                                 .logBook(logBook.orElse(Collections.emptyList()))
                                 .build()
                 )

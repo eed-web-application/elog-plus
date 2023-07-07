@@ -8,17 +8,14 @@ import edu.stanford.slac.elog_plus.api.v1.mapper.QueryResultMapper;
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.model.Log;
 import edu.stanford.slac.elog_plus.repository.LogRepository;
-import edu.stanford.slac.elog_plus.repository.TagRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
 import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
@@ -110,7 +107,7 @@ public class LogService {
                                 String error = String.format("The tag %s has not been found", tagName);
                                 throw ControllerLogicException.of(
                                         -2,
-                                        "error",
+                                        error,
                                         "LogService::createNew"
                                 );
                             }
@@ -158,7 +155,7 @@ public class LogService {
         );
 
         if (includeFollowUps.isPresent() && includeFollowUps.get()) {
-            result = LogMapper.INSTANCE.fromModelWithFollowUpsAndAttachement(
+            result = LogMapper.INSTANCE.fromModelWithFollowUpsAndAttachment(
                     foundLog.get(),
                     this,
                     attachmentService
