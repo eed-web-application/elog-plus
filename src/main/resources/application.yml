@@ -13,17 +13,23 @@ spring:
     name: 'elog-plus'
   data:
     mongodb:
-      uri: mongodb://elogs:elogs@${DB_HOST:localhost}:27017/elogs?authSource=elogs
+      uri: ${MONGODB_URI:mongodb://elogs:elogs@localhost:27017/elogs?authSource=elogs}
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9094}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     consumer:
-      group-id: ${ELOG_PLUS_CONSUMER_ID:random.uuid}
+      group-id: ${ELOG_PLUS_CONSUMER_GROUP_ID:random.uuid}
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      enabled: true
+      file-size-threshold: 1MB
+
 
 edu:
   stanford:
