@@ -22,6 +22,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -150,6 +151,53 @@ public class LogServiceTest {
 
         assertThat(fullLog).isNotNull();
         assertThat(fullLog.id()).isEqualTo(newLogID);
+    }
+
+    @Test
+    public void testHistory() {
+        String supersededLogID =
+                assertDoesNotThrow(
+                        () -> logService.createNew(
+                                NewLogDTO
+                                        .builder()
+                                        .logbook("MCC")
+                                        .text("This is a log for test")
+                                        .title("A very wonderful log")
+                                        .build()
+                        )
+                );
+
+        String supersededLogIDTwo =
+                assertDoesNotThrow(
+                        () -> logService.createNewSupersede(
+                                supersededLogID,
+                                NewLogDTO
+                                        .builder()
+                                        .logbook("MCC")
+                                        .text("This is a log for test")
+                                        .title("A very wonderful log updated for supersede")
+                                        .build()
+                        )
+                );
+
+        String supersededLogIDNewest =
+                assertDoesNotThrow(
+                        () -> logService.createNewSupersede(
+                                supersededLogIDTwo,
+                                NewLogDTO
+                                        .builder()
+                                        .logbook("MCC")
+                                        .text("This is a log for test")
+                                        .title("A very wonderful log updated for supersede of supersede")
+                                        .build()
+                        )
+                );
+        List<LogDTO> history = new ArrayList<>();
+        assertDoesNotThrow(
+                () -> logService.getLogHistory(supersededLogIDNewest, history)
+        );
+        assertThat(history).isNotEmpty();
+        assertThat(history).extracting("id").containsExactly(supersededLogIDTwo, supersededLogID);
     }
 
     @Test

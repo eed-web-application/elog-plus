@@ -71,13 +71,15 @@ public class LogsController {
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(description = "Return the full log information")
-    public ApiResultResponse<LogDTO> newLog(
+    public ApiResultResponse<LogDTO> getFullLog(
             @PathVariable String id,
             @Parameter(name = "includeFollowUps", description = "If true the API return all the followUp")
-            @RequestParam("includeFollowUps") Optional<Boolean> includeFollowUps
+            @RequestParam("includeFollowUps") Optional<Boolean> includeFollowUps,
+            @Parameter(name = "includeHistory", description = "If true the API return all log updates history")
+            @RequestParam("includeHistory") Optional<Boolean> includeHistory
     ) {
         return ApiResultResponse.of(
-                logService.getFullLog(id, includeFollowUps)
+                logService.getFullLog(id, includeFollowUps, includeHistory)
         );
     }
 

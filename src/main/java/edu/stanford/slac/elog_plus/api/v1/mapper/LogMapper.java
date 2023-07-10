@@ -24,11 +24,10 @@ public interface LogMapper {
     @Mapping(target = "followUp", ignore = true)
     LogDTO fromModel(Log log, @Context AttachmentService attachmentService);
 
-
     @Mapping(target = "author", expression = "java(log.getFirstName() + \" \" + log.getLastName())")
-    @Mapping(target = "attachments", source = "attachments", qualifiedByName = "mapAttachments")
-    @Mapping(target = "followUp", source = "followUp", qualifiedByName = "mapFollowUp")
-    LogDTO fromModelWithFollowUpsAndAttachment(Log log, @Context LogService logService, @Context AttachmentService attachmentService);
+    @Mapping(target = "attachments", ignore = true)
+    @Mapping(target = "followUp", ignore = true)
+    LogDTO fromModelNoAttachment(Log log);
 
     @Mapping(target = "author", expression = "java(log.getFirstName() + \" \" + log.getLastName())")
     @Mapping(target = "attachments", source = "attachments", qualifiedByName = "mapAttachments")
@@ -46,20 +45,6 @@ public interface LogMapper {
 
         }
 
-        return list;
-    }
-
-    @Named("mapFollowUp")
-    default List<LogDTO> mapFollowUp(List<String> followUp, @Context LogService logService) {
-        if (followUp == null) {
-            return null;
-        }
-
-        List<LogDTO> list = new ArrayList<>(followUp.size());
-        for (String fID : followUp) {
-            list.add(logService.getFullLog(fID));
-
-        }
         return list;
     }
 

@@ -7,9 +7,12 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface LogRepository extends MongoRepository<Log, String>, LogRepositoryCustom {
     Page<Log> findByLogbookIn(List<String> logbook, Pageable pageable);
 
     List<Log> findAllByIdIn(List<String> ids);
+
+    Optional<Log> findBySupersedeBy(String id);
 }

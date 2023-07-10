@@ -172,12 +172,22 @@ public class TestHelperService {
                 });
     }
 
-
     public ApiResultResponse<LogDTO> getFullLog(MockMvc mockMvc, String id, boolean includeFollowUps) throws Exception {
+        return getFullLog(mockMvc, id, includeFollowUps, false);
+    }
+    public ApiResultResponse<LogDTO> getFullLog(MockMvc mockMvc, String id, boolean includeFollowUps, boolean includeHistory) throws Exception {
+        MockHttpServletRequestBuilder request = get("/v1/logs/{id}", id)
+                .accept(MediaType.APPLICATION_JSON);
+        if(includeFollowUps) {
+            request.param("includeFollowUps", String.valueOf(true));
+        }
+
+        if(includeHistory) {
+            request.param("includeHistory", String.valueOf(true));
+        }
+
         MvcResult result = mockMvc.perform(
-                        get("/v1/logs/{id}", id)
-                                .param("includeFollowUps", String.valueOf(includeFollowUps))
-                                .accept(MediaType.APPLICATION_JSON)
+                        request
                 )
                 .andExpect(status().isOk())
                 .andReturn();

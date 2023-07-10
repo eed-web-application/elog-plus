@@ -187,6 +187,69 @@ public class LogsControllerTest {
         AssertionsForClassTypes.assertThat(queryResult.getPayload().getContent().size()).isEqualTo(1);
     }
 
+    @Test
+    public void getLogHistory() throws Exception {
+        ApiResultResponse<String> newLogIDResult =
+                assertDoesNotThrow(
+                        () ->
+                                testHelperService.createNewLog(
+                                        mockMvc,
+                                        NewLogDTO
+                                                .builder()
+                                                .logbook("MCC")
+                                                .text("This is a log for test")
+                                                .title("A very wonderful log")
+                                                .build()
+                                )
+                );
+
+        AssertionsForClassTypes.assertThat(newLogIDResult).isNotNull();
+        AssertionsForClassTypes.assertThat(newLogIDResult.getErrorCode()).isEqualTo(0);
+        //create supersede
+        ApiResultResponse<String> newSupersedeLogIDResult1 = assertDoesNotThrow(
+                () -> testHelperService.createNewSupersedeLog(
+                        mockMvc,
+                        newLogIDResult.getPayload(),
+                        NewLogDTO
+                                .builder()
+                                .logbook("MCC")
+                                .text("This is a log for test")
+                                .title("A very wonderful supersede log")
+                                .build()
+                )
+        );
+
+        //check old log for supersede info
+        ApiResultResponse<String> newSupersedeLogIDResult2 = assertDoesNotThrow(
+                () -> testHelperService.createNewSupersedeLog(
+                        mockMvc,
+                        newSupersedeLogIDResult1.getPayload(),
+                        NewLogDTO
+                                .builder()
+                                .logbook("MCC")
+                                .text("This is a log for test")
+                                .title("A very wonderful supersede log of supersede")
+                                .build()
+                )
+        );
+
+        //return ful log wiht only history
+        ApiResultResponse<LogDTO> fullLog = assertDoesNotThrow(
+                () -> testHelperService.getFullLog(
+                        mockMvc,
+                        newSupersedeLogIDResult2.getPayload(),
+                        false,
+                        true
+                )
+        );
+
+        assertThat(fullLog.getErrorCode()).isEqualTo(0);
+        assertThat(fullLog.getPayload().history()).extracting("id").containsExactly(
+                newSupersedeLogIDResult1.getPayload(),
+                newLogIDResult.getPayload()
+        );
+    }
+
 
     @Test
     public void createNewFollowUpLogsAndFetch() throws Exception {
