@@ -37,10 +37,10 @@ edu:
       elogs-plus:
         image-preview-topic: ${ELOG_PLUS_IMAGE_PREVIEW_TOPIC:elog-plus-preview-creation}
         minio:
-          url: ${MINIO_URL:http://${MINIO_HOST:localhost}:9000}
-          key: ${MINIO_KEY:minio}
-          secret: ${MINIO_SECRET:minio123}
-          bucket: ${MINIO_BUCKET_NAME:elog}
+          url: ${ELOG_PLUS_MINIO_URL:http://localhost:9000}
+          key: ${ELOG_PLUS_MINIO_KEY:minio}
+          secret: ${ELOG_PLUS_MINIO_SECRET:minio123}
+          bucket: ${ELOG_PLUS_MINIO_BUCKET_NAME:elog}
 
 management:
   endpoints:
