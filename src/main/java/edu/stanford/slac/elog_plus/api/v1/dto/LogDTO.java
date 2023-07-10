@@ -7,10 +7,12 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
 import org.springframework.data.annotation.Version;
 
 import java.time.LocalDateTime;
 import java.util.List;
+@Builder(toBuilder=true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "Identify the single elog record")
@@ -30,8 +32,8 @@ public record LogDTO(
         String text,
         String author,
         List<AttachmentDTO> attachments,
-
         List<LogDTO> followUp,
+        List<LogDTO> history,
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)
         LocalDateTime logDate,

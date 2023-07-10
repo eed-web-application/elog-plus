@@ -14,12 +14,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
 import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
+import static java.util.Collections.emptyList;
 
 @Service
 @AllArgsConstructor
@@ -129,17 +131,18 @@ public class LogService {
     }
 
     public LogDTO getFullLog(String id) {
-        return getFullLog(id, Optional.of(false));
+        return getFullLog(id, Optional.of(false), Optional.of(false));
     }
 
     /**
      * return the full log
      *
      * @param id               the unique identifier of the log
-     * @param includeFollowUps
+     * @param includeFollowUps if true the result will include the follow-up logs
+     * @param followHistory if true the result will include the log history
      * @return the full log description
      */
-    public LogDTO getFullLog(String id, Optional<Boolean> includeFollowUps) {
+    public LogDTO getFullLog(String id, Optional<Boolean> includeFollowUps, Optional<Boolean> followHistory) {
         LogDTO result = null;
         Optional<Log> foundLog =
                 wrapCatch(
@@ -154,19 +157,62 @@ public class LogService {
                 "LogService::getFullLog"
         );
 
+        result = LogMapper.INSTANCE.fromModel(
+                foundLog.get(),
+                attachmentService
+        );
+
         if (includeFollowUps.isPresent() && includeFollowUps.get()) {
-            result = LogMapper.INSTANCE.fromModelWithFollowUpsAndAttachment(
-                    foundLog.get(),
-                    this,
-                    attachmentService
-            );
-        } else {
-            result = LogMapper.INSTANCE.fromModel(
-                    foundLog.get(),
-                    attachmentService
-            );
+            List<LogDTO> list = new ArrayList<>(foundLog.get().getFollowUp().size());
+            for (String fID : foundLog.get().getFollowUp()){
+                list.add(getFullLog(fID));
+
+            }
+            result = result.toBuilder()
+                    .followUp(list)
+                    .build();
+        }
+
+        if(followHistory.isPresent() && followHistory.get()) {
+            // load all the history
+            List<LogDTO> logHistory = new ArrayList<>();
+            getLogHistory(id, logHistory);
+            if(logHistory.size()>0) {
+                result = result.toBuilder()
+                        .history(logHistory)
+                        .build();
+            }
         }
         return result;
+    }
+
+    /**
+     * Return the previous log in the history, the superseded log is returned without attachment
+     * @param newestLogID is the log of the root release for which we want the history
+     * @return the log superseded byt the one identified by newestLogID
+     */
+    public LogDTO getSuperseded(String newestLogID) {
+        Optional<Log> foundLog =
+                wrapCatch(
+                        () -> logRepository.findBySupersedeBy(newestLogID),
+                        -1,
+                        "LogService::getLogHistory"
+                );
+        return foundLog.map(LogMapper.INSTANCE::fromModelNoAttachment).orElse(null);
+    }
+
+    /**
+     * Return all the history of the log from the newest one passed in input until the last
+     * @param newestLogID the log of the newest id
+     * @param history the list of the log until the last, from the one identified by newestLogID
+     */
+    public void getLogHistory(String newestLogID, List<LogDTO> history) {
+        if(history == null) return;
+        LogDTO prevInHistory = getSuperseded(newestLogID);
+        if(prevInHistory == null) return;
+
+        history.add(prevInHistory);
+        getLogHistory(prevInHistory.id(), history);
     }
 
     /**
