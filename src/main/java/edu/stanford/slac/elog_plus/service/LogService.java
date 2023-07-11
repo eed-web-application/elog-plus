@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 
 import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
 import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
-import static java.util.Collections.emptyList;
 
 @Service
 @AllArgsConstructor
@@ -106,9 +105,24 @@ public class LogService {
                 .forEach(
                         tagName -> {
                             if (!tagService.existsByName(tagName)) {
-                                String error = String.format("The tag %s has not been found", tagName);
+                                String error = String.format("The tag '%s' has not been found", tagName);
                                 throw ControllerLogicException.of(
                                         -2,
+                                        error,
+                                        "LogService::createNew"
+                                );
+                            }
+                        }
+                );
+
+        newLogDTO
+                .attachments()
+                .forEach(
+                        attachementID -> {
+                            if (!attachmentService.exists(attachementID)) {
+                                String error = String.format("The attachment id '%s' has not been found", attachementID);
+                                throw ControllerLogicException.of(
+                                        -3,
                                         error,
                                         "LogService::createNew"
                                 );

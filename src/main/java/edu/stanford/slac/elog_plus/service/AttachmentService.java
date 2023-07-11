@@ -58,9 +58,17 @@ public class AttachmentService {
         return newAttachmentID.getId();
     }
 
+    boolean exists(String id) {
+        return wrapCatch(
+                () -> attachmentRepository.existsById(
+                        id
+                ),
+                0,
+                "AttachmentService::exists");
+    }
+
     /**
      * @param id
-     * @param attachment
      */
     public FileObjectDescription getAttachmentContent(String id) {
         FileObjectDescription attachment = FileObjectDescription.builder().build();
@@ -92,6 +100,11 @@ public class AttachmentService {
         return attachment;
     }
 
+    /**
+     *
+     * @param id
+     * @return
+     */
     public FileObjectDescription getPreviewContent(String id) {
         FileObjectDescription attachment = FileObjectDescription.builder().build();
         // fetch
@@ -122,6 +135,11 @@ public class AttachmentService {
         return attachment;
     }
 
+    /**
+     *
+     * @param id
+     * @return
+     */
     public AttachmentDTO getAttachment(String id) {
         // fetch
         Optional<Attachment> foundAttachment = wrapCatch(
@@ -141,6 +159,11 @@ public class AttachmentService {
        return AttachmentMapper.INSTANCE.fromModel(foundAttachment.get());
     }
 
+    /**
+     *
+     * @param ids
+     * @return
+     */
     public List<AttachmentDTO> getAttachment(List<String> ids) {
         List<AttachmentDTO> result = new ArrayList<>();
         for (String id:
@@ -217,6 +240,11 @@ public class AttachmentService {
         return attachmentRepository.setPreviewState(id, processingState);
     }
 
+    /**
+     *
+     * @param id
+     * @return
+     */
     public String getPreviewProcessingState(String id) {
         // fetch
         Optional<Attachment> foundAttachment = wrapCatch(
