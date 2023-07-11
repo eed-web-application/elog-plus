@@ -6,8 +6,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Getter
 @Setter
-@ConfigurationProperties(prefix = "edu.stanford.slac.elogs-plus.minio")
-public class MinioProperties {
+@ConfigurationProperties(prefix = "edu.stanford.slac.elogs-plus.storage")
+public class StorageProperties {
     private String url;
     private String bucket;
     private String secret;

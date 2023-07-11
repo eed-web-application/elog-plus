@@ -33,19 +33,19 @@ dependencies {
             'com.github.javafaker:javafaker:1.0.2',
             'com.fasterxml.jackson.core:jackson-databind',
             'org.springframework.kafka:spring-kafka:3.0.8',
-            'net.coobird:thumbnailator:[0.4, 0.5)'
+            'net.coobird:thumbnailator:[0.4, 0.5)',
+            'software.amazon.awssdk:s3:2.20.102'
+
 
     // MongoDB
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
 
     // minio
-    implementation 'io.minio:minio:8.2.2'
-
-    implementation 'io.mongock:mongock-bom:5.3.1',
+    // implementation 'io.minio:minio:8.2.2'
+    // mongock
+    implementation  'io.mongock:mongock-bom:5.3.1',
                     'io.mongock:mongock-springboot-v3:5.3.1',
                     'io.mongock:mongodb-springdata-v4-driver:5.3.1'
-
-
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
