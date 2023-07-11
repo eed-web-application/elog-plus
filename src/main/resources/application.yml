@@ -1,7 +1,7 @@
 logging:
   level:
     edu.stanford.slac.elog_plus: DEBUG
-    org.springdoc: debug
+    software.amazon.awssdk: DEBUG
 
 server:
   tomcat:
@@ -36,7 +36,7 @@ edu:
     slac:
       elogs-plus:
         image-preview-topic: ${ELOG_PLUS_IMAGE_PREVIEW_TOPIC:elog-plus-preview-creation}
-        minio:
+        storage:
           url: ${ELOG_PLUS_MINIO_URL:http://localhost:9000}
           key: ${ELOG_PLUS_MINIO_KEY:minio}
           secret: ${ELOG_PLUS_MINIO_SECRET:minio123}

@@ -96,7 +96,7 @@ public class AttachmentServiceTest {
             await().atMost(10, SECONDS).until(
                     () -> {
                         String state = attachmentService.getPreviewProcessingState(attachmentID);
-                        log.info("state {} for attachement id {}", state, attachmentID);
+                        log.info("state {} for attachment id {}", state, attachmentID);
                         return state.compareTo(Attachment.PreviewProcessingState.Completed.name()) == 0;
                     }
             );

@@ -3,9 +3,7 @@ package edu.stanford.slac.elog_plus.api.v1.dto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
-import kotlin.collections.EmptyList;
 import lombok.Builder;
-import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.util.Collections;
 import java.util.List;

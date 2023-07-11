@@ -1,16 +1,18 @@
 package edu.stanford.slac.elog_plus.repository;
 
-import edu.stanford.slac.elog_plus.config.MinioProperties;
+import edu.stanford.slac.elog_plus.config.StorageProperties;
 import edu.stanford.slac.elog_plus.model.FileObjectDescription;
-import io.minio.*;
-import io.minio.errors.*;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Repository;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.core.sync.ResponseTransformer;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.util.UUID;
 
 import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
 import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
@@ -21,10 +23,10 @@ import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
 @Repository
 @AllArgsConstructor
 public class StorageRepository {
-    final private MinioClient objectStorageClient;
-    final private MinioProperties objectStorageProperties;
+    final private S3Client s3Client;
+    final private StorageProperties objectStorageProperties;
 
-    public void uploadFile(String id, FileObjectDescription attachment) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+    public void uploadFile(String id, FileObjectDescription attachment) throws IOException {
         assertion(() -> attachment.getContentType()!=null,
                 -1,
                 "The Content type is mandatory",
@@ -38,13 +40,16 @@ public class StorageRepository {
                 "The input stream is mandatory type is mandatory",
                 "AttachmentRepository::uploadFile");
 
-        ObjectWriteResponse owr = objectStorageClient.putObject(
-                PutObjectArgs.builder()
+        s3Client.putObject(
+                PutObjectRequest.builder()
                         .bucket(objectStorageProperties.getBucket())
-                        .object(id)
-                        .stream(attachment.getIs(), -1, 1024*1000*1000)
+                        .key(id)
                         .contentType(attachment.getContentType())
-                        .build()
+                        .build(),
+                RequestBody.fromInputStream(
+                        attachment.getIs(),
+                        attachment.getIs().available()
+                )
         );
     }
 
@@ -53,18 +58,20 @@ public class StorageRepository {
                 -1,
                 "The attachment id is invalid",
                 "AttachmentRepository::getFileObject");
-        GetObjectResponse objectResponse =
+
+        ResponseInputStream<GetObjectResponse> objectResponse =
                 wrapCatch(
-                        () -> objectStorageClient.getObject(
-                                GetObjectArgs.builder()
+                        () -> s3Client.getObject(
+                                GetObjectRequest.builder()
                                         .bucket(objectStorageProperties.getBucket())
-                                        .object(id)
-                                        .build()
+                                        .key(id)
+                                        .build(),
+                                ResponseTransformer.toInputStream()
                         ),
                         -1,
                         "AttachmentRepository::getFile"
                 );
         objDesc.setIs(objectResponse);
-        objDesc.setContentType(objectResponse.headers().get("Content-Type"));
+        objDesc.setContentType(objectResponse.response().contentType());
     }
 }

@@ -9,5 +9,5 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "edu.stanford.slac.elogs-plus")
 public class AppProperties {
     private String imagePreviewTopic;
-    private MinioProperties minio;
+    private StorageProperties storage;
 }
