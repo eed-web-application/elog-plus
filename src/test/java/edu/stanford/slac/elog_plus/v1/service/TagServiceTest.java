@@ -89,7 +89,7 @@ public class TagServiceTest {
     public void normalizeTagName() {
         final String input = "Tĥïŝ ĩš â fůňķŷ Šťŕĭńġ";
         String output = tagService.tagNameNormalization(input);
-        assertThat(output).isEqualTo("This-is-a-funky-String");
+        assertThat(output).isEqualTo("this-is-a-funky-string");
     }
 
     @Test
