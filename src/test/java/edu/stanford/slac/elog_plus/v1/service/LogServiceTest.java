@@ -73,6 +73,42 @@ public class LogServiceTest {
     }
 
     @Test
+    public void testFailBadTags() {
+        ControllerLogicException ex =
+                assertThrows(
+                        ControllerLogicException.class,
+                        () -> logService.createNew(
+                                NewLogDTO
+                                        .builder()
+                                        .logbook("MCC")
+                                        .text("This is a log for test")
+                                        .title("A very wonderful log")
+                                        .tags(List.of("wrong tags"))
+                                        .build()
+                        )
+                );
+        assertThat(ex.getErrorCode()).isEqualTo(-2);
+    }
+
+    @Test
+    public void testFailBadAttachmentID() {
+        ControllerLogicException ex =
+                assertThrows(
+                        ControllerLogicException.class,
+                        () -> logService.createNew(
+                                NewLogDTO
+                                        .builder()
+                                        .logbook("MCC")
+                                        .text("This is a log for test")
+                                        .title("A very wonderful log")
+                                        .attachments(List.of("wrong id"))
+                                        .build()
+                        )
+                );
+        assertThat(ex.getErrorCode()).isEqualTo(-3);
+    }
+
+    @Test
     public void testFetchFullLog() {
         String newLogID =
                 assertDoesNotThrow(
@@ -441,7 +477,7 @@ public class LogServiceTest {
                             )
                     );
             assertThat(newLogID).isNotNull();
-            if(idx == 49) {
+            if (idx == 49) {
                 anchorID = newLogID;
             }
         }
@@ -458,9 +494,9 @@ public class LogServiceTest {
         assertThat(firstPage).isNotNull();
         assertThat(firstPage.size()).isEqualTo(10);
         String lastSegment = null;
-        for (SearchResultLogDTO l:
-            firstPage) {
-            if(lastSegment == null) {
+        for (SearchResultLogDTO l :
+                firstPage) {
+            if (lastSegment == null) {
                 lastSegment = l.segment();
                 continue;
             }
@@ -469,7 +505,7 @@ public class LogServiceTest {
             );
             lastSegment = l.segment();
         }
-        var testAnchorLog = firstPage.get(firstPage.size()-1);
+        var testAnchorLog = firstPage.get(firstPage.size() - 1);
         // load next page
         List<SearchResultLogDTO> nextPage = assertDoesNotThrow(
                 () -> logService.searchAll(
@@ -484,11 +520,11 @@ public class LogServiceTest {
         assertThat(nextPage).isNotNull();
         assertThat(nextPage.size()).isEqualTo(10);
         // check that the first of next page is not the last of the previous
-        assertThat(nextPage.get(0).id()).isNotEqualTo(firstPage.get(firstPage.size()-1).id());
+        assertThat(nextPage.get(0).id()).isNotEqualTo(firstPage.get(firstPage.size() - 1).id());
 
         lastSegment = nextPage.get(0).segment();
         nextPage.remove(0);
-        for (SearchResultLogDTO l:
+        for (SearchResultLogDTO l :
                 nextPage) {
             assertThat(Integer.valueOf(lastSegment)).isGreaterThan(
                     Integer.valueOf(l.segment())

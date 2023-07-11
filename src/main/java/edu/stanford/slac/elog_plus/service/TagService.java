@@ -104,18 +104,19 @@ public class TagService {
     }
 
     /**
-     *
      * @param tagName
      * @return
      */
     public String tagNameNormalization(String tagName) {
         return Normalizer
-                .normalize(tagName, Normalizer.Form.NFD)
-                .replaceAll("[^\\p{ASCII}]", "");
+                .normalize(
+                        tagName.trim().toLowerCase(),
+                        Normalizer.Form.NFD
+                ).replaceAll("[^\\p{ASCII}]", "")
+                .replaceAll(" ", "_");
     }
 
     /**
-     *
      * @param tagName
      * @return
      */
