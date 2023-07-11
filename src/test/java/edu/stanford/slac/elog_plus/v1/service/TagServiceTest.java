@@ -89,20 +89,20 @@ public class TagServiceTest {
     public void normalizeTagName() {
         final String input = "Tĥïŝ ĩš â fůňķŷ Šťŕĭńġ";
         String output = tagService.tagNameNormalization(input);
-        assertThat(output).isEqualTo("This is a funky String");
+        assertThat(output).isEqualTo("This-is-a-funky-String");
     }
 
     @Test
     public void normalizeTagNameLowerCase() {
         final String input = "This Is With Upper Case";
         String output = tagService.tagNameNormalization(input);
-        assertThat(output).isEqualTo("this is with upper case");
+        assertThat(output).isEqualTo("this-is-with-upper-case");
     }
 
     @Test
     public void normalizeTagNameWithSpace() {
         final String input = " with space ";
         String output = tagService.tagNameNormalization(input);
-        assertThat(output).isEqualTo("with_space");
+        assertThat(output).isEqualTo("with-space");
     }
 }

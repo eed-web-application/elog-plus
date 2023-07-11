@@ -113,7 +113,7 @@ public class TagService {
                         tagName.trim().toLowerCase(),
                         Normalizer.Form.NFD
                 ).replaceAll("[^\\p{ASCII}]", "")
-                .replaceAll(" ", "_");
+                .replaceAll(" ", "-");
     }
 
     /**
