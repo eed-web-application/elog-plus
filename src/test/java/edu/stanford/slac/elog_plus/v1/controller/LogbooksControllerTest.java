@@ -4,8 +4,12 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
 import edu.stanford.slac.elog_plus.api.v1.dto.LogbookDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.NewLogbookDTO;
 import edu.stanford.slac.elog_plus.migration.InitLogbook;
 import edu.stanford.slac.elog_plus.model.Log;
+import edu.stanford.slac.elog_plus.model.Logbook;
+import edu.stanford.slac.elog_plus.service.LogService;
+import edu.stanford.slac.elog_plus.service.LogbookService;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
@@ -24,6 +29,8 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.List;
 
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -35,23 +42,39 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class LogbooksControllerTest {
     @Autowired
     private MockMvc mockMvc;
-
     @Autowired
     private MongoTemplate mongoTemplate;
+    @Autowired
+    private LogbookService logbookService;
 
     @BeforeEach
     public void preTest() {
+        mongoTemplate.remove(new Query(), Logbook.class);
         mongoTemplate.remove(new Query(), Log.class);
     }
+
     @Test
     public void fetchLogbooks() throws Exception {
+        String newID =
+                assertDoesNotThrow(
+                        () -> logbookService.createNew(
+                                NewLogbookDTO
+                                        .builder()
+                                        .name("test-logbook")
+                                        .build()
+                        )
+                );
         var queryParameter = getLogbooks();
-        AssertionsForClassTypes.assertThat(queryParameter).isNotNull();
-        AssertionsForClassTypes.assertThat(queryParameter.getErrorCode()).isEqualTo(0);
-        AssertionsForClassTypes.assertThat(queryParameter.getPayload()).isNotNull();
-        AssertionsForClassTypes.assertThat(queryParameter.getPayload().size())
+        assertThat(queryParameter).isNotNull();
+        assertThat(queryParameter.getErrorCode()).isEqualTo(0);
+        assertThat(queryParameter.getPayload()).isNotNull();
+        assertThat(queryParameter.getPayload().size())
                 .isEqualTo(
-                        InitLogbook.logbookNames.size()
+                       1
+                );
+        assertThat(queryParameter.getPayload())
+                .extracting("id").containsAll(
+                        List.of(newID)
                 );
     }
 
