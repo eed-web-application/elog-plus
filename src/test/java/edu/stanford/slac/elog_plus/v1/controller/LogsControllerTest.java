@@ -5,8 +5,10 @@ import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.model.Attachment;
 import edu.stanford.slac.elog_plus.model.Log;
 import edu.stanford.slac.elog_plus.model.Tag;
+import edu.stanford.slac.elog_plus.service.LogbookService;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.assertj.core.api.AssertionsForInterfaceTypes;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -38,10 +40,25 @@ public class LogsControllerTest {
     private MockMvc mockMvc;
 
     @Autowired
+    LogbookService logbookService;
+
+    @Autowired
     private MongoTemplate mongoTemplate;
 
     @Autowired
     private TestHelperService testHelperService;
+
+    @BeforeAll
+    public void initLogbook() {
+        if(!logbookService.exist("MCC")) {
+            logbookService.createNew(
+                    NewLogbookDTO
+                            .builder()
+                            .name("MCC")
+                            .build()
+            );
+        }
+    }
 
     @BeforeEach
     public void preTest() {

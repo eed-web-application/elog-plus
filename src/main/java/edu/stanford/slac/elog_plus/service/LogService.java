@@ -25,11 +25,10 @@ import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
 @Service
 @AllArgsConstructor
 public class LogService {
-    final private LogRepository logRepository;
     final private TagService tagService;
+    final private LogRepository logRepository;
+    final private LogbookService logbookService;
     final private AttachmentService attachmentService;
-    final private QueryParameterConfigurationDTO queryParameterConfigurationDTO;
-
     public QueryPagedResultDTO<SearchResultLogDTO> searchAll(QueryParameterDTO queryParameter) {
         Page<Log> found =
                 wrapCatch(
@@ -94,7 +93,7 @@ public class LogService {
 
         //check logbook
         assertion(
-                () -> queryParameterConfigurationDTO.logbook().contains(newLogDTO.logbook()),
+                () -> logbookService.exist(newLogDTO.logbook()),
                 -1,
                 "The logbook is not valid",
                 "LogService::createNew"
