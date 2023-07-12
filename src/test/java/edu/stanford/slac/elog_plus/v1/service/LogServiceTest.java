@@ -7,6 +7,8 @@ import edu.stanford.slac.elog_plus.model.FileObjectDescription;
 import edu.stanford.slac.elog_plus.model.Log;
 import edu.stanford.slac.elog_plus.service.AttachmentService;
 import edu.stanford.slac.elog_plus.service.LogService;
+import edu.stanford.slac.elog_plus.service.LogbookService;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -38,9 +40,23 @@ public class LogServiceTest {
     @Autowired
     private LogService logService;
     @Autowired
+    private LogbookService logbookService;
+    @Autowired
     private AttachmentService attachmentService;
     @Autowired
     MongoTemplate mongoTemplate;
+
+    @BeforeAll
+    public void initLogbook() {
+        if(!logbookService.exist("MCC")) {
+            logbookService.createNew(
+                    NewLogbookDTO
+                            .builder()
+                            .name("MCC")
+                            .build()
+            );
+        }
+    }
 
     @BeforeEach
     public void preTest() {

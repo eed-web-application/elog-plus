@@ -3,8 +3,13 @@ package edu.stanford.slac.elog_plus.v1.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
-import edu.stanford.slac.elog_plus.api.v1.dto.QueryParameterConfigurationDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.LogbookDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.NewLogbookDTO;
+import edu.stanford.slac.elog_plus.migration.InitLogbook;
 import edu.stanford.slac.elog_plus.model.Log;
+import edu.stanford.slac.elog_plus.model.Logbook;
+import edu.stanford.slac.elog_plus.service.LogService;
+import edu.stanford.slac.elog_plus.service.LogbookService;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,12 +20,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.util.List;
+
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -32,30 +42,43 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class LogbooksControllerTest {
     @Autowired
     private MockMvc mockMvc;
-
     @Autowired
     private MongoTemplate mongoTemplate;
-
     @Autowired
-    private QueryParameterConfigurationDTO queryParameterConfigurationDTO;
+    private LogbookService logbookService;
 
     @BeforeEach
     public void preTest() {
+        mongoTemplate.remove(new Query(), Logbook.class);
         mongoTemplate.remove(new Query(), Log.class);
     }
+
     @Test
     public void fetchLogbooks() throws Exception {
+        String newID =
+                assertDoesNotThrow(
+                        () -> logbookService.createNew(
+                                NewLogbookDTO
+                                        .builder()
+                                        .name("test-logbook")
+                                        .build()
+                        )
+                );
         var queryParameter = getLogbooks();
-        AssertionsForClassTypes.assertThat(queryParameter).isNotNull();
-        AssertionsForClassTypes.assertThat(queryParameter.getErrorCode()).isEqualTo(0);
-        AssertionsForClassTypes.assertThat(queryParameter.getPayload()).isNotNull();
-        AssertionsForClassTypes.assertThat(queryParameter.getPayload().logbook().size())
+        assertThat(queryParameter).isNotNull();
+        assertThat(queryParameter.getErrorCode()).isEqualTo(0);
+        assertThat(queryParameter.getPayload()).isNotNull();
+        assertThat(queryParameter.getPayload().size())
                 .isEqualTo(
-                        queryParameterConfigurationDTO.logbook().size()
+                       1
+                );
+        assertThat(queryParameter.getPayload())
+                .extracting("id").containsAll(
+                        List.of(newID)
                 );
     }
 
-    private ApiResultResponse<QueryParameterConfigurationDTO> getLogbooks() throws Exception {
+    private ApiResultResponse<List<LogbookDTO>> getLogbooks() throws Exception {
         MvcResult result = mockMvc.perform(
                         get("/v1/logbooks")
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -64,7 +87,7 @@ public class LogbooksControllerTest {
                 .andExpect(status().isOk())
                 .andReturn();
 
-        ApiResultResponse<QueryParameterConfigurationDTO> queryParameterConfiguration = new ObjectMapper().readValue(
+        ApiResultResponse<List<LogbookDTO>> queryParameterConfiguration = new ObjectMapper().readValue(
                 result.getResponse().getContentAsString(),
                 new TypeReference<>() {
                 });
