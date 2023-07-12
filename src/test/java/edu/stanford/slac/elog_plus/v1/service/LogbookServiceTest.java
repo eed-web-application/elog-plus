@@ -2,7 +2,6 @@ package edu.stanford.slac.elog_plus.v1.service;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.LogbookDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.NewLogbookDTO;
-import edu.stanford.slac.elog_plus.model.Log;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import org.junit.jupiter.api.BeforeEach;
