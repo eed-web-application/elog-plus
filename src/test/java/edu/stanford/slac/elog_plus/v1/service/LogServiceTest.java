@@ -26,6 +26,7 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -367,6 +368,50 @@ public class LogServiceTest {
 
         assertThat(followUpLogsFound).isNotNull();
         assertThat(followUpLogsFound.size()).isEqualTo(2);
+    }
+
+    @Test
+    public void testFollowingUpIngFullLog() {
+        String rootLogID =
+                assertDoesNotThrow(
+                        () -> logService.createNew(
+                                NewLogDTO
+                                        .builder()
+                                        .logbook("MCC")
+                                        .text("This is a log for test")
+                                        .title("A very wonderful log")
+                                        .build()
+                        )
+                );
+        assertThat(rootLogID).isNotNull();
+
+        String newFollowUpOneID =
+                assertDoesNotThrow(
+                        () -> logService.createNewFollowUp(
+                                rootLogID,
+                                NewLogDTO
+                                        .builder()
+                                        .logbook("MCC")
+                                        .text("This is a log for test")
+                                        .title("A very wonderful log updated for followUp one")
+                                        .build()
+                        )
+                );
+        assertThat(newFollowUpOneID).isNotNull();
+
+        LogDTO logWithFlowingUpLog =
+                assertDoesNotThrow(
+                        () -> logService.getFullLog(
+                                newFollowUpOneID,
+                                Optional.empty(),
+                                Optional.of(true),
+                                Optional.empty()
+                        )
+                );
+
+        assertThat(logWithFlowingUpLog).isNotNull();
+        assertThat(logWithFlowingUpLog.followingUp()).isNotNull();
+        assertThat(logWithFlowingUpLog.followingUp().id()).isEqualTo(rootLogID);
     }
 
     @Test

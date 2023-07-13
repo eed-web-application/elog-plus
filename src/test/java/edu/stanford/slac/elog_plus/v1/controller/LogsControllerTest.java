@@ -205,7 +205,7 @@ public class LogsControllerTest {
     }
 
     @Test
-    public void getLogHistory() throws Exception {
+    public void getLogHistoryAndFollowingLog() throws Exception {
         ApiResultResponse<String> newLogIDResult =
                 assertDoesNotThrow(
                         () ->
@@ -250,11 +250,12 @@ public class LogsControllerTest {
                 )
         );
 
-        //return ful log wiht only history
+        //return full log with only history
         ApiResultResponse<LogDTO> fullLog = assertDoesNotThrow(
                 () -> testHelperService.getFullLog(
                         mockMvc,
                         newSupersedeLogIDResult2.getPayload(),
+                        false,
                         false,
                         true
                 )
@@ -310,7 +311,7 @@ public class LogsControllerTest {
                                 .builder()
                                 .logbook("MCC")
                                 .text("This is a log for test")
-                                .title("A very wonderful followup log one")
+                                .title("A very wonderful followup log two")
                                 .build()
                 )
         );
@@ -348,6 +349,21 @@ public class LogsControllerTest {
         assertThat(fullLogWitFollowUps.getErrorCode()).isEqualTo(0);
         assertThat(fullLogWitFollowUps.getPayload().followUp()).isNotNull();
         assertThat(fullLogWitFollowUps.getPayload().followUp().size()).isEqualTo(2);
+
+        // check for full log with the following up one
+        ApiResultResponse<LogDTO> fullLogWithFollowingUp = assertDoesNotThrow(
+                () -> testHelperService.getFullLog(
+                        mockMvc,
+                        newFULogIDOneResult.getPayload(),
+                        false,
+                        true,
+                        false
+                )
+        );
+
+        assertThat(fullLogWithFollowingUp.getErrorCode()).isEqualTo(0);
+        assertThat(fullLogWithFollowingUp.getPayload().followingUp()).isNotNull();
+        assertThat(fullLogWithFollowingUp.getPayload().followingUp().id()).isEqualTo(newLogIDResult.getPayload());
     }
 
 
