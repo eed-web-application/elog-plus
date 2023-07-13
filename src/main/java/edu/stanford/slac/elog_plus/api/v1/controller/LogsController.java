@@ -75,11 +75,13 @@ public class LogsController {
             @PathVariable String id,
             @Parameter(name = "includeFollowUps", description = "If true the API return all the followUp")
             @RequestParam("includeFollowUps") Optional<Boolean> includeFollowUps,
+            @Parameter(name = "includeFollowingUps", description = "If true the API return all the followingUp")
+            @RequestParam("includeFollowingUps") Optional<Boolean> includeFollowingUps,
             @Parameter(name = "includeHistory", description = "If true the API return all log updates history")
             @RequestParam("includeHistory") Optional<Boolean> includeHistory
     ) {
         return ApiResultResponse.of(
-                logService.getFullLog(id, includeFollowUps, includeHistory)
+                logService.getFullLog(id, includeFollowUps, includeFollowingUps, includeHistory)
         );
     }
 

@@ -15,4 +15,11 @@ public interface LogRepository extends MongoRepository<Log, String>, LogReposito
     List<Log> findAllByIdIn(List<String> ids);
 
     Optional<Log> findBySupersedeBy(String id);
+
+    /**
+     * Return the log that the one identified by id is his followUp
+     * @param id the id of the followup record
+     * @return the following up record
+     */
+    Optional<Log> findByFollowUpContains(String id);
 }

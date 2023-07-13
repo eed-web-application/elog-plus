@@ -144,7 +144,7 @@ public class LogService {
     }
 
     public LogDTO getFullLog(String id) {
-        return getFullLog(id, Optional.of(false), Optional.of(false));
+        return getFullLog(id, Optional.of(false), Optional.of(false), Optional.of(false));
     }
 
     /**
@@ -152,10 +152,11 @@ public class LogService {
      *
      * @param id               the unique identifier of the log
      * @param includeFollowUps if true the result will include the follow-up logs
-     * @param followHistory if true the result will include the log history
+     * @param includeFollowingUps if true the result will include all the following up of this
+     * @param followHistory    if true the result will include the log history
      * @return the full log description
      */
-    public LogDTO getFullLog(String id, Optional<Boolean> includeFollowUps, Optional<Boolean> followHistory) {
+    public LogDTO getFullLog(String id, Optional<Boolean> includeFollowUps, Optional<Boolean> includeFollowingUps, Optional<Boolean> followHistory) {
         LogDTO result = null;
         Optional<Log> foundLog =
                 wrapCatch(
@@ -184,6 +185,24 @@ public class LogService {
             result = result.toBuilder()
                     .followUp(list)
                     .build();
+        }
+
+        if(includeFollowingUps.isPresent() && includeFollowingUps.get()) {
+            Optional<Log> followingLog = wrapCatch(
+                    ()->logRepository.findByFollowUpContains(id),
+                    -3,
+                    "LogService::getFullLog"
+            );
+            if(followingLog.isPresent()) {
+                result = result.toBuilder()
+                        .followingUp(
+                                followingLog.map(
+                                        l->LogMapper.INSTANCE.fromModel(l, attachmentService)
+                                ).orElse(null)
+                        )
+                        .build();
+            }
+
         }
 
         if(followHistory.isPresent() && followHistory.get()) {
