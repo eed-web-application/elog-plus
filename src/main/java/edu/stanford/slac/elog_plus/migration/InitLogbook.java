@@ -75,7 +75,7 @@ public class InitLogbook {
         // fill logbook
         for (String logbookName:
                 logbookNames) {
-            if(!logbookService.exist("MCC")) {
+            if(!logbookService.exist(logbookName)) {
                 String id = logbookService.createNew(
                         NewLogbookDTO
                                 .builder()
