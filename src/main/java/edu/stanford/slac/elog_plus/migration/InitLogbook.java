@@ -75,13 +75,18 @@ public class InitLogbook {
         // fill logbook
         for (String logbookName:
                 logbookNames) {
-            String id = logbookService.createNew(
-                    NewLogbookDTO
-                            .builder()
-                            .name(logbookName)
-                            .build()
-            );
-            log.info("Initialized logbook {} with id {}", logbookName, id);
+            if(!logbookService.exist("MCC")) {
+                String id = logbookService.createNew(
+                        NewLogbookDTO
+                                .builder()
+                                .name(logbookName)
+                                .build()
+                );
+                log.info("Initialized logbook {} with id {}", logbookName, id);
+            } else {
+                log.info("Logbook {} already exists", logbookName);
+            }
+
         }
     }
 

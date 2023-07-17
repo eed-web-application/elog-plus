@@ -3,15 +3,13 @@ package edu.stanford.slac.elog_plus.v1.service;
 import com.github.javafaker.Faker;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
+import edu.stanford.slac.elog_plus.exception.ItemNotFound;
 import edu.stanford.slac.elog_plus.model.FileObjectDescription;
 import edu.stanford.slac.elog_plus.model.Log;
 import edu.stanford.slac.elog_plus.service.AttachmentService;
 import edu.stanford.slac.elog_plus.service.LogService;
 import edu.stanford.slac.elog_plus.service.LogbookService;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -123,6 +121,16 @@ public class LogServiceTest {
                         )
                 );
         assertThat(ex.getErrorCode()).isEqualTo(-3);
+    }
+
+    @Test
+    public void failGettingNotFoundLog() {
+        ItemNotFound exception =
+                assertThrows(
+                        ItemNotFound.class,
+                        () -> logService.getFullLog("wrong id")
+                );
+        assertThat(exception.getErrorCode()).isEqualTo(-2);
     }
 
     @Test

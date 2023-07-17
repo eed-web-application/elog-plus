@@ -1,40 +1,25 @@
 package edu.stanford.slac.elog_plus.exception;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @ResponseStatus(value = HttpStatus.OK, reason = "ControllerLogicException")
 public class ControllerLogicException extends RuntimeException {
-    private int errorCode = 0;
+    private int errorCode;
     private String errorMessage;
     private String errorDomain;
-
-    public ControllerLogicException() {
-    }
-
-    public ControllerLogicException(int errorCode, String errorMessage, String errorDomain) {
-        super(String.format("%d-%s-%s", errorCode, errorMessage, errorDomain));
-        this.errorCode = errorCode;
-        this.errorMessage = errorMessage;
-        this.errorDomain = errorDomain;
-    }
-
-    public ControllerLogicException(int errorCode, String errorMessage, String errorDomain, Throwable cause) {
-        super(String.format("%d-%s-%s", errorCode, errorMessage, errorDomain), cause);
-        this.errorCode = errorCode;
-        this.errorMessage = errorMessage;
-        this.errorDomain = errorDomain;
-    }
-
+    @Builder.Default
+    private HttpStatus httpStatus = HttpStatus.OK;
     public ApiResultResponse<Object> toApiResultResponse() {
         return ApiResultResponse.of(this.errorCode, this.errorMessage, this.errorDomain);
-    }
-
-    static public <T> ControllerLogicException fromApiresultResponse(ApiResultResponse<T> apiResultResponse) {
-        return new ControllerLogicException(apiResultResponse.getErrorCode(),
-                apiResultResponse.getErrorMessage(),
-                apiResultResponse.getErrorDomain());
     }
 
     static public <T> ApiResultResponse<T> toApiResultResponse(ControllerLogicException logicException) {
@@ -70,10 +55,10 @@ public class ControllerLogicException extends RuntimeException {
     }
 
     static public ControllerLogicException of(int errorCode, String errorMessage, String errorDomain) {
-        return new ControllerLogicException(errorCode, errorMessage, errorDomain);
+        return new ControllerLogicException(errorCode, errorMessage, errorDomain, HttpStatus.OK);
     }
 
     static public ControllerLogicException of(int errorCode, String errorMessage, String errorDomain, Throwable cause) {
-        return new ControllerLogicException(errorCode, errorMessage, errorDomain, cause);
+        return new ControllerLogicException(errorCode, errorMessage, errorDomain, HttpStatus.OK);
     }
 }

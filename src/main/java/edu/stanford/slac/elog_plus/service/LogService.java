@@ -6,6 +6,7 @@ import edu.stanford.slac.elog_plus.api.v1.mapper.LogMapper;
 import edu.stanford.slac.elog_plus.api.v1.mapper.QueryParameterMapper;
 import edu.stanford.slac.elog_plus.api.v1.mapper.QueryResultMapper;
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
+import edu.stanford.slac.elog_plus.exception.ItemNotFound;
 import edu.stanford.slac.elog_plus.model.Log;
 import edu.stanford.slac.elog_plus.repository.LogRepository;
 import lombok.AllArgsConstructor;
@@ -164,12 +165,13 @@ public class LogService {
                         -1,
                         "LogService::getFullLog"
                 );
-        assertion(
-                foundLog::isPresent,
-                -2,
-                "The log has not been found",
-                "LogService::getFullLog"
-        );
+        if(foundLog.isEmpty()) {
+            throw ItemNotFound.ItemNotFoundBuilder()
+                    .errorCode(-2)
+                    .errorMessage("The log has not been foun")
+                    .errorDomain("LogService::getFullLog")
+                    .build();
+        }
 
         result = LogMapper.INSTANCE.fromModel(
                 foundLog.get(),
