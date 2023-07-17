@@ -24,7 +24,11 @@ public class Utility {
         } catch (ControllerLogicException e) {
             throw e;
         } catch (Exception e) {
-            throw new ControllerLogicException(errorCode, errorMessage, errorDomain); // or return null, or whatever you want
+            throw ControllerLogicException.builder()
+                    .errorCode(errorCode)
+                    .errorMessage(errorMessage)
+                    .errorDomain(errorDomain)
+                    .build(); // or return null, or whatever you want
         }
     }
 
@@ -46,7 +50,11 @@ public class Utility {
         } catch (ControllerLogicException e) {
             throw e;
         } catch (Exception e) {
-            throw new ControllerLogicException(errorCode, e.getMessage(), errorDomain); // or return null, or whatever you want
+            throw ControllerLogicException.builder()
+                    .errorCode(errorCode)
+                    .errorMessage(e.getMessage())
+                    .errorDomain(errorDomain)
+                    .build(); // or return null, or whatever you want
         }
     }
 
@@ -61,11 +69,19 @@ public class Utility {
     static public void assertion(Callable<Boolean> callable, int errorCode, String errorMessage, String errorDomain) {
         try {
             if (!callable.call())
-                throw new ControllerLogicException(errorCode, errorMessage, errorDomain); // or return null, or whatever you want
+                throw ControllerLogicException.builder()
+                        .errorCode(errorCode)
+                        .errorMessage(errorMessage)
+                        .errorDomain(errorDomain)
+                        .build(); // or return null, or whatever you want
         } catch (ControllerLogicException e) {
             throw e;
         } catch (Exception e) {
-            throw new ControllerLogicException(errorCode, errorMessage, errorDomain); // or return null, or whatever you want
+            throw ControllerLogicException.builder()
+                    .errorCode(errorCode)
+                    .errorMessage(errorMessage)
+                    .errorDomain(errorDomain)
+                    .build(); // or return null, or whatever you want
         }
     }
 }
