@@ -8,11 +8,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.validation.BindException;
 import org.springframework.validation.ObjectError;
+import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 
 import java.util.Map;
 
-@Configuration
+@ControllerAdvice
 public class ErrorAttributeConfiguration {
     @Bean
     public ErrorAttributes errorAttributes() {
@@ -22,14 +23,12 @@ public class ErrorAttributeConfiguration {
                 Map<String, Object> errorAttributes = super.getErrorAttributes(webRequest, options);
                 Throwable error = getError(webRequest);
                 if (error != null) {
-                    if (error instanceof ControllerLogicException) {
-                        ControllerLogicException myException = (ControllerLogicException) error;
+                    if (error instanceof ControllerLogicException myException) {
                         errorAttributes.put("errorCode", myException.getErrorCode());
                         errorAttributes.put("errorMessage", myException.getErrorMessage());
                         errorAttributes.put("errorDomain", myException.getErrorDomain());
-                    } else if (error instanceof BindException) {
+                    } else if (error instanceof BindException bindExc) {
                         int errNum = 1;
-                        BindException bindExc = (BindException) error;
                         for (ObjectError err : bindExc.getAllErrors()) {
                             errorAttributes.put(String.format("Err.%d", errNum++), err.toString());
                         }

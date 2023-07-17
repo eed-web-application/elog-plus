@@ -5,12 +5,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import org.assertj.core.api.AssertionsForClassTypes;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.result.StatusResultMatchers;
 
 import java.io.UnsupportedEncodingException;
 import java.time.LocalDateTime;
@@ -161,6 +164,23 @@ public class TestHelperService {
                                 .accept(MediaType.APPLICATION_JSON)
                 )
                 .andExpect(status().isOk())
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
+
+    public ApiResultResponse<LogDTO> getFullLog(MockMvc mockMvc, String id, ResultMatcher resultMatcher) throws Exception {
+        MvcResult result = mockMvc.perform(
+                        get("/v1/logs/{id}", id)
+                                .accept(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(resultMatcher)
                 .andReturn();
         Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
         if (someException.isPresent()) {
