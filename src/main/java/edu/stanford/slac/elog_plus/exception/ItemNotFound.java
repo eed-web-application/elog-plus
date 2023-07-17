@@ -9,6 +9,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class ItemNotFound extends ControllerLogicException {
     @Builder(builderMethodName = "ItemNotFoundBuilder")
     public ItemNotFound(Integer errorCode, String errorMessage, String errorDomain) {
-        super(errorCode, errorMessage, errorDomain, HttpStatus.NOT_FOUND);
+        super(errorCode, errorMessage, errorDomain);
     }
 }

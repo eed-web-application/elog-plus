@@ -16,8 +16,6 @@ public class ControllerLogicException extends RuntimeException {
     private int errorCode;
     private String errorMessage;
     private String errorDomain;
-    @Builder.Default
-    private HttpStatus httpStatus = HttpStatus.OK;
     public ApiResultResponse<Object> toApiResultResponse() {
         return ApiResultResponse.of(this.errorCode, this.errorMessage, this.errorDomain);
     }
@@ -55,10 +53,10 @@ public class ControllerLogicException extends RuntimeException {
     }
 
     static public ControllerLogicException of(int errorCode, String errorMessage, String errorDomain) {
-        return new ControllerLogicException(errorCode, errorMessage, errorDomain, HttpStatus.OK);
+        return new ControllerLogicException(errorCode, errorMessage, errorDomain);
     }
 
     static public ControllerLogicException of(int errorCode, String errorMessage, String errorDomain, Throwable cause) {
-        return new ControllerLogicException(errorCode, errorMessage, errorDomain, HttpStatus.OK);
+        return new ControllerLogicException(errorCode, errorMessage, errorDomain);
     }
 }

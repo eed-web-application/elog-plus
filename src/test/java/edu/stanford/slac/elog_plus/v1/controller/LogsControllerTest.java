@@ -2,6 +2,7 @@ package edu.stanford.slac.elog_plus.v1.controller;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
+import edu.stanford.slac.elog_plus.exception.ItemNotFound;
 import edu.stanford.slac.elog_plus.model.Attachment;
 import edu.stanford.slac.elog_plus.model.Log;
 import edu.stanford.slac.elog_plus.model.Tag;
@@ -29,6 +30,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureMockMvc
 @SpringBootTest()
@@ -124,6 +126,21 @@ public class LogsControllerTest {
                 List.of("MCC")
         );
         AssertionsForClassTypes.assertThat(queryResult.getPayload().getContent().size()).isEqualTo(1);
+    }
+
+    @Test
+    public void fetchInvalidLogbook() {
+        ItemNotFound newLogID =
+                assertThrows(
+                        ItemNotFound.class,
+                        () ->
+                                testHelperService.getFullLog(
+                                        mockMvc,
+                                        "bad-id",
+                                        status().is4xxClientError()
+                                )
+                );
+        AssertionsForClassTypes.assertThat(newLogID.getErrorCode()).isEqualTo(-2);
     }
 
     @Test
