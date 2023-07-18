@@ -10,6 +10,8 @@ import edu.stanford.slac.elog_plus.exception.ItemNotFound;
 import edu.stanford.slac.elog_plus.model.Log;
 import edu.stanford.slac.elog_plus.repository.LogRepository;
 import lombok.AllArgsConstructor;
+import org.jsoup.Jsoup;
+import org.jsoup.safety.Safelist;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -100,8 +102,8 @@ public class LogService {
                 "LogService::createNew"
         );
 
-        newLogDTO
-                .tags()
+        newLog
+                .getTags()
                 .forEach(
                         tagName -> {
                             if (!tagService.existsByName(tagName)) {
@@ -115,8 +117,8 @@ public class LogService {
                         }
                 );
 
-        newLogDTO
-                .attachments()
+        newLog
+                .getAttachments()
                 .forEach(
                         attachementID -> {
                             if (!attachmentService.exists(attachementID)) {
@@ -129,6 +131,14 @@ public class LogService {
                             }
                         }
                 );
+
+        //sanitize title and text
+        newLog.setTitle(
+                Jsoup.clean(newLog.getTitle(), Safelist.basic())
+        );
+        newLog.setText(
+                Jsoup.clean(newLog.getText(), Safelist.basicWithImages())
+        );
 
         // other check
         Log finalNewLog = newLog;

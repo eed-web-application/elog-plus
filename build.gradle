@@ -40,8 +40,9 @@ dependencies {
     // MongoDB
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
 
-    // minio
-    // implementation 'io.minio:minio:8.2.2'
+    // JSOUP
+    implementation 'org.jsoup:jsoup:1.16.1'
+
     // mongock
     implementation  'io.mongock:mongock-bom:5.3.1',
                     'io.mongock:mongock-springboot-v3:5.3.1',
