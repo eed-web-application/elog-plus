@@ -88,6 +88,26 @@ public class LogServiceTest {
     }
 
     @Test
+    public void testLogTextSanitization() {
+        String newLogID = logService.createNew(
+                NewLogDTO
+                        .builder()
+                        .logbook("MCC")
+                        .text("<p><a href='http://example.com/' onclick='stealCookies()'>Link</a></p>")
+                        .title("A very wonderful log")
+                        .build()
+        );
+
+        LogDTO fullLog =
+                assertDoesNotThrow(
+                        () -> logService.getFullLog(
+                                newLogID
+                        )
+                );
+        assertThat(fullLog.text()).isEqualTo("<p><a href=\"http://example.com/\" rel=\"nofollow\">Link</a></p>");
+    }
+
+    @Test
     public void testFailBadTags() {
         ControllerLogicException ex =
                 assertThrows(
