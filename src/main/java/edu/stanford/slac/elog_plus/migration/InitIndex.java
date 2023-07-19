@@ -2,7 +2,7 @@ package edu.stanford.slac.elog_plus.migration;
 
 
 import edu.stanford.slac.elog_plus.model.Attachment;
-import edu.stanford.slac.elog_plus.model.Log;
+import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Tag;
 import io.mongock.api.annotations.ChangeUnit;
 import io.mongock.api.annotations.Execution;
@@ -19,7 +19,7 @@ public class InitIndex {
 
     @Execution
     public void changeSet() {
-        MongoDDLOps.createIndex(Log.class, mongoTemplate, mongoMappingContext);
+        MongoDDLOps.createIndex(Entry.class, mongoTemplate, mongoMappingContext);
         MongoDDLOps.createIndex(Attachment.class, mongoTemplate, mongoMappingContext);
         MongoDDLOps.createIndex(Tag.class, mongoTemplate, mongoMappingContext);
     }

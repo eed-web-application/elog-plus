@@ -17,29 +17,28 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "The query parameter")
 public record QueryWithAnchorDTO(
-        LocalDateTime anchorDate,
-        Integer logsBefore,
-
-        Integer logsAfter,
-
-        String textSearch,
-
+        @Schema(description = "Only include entries after this date. Defaults to current time.")
+        @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+        @JsonSerialize(using = LocalDateTimeSerializer.class)
+        LocalDateTime startDate,
+        @Schema(description = "Only include entries before this date. If not supplied, then does not apply any filter")
+        @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+        @JsonSerialize(using = LocalDateTimeSerializer.class)
+        LocalDateTime endDate,
+        @Schema(description = "Include this number of entires before the startDate (used for hightlighting entries)")
+        Integer contextSize,
+        @Schema(description = "Limit the number the number of entries after the start date.")
+        Integer limit,
+        @Schema(description = "Typical search functionality.")
+        String search,
+        @Schema(description = "Only include entries that use one of these tags.")
         List<String> tags,
 
-        @Schema(description = "is the logbook that need to be filtered")
-        List<String> logBook,
-
-        @Schema(description = "is the start date from for the records selection")
-        @JsonDeserialize(using = LocalDateTimeDeserializer.class)
-        @JsonSerialize(using = LocalDateTimeSerializer.class)
-        LocalDateTime from,
-        @Schema(description = "is the most recent end date for the records selection")
-        @JsonDeserialize(using = LocalDateTimeDeserializer.class)
-        @JsonSerialize(using = LocalDateTimeSerializer.class)
-        LocalDateTime to){
-        public QueryWithAnchorDTO {
-                if(logsAfter == null) {
-                        logsAfter = 10;
-                }
+        @Schema(description = "Only include entries that belong to one of these logbooks.")
+        List<String> logBook) {
+    public QueryWithAnchorDTO {
+        if (limit == null) {
+            limit = 10;
         }
+    }
 }

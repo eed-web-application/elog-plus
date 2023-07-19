@@ -4,7 +4,7 @@ import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.exception.ItemNotFound;
 import edu.stanford.slac.elog_plus.model.Attachment;
-import edu.stanford.slac.elog_plus.model.Log;
+import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Tag;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import org.assertj.core.api.AssertionsForClassTypes;
@@ -23,7 +23,6 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -64,7 +63,7 @@ public class EntriesControllerTest {
 
     @BeforeEach
     public void preTest() {
-        mongoTemplate.remove(new Query(), Log.class);
+        mongoTemplate.remove(new Query(), Entry.class);
         mongoTemplate.remove(new Query(), Attachment.class);
         mongoTemplate.remove(new Query(), Tag.class);
     }
@@ -76,7 +75,7 @@ public class EntriesControllerTest {
                         () ->
                                 testHelperService.createNewLog(
                                         mockMvc,
-                                        NewEntryDTO
+                                        EntryNewDTO
                                                 .builder()
                                                 .logbook("MCC")
                                                 .text("This is a log for test")
@@ -107,7 +106,7 @@ public class EntriesControllerTest {
                         () ->
                                 testHelperService.createNewLog(
                                         mockMvc,
-                                        NewEntryDTO
+                                        EntryNewDTO
                                                 .builder()
                                                 .logbook("MCC")
                                                 .text("This is a log for test")
@@ -153,7 +152,7 @@ public class EntriesControllerTest {
                         () ->
                                 testHelperService.createNewLog(
                                         mockMvc,
-                                        NewEntryDTO
+                                        EntryNewDTO
                                                 .builder()
                                                 .logbook("MCC")
                                                 .text("This is a log for test")
@@ -163,7 +162,7 @@ public class EntriesControllerTest {
                 );
         AssertionsForClassTypes.assertThat(newLogID.getErrorCode()).isEqualTo(0);
 
-        ApiResultResponse<LogDTO> fullLog = assertDoesNotThrow(
+        ApiResultResponse<EntryDTO> fullLog = assertDoesNotThrow(
                 () ->
                         testHelperService.getFullLog(
                                 mockMvc,
@@ -181,7 +180,7 @@ public class EntriesControllerTest {
                         () ->
                                 testHelperService.createNewLog(
                                         mockMvc,
-                                        NewEntryDTO
+                                        EntryNewDTO
                                                 .builder()
                                                 .logbook("MCC")
                                                 .text("This is a log for test")
@@ -197,7 +196,7 @@ public class EntriesControllerTest {
                 () -> testHelperService.createNewSupersedeLog(
                         mockMvc,
                         newLogIDResult.getPayload(),
-                        NewEntryDTO
+                        EntryNewDTO
                                 .builder()
                                 .logbook("MCC")
                                 .text("This is a log for test")
@@ -207,7 +206,7 @@ public class EntriesControllerTest {
         );
 
         //check old log for supersede info
-        ApiResultResponse<LogDTO> oldFull = assertDoesNotThrow(
+        ApiResultResponse<EntryDTO> oldFull = assertDoesNotThrow(
                 () ->
                         testHelperService.getFullLog(
                                 mockMvc,
@@ -239,7 +238,7 @@ public class EntriesControllerTest {
                         () ->
                                 testHelperService.createNewLog(
                                         mockMvc,
-                                        NewEntryDTO
+                                        EntryNewDTO
                                                 .builder()
                                                 .logbook("MCC")
                                                 .text("This is a log for test")
@@ -255,7 +254,7 @@ public class EntriesControllerTest {
                 () -> testHelperService.createNewSupersedeLog(
                         mockMvc,
                         newLogIDResult.getPayload(),
-                        NewEntryDTO
+                        EntryNewDTO
                                 .builder()
                                 .logbook("MCC")
                                 .text("This is a log for test")
@@ -269,7 +268,7 @@ public class EntriesControllerTest {
                 () -> testHelperService.createNewSupersedeLog(
                         mockMvc,
                         newSupersedeLogIDResult1.getPayload(),
-                        NewEntryDTO
+                        EntryNewDTO
                                 .builder()
                                 .logbook("MCC")
                                 .text("This is a log for test")
@@ -279,7 +278,7 @@ public class EntriesControllerTest {
         );
 
         //return full log with only history
-        ApiResultResponse<LogDTO> fullLog = assertDoesNotThrow(
+        ApiResultResponse<EntryDTO> fullLog = assertDoesNotThrow(
                 () -> testHelperService.getFullLog(
                         mockMvc,
                         newSupersedeLogIDResult2.getPayload(),
@@ -304,7 +303,7 @@ public class EntriesControllerTest {
                         () ->
                                 testHelperService.createNewLog(
                                         mockMvc,
-                                        NewEntryDTO
+                                        EntryNewDTO
                                                 .builder()
                                                 .logbook("MCC")
                                                 .text("This is a log for test")
@@ -321,7 +320,7 @@ public class EntriesControllerTest {
                 () -> testHelperService.createNewFollowUpLog(
                         mockMvc,
                         newLogIDResult.getPayload(),
-                        NewEntryDTO
+                        EntryNewDTO
                                 .builder()
                                 .logbook("MCC")
                                 .text("This is a log for test")
@@ -335,7 +334,7 @@ public class EntriesControllerTest {
                 () -> testHelperService.createNewFollowUpLog(
                         mockMvc,
                         newLogIDResult.getPayload(),
-                        NewEntryDTO
+                        EntryNewDTO
                                 .builder()
                                 .logbook("MCC")
                                 .text("This is a log for test")
@@ -354,7 +353,7 @@ public class EntriesControllerTest {
         assertThat(foundFollowUp.getPayload().size()).isEqualTo(2);
 
         //get full log without followUPs
-        ApiResultResponse<LogDTO> fullLog = assertDoesNotThrow(
+        ApiResultResponse<EntryDTO> fullLog = assertDoesNotThrow(
                 () -> testHelperService.getFullLog(
                         mockMvc,
                         newLogIDResult.getPayload(),
@@ -366,7 +365,7 @@ public class EntriesControllerTest {
         assertThat(fullLog.getPayload().followUp()).isNull();
 
         //get full log without followUPs
-        ApiResultResponse<LogDTO> fullLogWitFollowUps = assertDoesNotThrow(
+        ApiResultResponse<EntryDTO> fullLogWitFollowUps = assertDoesNotThrow(
                 () -> testHelperService.getFullLog(
                         mockMvc,
                         newLogIDResult.getPayload(),
@@ -379,7 +378,7 @@ public class EntriesControllerTest {
         assertThat(fullLogWitFollowUps.getPayload().followUp().size()).isEqualTo(2);
 
         // check for full log with the following up one
-        ApiResultResponse<LogDTO> fullLogWithFollowingUp = assertDoesNotThrow(
+        ApiResultResponse<EntryDTO> fullLogWithFollowingUp = assertDoesNotThrow(
                 () -> testHelperService.getFullLog(
                         mockMvc,
                         newFULogIDOneResult.getPayload(),
@@ -404,7 +403,7 @@ public class EntriesControllerTest {
                     assertDoesNotThrow(
                             () -> testHelperService.createNewLog(
                                     mockMvc,
-                                    NewEntryDTO
+                                    EntryNewDTO
                                             .builder()
                                             .logbook("MCC")
                                             .text("This is a log for test")
@@ -543,7 +542,7 @@ public class EntriesControllerTest {
                     assertDoesNotThrow(
                             () -> testHelperService.createNewLog(
                                     mockMvc,
-                                    NewEntryDTO
+                                    EntryNewDTO
                                             .builder()
                                             .logbook("MCC")
                                             .text("This is a log for test")
@@ -601,7 +600,7 @@ public class EntriesControllerTest {
                     assertDoesNotThrow(
                             () -> testHelperService.createNewLog(
                                     mockMvc,
-                                    NewEntryDTO
+                                    EntryNewDTO
                                             .builder()
                                             .logbook("MCC")
                                             .text("This is a log for test")
@@ -638,7 +637,7 @@ public class EntriesControllerTest {
                         () ->
                                 testHelperService.createNewLog(
                                         mockMvc,
-                                        NewEntryDTO
+                                        EntryNewDTO
                                                 .builder()
                                                 .logbook("MCC")
                                                 .text("This is a log for test")
@@ -679,7 +678,7 @@ public class EntriesControllerTest {
                         () ->
                                 testHelperService.createNewLog(
                                         mockMvc,
-                                        NewEntryDTO
+                                        EntryNewDTO
                                                 .builder()
                                                 .logbook("MCC")
                                                 .text("This is a log for test")

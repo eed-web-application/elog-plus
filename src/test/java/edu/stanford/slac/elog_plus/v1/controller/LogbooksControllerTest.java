@@ -5,12 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
 import edu.stanford.slac.elog_plus.api.v1.dto.LogbookDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.NewLogbookDTO;
-import edu.stanford.slac.elog_plus.migration.InitLogbook;
-import edu.stanford.slac.elog_plus.model.Log;
+import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
-import edu.stanford.slac.elog_plus.service.LogService;
 import edu.stanford.slac.elog_plus.service.LogbookService;
-import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -20,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
@@ -50,7 +46,7 @@ public class LogbooksControllerTest {
     @BeforeEach
     public void preTest() {
         mongoTemplate.remove(new Query(), Logbook.class);
-        mongoTemplate.remove(new Query(), Log.class);
+        mongoTemplate.remove(new Query(), Entry.class);
     }
 
     @Test

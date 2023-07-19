@@ -15,7 +15,7 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "Identify the single elog record")
-public record LogDTO(
+public record EntryDTO(
         @Schema(description = "record primary key")
         String id,
         String supersedeBy,
@@ -31,9 +31,9 @@ public record LogDTO(
         String text,
         String loggedBy,
         List<AttachmentDTO> attachments,
-        List<LogDTO> followUp,
-        LogDTO followingUp,
-        List<LogDTO> history,
+        List<EntryDTO> followUp,
+        EntryDTO followingUp,
+        List<EntryDTO> history,
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)
         LocalDateTime loggedAt,

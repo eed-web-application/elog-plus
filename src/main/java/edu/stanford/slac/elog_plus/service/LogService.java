@@ -2,16 +2,15 @@ package edu.stanford.slac.elog_plus.service;
 
 import com.github.javafaker.Faker;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
-import edu.stanford.slac.elog_plus.api.v1.mapper.LogMapper;
+import edu.stanford.slac.elog_plus.api.v1.mapper.EntryMapper;
 import edu.stanford.slac.elog_plus.api.v1.mapper.QueryParameterMapper;
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.exception.ItemNotFound;
-import edu.stanford.slac.elog_plus.model.Log;
-import edu.stanford.slac.elog_plus.repository.LogRepository;
+import edu.stanford.slac.elog_plus.model.Entry;
+import edu.stanford.slac.elog_plus.repository.EntryRepository;
 import lombok.AllArgsConstructor;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Safelist;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,13 +27,13 @@ import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
 @AllArgsConstructor
 public class LogService {
     final private TagService tagService;
-    final private LogRepository logRepository;
+    final private EntryRepository entryRepository;
     final private LogbookService logbookService;
     final private AttachmentService attachmentService;
 
     public List<EntrySummaryDTO> searchAll(QueryWithAnchorDTO queryWithAnchorDTO) {
-        List<Log> found = wrapCatch(
-                () -> logRepository.searchAll(
+        List<Entry> found = wrapCatch(
+                () -> entryRepository.searchAll(
                         QueryParameterMapper.INSTANCE.fromDTO(
                                 queryWithAnchorDTO
                         )
@@ -44,7 +43,7 @@ public class LogService {
         );
         return found.stream().map(
                 log -> {
-                    return LogMapper.INSTANCE.toSearchResultFromDTO(log, attachmentService);
+                    return EntryMapper.INSTANCE.toSearchResultFromDTO(log, attachmentService);
                 }
 
         ).collect(Collectors.toList());
@@ -53,36 +52,36 @@ public class LogService {
     /**
      * Create a new log entry
      *
-     * @param newEntryDTO is a new log information
+     * @param entryNewDTO is a new log information
      * @return the id of the newly created log
      */
     @Transactional(propagation = Propagation.NESTED)
-    public String createNew(NewEntryDTO newEntryDTO) {
+    public String createNew(EntryNewDTO entryNewDTO) {
         Faker faker = new Faker();
-        Log newLog = LogMapper.INSTANCE.fromDTO(newEntryDTO, faker.name().firstName(), faker.name().lastName(), faker.name().username());
+        Entry newEntry = EntryMapper.INSTANCE.fromDTO(entryNewDTO, faker.name().firstName(), faker.name().lastName(), faker.name().username());
 
-        if (newLog.getTags() != null) {
-            List<String> tagsNormalizedNames = newLog
+        if (newEntry.getTags() != null) {
+            List<String> tagsNormalizedNames = newEntry
                     .getTags()
                     .stream()
                     .map(
                             tagService::tagNameNormalization
                     )
                     .toList();
-            newLog.setTags(
+            newEntry.setTags(
                     tagsNormalizedNames
             );
         }
 
         //check logbook
         assertion(
-                () -> logbookService.exist(newEntryDTO.logbook()),
+                () -> logbookService.exist(entryNewDTO.logbook()),
                 -1,
                 "The logbook is not valid",
                 "LogService::createNew"
         );
 
-        newLog
+        newEntry
                 .getTags()
                 .forEach(
                         tagName -> {
@@ -97,7 +96,7 @@ public class LogService {
                         }
                 );
 
-        newLog
+        newEntry
                 .getAttachments()
                 .forEach(
                         attachementID -> {
@@ -113,28 +112,28 @@ public class LogService {
                 );
 
         //sanitize title and text
-        newLog.setTitle(
-                Jsoup.clean(newLog.getTitle(), Safelist.basic())
+        newEntry.setTitle(
+                Jsoup.clean(newEntry.getTitle(), Safelist.basic())
         );
-        newLog.setText(
-                Jsoup.clean(newLog.getText(), Safelist.basicWithImages())
+        newEntry.setText(
+                Jsoup.clean(newEntry.getText(), Safelist.basicWithImages())
         );
 
         // other check
-        Log finalNewLog = newLog;
-        newLog =
+        Entry finalNewEntry = newEntry;
+        newEntry =
                 wrapCatch(
-                        () -> logRepository.insert(
-                                finalNewLog
+                        () -> entryRepository.insert(
+                                finalNewEntry
                         ),
                         -2,
                         "LogService::createNew"
                 );
-        return newLog.getId();
+        return newEntry.getId();
 
     }
 
-    public LogDTO getFullLog(String id) {
+    public EntryDTO getFullLog(String id) {
         return getFullLog(id, Optional.of(false), Optional.of(false), Optional.of(false));
     }
 
@@ -147,11 +146,11 @@ public class LogService {
      * @param followHistory    if true the result will include the log history
      * @return the full log description
      */
-    public LogDTO getFullLog(String id, Optional<Boolean> includeFollowUps, Optional<Boolean> includeFollowingUps, Optional<Boolean> followHistory) {
-        LogDTO result = null;
-        Optional<Log> foundLog =
+    public EntryDTO getFullLog(String id, Optional<Boolean> includeFollowUps, Optional<Boolean> includeFollowingUps, Optional<Boolean> followHistory) {
+        EntryDTO result = null;
+        Optional<Entry> foundLog =
                 wrapCatch(
-                        () -> logRepository.findById(id),
+                        () -> entryRepository.findById(id),
                         -1,
                         "LogService::getFullLog"
                 );
@@ -163,13 +162,13 @@ public class LogService {
                     .build();
         }
 
-        result = LogMapper.INSTANCE.fromModel(
+        result = EntryMapper.INSTANCE.fromModel(
                 foundLog.get(),
                 attachmentService
         );
 
         if (includeFollowUps.isPresent() && includeFollowUps.get()) {
-            List<LogDTO> list = new ArrayList<>(foundLog.get().getFollowUp().size());
+            List<EntryDTO> list = new ArrayList<>(foundLog.get().getFollowUp().size());
             for (String fID : foundLog.get().getFollowUp()){
                 list.add(getFullLog(fID));
 
@@ -180,8 +179,8 @@ public class LogService {
         }
 
         if(includeFollowingUps.isPresent() && includeFollowingUps.get()) {
-            Optional<Log> followingLog = wrapCatch(
-                    ()->logRepository.findByFollowUpContains(id),
+            Optional<Entry> followingLog = wrapCatch(
+                    ()-> entryRepository.findByFollowUpContains(id),
                     -3,
                     "LogService::getFullLog"
             );
@@ -189,7 +188,7 @@ public class LogService {
                 result = result.toBuilder()
                         .followingUp(
                                 followingLog.map(
-                                        l->LogMapper.INSTANCE.fromModel(l, attachmentService)
+                                        l-> EntryMapper.INSTANCE.fromModel(l, attachmentService)
                                 ).orElse(null)
                         )
                         .build();
@@ -199,7 +198,7 @@ public class LogService {
 
         if(followHistory.isPresent() && followHistory.get()) {
             // load all the history
-            List<LogDTO> logHistory = new ArrayList<>();
+            List<EntryDTO> logHistory = new ArrayList<>();
             getLogHistory(id, logHistory);
             if(logHistory.size()>0) {
                 result = result.toBuilder()
@@ -215,14 +214,14 @@ public class LogService {
      * @param newestLogID is the log of the root release for which we want the history
      * @return the log superseded byt the one identified by newestLogID
      */
-    public LogDTO getSuperseded(String newestLogID) {
-        Optional<Log> foundLog =
+    public EntryDTO getSuperseded(String newestLogID) {
+        Optional<Entry> foundLog =
                 wrapCatch(
-                        () -> logRepository.findBySupersedeBy(newestLogID),
+                        () -> entryRepository.findBySupersedeBy(newestLogID),
                         -1,
                         "LogService::getLogHistory"
                 );
-        return foundLog.map(LogMapper.INSTANCE::fromModelNoAttachment).orElse(null);
+        return foundLog.map(EntryMapper.INSTANCE::fromModelNoAttachment).orElse(null);
     }
 
     /**
@@ -230,9 +229,9 @@ public class LogService {
      * @param newestLogID the log of the newest id
      * @param history the list of the log until the last, from the one identified by newestLogID
      */
-    public void getLogHistory(String newestLogID, List<LogDTO> history) {
+    public void getLogHistory(String newestLogID, List<EntryDTO> history) {
         if(history == null) return;
-        LogDTO prevInHistory = getSuperseded(newestLogID);
+        EntryDTO prevInHistory = getSuperseded(newestLogID);
         if(prevInHistory == null) return;
 
         history.add(prevInHistory);
@@ -247,10 +246,10 @@ public class LogService {
      * @return the id of the new supersede log
      */
     @Transactional
-    public String createNewSupersede(String id, NewEntryDTO newLog) {
-        Optional<Log> supersededLog =
+    public String createNewSupersede(String id, EntryNewDTO newLog) {
+        Optional<Entry> supersededLog =
                 wrapCatch(
-                        () -> logRepository.findById(id),
+                        () -> entryRepository.findById(id),
                         -1,
                         "LogService::createNewSupersede"
                 );
@@ -260,7 +259,7 @@ public class LogService {
                 "The log to supersede has not been found",
                 "LogService::getFullLog"
         );
-        Log l = supersededLog.get();
+        Entry l = supersededLog.get();
         assertion(
                 () -> (l.getSupersedeBy() == null ||
                         l.getSupersedeBy().isEmpty())
@@ -274,7 +273,7 @@ public class LogService {
         // update supersede
         l.setSupersedeBy(newLogID);
         wrapCatch(
-                () -> logRepository.save(l),
+                () -> entryRepository.save(l),
                 -4,
                 "LogService::createNewSupersede"
         );
@@ -289,10 +288,10 @@ public class LogService {
      * @return the id of the new follow-up log
      */
     @Transactional
-    public String createNewFollowUp(String id, NewEntryDTO newLog) {
-        Optional<Log> rootLog =
+    public String createNewFollowUp(String id, EntryNewDTO newLog) {
+        Optional<Entry> rootLog =
                 wrapCatch(
-                        () -> logRepository.findById(id),
+                        () -> entryRepository.findById(id),
                         -1,
                         "LogService::createNewFollowUp"
                 );
@@ -302,12 +301,12 @@ public class LogService {
                 "The log to follow-up has not been found",
                 "LogService::createNewFollowUp"
         );
-        Log l = rootLog.get();
+        Entry l = rootLog.get();
         String newFollowupLogID = createNew(newLog);
         // update supersede
         l.getFollowUp().add(newFollowupLogID);
         wrapCatch(
-                () -> logRepository.save(l),
+                () -> entryRepository.save(l),
                 -4,
                 "LogService::createNewSupersede"
         );
@@ -321,9 +320,9 @@ public class LogService {
      * @return the list of all the followup of the specific log identified by the id
      */
     public List<EntrySummaryDTO> getAllFollowUpForALog(String id) {
-        Optional<Log> rootLog =
+        Optional<Entry> rootLog =
                 wrapCatch(
-                        () -> logRepository.findById(id),
+                        () -> entryRepository.findById(id),
                         -1,
                         "LogService::getAllFollowUpForALog"
                 );
@@ -340,23 +339,23 @@ public class LogService {
                 "The log has not been found",
                 "LogService::getAllFollowUpForALog"
         );
-        List<Log> followUp =
+        List<Entry> followUp =
                 wrapCatch(
-                        () -> logRepository.findAllByIdIn(rootLog.get().getFollowUp()),
+                        () -> entryRepository.findAllByIdIn(rootLog.get().getFollowUp()),
                         -1,
                         "LogService::getAllFollowUpForALog"
                 );
         return followUp
                 .stream()
                 .map(
-                        l -> LogMapper.INSTANCE.toSearchResultFromDTO(l, attachmentService)
+                        l -> EntryMapper.INSTANCE.toSearchResultFromDTO(l, attachmentService)
                 )
                 .collect(Collectors.toList());
     }
 
     public List<String> getAllTags() {
         return wrapCatch(
-                logRepository::getAllTags,
+                entryRepository::getAllTags,
                 -1,
                 "LogService::getAllTags"
         );

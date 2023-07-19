@@ -69,9 +69,9 @@ public class TestHelperService {
         AssertionsForClassTypes.assertThat(result.getResponse().getContentType()).isEqualTo(mediaType);
     }
 
-    public ApiResultResponse<String> createNewLog(MockMvc mockMvc, NewEntryDTO newLog) throws Exception {
+    public ApiResultResponse<String> createNewLog(MockMvc mockMvc, EntryNewDTO newLog) throws Exception {
         MvcResult result = mockMvc.perform(
-                        post("/v1/logs")
+                        post("/v1/entries")
                                 .content(
                                         new ObjectMapper().writeValueAsString(
                                                 newLog
@@ -92,9 +92,9 @@ public class TestHelperService {
                 });
     }
 
-    public ApiResultResponse<String> createNewSupersedeLog(MockMvc mockMvc, String supersededLogId, NewEntryDTO newLog) throws Exception {
+    public ApiResultResponse<String> createNewSupersedeLog(MockMvc mockMvc, String supersededLogId, EntryNewDTO newLog) throws Exception {
         MvcResult result = mockMvc.perform(
-                        post("/v1/logs/{id}/supersede", supersededLogId)
+                        post("/v1/entries/{id}/supersede", supersededLogId)
                                 .content(
                                         new ObjectMapper().writeValueAsString(
                                                 newLog
@@ -115,9 +115,9 @@ public class TestHelperService {
                 });
     }
 
-    public ApiResultResponse<String> createNewFollowUpLog(MockMvc mockMvc, String followedLogID, NewEntryDTO newLog) throws Exception {
+    public ApiResultResponse<String> createNewFollowUpLog(MockMvc mockMvc, String followedLogID, EntryNewDTO newLog) throws Exception {
         MvcResult result = mockMvc.perform(
-                        post("/v1/logs/{id}/follow-up", followedLogID)
+                        post("/v1/entries/{id}/follow-up", followedLogID)
                                 .content(
                                         new ObjectMapper().writeValueAsString(
                                                 newLog
@@ -140,7 +140,7 @@ public class TestHelperService {
 
     public ApiResultResponse<List<EntrySummaryDTO>> getAllFollowUpLog(MockMvc mockMvc, String followedLogID) throws Exception {
         MvcResult result = mockMvc.perform(
-                        get("/v1/logs/{id}/follow-up", followedLogID)
+                        get("/v1/entries/{id}/follow-up", followedLogID)
                                 .accept(MediaType.APPLICATION_JSON)
                 )
                 .andExpect(status().isOk())
@@ -155,9 +155,9 @@ public class TestHelperService {
                 });
     }
 
-    public ApiResultResponse<LogDTO> getFullLog(MockMvc mockMvc, String id) throws Exception {
+    public ApiResultResponse<EntryDTO> getFullLog(MockMvc mockMvc, String id) throws Exception {
         MvcResult result = mockMvc.perform(
-                        get("/v1/logs/{id}", id)
+                        get("/v1/entries/{id}", id)
                                 .accept(MediaType.APPLICATION_JSON)
                 )
                 .andExpect(status().isOk())
@@ -172,9 +172,9 @@ public class TestHelperService {
                 });
     }
 
-    public ApiResultResponse<LogDTO> getFullLog(MockMvc mockMvc, String id, ResultMatcher resultMatcher) throws Exception {
+    public ApiResultResponse<EntryDTO> getFullLog(MockMvc mockMvc, String id, ResultMatcher resultMatcher) throws Exception {
         MvcResult result = mockMvc.perform(
-                        get("/v1/logs/{id}", id)
+                        get("/v1/entries/{id}", id)
                                 .accept(MediaType.APPLICATION_JSON)
                 )
                 .andExpect(resultMatcher)
@@ -189,11 +189,11 @@ public class TestHelperService {
                 });
     }
 
-    public ApiResultResponse<LogDTO> getFullLog(MockMvc mockMvc, String id, boolean includeFollowUps) throws Exception {
+    public ApiResultResponse<EntryDTO> getFullLog(MockMvc mockMvc, String id, boolean includeFollowUps) throws Exception {
         return getFullLog(mockMvc, id, includeFollowUps, false, false);
     }
-    public ApiResultResponse<LogDTO> getFullLog(MockMvc mockMvc, String id, boolean includeFollowUps, boolean includeFollowingUps, boolean includeHistory) throws Exception {
-        MockHttpServletRequestBuilder request = get("/v1/logs/{id}", id)
+    public ApiResultResponse<EntryDTO> getFullLog(MockMvc mockMvc, String id, boolean includeFollowUps, boolean includeFollowingUps, boolean includeHistory) throws Exception {
+        MockHttpServletRequestBuilder request = get("/v1/entries/{id}", id)
                 .accept(MediaType.APPLICATION_JSON);
         if(includeFollowUps) {
             request.param("includeFollowUps", String.valueOf(true));
@@ -222,20 +222,21 @@ public class TestHelperService {
 
     public ApiResultResponse<List<EntrySummaryDTO>> submitSearchByGetWithAnchor(
             MockMvc mockMvc,
-            Optional<LocalDateTime> anchorDate,
-            Optional<Integer> logsBefore,
-            Optional<Integer> logsAfter,
-            Optional<String> textFilter,
+            Optional<LocalDateTime> startDate,
+            Optional<Integer> contextSize,
+            Optional<Integer> limit,
+            Optional<String> search,
             Optional<List<String>> tags,
             Optional<List<String>> logBook) throws Exception {
 
         MockHttpServletRequestBuilder getBuilder =
-                get("/v1/logs")
+                get("/v1/entries")
                         .accept(MediaType.APPLICATION_JSON);
-        anchorDate.ifPresent(localDateTime -> getBuilder.param("anchorDate", String.valueOf(localDateTime)));
-        logsBefore.ifPresent(logBefore -> getBuilder.param("logsBefore", String.valueOf(logBefore)));
-        logsAfter.ifPresent(logAfter -> getBuilder.param("logsAfter", String.valueOf(logAfter)));
-        textFilter.ifPresent(tex -> getBuilder.param("textFilter", tex));
+        startDate.ifPresent(localDateTime -> getBuilder.param("startDate", String.valueOf(localDateTime)));
+        //endDate.ifPresent(localDateTime -> getBuilder.param("endDate", String.valueOf(localDateTime)));
+        contextSize.ifPresent(size -> getBuilder.param("contextSize", String.valueOf(size)));
+        limit.ifPresent(size -> getBuilder.param("limit", String.valueOf(size)));
+        search.ifPresent(text -> getBuilder.param("search", text));
         tags.ifPresent(tl -> {
             String[] tlArray = new String[tl.size()];
             tl.toArray(tlArray);
@@ -244,7 +245,7 @@ public class TestHelperService {
         logBook.ifPresent(logbook -> {
             String[] lbArray = new String[logbook.size()];
             logbook.toArray(lbArray);
-            getBuilder.param("logbook", lbArray);
+            getBuilder.param("logbooks", lbArray);
         });
         MvcResult result = mockMvc.perform(
                         getBuilder

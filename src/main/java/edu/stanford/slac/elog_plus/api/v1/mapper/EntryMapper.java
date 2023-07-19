@@ -1,10 +1,10 @@
 package edu.stanford.slac.elog_plus.api.v1.mapper;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.AttachmentDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.LogDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.NewEntryDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.EntryNewDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.EntryDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.EntrySummaryDTO;
-import edu.stanford.slac.elog_plus.model.Log;
+import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.service.AttachmentService;
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
@@ -15,22 +15,22 @@ import java.util.List;
 @Mapper(
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
         componentModel = "spring")
-public interface LogMapper {
-    LogMapper INSTANCE = Mappers.getMapper(LogMapper.class);
+public interface EntryMapper {
+    EntryMapper INSTANCE = Mappers.getMapper(EntryMapper.class);
 
-    @Mapping(target = "loggedBy", expression = "java(log.getFirstName() + \" \" + log.getLastName())")
+    @Mapping(target = "loggedBy", expression = "java(entry.getFirstName() + \" \" + entry.getLastName())")
     @Mapping(target = "attachments", source = "attachments", qualifiedByName = "mapAttachments")
     @Mapping(target = "followUp", ignore = true)
-    LogDTO fromModel(Log log, @Context AttachmentService attachmentService);
+    EntryDTO fromModel(Entry entry, @Context AttachmentService attachmentService);
 
-    @Mapping(target = "loggedBy", expression = "java(log.getFirstName() + \" \" + log.getLastName())")
+    @Mapping(target = "loggedBy", expression = "java(entry.getFirstName() + \" \" + entry.getLastName())")
     @Mapping(target = "attachments", ignore = true)
     @Mapping(target = "followUp", ignore = true)
-    LogDTO fromModelNoAttachment(Log log);
+    EntryDTO fromModelNoAttachment(Entry entry);
 
-    @Mapping(target = "loggedBy", expression = "java(log.getFirstName() + \" \" + log.getLastName())")
+    @Mapping(target = "loggedBy", expression = "java(entry.getFirstName() + \" \" + entry.getLastName())")
     @Mapping(target = "attachments", source = "attachments", qualifiedByName = "mapAttachments")
-    EntrySummaryDTO toSearchResultFromDTO(Log log, @Context AttachmentService attachmentService);
+    EntrySummaryDTO toSearchResultFromDTO(Entry entry, @Context AttachmentService attachmentService);
 
     @Named("mapAttachments")
     default List<AttachmentDTO> mapAttachments(List<String> attachments, @Context AttachmentService attachmentService) {
@@ -46,7 +46,7 @@ public interface LogMapper {
         return list;
     }
 
-    Log fromDTO(NewEntryDTO newEntryDTO, String firstName, String lastName, String userName);
+    Entry fromDTO(EntryNewDTO entryNewDTO, String firstName, String lastName, String userName);
 
 
 

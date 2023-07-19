@@ -6,6 +6,7 @@ import edu.stanford.slac.elog_plus.service.TagService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +17,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController()
-@RequestMapping("/v1/logs")
+@RequestMapping("/v1/entries")
 @AllArgsConstructor
 @Schema(description = "Main set of api for the query on the log data")
 public class EntriesController {
@@ -25,7 +26,7 @@ public class EntriesController {
 
     @PostMapping(produces = {MediaType.APPLICATION_JSON_VALUE})
     @Operation(description = "Perform the query on all log data")
-    public ApiResultResponse<String> newLog(@RequestBody NewEntryDTO newLog) {
+    public ApiResultResponse<String> newLog(@RequestBody EntryNewDTO newLog) {
         return ApiResultResponse.of(
                 logService.createNew(newLog)
         );
@@ -36,25 +37,25 @@ public class EntriesController {
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(description = "Create a new supersede for the log identified by the id")
-    public ApiResultResponse<String> newSupersedeLog(@PathVariable String id, @RequestBody NewEntryDTO newLog) {
+    public ApiResultResponse<String> newSupersedeLog(@PathVariable String id, @RequestBody EntryNewDTO newLog) {
         return ApiResultResponse.of(
                 logService.createNewSupersede(id, newLog)
         );
     }
 
     @PostMapping(
-            path = "/{id}/follow-up",
+            path = "/{id}/follow-ups",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(description = "Create a new follow-up log for the the log identified by the id")
-    public ApiResultResponse<String> newFollowupLog(@PathVariable String id, @RequestBody NewEntryDTO newLog) {
+    public ApiResultResponse<String> newFollowupLog(@PathVariable String id, @RequestBody EntryNewDTO newLog) {
         return ApiResultResponse.of(
                 logService.createNewFollowUp(id, newLog)
         );
     }
 
     @GetMapping(
-            path = "/{id}/follow-up",
+            path = "/{id}/follow-ups",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(description = "Return all the follow-up logs for a specific log identified by the id")
@@ -69,7 +70,7 @@ public class EntriesController {
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(description = "Return the full log information")
-    public ApiResultResponse<LogDTO> getFullLog(
+    public ApiResultResponse<EntryDTO> getFullLog(
             @PathVariable String id,
             @Parameter(name = "includeFollowUps", description = "If true the API return all the followUp")
             @RequestParam("includeFollowUps") Optional<Boolean> includeFollowUps,
@@ -86,28 +87,45 @@ public class EntriesController {
     @GetMapping(
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @Operation(description = "Perform the query on all log data")
+    @Operation(
+            description = "Perform the query on all log data",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Successful response"
+//                            content = @Content(
+//                                    array = @ArraySchema(
+//                                            schema = @Schema(
+//                                                    implementation = EntrySummaryDTO.class
+//                                            )
+//                                    )
+//                            )
+                    )
+            }
+    )
     public ApiResultResponse<List<EntrySummaryDTO>> search(
-            @Parameter(name = "anchorDate", description = "is the date for which the search is started")
+            @Parameter(name = "startDate", description = "Only include entries after this date. Defaults to current time.")
             @RequestParam("anchorDate") Optional<LocalDateTime> anchorDate,
-            @Parameter(name = "logsBefore", description = "the number of the log before the anchor date to return")
-            @RequestParam("logsBefore") Optional<Integer> logsBefore,
-            @Parameter(name = "logsAfter", description = "the number of the log after the anchor date to return, thi work also without anchor date [return the first page]")
-            @RequestParam("logsAfter") Optional<Integer> logsAfter,
-            @Parameter(name = "textFilter", description = "a string to search within title and body of the log")
-            @RequestParam("textFilter") Optional<String> textFilter,
-            @Parameter(name = "tags", description = "a set of tags to filter the data")
+            @Parameter(name = "endDate", description = "Only include entries before this date. If not supplied, then does not apply any filter")
+            @RequestParam("endDate") Optional<LocalDateTime> endDate,
+            @Parameter(name = "contextSize", description = "Include this number of entires before the startDate (used for hightlighting entries)")
+            @RequestParam("contextSize") Optional<Integer> contextSize,
+            @Parameter(name = "limit", description = "Limit the number the number of entries after the start date.")
+            @RequestParam(value = "limit") Optional<Integer>  limit,
+            @Parameter(name = "search", description = "Typical search functionality")
+            @RequestParam("search") Optional<String> search,
+            @Parameter(name = "tags", description = "Only include entries that use one of these tags")
             @RequestParam("tags") Optional<List<String>> tags,
-            @Parameter(name = "logbook", description = "a set of the logbook to include in the search")
-            @RequestParam("logbook") Optional<List<String>> logBook) {
+            @Parameter(name = "logbooks", description = "Only include entries that belong to one of these logbooks")
+            @RequestParam("logbooks") Optional<List<String>> logBook) {
         return ApiResultResponse.of(
                 logService.searchAll(
                         QueryWithAnchorDTO
                                 .builder()
-                                .anchorDate(anchorDate.orElse(null))
-                                .logsBefore(logsBefore.orElse(0))
-                                .logsAfter(logsAfter.orElse(0))
-                                .textSearch(textFilter.orElse(null))
+                                .startDate(anchorDate.orElse(null))
+                                .contextSize(contextSize.orElse(0))
+                                .limit(limit.orElse(10))
+                                .search(search.orElse(null))
                                 .tags(tags.orElse(Collections.emptyList()))
                                 .logBook(logBook.orElse(Collections.emptyList()))
                                 .build()

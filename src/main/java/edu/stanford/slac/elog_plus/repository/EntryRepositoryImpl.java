@@ -1,7 +1,7 @@
 package edu.stanford.slac.elog_plus.repository;
 
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
-import edu.stanford.slac.elog_plus.model.Log;
+import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.QueryParameter;
 import edu.stanford.slac.elog_plus.model.QueryParameterWithAnchor;
 import lombok.AllArgsConstructor;
@@ -23,11 +23,11 @@ import java.util.List;
 
 @Repository
 @AllArgsConstructor
-public class LogRepositoryImpl implements LogRepositoryCustom {
+public class EntryRepositoryImpl implements EntryRepositoryCustom {
     final private MongoTemplate mongoTemplate;
 
     @Override
-    public Page<Log> searchAll(QueryParameter parameter) {
+    public Page<Entry> searchAll(QueryParameter parameter) {
         Pageable pageable = PageRequest.of(
                 parameter.getPage(),
                 parameter.getRowPerPage()
@@ -52,17 +52,17 @@ public class LogRepositoryImpl implements LogRepositoryCustom {
                     )
             );
         }
-        List<Log> found = mongoTemplate.find(query, Log.class);
+        List<Entry> found = mongoTemplate.find(query, Entry.class);
         return PageableExecutionUtils.getPage(
                 found,
                 pageable,
                 () -> mongoTemplate.count(
-                        Query.of(query).limit(-1).skip(-1), Log.class)
+                        Query.of(query).limit(-1).skip(-1), Entry.class)
         );
     }
 
     @Override
-    public List<Log> searchAll(QueryParameterWithAnchor queryWithAnchor) {
+    public List<Entry> searchAll(QueryParameterWithAnchor queryWithAnchor) {
         if (queryWithAnchor.getLogsBefore() != null && queryWithAnchor.getLogsAfter() == null) {
             throw ControllerLogicException.of(
                     -1,
@@ -99,8 +99,8 @@ public class LogRepositoryImpl implements LogRepositoryCustom {
                 Criteria.where("supersedeBy").exists(false)
         );
 
-        List<Log> logsBeforeAnchor = new ArrayList<>();
-        List<Log> logsAfterAnchor = new ArrayList<>();
+        List<Entry> logsBeforeAnchor = new ArrayList<>();
+        List<Entry> logsAfterAnchor = new ArrayList<>();
 
         if (
                 queryWithAnchor.getLogsBefore() != null
@@ -120,7 +120,7 @@ public class LogRepositoryImpl implements LogRepositoryCustom {
             ).limit(queryWithAnchor.getLogsBefore());
             logsBeforeAnchor.addAll(mongoTemplate.find(
                             q,
-                            Log.class
+                            Entry.class
                     )
             );
             Collections.reverse(logsBeforeAnchor);
@@ -142,7 +142,7 @@ public class LogRepositoryImpl implements LogRepositoryCustom {
             ).limit(queryWithAnchor.getLogsAfter());
             logsAfterAnchor = mongoTemplate.find(
                     q,
-                    Log.class
+                    Entry.class
             );
         }
 
@@ -152,7 +152,7 @@ public class LogRepositoryImpl implements LogRepositoryCustom {
 
     @Override
     public List<String> getAllTags() {
-        return mongoTemplate.findDistinct(new Query(), "tags", Log.class, String.class);
+        return mongoTemplate.findDistinct(new Query(), "tags", Entry.class, String.class);
     }
 
     private Query getDefaultQuery(String textSearch) {

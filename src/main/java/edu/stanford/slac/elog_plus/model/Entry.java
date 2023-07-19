@@ -20,18 +20,15 @@ import java.util.List;
 @AllArgsConstructor
 @ToString
 @Document()
-public class Log {
+public class Entry {
     @Id
     private String id;
     private String supersedeBy;
-    @Field("ENTRY_TYPE")
     private String entryType;
     @Field("LOGBOOK")
     @Indexed
     private String logbook;
-    @Field("PRIORITY")
     private String priority;
-    @Field("SEGMENT")
     private String segment;
     @TextIndexed
     @Field("TITLE")
@@ -39,11 +36,8 @@ public class Log {
     @TextIndexed
     @Field("TEXT")
     private String text;
-    @Field("LASTNAME")
     private String lastName;
-    @Field("FIRSTNAME")
     private String firstName;
-    @Field("USERNAME")
     private String userName;
     @Indexed
     @Builder.Default
@@ -60,10 +54,8 @@ public class Log {
     private String filePreview;
     @Indexed
     @CreatedDate
-    @Field("LOGDATE")
     private LocalDateTime loggedAt;
     @CreatedDate
-    @Field("COMMITDATE")
     private LocalDateTime eventAt;
     @Version
     private Integer version;

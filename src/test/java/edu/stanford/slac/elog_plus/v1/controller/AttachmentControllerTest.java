@@ -2,7 +2,6 @@ package edu.stanford.slac.elog_plus.v1.controller;
 
 import com.github.javafaker.Faker;
 import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
-import edu.stanford.slac.elog_plus.api.v1.dto.LogDTO;
 import edu.stanford.slac.elog_plus.model.Attachment;
 import edu.stanford.slac.elog_plus.service.AttachmentService;
 import edu.stanford.slac.elog_plus.v1.service.DocumentGenerationService;

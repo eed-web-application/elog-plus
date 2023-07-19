@@ -4,8 +4,8 @@ import com.github.javafaker.Faker;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.exception.ItemNotFound;
+import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.FileObjectDescription;
-import edu.stanford.slac.elog_plus.model.Log;
 import edu.stanford.slac.elog_plus.service.AttachmentService;
 import edu.stanford.slac.elog_plus.service.LogService;
 import edu.stanford.slac.elog_plus.service.LogbookService;
@@ -35,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles(profiles = "test")
-public class LogServiceTest {
+public class EntryServiceTest {
     @Autowired
     private LogService logService;
     @Autowired
@@ -59,13 +59,13 @@ public class LogServiceTest {
 
     @BeforeEach
     public void preTest() {
-        mongoTemplate.remove(new Query(), Log.class);
+        mongoTemplate.remove(new Query(), Entry.class);
     }
 
     @Test
     public void testLogCreation() {
         String newLogID = logService.createNew(
-                NewEntryDTO
+                EntryNewDTO
                         .builder()
                         .logbook("MCC")
                         .text("This is a log for test")
@@ -79,7 +79,7 @@ public class LogServiceTest {
     @Test
     public void testLogTextSanitization() {
         String newLogID = logService.createNew(
-                NewEntryDTO
+                EntryNewDTO
                         .builder()
                         .logbook("MCC")
                         .text("<p><a href='http://example.com/' onclick='stealCookies()'>Link</a></p>")
@@ -87,7 +87,7 @@ public class LogServiceTest {
                         .build()
         );
 
-        LogDTO fullLog =
+        EntryDTO fullLog =
                 assertDoesNotThrow(
                         () -> logService.getFullLog(
                                 newLogID
@@ -102,7 +102,7 @@ public class LogServiceTest {
                 assertThrows(
                         ControllerLogicException.class,
                         () -> logService.createNew(
-                                NewEntryDTO
+                                EntryNewDTO
                                         .builder()
                                         .logbook("MCC")
                                         .text("This is a log for test")
@@ -120,7 +120,7 @@ public class LogServiceTest {
                 assertThrows(
                         ControllerLogicException.class,
                         () -> logService.createNew(
-                                NewEntryDTO
+                                EntryNewDTO
                                         .builder()
                                         .logbook("MCC")
                                         .text("This is a log for test")
@@ -147,7 +147,7 @@ public class LogServiceTest {
         String newLogID =
                 assertDoesNotThrow(
                         () -> logService.createNew(
-                                NewEntryDTO
+                                EntryNewDTO
                                         .builder()
                                         .logbook("MCC")
                                         .text("This is a log for test")
@@ -156,7 +156,7 @@ public class LogServiceTest {
                         )
                 );
 
-        LogDTO fullLog =
+        EntryDTO fullLog =
                 assertDoesNotThrow(
                         () -> logService.getFullLog(newLogID)
                 );
@@ -169,7 +169,7 @@ public class LogServiceTest {
                 ControllerLogicException.class,
                 () -> logService.createNewSupersede(
                         "bad id",
-                        NewEntryDTO
+                        EntryNewDTO
                                 .builder()
                                 .logbook("MCC")
                                 .text("This is a log for test")
@@ -186,7 +186,7 @@ public class LogServiceTest {
         String supersededLogID =
                 assertDoesNotThrow(
                         () -> logService.createNew(
-                                NewEntryDTO
+                                EntryNewDTO
                                         .builder()
                                         .logbook("MCC")
                                         .text("This is a log for test")
@@ -199,7 +199,7 @@ public class LogServiceTest {
                 assertDoesNotThrow(
                         () -> logService.createNewSupersede(
                                 supersededLogID,
-                                NewEntryDTO
+                                EntryNewDTO
                                         .builder()
                                         .logbook("MCC")
                                         .text("This is a log for test")
@@ -208,14 +208,14 @@ public class LogServiceTest {
                         )
                 );
 
-        LogDTO supersededLog = assertDoesNotThrow(
+        EntryDTO supersededLog = assertDoesNotThrow(
                 () -> logService.getFullLog(supersededLogID)
         );
 
         assertThat(supersededLog).isNotNull();
         assertThat(supersededLog.supersedeBy()).isEqualTo(newLogID);
 
-        LogDTO fullLog = assertDoesNotThrow(
+        EntryDTO fullLog = assertDoesNotThrow(
                 () -> logService.getFullLog(newLogID)
         );
 
@@ -228,7 +228,7 @@ public class LogServiceTest {
         String supersededLogID =
                 assertDoesNotThrow(
                         () -> logService.createNew(
-                                NewEntryDTO
+                                EntryNewDTO
                                         .builder()
                                         .logbook("MCC")
                                         .text("This is a log for test")
@@ -241,7 +241,7 @@ public class LogServiceTest {
                 assertDoesNotThrow(
                         () -> logService.createNewSupersede(
                                 supersededLogID,
-                                NewEntryDTO
+                                EntryNewDTO
                                         .builder()
                                         .logbook("MCC")
                                         .text("This is a log for test")
@@ -254,7 +254,7 @@ public class LogServiceTest {
                 assertDoesNotThrow(
                         () -> logService.createNewSupersede(
                                 supersededLogIDTwo,
-                                NewEntryDTO
+                                EntryNewDTO
                                         .builder()
                                         .logbook("MCC")
                                         .text("This is a log for test")
@@ -262,7 +262,7 @@ public class LogServiceTest {
                                         .build()
                         )
                 );
-        List<LogDTO> history = new ArrayList<>();
+        List<EntryDTO> history = new ArrayList<>();
         assertDoesNotThrow(
                 () -> logService.getLogHistory(supersededLogIDNewest, history)
         );
@@ -275,7 +275,7 @@ public class LogServiceTest {
         String supersededLogID =
                 assertDoesNotThrow(
                         () -> logService.createNew(
-                                NewEntryDTO
+                                EntryNewDTO
                                         .builder()
                                         .logbook("MCC")
                                         .text("This is a log for test")
@@ -289,7 +289,7 @@ public class LogServiceTest {
                 assertDoesNotThrow(
                         () -> logService.createNewSupersede(
                                 supersededLogID,
-                                NewEntryDTO
+                                EntryNewDTO
                                         .builder()
                                         .logbook("MCC")
                                         .text("This is a log for test")
@@ -304,7 +304,7 @@ public class LogServiceTest {
                         ControllerLogicException.class,
                         () -> logService.createNewSupersede(
                                 supersededLogID,
-                                NewEntryDTO
+                                EntryNewDTO
                                         .builder()
                                         .logbook("MCC")
                                         .text("This is a log for test")
@@ -321,7 +321,7 @@ public class LogServiceTest {
                 ControllerLogicException.class,
                 () -> logService.createNewFollowUp(
                         "bad root id",
-                        NewEntryDTO
+                        EntryNewDTO
                                 .builder()
                                 .logbook("MCC")
                                 .text("This is a log for test")
@@ -338,7 +338,7 @@ public class LogServiceTest {
         String rootLogID =
                 assertDoesNotThrow(
                         () -> logService.createNew(
-                                NewEntryDTO
+                                EntryNewDTO
                                         .builder()
                                         .logbook("MCC")
                                         .text("This is a log for test")
@@ -352,7 +352,7 @@ public class LogServiceTest {
                 assertDoesNotThrow(
                         () -> logService.createNewFollowUp(
                                 rootLogID,
-                                NewEntryDTO
+                                EntryNewDTO
                                         .builder()
                                         .logbook("MCC")
                                         .text("This is a log for test")
@@ -366,7 +366,7 @@ public class LogServiceTest {
                 assertDoesNotThrow(
                         () -> logService.createNewFollowUp(
                                 rootLogID,
-                                NewEntryDTO
+                                EntryNewDTO
                                         .builder()
                                         .logbook("MCC")
                                         .text("This is a log for test")
@@ -392,7 +392,7 @@ public class LogServiceTest {
         String rootLogID =
                 assertDoesNotThrow(
                         () -> logService.createNew(
-                                NewEntryDTO
+                                EntryNewDTO
                                         .builder()
                                         .logbook("MCC")
                                         .text("This is a log for test")
@@ -406,7 +406,7 @@ public class LogServiceTest {
                 assertDoesNotThrow(
                         () -> logService.createNewFollowUp(
                                 rootLogID,
-                                NewEntryDTO
+                                EntryNewDTO
                                         .builder()
                                         .logbook("MCC")
                                         .text("This is a log for test")
@@ -416,7 +416,7 @@ public class LogServiceTest {
                 );
         assertThat(newFollowUpOneID).isNotNull();
 
-        LogDTO logWithFlowingUpLog =
+        EntryDTO logWithFlowingUpLog =
                 assertDoesNotThrow(
                         () -> logService.getFullLog(
                                 newFollowUpOneID,
@@ -460,7 +460,7 @@ public class LogServiceTest {
         String newLogID =
                 assertDoesNotThrow(
                         () -> logService.createNew(
-                                NewEntryDTO
+                                EntryNewDTO
                                         .builder()
                                         .logbook("MCC")
                                         .text("This is a log for test")
@@ -471,7 +471,7 @@ public class LogServiceTest {
                 );
 
         // check for the attachment are well filled into dto
-        LogDTO foundLog =
+        EntryDTO foundLog =
                 assertDoesNotThrow(
                         () -> logService.getFullLog(newLogID)
                 );
@@ -510,7 +510,7 @@ public class LogServiceTest {
         String newLogID =
                 assertDoesNotThrow(
                         () -> logService.createNew(
-                                NewEntryDTO
+                                EntryNewDTO
                                         .builder()
                                         .logbook("MCC")
                                         .text("This is a log for test")
@@ -545,7 +545,7 @@ public class LogServiceTest {
             String newLogID =
                     assertDoesNotThrow(
                             () -> logService.createNew(
-                                    NewEntryDTO
+                                    EntryNewDTO
                                             .builder()
                                             .logbook("MCC")
                                             .text("This is a log for test")
@@ -589,8 +589,8 @@ public class LogServiceTest {
                 () -> logService.searchAll(
                         QueryWithAnchorDTO
                                 .builder()
-                                .anchorDate(testAnchorLog.loggedAt())
-                                .logsAfter(10)
+                                .startDate(testAnchorLog.loggedAt())
+                                .limit(10)
                                 .build()
                 )
         );
@@ -615,9 +615,9 @@ public class LogServiceTest {
                 () -> logService.searchAll(
                         QueryWithAnchorDTO
                                 .builder()
-                                .anchorDate(testAnchorLog.loggedAt())
-                                .logsBefore(10)
-                                .logsAfter(0)
+                                .startDate(testAnchorLog.loggedAt())
+                                .contextSize(10)
+                                .limit(0)
                                 .build()
                 )
         );
@@ -629,9 +629,9 @@ public class LogServiceTest {
                 () -> logService.searchAll(
                         QueryWithAnchorDTO
                                 .builder()
-                                .anchorDate(testAnchorLog.loggedAt())
-                                .logsBefore(10)
-                                .logsAfter(10)
+                                .startDate(testAnchorLog.loggedAt())
+                                .contextSize(10)
+                                .limit(10)
                                 .build()
                 )
         );
@@ -643,14 +643,14 @@ public class LogServiceTest {
 
 
         // now search in the middle of the data set
-        LogDTO middleAnchorLog = logService.getFullLog(anchorID);
+        EntryDTO middleAnchorLog = logService.getFullLog(anchorID);
         List<EntrySummaryDTO> prevAndNextPageByMiddlePin = assertDoesNotThrow(
                 () -> logService.searchAll(
                         QueryWithAnchorDTO
                                 .builder()
-                                .anchorDate(middleAnchorLog.loggedAt())
-                                .logsBefore(10)
-                                .logsAfter(10)
+                                .startDate(middleAnchorLog.loggedAt())
+                                .contextSize(10)
+                                .limit(10)
                                 .build()
                 )
         );
