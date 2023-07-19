@@ -11,7 +11,7 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Builder
 @Schema(description = "Is the model for the new ELog creation")
-public record NewLogDTO (
+public record NewEntryDTO(
     @Schema(description = "Is the logbook where the new log belong")
     String logbook,
     @Schema(description = "Is the segment associated to the log")
@@ -25,7 +25,7 @@ public record NewLogDTO (
     @Schema(description = "The list of the attachment of the log")
     List<String> attachments
 ){
-    public NewLogDTO {
+    public NewEntryDTO {
         if(tags == null) tags = Collections.emptyList();
         if(attachments == null) attachments = Collections.emptyList();
     }

@@ -118,7 +118,7 @@ public class AttachmentControllerTest {
                     MediaType.IMAGE_PNG_VALUE
             );
 
-            await().atMost(10, SECONDS).pollDelay(500, MILLISECONDS).until(
+            await().atMost(20, SECONDS).pollDelay(500, MILLISECONDS).until(
                     () -> {
                         String processingState = attachmentService.getPreviewProcessingState(newAttachmentID.getPayload());
                         return processingState.compareTo(

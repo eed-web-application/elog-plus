@@ -7,11 +7,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
-import org.springframework.cglib.core.Local;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
-import javax.swing.text.html.Option;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -21,13 +19,13 @@ import java.util.Optional;
 @RequestMapping("/v1/logs")
 @AllArgsConstructor
 @Schema(description = "Main set of api for the query on the log data")
-public class LogsController {
+public class EntriesController {
     private LogService logService;
     private TagService tagService;
 
     @PostMapping(produces = {MediaType.APPLICATION_JSON_VALUE})
     @Operation(description = "Perform the query on all log data")
-    public ApiResultResponse<String> newLog(@RequestBody NewLogDTO newLog) {
+    public ApiResultResponse<String> newLog(@RequestBody NewEntryDTO newLog) {
         return ApiResultResponse.of(
                 logService.createNew(newLog)
         );
@@ -38,7 +36,7 @@ public class LogsController {
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(description = "Create a new supersede for the log identified by the id")
-    public ApiResultResponse<String> newSupersedeLog(@PathVariable String id, @RequestBody NewLogDTO newLog) {
+    public ApiResultResponse<String> newSupersedeLog(@PathVariable String id, @RequestBody NewEntryDTO newLog) {
         return ApiResultResponse.of(
                 logService.createNewSupersede(id, newLog)
         );
@@ -49,7 +47,7 @@ public class LogsController {
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(description = "Create a new follow-up log for the the log identified by the id")
-    public ApiResultResponse<String> newFollowupLog(@PathVariable String id, @RequestBody NewLogDTO newLog) {
+    public ApiResultResponse<String> newFollowupLog(@PathVariable String id, @RequestBody NewEntryDTO newLog) {
         return ApiResultResponse.of(
                 logService.createNewFollowUp(id, newLog)
         );
@@ -60,7 +58,7 @@ public class LogsController {
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(description = "Return all the follow-up logs for a specific log identified by the id")
-    public ApiResultResponse<List<SearchResultLogDTO>> getAllFollowUpLog(@PathVariable String id) {
+    public ApiResultResponse<List<EntrySummaryDTO>> getAllFollowUpLog(@PathVariable String id) {
         return ApiResultResponse.of(
                 logService.getAllFollowUpForALog(id)
         );
@@ -86,31 +84,10 @@ public class LogsController {
     }
 
     @GetMapping(
-            path = "/paging",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(description = "Perform the query on all log data")
-    public ApiResultResponse<QueryPagedResultDTO<SearchResultLogDTO>> search(
-            @RequestParam("page") int page,
-            @RequestParam("size") int size,
-            @RequestParam("logbook") List<String> logBook) {
-        return ApiResultResponse.of(
-                logService.searchAll(
-                        QueryParameterDTO
-                                .builder()
-                                .page(page)
-                                .rowPerPage(size)
-                                .logBook(logBook)
-                                .build()
-                )
-        );
-    }
-
-    @GetMapping(
-            produces = {MediaType.APPLICATION_JSON_VALUE}
-    )
-    @Operation(description = "Perform the query on all log data")
-    public ApiResultResponse<List<SearchResultLogDTO>> search(
+    public ApiResultResponse<List<EntrySummaryDTO>> search(
             @Parameter(name = "anchorDate", description = "is the date for which the search is started")
             @RequestParam("anchorDate") Optional<LocalDateTime> anchorDate,
             @Parameter(name = "logsBefore", description = "the number of the log before the anchor date to return")

@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import org.assertj.core.api.AssertionsForClassTypes;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
@@ -13,9 +12,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-import org.springframework.test.web.servlet.result.StatusResultMatchers;
 
-import java.io.UnsupportedEncodingException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -72,7 +69,7 @@ public class TestHelperService {
         AssertionsForClassTypes.assertThat(result.getResponse().getContentType()).isEqualTo(mediaType);
     }
 
-    public ApiResultResponse<String> createNewLog(MockMvc mockMvc, NewLogDTO newLog) throws Exception {
+    public ApiResultResponse<String> createNewLog(MockMvc mockMvc, NewEntryDTO newLog) throws Exception {
         MvcResult result = mockMvc.perform(
                         post("/v1/logs")
                                 .content(
@@ -95,7 +92,7 @@ public class TestHelperService {
                 });
     }
 
-    public ApiResultResponse<String> createNewSupersedeLog(MockMvc mockMvc, String supersededLogId, NewLogDTO newLog) throws Exception {
+    public ApiResultResponse<String> createNewSupersedeLog(MockMvc mockMvc, String supersededLogId, NewEntryDTO newLog) throws Exception {
         MvcResult result = mockMvc.perform(
                         post("/v1/logs/{id}/supersede", supersededLogId)
                                 .content(
@@ -118,7 +115,7 @@ public class TestHelperService {
                 });
     }
 
-    public ApiResultResponse<String> createNewFollowUpLog(MockMvc mockMvc, String followedLogID, NewLogDTO newLog) throws Exception {
+    public ApiResultResponse<String> createNewFollowUpLog(MockMvc mockMvc, String followedLogID, NewEntryDTO newLog) throws Exception {
         MvcResult result = mockMvc.perform(
                         post("/v1/logs/{id}/follow-up", followedLogID)
                                 .content(
@@ -141,7 +138,7 @@ public class TestHelperService {
                 });
     }
 
-    public ApiResultResponse<List<SearchResultLogDTO>> getAllFollowUpLog(MockMvc mockMvc, String followedLogID) throws Exception {
+    public ApiResultResponse<List<EntrySummaryDTO>> getAllFollowUpLog(MockMvc mockMvc, String followedLogID) throws Exception {
         MvcResult result = mockMvc.perform(
                         get("/v1/logs/{id}/follow-up", followedLogID)
                                 .accept(MediaType.APPLICATION_JSON)
@@ -223,43 +220,7 @@ public class TestHelperService {
                 });
     }
 
-    public ApiResultResponse<QueryPagedResultDTO<LogDTO>> submitSearchByGet(
-            MockMvc mockMvc,
-            int page,
-            int size,
-            List<String> logbook) throws Exception {
-        MvcResult result;
-        if (logbook.size() == 0) {
-            result = mockMvc.perform(
-                            get("/v1/logs/paging")
-                                    .param("page", String.valueOf(page))
-                                    .param("size", String.valueOf(size))
-                                    .param("logbook", "")
-                                    .accept(MediaType.APPLICATION_JSON)
-                    )
-                    .andExpect(status().isOk())
-                    .andReturn();
-        } else {
-            String[] lbArray = new String[logbook.size()];
-            logbook.toArray(lbArray);
-            result = mockMvc.perform(
-                            get("/v1/logs/paging")
-                                    .param("page", String.valueOf(page))
-                                    .param("size", String.valueOf(size))
-                                    .param("logbook", lbArray)
-                                    .accept(MediaType.APPLICATION_JSON)
-                    )
-                    .andExpect(status().isOk())
-                    .andReturn();
-        }
-
-        return new ObjectMapper().readValue(
-                result.getResponse().getContentAsString(),
-                new TypeReference<>() {
-                });
-    }
-
-    public ApiResultResponse<List<SearchResultLogDTO>> submitSearchByGetWithAnchor(
+    public ApiResultResponse<List<EntrySummaryDTO>> submitSearchByGetWithAnchor(
             MockMvc mockMvc,
             Optional<LocalDateTime> anchorDate,
             Optional<Integer> logsBefore,

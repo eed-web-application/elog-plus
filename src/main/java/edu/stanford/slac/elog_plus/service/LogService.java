@@ -4,7 +4,6 @@ import com.github.javafaker.Faker;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.api.v1.mapper.LogMapper;
 import edu.stanford.slac.elog_plus.api.v1.mapper.QueryParameterMapper;
-import edu.stanford.slac.elog_plus.api.v1.mapper.QueryResultMapper;
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.exception.ItemNotFound;
 import edu.stanford.slac.elog_plus.model.Log;
@@ -32,27 +31,8 @@ public class LogService {
     final private LogRepository logRepository;
     final private LogbookService logbookService;
     final private AttachmentService attachmentService;
-    public QueryPagedResultDTO<SearchResultLogDTO> searchAll(QueryParameterDTO queryParameter) {
-        Page<Log> found =
-                wrapCatch(
-                        () -> logRepository.searchAll(
-                                QueryParameterMapper.INSTANCE.fromDTO(
-                                        queryParameter
-                                )
-                        ),
-                        -1,
-                        "LogService::searchAll"
-                );
-        return QueryResultMapper.from(
-                found.map(
-                        log -> {
-                            return LogMapper.INSTANCE.toSearchResultFromDTO(log, attachmentService);
-                        }
-                )
-        );
-    }
 
-    public List<SearchResultLogDTO> searchAll(QueryWithAnchorDTO queryWithAnchorDTO) {
+    public List<EntrySummaryDTO> searchAll(QueryWithAnchorDTO queryWithAnchorDTO) {
         List<Log> found = wrapCatch(
                 () -> logRepository.searchAll(
                         QueryParameterMapper.INSTANCE.fromDTO(
@@ -73,13 +53,13 @@ public class LogService {
     /**
      * Create a new log entry
      *
-     * @param newLogDTO is a new log information
+     * @param newEntryDTO is a new log information
      * @return the id of the newly created log
      */
     @Transactional(propagation = Propagation.NESTED)
-    public String createNew(NewLogDTO newLogDTO) {
+    public String createNew(NewEntryDTO newEntryDTO) {
         Faker faker = new Faker();
-        Log newLog = LogMapper.INSTANCE.fromDTO(newLogDTO, faker.name().firstName(), faker.name().lastName(), faker.name().username());
+        Log newLog = LogMapper.INSTANCE.fromDTO(newEntryDTO, faker.name().firstName(), faker.name().lastName(), faker.name().username());
 
         if (newLog.getTags() != null) {
             List<String> tagsNormalizedNames = newLog
@@ -96,7 +76,7 @@ public class LogService {
 
         //check logbook
         assertion(
-                () -> logbookService.exist(newLogDTO.logbook()),
+                () -> logbookService.exist(newEntryDTO.logbook()),
                 -1,
                 "The logbook is not valid",
                 "LogService::createNew"
@@ -267,7 +247,7 @@ public class LogService {
      * @return the id of the new supersede log
      */
     @Transactional
-    public String createNewSupersede(String id, NewLogDTO newLog) {
+    public String createNewSupersede(String id, NewEntryDTO newLog) {
         Optional<Log> supersededLog =
                 wrapCatch(
                         () -> logRepository.findById(id),
@@ -309,7 +289,7 @@ public class LogService {
      * @return the id of the new follow-up log
      */
     @Transactional
-    public String createNewFollowUp(String id, NewLogDTO newLog) {
+    public String createNewFollowUp(String id, NewEntryDTO newLog) {
         Optional<Log> rootLog =
                 wrapCatch(
                         () -> logRepository.findById(id),
@@ -340,7 +320,7 @@ public class LogService {
      * @param id the id of the log parent of the follow-up
      * @return the list of all the followup of the specific log identified by the id
      */
-    public List<SearchResultLogDTO> getAllFollowUpForALog(String id) {
+    public List<EntrySummaryDTO> getAllFollowUpForALog(String id) {
         Optional<Log> rootLog =
                 wrapCatch(
                         () -> logRepository.findById(id),

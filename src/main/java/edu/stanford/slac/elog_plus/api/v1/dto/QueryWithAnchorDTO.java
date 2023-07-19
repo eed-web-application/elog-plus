@@ -36,4 +36,10 @@ public record QueryWithAnchorDTO(
         @Schema(description = "is the most recent end date for the records selection")
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)
-        LocalDateTime to){}
+        LocalDateTime to){
+        public QueryWithAnchorDTO {
+                if(logsAfter == null) {
+                        logsAfter = 10;
+                }
+        }
+}

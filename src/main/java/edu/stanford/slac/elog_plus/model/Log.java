@@ -11,7 +11,6 @@ import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 @Getter
@@ -62,13 +61,10 @@ public class Log {
     @Indexed
     @CreatedDate
     @Field("LOGDATE")
-    private LocalDateTime logDate;
+    private LocalDateTime loggedAt;
     @CreatedDate
     @Field("COMMITDATE")
-    private LocalDateTime commitDate;
-    @CreatedDate
-    @Field("PROGDATE")
-    private LocalDateTime progDate;
+    private LocalDateTime eventAt;
     @Version
     private Integer version;
 }

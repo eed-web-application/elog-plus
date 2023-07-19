@@ -1,7 +1,7 @@
 package edu.stanford.slac.elog_plus.v1.mapper;
 
 import com.github.javafaker.Faker;
-import edu.stanford.slac.elog_plus.api.v1.dto.NewLogDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.NewEntryDTO;
 import edu.stanford.slac.elog_plus.api.v1.mapper.LogMapper;
 import edu.stanford.slac.elog_plus.model.Log;
 import edu.stanford.slac.elog_plus.service.AttachmentService;
@@ -16,8 +16,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
-
-import static java.util.Arrays.asList;
 
 @AutoConfigureMockMvc
 @SpringBootTest()
@@ -34,7 +32,7 @@ public class MapperTest {
                 .lastName("lastName")
                 .build();
         var logDto = LogMapper.INSTANCE.fromModel(log, attachmentService);
-        AssertionsForClassTypes.assertThat(logDto.author()).isEqualTo("firstName lastName");
+        AssertionsForClassTypes.assertThat(logDto.loggedBy()).isEqualTo("firstName lastName");
     }
 
     @Test
@@ -44,13 +42,13 @@ public class MapperTest {
                 .lastName("lastName")
                 .build();
         var logDto = LogMapper.INSTANCE.toSearchResultFromDTO(log, attachmentService);
-        AssertionsForClassTypes.assertThat(logDto.author()).isEqualTo("firstName lastName");
+        AssertionsForClassTypes.assertThat(logDto.loggedBy()).isEqualTo("firstName lastName");
     }
 
     @Test
     public void createModelFromNewLog() {
         Log newLog = LogMapper.INSTANCE.fromDTO(
-                NewLogDTO.builder().build(),
+                NewEntryDTO.builder().build(),
                 "firstName",
                 "lastName",
                 "userName");
@@ -61,7 +59,7 @@ public class MapperTest {
 
     @Test
     public void newLogDTOToModel() throws Exception {
-        var newLog = NewLogDTO
+        var newLog = NewEntryDTO
                 .builder()
                 .attachments(List.of("att_1", "arr_2"))
                 .title("title")
