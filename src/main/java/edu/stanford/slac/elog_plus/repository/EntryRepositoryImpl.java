@@ -65,7 +65,7 @@ public class EntryRepositoryImpl implements EntryRepositoryCustom {
         if (
                 queryWithAnchor.getContextSize() != null
                         && queryWithAnchor.getContextSize() > 0
-                        && queryWithAnchor.getStartDate() != null
+                        && queryWithAnchor.getEndDate() != null
         ) {
             Query q = getDefaultQuery(queryWithAnchor.getSearch());
             q.addCriteria(new Criteria().andOperator(
@@ -73,7 +73,7 @@ public class EntryRepositoryImpl implements EntryRepositoryCustom {
                     )
             ).addCriteria(
                     Criteria.where("loggedAt")
-                            .gte(queryWithAnchor.getStartDate())
+                            .gte(queryWithAnchor.getEndDate())
             ).with(
                     Sort.by(
                             Sort.Direction.ASC, "loggedAt")
@@ -88,9 +88,9 @@ public class EntryRepositoryImpl implements EntryRepositoryCustom {
 
         if (queryWithAnchor.getLimit() != null && queryWithAnchor.getLimit() > 0) {
             Query q = getDefaultQuery(queryWithAnchor.getSearch());
-            if (queryWithAnchor.getStartDate() != null) {
+            if (queryWithAnchor.getEndDate() != null) {
                 q.addCriteria(
-                        Criteria.where("loggedAt").lt(queryWithAnchor.getStartDate())
+                        Criteria.where("loggedAt").lt(queryWithAnchor.getEndDate())
                 );
             }
             q.addCriteria(new Criteria().andOperator(

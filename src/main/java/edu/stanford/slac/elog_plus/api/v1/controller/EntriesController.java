@@ -111,7 +111,7 @@ public class EntriesController {
     )
     public ApiResultResponse<List<EntrySummaryDTO>> search(
             @Parameter(name = "startDate", description = "Only include entries after this date. Defaults to current time.")
-            @RequestParam("startDate") Optional<LocalDateTime> anchorDate,
+            @RequestParam("startDate") Optional<LocalDateTime> startDate,
             @Parameter(name = "endDate", description = "Only include entries before this date. If not supplied, then does not apply any filter")
             @RequestParam("endDate") Optional<LocalDateTime> endDate,
             @Parameter(name = "contextSize", description = "Include this number of entries before the startDate (used for highlighting entries)")
@@ -128,7 +128,8 @@ public class EntriesController {
                 entryService.searchAll(
                         QueryWithAnchorDTO
                                 .builder()
-                                .startDate(anchorDate.orElse(null))
+                                .startDate(startDate.orElse(null))
+                                .endDate(endDate.orElse(null))
                                 .contextSize(contextSize.orElse(0))
                                 .limit(limit.orElse(0))
                                 .search(search.orElse(null))
