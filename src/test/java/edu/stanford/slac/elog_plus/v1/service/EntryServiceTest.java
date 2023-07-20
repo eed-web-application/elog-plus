@@ -526,6 +526,7 @@ public class EntryServiceTest {
                         () -> entryService.searchAll(
                                 QueryWithAnchorDTO
                                         .builder()
+                                        .limit(10)
                                         .build()
                         )
                 );

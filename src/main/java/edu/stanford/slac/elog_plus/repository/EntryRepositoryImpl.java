@@ -30,7 +30,7 @@ public class EntryRepositoryImpl implements EntryRepositoryCustom {
                     "LogRepositoryImpl::searchUsingAnchor"
             );
         }
-        if (queryWithAnchor.getContextSize() == null) {
+        if (queryWithAnchor.getLimit() == null) {
             throw ControllerLogicException.of(
                     -2,
                     "the logs after count is mandatory",
