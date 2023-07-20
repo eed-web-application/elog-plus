@@ -616,7 +616,7 @@ public class EntryServiceTest {
                 () -> entryService.searchAll(
                         QueryWithAnchorDTO
                                 .builder()
-                                .startDate(testAnchorLog.loggedAt())
+                                .endDate(testAnchorLog.loggedAt())
                                 .contextSize(10)
                                 .limit(0)
                                 .build()
@@ -630,7 +630,7 @@ public class EntryServiceTest {
                 () -> entryService.searchAll(
                         QueryWithAnchorDTO
                                 .builder()
-                                .startDate(testAnchorLog.loggedAt())
+                                .endDate(testAnchorLog.loggedAt())
                                 .contextSize(10)
                                 .limit(10)
                                 .build()
@@ -649,7 +649,7 @@ public class EntryServiceTest {
                 () -> entryService.searchAll(
                         QueryWithAnchorDTO
                                 .builder()
-                                .startDate(middleAnchorLog.loggedAt())
+                                .endDate(middleAnchorLog.loggedAt())
                                 .contextSize(10)
                                 .limit(10)
                                 .build()
