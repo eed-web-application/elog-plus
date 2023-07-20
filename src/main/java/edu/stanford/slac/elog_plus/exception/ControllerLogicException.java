@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@ResponseStatus(value = HttpStatus.OK, reason = "ControllerLogicException")
+@ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR, reason = "ControllerLogicException")
 public class ControllerLogicException extends RuntimeException {
     private int errorCode;
     private String errorMessage;

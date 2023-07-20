@@ -7,6 +7,7 @@ import edu.stanford.slac.elog_plus.service.TagService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,6 +24,7 @@ public class TagsController {
             consumes = {MediaType.APPLICATION_JSON_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE})
     @Operation(description = "Create a new tag")
+    @ResponseStatus(HttpStatus.CREATED)
     public ApiResultResponse<String> newTag(@RequestBody NewTagDTO newTag) {
         return ApiResultResponse.of(
                 tagService.createTag(newTag)

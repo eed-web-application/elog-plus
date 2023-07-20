@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import org.assertj.core.api.AssertionsForClassTypes;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
@@ -13,9 +12,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-import org.springframework.test.web.servlet.result.StatusResultMatchers;
 
-import java.io.UnsupportedEncodingException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -26,11 +23,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @Service()
 public class TestHelperService {
-    public ApiResultResponse<String> newAttachment(MockMvc mockMvc, MockMultipartFile file) throws Exception {
+    public ApiResultResponse<String> newAttachment(MockMvc mockMvc, ResultMatcher resultMatcher, MockMultipartFile file) throws Exception {
         MvcResult result_upload = mockMvc.perform(
                         multipart("/v1/attachment").file(file)
                 )
-                .andExpect(status().isOk())
+                .andExpect(resultMatcher)
                 .andReturn();
         Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result_upload.getResolvedException());
         if (someException.isPresent()) {
@@ -42,12 +39,12 @@ public class TestHelperService {
         return res;
     }
 
-    public void checkDownloadedFile(MockMvc mockMvc, String attachmentID, String mediaType) throws Exception {
+    public void checkDownloadedFile(MockMvc mockMvc, ResultMatcher resultMatcher, String attachmentID, String mediaType) throws Exception {
         MvcResult result = mockMvc.perform(
                         get("/v1/attachment/{id}/download", attachmentID)
                                 .contentType(mediaType)
                 )
-                .andExpect(status().isOk())
+                .andExpect(resultMatcher)
                 .andReturn();
         Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
         if (someException.isPresent()) {
@@ -57,12 +54,12 @@ public class TestHelperService {
         AssertionsForClassTypes.assertThat(result.getResponse().getContentType()).isEqualTo(mediaType);
     }
 
-    public void checkDownloadedPreview(MockMvc mockMvc, String attachmentID, String mediaType) throws Exception {
+    public void checkDownloadedPreview(MockMvc mockMvc, ResultMatcher resultMatcher, String attachmentID, String mediaType) throws Exception {
         MvcResult result = mockMvc.perform(
                         get("/v1/attachment/{id}/preview.jpg", attachmentID)
                                 .contentType(mediaType)
                 )
-                .andExpect(status().isOk())
+                .andExpect(resultMatcher)
                 .andReturn();
         Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
         if (someException.isPresent()) {
@@ -72,112 +69,15 @@ public class TestHelperService {
         AssertionsForClassTypes.assertThat(result.getResponse().getContentType()).isEqualTo(mediaType);
     }
 
-    public ApiResultResponse<String> createNewLog(MockMvc mockMvc, NewLogDTO newLog) throws Exception {
+    public ApiResultResponse<String> createNewLog(MockMvc mockMvc, ResultMatcher resultMatcher, EntryNewDTO newLog) throws Exception {
         MvcResult result = mockMvc.perform(
-                        post("/v1/logs")
+                        post("/v1/entries")
                                 .content(
                                         new ObjectMapper().writeValueAsString(
                                                 newLog
                                         )
                                 )
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .accept(MediaType.APPLICATION_JSON)
-                )
-                .andExpect(status().isOk())
-                .andReturn();
-        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
-        if (someException.isPresent()) {
-            throw someException.get();
-        }
-        return new ObjectMapper().readValue(
-                result.getResponse().getContentAsString(),
-                new TypeReference<>() {
-                });
-    }
-
-    public ApiResultResponse<String> createNewSupersedeLog(MockMvc mockMvc, String supersededLogId, NewLogDTO newLog) throws Exception {
-        MvcResult result = mockMvc.perform(
-                        post("/v1/logs/{id}/supersede", supersededLogId)
-                                .content(
-                                        new ObjectMapper().writeValueAsString(
-                                                newLog
-                                        )
-                                )
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .accept(MediaType.APPLICATION_JSON)
-                )
-                .andExpect(status().isOk())
-                .andReturn();
-        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
-        if (someException.isPresent()) {
-            throw someException.get();
-        }
-        return new ObjectMapper().readValue(
-                result.getResponse().getContentAsString(),
-                new TypeReference<>() {
-                });
-    }
-
-    public ApiResultResponse<String> createNewFollowUpLog(MockMvc mockMvc, String followedLogID, NewLogDTO newLog) throws Exception {
-        MvcResult result = mockMvc.perform(
-                        post("/v1/logs/{id}/follow-up", followedLogID)
-                                .content(
-                                        new ObjectMapper().writeValueAsString(
-                                                newLog
-                                        )
-                                )
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .accept(MediaType.APPLICATION_JSON)
-                )
-                .andExpect(status().isOk())
-                .andReturn();
-        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
-        if (someException.isPresent()) {
-            throw someException.get();
-        }
-        return new ObjectMapper().readValue(
-                result.getResponse().getContentAsString(),
-                new TypeReference<>() {
-                });
-    }
-
-    public ApiResultResponse<List<SearchResultLogDTO>> getAllFollowUpLog(MockMvc mockMvc, String followedLogID) throws Exception {
-        MvcResult result = mockMvc.perform(
-                        get("/v1/logs/{id}/follow-up", followedLogID)
-                                .accept(MediaType.APPLICATION_JSON)
-                )
-                .andExpect(status().isOk())
-                .andReturn();
-        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
-        if (someException.isPresent()) {
-            throw someException.get();
-        }
-        return new ObjectMapper().readValue(
-                result.getResponse().getContentAsString(),
-                new TypeReference<>() {
-                });
-    }
-
-    public ApiResultResponse<LogDTO> getFullLog(MockMvc mockMvc, String id) throws Exception {
-        MvcResult result = mockMvc.perform(
-                        get("/v1/logs/{id}", id)
-                                .accept(MediaType.APPLICATION_JSON)
-                )
-                .andExpect(status().isOk())
-                .andReturn();
-        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
-        if (someException.isPresent()) {
-            throw someException.get();
-        }
-        return new ObjectMapper().readValue(
-                result.getResponse().getContentAsString(),
-                new TypeReference<>() {
-                });
-    }
-
-    public ApiResultResponse<LogDTO> getFullLog(MockMvc mockMvc, String id, ResultMatcher resultMatcher) throws Exception {
-        MvcResult result = mockMvc.perform(
-                        get("/v1/logs/{id}", id)
                                 .accept(MediaType.APPLICATION_JSON)
                 )
                 .andExpect(resultMatcher)
@@ -192,26 +92,18 @@ public class TestHelperService {
                 });
     }
 
-    public ApiResultResponse<LogDTO> getFullLog(MockMvc mockMvc, String id, boolean includeFollowUps) throws Exception {
-        return getFullLog(mockMvc, id, includeFollowUps, false, false);
-    }
-    public ApiResultResponse<LogDTO> getFullLog(MockMvc mockMvc, String id, boolean includeFollowUps, boolean includeFollowingUps, boolean includeHistory) throws Exception {
-        MockHttpServletRequestBuilder request = get("/v1/logs/{id}", id)
-                .accept(MediaType.APPLICATION_JSON);
-        if(includeFollowUps) {
-            request.param("includeFollowUps", String.valueOf(true));
-        }
-        if(includeFollowingUps) {
-            request.param("includeFollowingUps", String.valueOf(true));
-        }
-        if(includeHistory) {
-            request.param("includeHistory", String.valueOf(true));
-        }
-
+    public ApiResultResponse<String> createNewSupersedeLog(MockMvc mockMvc, ResultMatcher resultMatcher, String supersededLogId, EntryNewDTO newLog) throws Exception {
         MvcResult result = mockMvc.perform(
-                        request
+                        post("/v1/entries/{id}/supersede", supersededLogId)
+                                .content(
+                                        new ObjectMapper().writeValueAsString(
+                                                newLog
+                                        )
+                                )
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .accept(MediaType.APPLICATION_JSON)
                 )
-                .andExpect(status().isOk())
+                .andExpect(resultMatcher)
                 .andReturn();
         Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
         if (someException.isPresent()) {
@@ -223,88 +115,49 @@ public class TestHelperService {
                 });
     }
 
-    public ApiResultResponse<QueryPagedResultDTO<LogDTO>> submitSearchByGet(
-            MockMvc mockMvc,
-            int page,
-            int size,
-            List<String> logbook) throws Exception {
-        MvcResult result;
-        if (logbook.size() == 0) {
-            result = mockMvc.perform(
-                            get("/v1/logs/paging")
-                                    .param("page", String.valueOf(page))
-                                    .param("size", String.valueOf(size))
-                                    .param("logbook", "")
-                                    .accept(MediaType.APPLICATION_JSON)
-                    )
-                    .andExpect(status().isOk())
-                    .andReturn();
-        } else {
-            String[] lbArray = new String[logbook.size()];
-            logbook.toArray(lbArray);
-            result = mockMvc.perform(
-                            get("/v1/logs/paging")
-                                    .param("page", String.valueOf(page))
-                                    .param("size", String.valueOf(size))
-                                    .param("logbook", lbArray)
-                                    .accept(MediaType.APPLICATION_JSON)
-                    )
-                    .andExpect(status().isOk())
-                    .andReturn();
-        }
-
-        return new ObjectMapper().readValue(
-                result.getResponse().getContentAsString(),
-                new TypeReference<>() {
-                });
-    }
-
-    public ApiResultResponse<List<SearchResultLogDTO>> submitSearchByGetWithAnchor(
-            MockMvc mockMvc,
-            Optional<LocalDateTime> anchorDate,
-            Optional<Integer> logsBefore,
-            Optional<Integer> logsAfter,
-            Optional<String> textFilter,
-            Optional<List<String>> tags,
-            Optional<List<String>> logBook) throws Exception {
-
-        MockHttpServletRequestBuilder getBuilder =
-                get("/v1/logs")
-                        .accept(MediaType.APPLICATION_JSON);
-        anchorDate.ifPresent(localDateTime -> getBuilder.param("anchorDate", String.valueOf(localDateTime)));
-        logsBefore.ifPresent(logBefore -> getBuilder.param("logsBefore", String.valueOf(logBefore)));
-        logsAfter.ifPresent(logAfter -> getBuilder.param("logsAfter", String.valueOf(logAfter)));
-        textFilter.ifPresent(tex -> getBuilder.param("textFilter", tex));
-        tags.ifPresent(tl -> {
-            String[] tlArray = new String[tl.size()];
-            tl.toArray(tlArray);
-            getBuilder.param("tags", tlArray);
-        });
-        logBook.ifPresent(logbook -> {
-            String[] lbArray = new String[logbook.size()];
-            logbook.toArray(lbArray);
-            getBuilder.param("logbook", lbArray);
-        });
+    public ApiResultResponse<String> createNewFollowUpLog(MockMvc mockMvc, ResultMatcher resultMatcher, String followedLogID, EntryNewDTO newLog) throws Exception {
         MvcResult result = mockMvc.perform(
-                        getBuilder
-                )
-                .andExpect(status().isOk())
-                .andReturn();
-        return new ObjectMapper().readValue(
-                result.getResponse().getContentAsString(),
-                new TypeReference<>() {
-                });
-    }
-
-    public ApiResultResponse<String> createNewTag(MockMvc mockMvc, NewTagDTO newTagDTO) throws Exception {
-        MvcResult result = mockMvc.perform(
-                        post("/v1/tags")
+                        post("/v1/entries/{id}/follow-ups", followedLogID)
                                 .content(
                                         new ObjectMapper().writeValueAsString(
-                                                newTagDTO
+                                                newLog
                                         )
                                 )
                                 .contentType(MediaType.APPLICATION_JSON)
+                                .accept(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
+
+    public ApiResultResponse<List<EntrySummaryDTO>> getAllFollowUpLog(MockMvc mockMvc, ResultMatcher resultMatcher, String followedLogID) throws Exception {
+        MvcResult result = mockMvc.perform(
+                        get("/v1/entries/{id}/follow-ups", followedLogID)
+                                .accept(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
+
+    public ApiResultResponse<EntryDTO> getFullLog(MockMvc mockMvc, String id) throws Exception {
+        MvcResult result = mockMvc.perform(
+                        get("/v1/entries/{id}", id)
                                 .accept(MediaType.APPLICATION_JSON)
                 )
                 .andExpect(status().isOk())
@@ -319,8 +172,119 @@ public class TestHelperService {
                 });
     }
 
+    public ApiResultResponse<EntryDTO> getFullLog(MockMvc mockMvc, ResultMatcher resultMatcher, String id) throws Exception {
+        MvcResult result = mockMvc.perform(
+                        get("/v1/entries/{id}", id)
+                                .accept(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
+
+    public ApiResultResponse<EntryDTO> getFullLog(MockMvc mockMvc, ResultMatcher resultMatcher, String id, boolean includeFollowUps) throws Exception {
+        return getFullLog(mockMvc, resultMatcher, id, includeFollowUps, false, false);
+    }
+    public ApiResultResponse<EntryDTO> getFullLog(MockMvc mockMvc, ResultMatcher resultMatcher, String id, boolean includeFollowUps, boolean includeFollowingUps, boolean includeHistory) throws Exception {
+        MockHttpServletRequestBuilder request = get("/v1/entries/{id}", id)
+                .accept(MediaType.APPLICATION_JSON);
+        if(includeFollowUps) {
+            request.param("includeFollowUps", String.valueOf(true));
+        }
+        if(includeFollowingUps) {
+            request.param("includeFollowingUps", String.valueOf(true));
+        }
+        if(includeHistory) {
+            request.param("includeHistory", String.valueOf(true));
+        }
+
+        MvcResult result = mockMvc.perform(
+                        request
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
+
+    public ApiResultResponse<List<EntrySummaryDTO>> submitSearchByGetWithAnchor(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<LocalDateTime> startDate,
+            Optional<Integer> contextSize,
+            Optional<Integer> limit,
+            Optional<String> search,
+            Optional<List<String>> tags,
+            Optional<List<String>> logBook) throws Exception {
+
+        MockHttpServletRequestBuilder getBuilder =
+                get("/v1/entries")
+                        .accept(MediaType.APPLICATION_JSON);
+        startDate.ifPresent(localDateTime -> getBuilder.param("startDate", String.valueOf(localDateTime)));
+        //endDate.ifPresent(localDateTime -> getBuilder.param("endDate", String.valueOf(localDateTime)));
+        contextSize.ifPresent(size -> getBuilder.param("contextSize", String.valueOf(size)));
+        limit.ifPresent(size -> getBuilder.param("limit", String.valueOf(size)));
+        search.ifPresent(text -> getBuilder.param("search", text));
+        tags.ifPresent(tl -> {
+            String[] tlArray = new String[tl.size()];
+            tl.toArray(tlArray);
+            getBuilder.param("tags", tlArray);
+        });
+        logBook.ifPresent(logbook -> {
+            String[] lbArray = new String[logbook.size()];
+            logbook.toArray(lbArray);
+            getBuilder.param("logbooks", lbArray);
+        });
+        MvcResult result = mockMvc.perform(
+                        getBuilder
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
+
+    public ApiResultResponse<String> createNewTag(MockMvc mockMvc, ResultMatcher resultMatcher, NewTagDTO newTagDTO) throws Exception {
+        MvcResult result = mockMvc.perform(
+                        post("/v1/tags")
+                                .content(
+                                        new ObjectMapper().writeValueAsString(
+                                                newTagDTO
+                                        )
+                                )
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .accept(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
+
     public ApiResultResponse<List<TagDTO>> getAllTags(
-            MockMvc mockMvc) throws Exception {
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher) throws Exception {
 
         MockHttpServletRequestBuilder getBuilder =
                 get("/v1/tags")
@@ -329,7 +293,7 @@ public class TestHelperService {
         MvcResult result = mockMvc.perform(
                         getBuilder
                 )
-                .andExpect(status().isOk())
+                .andExpect(resultMatcher)
                 .andReturn();
         return new ObjectMapper().readValue(
                 result.getResponse().getContentAsString(),

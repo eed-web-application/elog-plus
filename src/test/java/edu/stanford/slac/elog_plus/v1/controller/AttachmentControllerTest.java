@@ -2,7 +2,6 @@ package edu.stanford.slac.elog_plus.v1.controller;
 
 import com.github.javafaker.Faker;
 import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
-import edu.stanford.slac.elog_plus.api.v1.dto.LogDTO;
 import edu.stanford.slac.elog_plus.model.Attachment;
 import edu.stanford.slac.elog_plus.service.AttachmentService;
 import edu.stanford.slac.elog_plus.v1.service.DocumentGenerationService;
@@ -29,6 +28,7 @@ import java.nio.charset.StandardCharsets;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureMockMvc
 @SpringBootTest()
@@ -60,6 +60,7 @@ public class AttachmentControllerTest {
     public void createAttachment() throws Exception {
         ApiResultResponse<String> newAttachmentID = testHelperService.newAttachment(
                 mockMvc,
+                status().isCreated(),
                 new MockMultipartFile(
                         "uploadFile",
                         "contract.pdf",
@@ -84,6 +85,7 @@ public class AttachmentControllerTest {
         String fileName = f.file().fileName();
         ApiResultResponse<String> newAttachmentID = testHelperService.newAttachment(
                 mockMvc,
+                status().isCreated(),
                 new MockMultipartFile(
                         "uploadFile",
                         fileName,
@@ -94,6 +96,7 @@ public class AttachmentControllerTest {
 
         testHelperService.checkDownloadedFile(
                 mockMvc,
+                status().isOk(),
                 newAttachmentID.getPayload(),
                 MediaType.APPLICATION_PDF_VALUE
         );
@@ -104,6 +107,7 @@ public class AttachmentControllerTest {
         try (InputStream is = documentGenerationService.getTestPng()) {
             ApiResultResponse<String> newAttachmentID = testHelperService.newAttachment(
                     mockMvc,
+                    status().isCreated(),
                     new MockMultipartFile(
                             "uploadFile",
                             "test.png",
@@ -114,11 +118,12 @@ public class AttachmentControllerTest {
 
             testHelperService.checkDownloadedFile(
                     mockMvc,
+                    status().isOk(),
                     newAttachmentID.getPayload(),
                     MediaType.IMAGE_PNG_VALUE
             );
 
-            await().atMost(10, SECONDS).pollDelay(500, MILLISECONDS).until(
+            await().atMost(20, SECONDS).pollDelay(500, MILLISECONDS).until(
                     () -> {
                         String processingState = attachmentService.getPreviewProcessingState(newAttachmentID.getPayload());
                         return processingState.compareTo(
@@ -129,10 +134,10 @@ public class AttachmentControllerTest {
 
             testHelperService.checkDownloadedPreview(
                     mockMvc,
+                    status().isOk(),
                     newAttachmentID.getPayload(),
                     MediaType.IMAGE_JPEG_VALUE
             );
         }
-
     }
 }

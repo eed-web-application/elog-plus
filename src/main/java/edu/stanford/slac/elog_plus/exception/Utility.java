@@ -84,4 +84,19 @@ public class Utility {
                     .build(); // or return null, or whatever you want
         }
     }
+
+    static public void assertion(Callable<Boolean> callable, ControllerLogicException exception) {
+        try {
+            if (!callable.call())
+                throw exception;
+        } catch (ControllerLogicException e) {
+            throw e;
+        } catch (Exception e) {
+            throw ControllerLogicException.builder()
+                    .errorCode(exception.getErrorCode())
+                    .errorMessage(e.getMessage())
+                    .errorDomain(exception.getErrorDomain())
+                    .build(); // or return null, or whatever you want
+        }
+    }
 }
