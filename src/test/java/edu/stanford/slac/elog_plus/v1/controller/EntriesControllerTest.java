@@ -284,6 +284,26 @@ public class EntriesControllerTest {
     }
 
     @Test
+    public void createSupersedeFailedOnNotFoundEntry() throws Exception {
+        //create supersede
+        EntryNotFound exception = assertThrows(
+                EntryNotFound.class,
+                () -> testHelperService.createNewSupersedeLog(
+                        mockMvc,
+                        status().is4xxClientError(),
+                        "not found superseded log",
+                        EntryNewDTO
+                                .builder()
+                                .logbook("MCC")
+                                .text("This is a log for test")
+                                .title("A very wonderful supersede log")
+                                .build()
+                )
+        );
+        AssertionsForClassTypes.assertThat(exception.getErrorCode()).isEqualTo(-2);
+    }
+
+    @Test
     public void getLogHistoryAndFollowingLog() throws Exception {
         ApiResultResponse<String> newLogIDResult =
                 assertDoesNotThrow(

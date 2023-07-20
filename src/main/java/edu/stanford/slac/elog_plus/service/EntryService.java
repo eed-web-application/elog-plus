@@ -257,9 +257,10 @@ public class EntryService {
                 );
         assertion(
                 supersededLog::isPresent,
-                -2,
-                "The log to supersede has not been found",
-                "LogService::getFullLog"
+                EntryNotFound.entryNotFoundBuilder()
+                        .errorCode(-2)
+                        .errorDomain("LogService::createNewSupersede")
+                        .build()
         );
         Entry l = supersededLog.get();
         assertion(
