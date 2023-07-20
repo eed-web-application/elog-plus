@@ -28,6 +28,7 @@ import java.nio.charset.StandardCharsets;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureMockMvc
 @SpringBootTest()
@@ -59,6 +60,7 @@ public class AttachmentControllerTest {
     public void createAttachment() throws Exception {
         ApiResultResponse<String> newAttachmentID = testHelperService.newAttachment(
                 mockMvc,
+                status().isCreated(),
                 new MockMultipartFile(
                         "uploadFile",
                         "contract.pdf",
@@ -83,6 +85,7 @@ public class AttachmentControllerTest {
         String fileName = f.file().fileName();
         ApiResultResponse<String> newAttachmentID = testHelperService.newAttachment(
                 mockMvc,
+                status().isCreated(),
                 new MockMultipartFile(
                         "uploadFile",
                         fileName,
@@ -93,6 +96,7 @@ public class AttachmentControllerTest {
 
         testHelperService.checkDownloadedFile(
                 mockMvc,
+                status().isOk(),
                 newAttachmentID.getPayload(),
                 MediaType.APPLICATION_PDF_VALUE
         );
@@ -103,6 +107,7 @@ public class AttachmentControllerTest {
         try (InputStream is = documentGenerationService.getTestPng()) {
             ApiResultResponse<String> newAttachmentID = testHelperService.newAttachment(
                     mockMvc,
+                    status().isCreated(),
                     new MockMultipartFile(
                             "uploadFile",
                             "test.png",
@@ -113,6 +118,7 @@ public class AttachmentControllerTest {
 
             testHelperService.checkDownloadedFile(
                     mockMvc,
+                    status().isOk(),
                     newAttachmentID.getPayload(),
                     MediaType.IMAGE_PNG_VALUE
             );
@@ -128,10 +134,10 @@ public class AttachmentControllerTest {
 
             testHelperService.checkDownloadedPreview(
                     mockMvc,
+                    status().isOk(),
                     newAttachmentID.getPayload(),
                     MediaType.IMAGE_JPEG_VALUE
             );
         }
-
     }
 }

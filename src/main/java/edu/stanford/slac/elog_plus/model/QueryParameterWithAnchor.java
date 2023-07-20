@@ -13,17 +13,19 @@ import java.util.List;
 @AllArgsConstructor
 public class QueryParameterWithAnchor {
     @Builder.Default
-    LocalDateTime anchorDate = null;
+    LocalDateTime startDate = null;
     @Builder.Default
-    Integer logsBefore = 0;
+    LocalDateTime endDate = null;
     @Builder.Default
-    Integer logsAfter = 10;
+    Integer contextSize = 0;
     @Builder.Default
-    String textSearch = null;
+    Integer limit = 0;
+    @Builder.Default
+    String search = null;
     @Builder.Default
     List<String> tags  = Collections.emptyList();
     @Builder.Default
-    List<String> logBook = Collections.emptyList();
+    List<String> logbooks = Collections.emptyList();
     @Builder.Default
     private LocalDateTime from = null;
     @Builder.Default

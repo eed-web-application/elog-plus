@@ -33,12 +33,5 @@ public record QueryWithAnchorDTO(
         String search,
         @Schema(description = "Only include entries that use one of these tags.")
         List<String> tags,
-
         @Schema(description = "Only include entries that belong to one of these logbooks.")
-        List<String> logBook) {
-    public QueryWithAnchorDTO {
-        if (limit == null) {
-            limit = 10;
-        }
-    }
-}
+        List<String> logbooks) {}

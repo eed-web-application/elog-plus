@@ -23,6 +23,7 @@ public class AttachmentsController {
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(summary = "Create a new attachment")
+    @ResponseStatus(HttpStatus.CREATED)
     public ApiResultResponse<String> newAttachment(
             @RequestParam("uploadFile") MultipartFile uploadFile
     ) throws Exception {

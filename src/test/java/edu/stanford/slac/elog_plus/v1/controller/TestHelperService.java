@@ -23,11 +23,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @Service()
 public class TestHelperService {
-    public ApiResultResponse<String> newAttachment(MockMvc mockMvc, MockMultipartFile file) throws Exception {
+    public ApiResultResponse<String> newAttachment(MockMvc mockMvc, ResultMatcher resultMatcher, MockMultipartFile file) throws Exception {
         MvcResult result_upload = mockMvc.perform(
                         multipart("/v1/attachment").file(file)
                 )
-                .andExpect(status().isOk())
+                .andExpect(resultMatcher)
                 .andReturn();
         Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result_upload.getResolvedException());
         if (someException.isPresent()) {
@@ -39,12 +39,12 @@ public class TestHelperService {
         return res;
     }
 
-    public void checkDownloadedFile(MockMvc mockMvc, String attachmentID, String mediaType) throws Exception {
+    public void checkDownloadedFile(MockMvc mockMvc, ResultMatcher resultMatcher, String attachmentID, String mediaType) throws Exception {
         MvcResult result = mockMvc.perform(
                         get("/v1/attachment/{id}/download", attachmentID)
                                 .contentType(mediaType)
                 )
-                .andExpect(status().isOk())
+                .andExpect(resultMatcher)
                 .andReturn();
         Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
         if (someException.isPresent()) {
@@ -54,12 +54,12 @@ public class TestHelperService {
         AssertionsForClassTypes.assertThat(result.getResponse().getContentType()).isEqualTo(mediaType);
     }
 
-    public void checkDownloadedPreview(MockMvc mockMvc, String attachmentID, String mediaType) throws Exception {
+    public void checkDownloadedPreview(MockMvc mockMvc, ResultMatcher resultMatcher, String attachmentID, String mediaType) throws Exception {
         MvcResult result = mockMvc.perform(
                         get("/v1/attachment/{id}/preview.jpg", attachmentID)
                                 .contentType(mediaType)
                 )
-                .andExpect(status().isOk())
+                .andExpect(resultMatcher)
                 .andReturn();
         Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
         if (someException.isPresent()) {
@@ -69,7 +69,7 @@ public class TestHelperService {
         AssertionsForClassTypes.assertThat(result.getResponse().getContentType()).isEqualTo(mediaType);
     }
 
-    public ApiResultResponse<String> createNewLog(MockMvc mockMvc, EntryNewDTO newLog) throws Exception {
+    public ApiResultResponse<String> createNewLog(MockMvc mockMvc, ResultMatcher resultMatcher, EntryNewDTO newLog) throws Exception {
         MvcResult result = mockMvc.perform(
                         post("/v1/entries")
                                 .content(
@@ -80,7 +80,7 @@ public class TestHelperService {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .accept(MediaType.APPLICATION_JSON)
                 )
-                .andExpect(status().isOk())
+                .andExpect(resultMatcher)
                 .andReturn();
         Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
         if (someException.isPresent()) {
@@ -92,7 +92,7 @@ public class TestHelperService {
                 });
     }
 
-    public ApiResultResponse<String> createNewSupersedeLog(MockMvc mockMvc, String supersededLogId, EntryNewDTO newLog) throws Exception {
+    public ApiResultResponse<String> createNewSupersedeLog(MockMvc mockMvc, ResultMatcher resultMatcher, String supersededLogId, EntryNewDTO newLog) throws Exception {
         MvcResult result = mockMvc.perform(
                         post("/v1/entries/{id}/supersede", supersededLogId)
                                 .content(
@@ -103,7 +103,7 @@ public class TestHelperService {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .accept(MediaType.APPLICATION_JSON)
                 )
-                .andExpect(status().isOk())
+                .andExpect(resultMatcher)
                 .andReturn();
         Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
         if (someException.isPresent()) {
@@ -115,9 +115,9 @@ public class TestHelperService {
                 });
     }
 
-    public ApiResultResponse<String> createNewFollowUpLog(MockMvc mockMvc, String followedLogID, EntryNewDTO newLog) throws Exception {
+    public ApiResultResponse<String> createNewFollowUpLog(MockMvc mockMvc, ResultMatcher resultMatcher, String followedLogID, EntryNewDTO newLog) throws Exception {
         MvcResult result = mockMvc.perform(
-                        post("/v1/entries/{id}/follow-up", followedLogID)
+                        post("/v1/entries/{id}/follow-ups", followedLogID)
                                 .content(
                                         new ObjectMapper().writeValueAsString(
                                                 newLog
@@ -126,7 +126,7 @@ public class TestHelperService {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .accept(MediaType.APPLICATION_JSON)
                 )
-                .andExpect(status().isOk())
+                .andExpect(resultMatcher)
                 .andReturn();
         Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
         if (someException.isPresent()) {
@@ -138,12 +138,12 @@ public class TestHelperService {
                 });
     }
 
-    public ApiResultResponse<List<EntrySummaryDTO>> getAllFollowUpLog(MockMvc mockMvc, String followedLogID) throws Exception {
+    public ApiResultResponse<List<EntrySummaryDTO>> getAllFollowUpLog(MockMvc mockMvc, ResultMatcher resultMatcher, String followedLogID) throws Exception {
         MvcResult result = mockMvc.perform(
-                        get("/v1/entries/{id}/follow-up", followedLogID)
+                        get("/v1/entries/{id}/follow-ups", followedLogID)
                                 .accept(MediaType.APPLICATION_JSON)
                 )
-                .andExpect(status().isOk())
+                .andExpect(resultMatcher)
                 .andReturn();
         Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
         if (someException.isPresent()) {
@@ -172,7 +172,7 @@ public class TestHelperService {
                 });
     }
 
-    public ApiResultResponse<EntryDTO> getFullLog(MockMvc mockMvc, String id, ResultMatcher resultMatcher) throws Exception {
+    public ApiResultResponse<EntryDTO> getFullLog(MockMvc mockMvc, ResultMatcher resultMatcher, String id) throws Exception {
         MvcResult result = mockMvc.perform(
                         get("/v1/entries/{id}", id)
                                 .accept(MediaType.APPLICATION_JSON)
@@ -189,10 +189,10 @@ public class TestHelperService {
                 });
     }
 
-    public ApiResultResponse<EntryDTO> getFullLog(MockMvc mockMvc, String id, boolean includeFollowUps) throws Exception {
-        return getFullLog(mockMvc, id, includeFollowUps, false, false);
+    public ApiResultResponse<EntryDTO> getFullLog(MockMvc mockMvc, ResultMatcher resultMatcher, String id, boolean includeFollowUps) throws Exception {
+        return getFullLog(mockMvc, resultMatcher, id, includeFollowUps, false, false);
     }
-    public ApiResultResponse<EntryDTO> getFullLog(MockMvc mockMvc, String id, boolean includeFollowUps, boolean includeFollowingUps, boolean includeHistory) throws Exception {
+    public ApiResultResponse<EntryDTO> getFullLog(MockMvc mockMvc, ResultMatcher resultMatcher, String id, boolean includeFollowUps, boolean includeFollowingUps, boolean includeHistory) throws Exception {
         MockHttpServletRequestBuilder request = get("/v1/entries/{id}", id)
                 .accept(MediaType.APPLICATION_JSON);
         if(includeFollowUps) {
@@ -208,7 +208,7 @@ public class TestHelperService {
         MvcResult result = mockMvc.perform(
                         request
                 )
-                .andExpect(status().isOk())
+                .andExpect(resultMatcher)
                 .andReturn();
         Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
         if (someException.isPresent()) {
@@ -222,6 +222,7 @@ public class TestHelperService {
 
     public ApiResultResponse<List<EntrySummaryDTO>> submitSearchByGetWithAnchor(
             MockMvc mockMvc,
+            ResultMatcher resultMatcher,
             Optional<LocalDateTime> startDate,
             Optional<Integer> contextSize,
             Optional<Integer> limit,
@@ -250,7 +251,7 @@ public class TestHelperService {
         MvcResult result = mockMvc.perform(
                         getBuilder
                 )
-                .andExpect(status().isOk())
+                .andExpect(resultMatcher)
                 .andReturn();
         return new ObjectMapper().readValue(
                 result.getResponse().getContentAsString(),
@@ -258,7 +259,7 @@ public class TestHelperService {
                 });
     }
 
-    public ApiResultResponse<String> createNewTag(MockMvc mockMvc, NewTagDTO newTagDTO) throws Exception {
+    public ApiResultResponse<String> createNewTag(MockMvc mockMvc, ResultMatcher resultMatcher, NewTagDTO newTagDTO) throws Exception {
         MvcResult result = mockMvc.perform(
                         post("/v1/tags")
                                 .content(
@@ -269,7 +270,7 @@ public class TestHelperService {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .accept(MediaType.APPLICATION_JSON)
                 )
-                .andExpect(status().isOk())
+                .andExpect(resultMatcher)
                 .andReturn();
         Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
         if (someException.isPresent()) {
@@ -282,7 +283,8 @@ public class TestHelperService {
     }
 
     public ApiResultResponse<List<TagDTO>> getAllTags(
-            MockMvc mockMvc) throws Exception {
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher) throws Exception {
 
         MockHttpServletRequestBuilder getBuilder =
                 get("/v1/tags")
@@ -291,7 +293,7 @@ public class TestHelperService {
         MvcResult result = mockMvc.perform(
                         getBuilder
                 )
-                .andExpect(status().isOk())
+                .andExpect(resultMatcher)
                 .andReturn();
         return new ObjectMapper().readValue(
                 result.getResponse().getContentAsString(),

@@ -4,8 +4,7 @@ import com.github.javafaker.Faker;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.api.v1.mapper.EntryMapper;
 import edu.stanford.slac.elog_plus.api.v1.mapper.QueryParameterMapper;
-import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
-import edu.stanford.slac.elog_plus.exception.ItemNotFound;
+import edu.stanford.slac.elog_plus.exception.*;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.repository.EntryRepository;
 import lombok.AllArgsConstructor;
@@ -25,7 +24,7 @@ import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
 
 @Service
 @AllArgsConstructor
-public class LogService {
+public class EntryService {
     final private TagService tagService;
     final private EntryRepository entryRepository;
     final private LogbookService logbookService;
@@ -76,23 +75,24 @@ public class LogService {
         //check logbook
         assertion(
                 () -> logbookService.exist(entryNewDTO.logbook()),
-                -1,
-                "The logbook is not valid",
-                "LogService::createNew"
+                NotebookNotFound.notebookNotFoundBuilder()
+                        .errorCode(-1)
+                        .errorDomain("LogService::createNew")
+                        .build()
         );
 
         newEntry
                 .getTags()
                 .forEach(
                         tagName -> {
-                            if (!tagService.existsByName(tagName)) {
-                                String error = String.format("The tag '%s' has not been found", tagName);
-                                throw ControllerLogicException.of(
-                                        -2,
-                                        error,
-                                        "LogService::createNew"
-                                );
-                            }
+                            assertion(
+                                    () -> tagService.existsByName(tagName),
+                                    TagNotFound.tagNotFoundBuilder()
+                                            .errorCode(-2)
+                                            .tagName(tagName)
+                                            .errorDomain("LogService::createNew")
+                                            .build()
+                            );
                         }
                 );
 
@@ -140,36 +140,36 @@ public class LogService {
     /**
      * return the full log
      *
-     * @param id               the unique identifier of the log
-     * @param includeFollowUps if true the result will include the follow-up logs
+     * @param id                  the unique identifier of the log
+     * @param includeFollowUps    if true the result will include the follow-up logs
      * @param includeFollowingUps if true the result will include all the following up of this
-     * @param followHistory    if true the result will include the log history
+     * @param followHistory       if true the result will include the log history
      * @return the full log description
      */
     public EntryDTO getFullLog(String id, Optional<Boolean> includeFollowUps, Optional<Boolean> includeFollowingUps, Optional<Boolean> followHistory) {
         EntryDTO result = null;
-        Optional<Entry> foundLog =
+        Optional<Entry> foundEntry =
                 wrapCatch(
                         () -> entryRepository.findById(id),
                         -1,
                         "LogService::getFullLog"
                 );
-        if(foundLog.isEmpty()) {
-            throw ItemNotFound.ItemNotFoundBuilder()
-                    .errorCode(-2)
-                    .errorMessage("The log has not been foun")
-                    .errorDomain("LogService::getFullLog")
-                    .build();
-        }
+        assertion(
+                foundEntry::isPresent,
+                EntryNotFound.entryNotFoundBuilder()
+                        .errorCode(-2)
+                        .errorDomain("LogService::getFullLog")
+                        .build()
+        );
 
         result = EntryMapper.INSTANCE.fromModel(
-                foundLog.get(),
+                foundEntry.get(),
                 attachmentService
         );
 
         if (includeFollowUps.isPresent() && includeFollowUps.get()) {
-            List<EntryDTO> list = new ArrayList<>(foundLog.get().getFollowUp().size());
-            for (String fID : foundLog.get().getFollowUp()){
+            List<EntryDTO> list = new ArrayList<>(foundEntry.get().getFollowUp().size());
+            for (String fID : foundEntry.get().getFollowUp()) {
                 list.add(getFullLog(fID));
 
             }
@@ -178,17 +178,17 @@ public class LogService {
                     .build();
         }
 
-        if(includeFollowingUps.isPresent() && includeFollowingUps.get()) {
+        if (includeFollowingUps.isPresent() && includeFollowingUps.get()) {
             Optional<Entry> followingLog = wrapCatch(
-                    ()-> entryRepository.findByFollowUpContains(id),
+                    () -> entryRepository.findByFollowUpContains(id),
                     -3,
                     "LogService::getFullLog"
             );
-            if(followingLog.isPresent()) {
+            if (followingLog.isPresent()) {
                 result = result.toBuilder()
                         .followingUp(
                                 followingLog.map(
-                                        l-> EntryMapper.INSTANCE.fromModel(l, attachmentService)
+                                        l -> EntryMapper.INSTANCE.fromModel(l, attachmentService)
                                 ).orElse(null)
                         )
                         .build();
@@ -196,11 +196,11 @@ public class LogService {
 
         }
 
-        if(followHistory.isPresent() && followHistory.get()) {
+        if (followHistory.isPresent() && followHistory.get()) {
             // load all the history
             List<EntryDTO> logHistory = new ArrayList<>();
             getLogHistory(id, logHistory);
-            if(logHistory.size()>0) {
+            if (logHistory.size() > 0) {
                 result = result.toBuilder()
                         .history(logHistory)
                         .build();
@@ -211,6 +211,7 @@ public class LogService {
 
     /**
      * Return the previous log in the history, the superseded log is returned without attachment
+     *
      * @param newestLogID is the log of the root release for which we want the history
      * @return the log superseded byt the one identified by newestLogID
      */
@@ -226,13 +227,14 @@ public class LogService {
 
     /**
      * Return all the history of the log from the newest one passed in input until the last
+     *
      * @param newestLogID the log of the newest id
-     * @param history the list of the log until the last, from the one identified by newestLogID
+     * @param history     the list of the log until the last, from the one identified by newestLogID
      */
     public void getLogHistory(String newestLogID, List<EntryDTO> history) {
-        if(history == null) return;
+        if (history == null) return;
         EntryDTO prevInHistory = getSuperseded(newestLogID);
-        if(prevInHistory == null) return;
+        if (prevInHistory == null) return;
 
         history.add(prevInHistory);
         getLogHistory(prevInHistory.id(), history);
@@ -264,9 +266,10 @@ public class LogService {
                 () -> (l.getSupersedeBy() == null ||
                         l.getSupersedeBy().isEmpty())
                 ,
-                -3,
-                "The log has already a supersede",
-                "LogService::getFullLog"
+                SupersedeAlreadyCreated.supersedeAlreadyCreatedBuilder()
+                        .errorCode(-3)
+                        .errorDomain("LogService::createNewSupersede")
+                        .build()
         );
         //create supersede
         String newLogID = createNew(newLog);
@@ -328,11 +331,11 @@ public class LogService {
                 );
         assertion(
                 rootLog::isPresent,
-                -2,
-                "The log has not been found",
-                "LogService::getAllFollowUpForALog"
+                EntryNotFound.entryNotFoundBuilder()
+                        .errorCode(-2)
+                        .errorDomain("LogService::getAllFollowUpForALog")
+                        .build()
         );
-
         assertion(
                 () -> (rootLog.get().getFollowUp().size() > 0),
                 -3,

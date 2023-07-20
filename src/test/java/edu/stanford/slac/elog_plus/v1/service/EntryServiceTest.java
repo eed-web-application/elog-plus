@@ -3,11 +3,11 @@ package edu.stanford.slac.elog_plus.v1.service;
 import com.github.javafaker.Faker;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
-import edu.stanford.slac.elog_plus.exception.ItemNotFound;
+import edu.stanford.slac.elog_plus.exception.EntryNotFound;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.FileObjectDescription;
 import edu.stanford.slac.elog_plus.service.AttachmentService;
-import edu.stanford.slac.elog_plus.service.LogService;
+import edu.stanford.slac.elog_plus.service.EntryService;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,7 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @ActiveProfiles(profiles = "test")
 public class EntryServiceTest {
     @Autowired
-    private LogService logService;
+    private EntryService entryService;
     @Autowired
     private LogbookService logbookService;
     @Autowired
@@ -64,7 +64,7 @@ public class EntryServiceTest {
 
     @Test
     public void testLogCreation() {
-        String newLogID = logService.createNew(
+        String newLogID = entryService.createNew(
                 EntryNewDTO
                         .builder()
                         .logbook("MCC")
@@ -78,7 +78,7 @@ public class EntryServiceTest {
 
     @Test
     public void testLogTextSanitization() {
-        String newLogID = logService.createNew(
+        String newLogID = entryService.createNew(
                 EntryNewDTO
                         .builder()
                         .logbook("MCC")
@@ -89,7 +89,7 @@ public class EntryServiceTest {
 
         EntryDTO fullLog =
                 assertDoesNotThrow(
-                        () -> logService.getFullLog(
+                        () -> entryService.getFullLog(
                                 newLogID
                         )
                 );
@@ -101,7 +101,7 @@ public class EntryServiceTest {
         ControllerLogicException ex =
                 assertThrows(
                         ControllerLogicException.class,
-                        () -> logService.createNew(
+                        () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
                                         .logbook("MCC")
@@ -119,7 +119,7 @@ public class EntryServiceTest {
         ControllerLogicException ex =
                 assertThrows(
                         ControllerLogicException.class,
-                        () -> logService.createNew(
+                        () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
                                         .logbook("MCC")
@@ -134,10 +134,10 @@ public class EntryServiceTest {
 
     @Test
     public void failGettingNotFoundLog() {
-        ItemNotFound exception =
+        EntryNotFound exception =
                 assertThrows(
-                        ItemNotFound.class,
-                        () -> logService.getFullLog("wrong id")
+                        EntryNotFound.class,
+                        () -> entryService.getFullLog("wrong id")
                 );
         assertThat(exception.getErrorCode()).isEqualTo(-2);
     }
@@ -146,7 +146,7 @@ public class EntryServiceTest {
     public void testFetchFullLog() {
         String newLogID =
                 assertDoesNotThrow(
-                        () -> logService.createNew(
+                        () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
                                         .logbook("MCC")
@@ -158,7 +158,7 @@ public class EntryServiceTest {
 
         EntryDTO fullLog =
                 assertDoesNotThrow(
-                        () -> logService.getFullLog(newLogID)
+                        () -> entryService.getFullLog(newLogID)
                 );
         assertThat(fullLog.id()).isEqualTo(newLogID);
     }
@@ -167,7 +167,7 @@ public class EntryServiceTest {
     public void testSupersedeCreationFailOnWrongRootLog() {
         ControllerLogicException exception = assertThrows(
                 ControllerLogicException.class,
-                () -> logService.createNewSupersede(
+                () -> entryService.createNewSupersede(
                         "bad id",
                         EntryNewDTO
                                 .builder()
@@ -185,7 +185,7 @@ public class EntryServiceTest {
     public void testSupersedeOK() {
         String supersededLogID =
                 assertDoesNotThrow(
-                        () -> logService.createNew(
+                        () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
                                         .logbook("MCC")
@@ -197,7 +197,7 @@ public class EntryServiceTest {
 
         String newLogID =
                 assertDoesNotThrow(
-                        () -> logService.createNewSupersede(
+                        () -> entryService.createNewSupersede(
                                 supersededLogID,
                                 EntryNewDTO
                                         .builder()
@@ -209,14 +209,14 @@ public class EntryServiceTest {
                 );
 
         EntryDTO supersededLog = assertDoesNotThrow(
-                () -> logService.getFullLog(supersededLogID)
+                () -> entryService.getFullLog(supersededLogID)
         );
 
         assertThat(supersededLog).isNotNull();
         assertThat(supersededLog.supersedeBy()).isEqualTo(newLogID);
 
         EntryDTO fullLog = assertDoesNotThrow(
-                () -> logService.getFullLog(newLogID)
+                () -> entryService.getFullLog(newLogID)
         );
 
         assertThat(fullLog).isNotNull();
@@ -227,7 +227,7 @@ public class EntryServiceTest {
     public void testHistory() {
         String supersededLogID =
                 assertDoesNotThrow(
-                        () -> logService.createNew(
+                        () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
                                         .logbook("MCC")
@@ -239,7 +239,7 @@ public class EntryServiceTest {
 
         String supersededLogIDTwo =
                 assertDoesNotThrow(
-                        () -> logService.createNewSupersede(
+                        () -> entryService.createNewSupersede(
                                 supersededLogID,
                                 EntryNewDTO
                                         .builder()
@@ -252,7 +252,7 @@ public class EntryServiceTest {
 
         String supersededLogIDNewest =
                 assertDoesNotThrow(
-                        () -> logService.createNewSupersede(
+                        () -> entryService.createNewSupersede(
                                 supersededLogIDTwo,
                                 EntryNewDTO
                                         .builder()
@@ -264,7 +264,7 @@ public class EntryServiceTest {
                 );
         List<EntryDTO> history = new ArrayList<>();
         assertDoesNotThrow(
-                () -> logService.getLogHistory(supersededLogIDNewest, history)
+                () -> entryService.getLogHistory(supersededLogIDNewest, history)
         );
         assertThat(history).isNotEmpty();
         assertThat(history).extracting("id").containsExactly(supersededLogIDTwo, supersededLogID);
@@ -274,7 +274,7 @@ public class EntryServiceTest {
     public void testSupersedeErrorOnDoubleSuperseding() {
         String supersededLogID =
                 assertDoesNotThrow(
-                        () -> logService.createNew(
+                        () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
                                         .logbook("MCC")
@@ -287,7 +287,7 @@ public class EntryServiceTest {
 
         String newLogID =
                 assertDoesNotThrow(
-                        () -> logService.createNewSupersede(
+                        () -> entryService.createNewSupersede(
                                 supersededLogID,
                                 EntryNewDTO
                                         .builder()
@@ -302,7 +302,7 @@ public class EntryServiceTest {
         ControllerLogicException exception =
                 assertThrows(
                         ControllerLogicException.class,
-                        () -> logService.createNewSupersede(
+                        () -> entryService.createNewSupersede(
                                 supersededLogID,
                                 EntryNewDTO
                                         .builder()
@@ -319,7 +319,7 @@ public class EntryServiceTest {
     public void testFollowUpCreationFailOnWrongRootLog() {
         ControllerLogicException exception = assertThrows(
                 ControllerLogicException.class,
-                () -> logService.createNewFollowUp(
+                () -> entryService.createNewFollowUp(
                         "bad root id",
                         EntryNewDTO
                                 .builder()
@@ -337,7 +337,7 @@ public class EntryServiceTest {
     public void testFollowUpCreation() {
         String rootLogID =
                 assertDoesNotThrow(
-                        () -> logService.createNew(
+                        () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
                                         .logbook("MCC")
@@ -350,7 +350,7 @@ public class EntryServiceTest {
 
         String newFollowUpOneID =
                 assertDoesNotThrow(
-                        () -> logService.createNewFollowUp(
+                        () -> entryService.createNewFollowUp(
                                 rootLogID,
                                 EntryNewDTO
                                         .builder()
@@ -364,7 +364,7 @@ public class EntryServiceTest {
 
         String newFollowUpTwoID =
                 assertDoesNotThrow(
-                        () -> logService.createNewFollowUp(
+                        () -> entryService.createNewFollowUp(
                                 rootLogID,
                                 EntryNewDTO
                                         .builder()
@@ -378,7 +378,7 @@ public class EntryServiceTest {
 
         List<EntrySummaryDTO> followUpLogsFound =
                 assertDoesNotThrow(
-                        () -> logService.getAllFollowUpForALog(
+                        () -> entryService.getAllFollowUpForALog(
                                 rootLogID
                         )
                 );
@@ -391,7 +391,7 @@ public class EntryServiceTest {
     public void testFollowingUpIngFullLog() {
         String rootLogID =
                 assertDoesNotThrow(
-                        () -> logService.createNew(
+                        () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
                                         .logbook("MCC")
@@ -404,7 +404,7 @@ public class EntryServiceTest {
 
         String newFollowUpOneID =
                 assertDoesNotThrow(
-                        () -> logService.createNewFollowUp(
+                        () -> entryService.createNewFollowUp(
                                 rootLogID,
                                 EntryNewDTO
                                         .builder()
@@ -418,7 +418,7 @@ public class EntryServiceTest {
 
         EntryDTO logWithFlowingUpLog =
                 assertDoesNotThrow(
-                        () -> logService.getFullLog(
+                        () -> entryService.getFullLog(
                                 newFollowUpOneID,
                                 Optional.empty(),
                                 Optional.of(true),
@@ -459,7 +459,7 @@ public class EntryServiceTest {
         assertThat(attachmentID).isNotNull();
         String newLogID =
                 assertDoesNotThrow(
-                        () -> logService.createNew(
+                        () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
                                         .logbook("MCC")
@@ -473,7 +473,7 @@ public class EntryServiceTest {
         // check for the attachment are well filled into dto
         EntryDTO foundLog =
                 assertDoesNotThrow(
-                        () -> logService.getFullLog(newLogID)
+                        () -> entryService.getFullLog(newLogID)
                 );
         assertThat(foundLog).isNotNull();
         assertThat(foundLog.attachments().size()).isEqualTo(1);
@@ -509,7 +509,7 @@ public class EntryServiceTest {
         assertThat(attachmentID).isNotNull();
         String newLogID =
                 assertDoesNotThrow(
-                        () -> logService.createNew(
+                        () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
                                         .logbook("MCC")
@@ -523,7 +523,7 @@ public class EntryServiceTest {
         // check for the attachment are well filled into dto
         var foundLog =
                 assertDoesNotThrow(
-                        () -> logService.searchAll(
+                        () -> entryService.searchAll(
                                 QueryWithAnchorDTO
                                         .builder()
                                         .build()
@@ -544,7 +544,7 @@ public class EntryServiceTest {
             int finalIdx = idx;
             String newLogID =
                     assertDoesNotThrow(
-                            () -> logService.createNew(
+                            () -> entryService.createNew(
                                     EntryNewDTO
                                             .builder()
                                             .logbook("MCC")
@@ -562,10 +562,10 @@ public class EntryServiceTest {
 
         // initial search
         List<EntrySummaryDTO> firstPage = assertDoesNotThrow(
-                () -> logService.searchAll(
+                () -> entryService.searchAll(
                         QueryWithAnchorDTO
                                 .builder()
-                                .logsAfter(10)
+                                .limit(10)
                                 .build()
                 )
         );
@@ -586,7 +586,7 @@ public class EntryServiceTest {
         var testAnchorLog = firstPage.get(firstPage.size() - 1);
         // load next page
         List<EntrySummaryDTO> nextPage = assertDoesNotThrow(
-                () -> logService.searchAll(
+                () -> entryService.searchAll(
                         QueryWithAnchorDTO
                                 .builder()
                                 .startDate(testAnchorLog.loggedAt())
@@ -612,7 +612,7 @@ public class EntryServiceTest {
 
         // now get all the record upside and downside
         List<EntrySummaryDTO> prevPageByPin = assertDoesNotThrow(
-                () -> logService.searchAll(
+                () -> entryService.searchAll(
                         QueryWithAnchorDTO
                                 .builder()
                                 .startDate(testAnchorLog.loggedAt())
@@ -626,7 +626,7 @@ public class EntryServiceTest {
         assertThat(prevPageByPin).isEqualTo(firstPage);
 
         List<EntrySummaryDTO> prevAndNextPageByPin = assertDoesNotThrow(
-                () -> logService.searchAll(
+                () -> entryService.searchAll(
                         QueryWithAnchorDTO
                                 .builder()
                                 .startDate(testAnchorLog.loggedAt())
@@ -643,9 +643,9 @@ public class EntryServiceTest {
 
 
         // now search in the middle of the data set
-        EntryDTO middleAnchorLog = logService.getFullLog(anchorID);
+        EntryDTO middleAnchorLog = entryService.getFullLog(anchorID);
         List<EntrySummaryDTO> prevAndNextPageByMiddlePin = assertDoesNotThrow(
-                () -> logService.searchAll(
+                () -> entryService.searchAll(
                         QueryWithAnchorDTO
                                 .builder()
                                 .startDate(middleAnchorLog.loggedAt())

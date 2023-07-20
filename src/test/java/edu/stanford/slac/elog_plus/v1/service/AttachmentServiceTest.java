@@ -3,7 +3,7 @@ package edu.stanford.slac.elog_plus.v1.service;
 import edu.stanford.slac.elog_plus.model.Attachment;
 import edu.stanford.slac.elog_plus.model.FileObjectDescription;
 import edu.stanford.slac.elog_plus.service.AttachmentService;
-import edu.stanford.slac.elog_plus.service.LogService;
+import edu.stanford.slac.elog_plus.service.EntryService;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 public class AttachmentServiceTest {
     private static final Logger log = LoggerFactory.getLogger(AttachmentServiceTest.class);
     @Autowired
-    private LogService logService;
+    private EntryService entryService;
     @Autowired
     private AttachmentService attachmentService;
     @Autowired

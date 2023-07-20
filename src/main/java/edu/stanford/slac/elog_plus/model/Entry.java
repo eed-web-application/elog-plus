@@ -25,16 +25,13 @@ public class Entry {
     private String id;
     private String supersedeBy;
     private String entryType;
-    @Field("LOGBOOK")
     @Indexed
     private String logbook;
     private String priority;
     private String segment;
     @TextIndexed
-    @Field("TITLE")
     private String title;
     @TextIndexed
-    @Field("TEXT")
     private String text;
     private String lastName;
     private String firstName;
@@ -48,9 +45,7 @@ public class Entry {
     @Indexed
     @Builder.Default
     private List<String> followUp = new ArrayList<>();
-    @Field("FILE_PS")
     private String filePs;
-    @Field("FILE_PREVIEW")
     private String filePreview;
     @Indexed
     @CreatedDate
