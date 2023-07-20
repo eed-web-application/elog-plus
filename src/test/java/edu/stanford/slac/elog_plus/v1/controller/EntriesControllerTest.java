@@ -115,6 +115,7 @@ public class EntriesControllerTest {
                 status().isOk(),
                 Optional.empty(),
                 Optional.empty(),
+                Optional.empty(),
                 Optional.of(10),
                 Optional.empty(),
                 Optional.empty(),
@@ -219,6 +220,7 @@ public class EntriesControllerTest {
         var queryResult  = testHelperService.submitSearchByGetWithAnchor(
                 mockMvc,
                 status().isOk(),
+                Optional.empty(),
                 Optional.empty(),
                 Optional.empty(),
                 Optional.of(10),
@@ -506,6 +508,7 @@ public class EntriesControllerTest {
                         status().isOk(),
                         Optional.empty(),
                         Optional.empty(),
+                        Optional.empty(),
                         Optional.of(10),
                         Optional.empty(),
                         Optional.empty(),
@@ -534,6 +537,7 @@ public class EntriesControllerTest {
                 () -> testHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
+                        Optional.empty(),
                         Optional.of(testAnchorDate),
                         Optional.empty(),
                         Optional.of(10),
@@ -564,6 +568,7 @@ public class EntriesControllerTest {
                 () -> testHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
+                        Optional.empty(),
                         Optional.of(testAnchorDate),
                         Optional.of(10),
                         Optional.empty(),
@@ -583,6 +588,7 @@ public class EntriesControllerTest {
                 () -> testHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
+                        Optional.empty(),
                         Optional.of(testAnchorDate),
                         Optional.of(10),
                         Optional.of(10),
@@ -653,6 +659,7 @@ public class EntriesControllerTest {
                         status().isOk(),
                         Optional.empty(),
                         Optional.empty(),
+                        Optional.empty(),
                         Optional.of(10),
                         Optional.empty(),
                         Optional.of(List.of("99", "49", "0")),
@@ -669,6 +676,7 @@ public class EntriesControllerTest {
                 () -> testHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
+                        Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.of(10),
@@ -711,6 +719,7 @@ public class EntriesControllerTest {
                 () -> testHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
+                        Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.of(10),

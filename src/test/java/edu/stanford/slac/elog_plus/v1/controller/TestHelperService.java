@@ -224,6 +224,7 @@ public class TestHelperService {
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<LocalDateTime> startDate,
+            Optional<LocalDateTime> endDate,
             Optional<Integer> contextSize,
             Optional<Integer> limit,
             Optional<String> search,
@@ -234,7 +235,7 @@ public class TestHelperService {
                 get("/v1/entries")
                         .accept(MediaType.APPLICATION_JSON);
         startDate.ifPresent(localDateTime -> getBuilder.param("startDate", String.valueOf(localDateTime)));
-        //endDate.ifPresent(localDateTime -> getBuilder.param("endDate", String.valueOf(localDateTime)));
+        endDate.ifPresent(localDateTime -> getBuilder.param("endDate", String.valueOf(localDateTime)));
         contextSize.ifPresent(size -> getBuilder.param("contextSize", String.valueOf(size)));
         limit.ifPresent(size -> getBuilder.param("limit", String.valueOf(size)));
         search.ifPresent(text -> getBuilder.param("search", text));
