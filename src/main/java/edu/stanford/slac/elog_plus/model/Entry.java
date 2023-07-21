@@ -50,7 +50,6 @@ public class Entry {
     @Indexed
     @CreatedDate
     private LocalDateTime loggedAt;
-    @CreatedDate
     private LocalDateTime eventAt;
     @Version
     private Integer version;
