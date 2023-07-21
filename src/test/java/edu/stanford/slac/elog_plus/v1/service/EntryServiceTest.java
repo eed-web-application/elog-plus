@@ -22,6 +22,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -161,6 +162,61 @@ public class EntryServiceTest {
                         () -> entryService.getFullLog(newLogID)
                 );
         assertThat(fullLog.id()).isEqualTo(newLogID);
+    }
+
+    @Test
+    public void testEventAtFetchFullLog() {
+        var eventAt = LocalDateTime.of(
+                2023,
+                7,
+                1,
+                0,
+                1,
+                0
+        );
+        String newLogID =
+                assertDoesNotThrow(
+                        () -> entryService.createNew(
+                                EntryNewDTO
+                                        .builder()
+                                        .logbook("MCC")
+                                        .text("This is a log for test")
+                                        .title("A very wonderful log")
+                                        .eventAt(
+                                                eventAt
+                                        )
+                                        .build()
+                        )
+                );
+
+        EntryDTO fullLog =
+                assertDoesNotThrow(
+                        () -> entryService.getFullLog(newLogID)
+                );
+        assertThat(fullLog.id()).isEqualTo(newLogID);
+        assertThat(fullLog.eventAt()).isEqualTo(eventAt);
+    }
+
+    @Test
+    public void testWitoutEventAtFetchFullLog() {
+        String newLogID =
+                assertDoesNotThrow(
+                        () -> entryService.createNew(
+                                EntryNewDTO
+                                        .builder()
+                                        .logbook("MCC")
+                                        .text("This is a log for test")
+                                        .title("A very wonderful log")
+                                        .build()
+                        )
+                );
+
+        EntryDTO fullLog =
+                assertDoesNotThrow(
+                        () -> entryService.getFullLog(newLogID)
+                );
+        assertThat(fullLog.id()).isEqualTo(newLogID);
+        assertThat(fullLog.eventAt()).isEqualTo(fullLog.loggedAt());
     }
 
     @Test

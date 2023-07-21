@@ -1,6 +1,7 @@
 package edu.stanford.slac.elog_plus.config;
 
 
+import edu.stanford.slac.elog_plus.model.EntityListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
