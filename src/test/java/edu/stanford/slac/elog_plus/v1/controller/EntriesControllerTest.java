@@ -818,13 +818,12 @@ public class EntriesControllerTest {
     @Test
     public void createLogWithTagFailWithNoSave() {
         var newLogBookResult = getTestLogbook();
-        ControllerLogicException exception =
-                assertThrows(
-                        ControllerLogicException.class,
+        ApiResultResponse<String>  newCreationResult =
+                assertDoesNotThrow(
                         () ->
                                 testHelperService.createNewLog(
                                         mockMvc,
-                                        status().is4xxClientError(),
+                                        status().isCreated(),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbook(newLogBookResult.getPayload().name())
@@ -834,7 +833,7 @@ public class EntriesControllerTest {
                                                 .build()
                                 )
                 );
-        AssertionsForClassTypes.assertThat(exception.getErrorCode()).isEqualTo(-2);
+        AssertionsForClassTypes.assertThat(newCreationResult.getErrorCode()).isEqualTo(0);
     }
 
     @Test
