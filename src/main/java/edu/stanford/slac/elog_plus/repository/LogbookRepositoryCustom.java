@@ -10,4 +10,6 @@ public interface LogbookRepositoryCustom {
     List<Tag> getAllTagFor(String logbookId);
 
     boolean tagExistByName(String logbookId, String tagName);
+
+    List<String> getAllLogbook();
 }

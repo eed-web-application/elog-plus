@@ -18,6 +18,7 @@ import java.io.UnsupportedEncodingException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -361,6 +362,33 @@ public class TestHelperService {
         MvcResult result = mockMvc.perform(
                         get("/v1/logbooks/{logbookId}/tags", logbookId)
                                 .accept(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
+
+    public ApiResultResponse<List<TagDTO>> getLogbookTagsFromTagsController(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<List<String>> logbooksName) throws Exception {
+        MockHttpServletRequestBuilder getRequest =  get("/v1/tags")
+                .accept(MediaType.APPLICATION_JSON);
+        logbooksName.ifPresent(lb -> {
+            String[] lbArray = new String[lb.size()];
+            lb.toArray(lbArray);
+            getRequest.param("logbooks", lbArray);
+        });
+
+        MvcResult result = mockMvc.perform(
+                        getRequest
                 )
                 .andExpect(resultMatcher)
                 .andReturn();

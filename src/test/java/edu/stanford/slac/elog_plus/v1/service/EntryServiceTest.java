@@ -106,25 +106,6 @@ public class EntryServiceTest {
     }
 
     @Test
-    public void testFailBadTags() {
-        var logbook = getTestLogbook();
-        ControllerLogicException ex =
-                assertThrows(
-                        ControllerLogicException.class,
-                        () -> entryService.createNew(
-                                EntryNewDTO
-                                        .builder()
-                                        .logbook(logbook.name())
-                                        .text("This is a log for test")
-                                        .title("A very wonderful log")
-                                        .tags(List.of("wrong tags"))
-                                        .build()
-                        )
-                );
-        assertThat(ex.getErrorCode()).isEqualTo(-2);
-    }
-
-    @Test
     public void testFailBadAttachmentID() {
         var logbook = getTestLogbook();
         ControllerLogicException ex =

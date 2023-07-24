@@ -9,6 +9,7 @@ import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.repository.EntryRepository;
 import edu.stanford.slac.elog_plus.utility.StringUtilities;
 import lombok.AllArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Safelist;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
 import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
 
 @Service
+@Log4j2
 @AllArgsConstructor
 public class EntryService {
     final private EntryRepository entryRepository;
@@ -83,16 +85,25 @@ public class EntryService {
                 .getTags()
                 .forEach(
                         tagName -> {
-                            assertion(
-                                    () -> lb.tags().stream().anyMatch(
-                                            t->t.name().compareTo(tagName)==0
-                                    ),
-                                    TagNotFound.tagNotFoundBuilder()
-                                            .errorCode(-2)
-                                            .tagName(tagName)
-                                            .errorDomain("LogService::createNew")
-                                            .build()
-                            );
+                            if (
+                                    lb.tags().stream().noneMatch(
+                                    t -> t.name().compareTo(tagName) == 0)
+                            ){
+                                // we need to create a tag for the user
+                                String newTagID = wrapCatch(
+                                        () -> logbookService.createNewTag(
+                                        lb.id(),
+                                        NewTagDTO
+                                                .builder()
+                                                .name(tagName)
+                                                .build()
+                                ),
+                                        -2,
+                                        "EntryService:createNew"
+                                );
+
+                                log.info("Tag automatically created for the logbook {} with name {}", lb.name(), tagName);
+                            }
                         }
                 );
 

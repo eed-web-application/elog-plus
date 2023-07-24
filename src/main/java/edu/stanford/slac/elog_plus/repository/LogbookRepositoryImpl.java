@@ -11,6 +11,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -80,5 +81,18 @@ public class LogbookRepositoryImpl implements LogbookRepositoryCustom {
         } else {
             return false;
         }
+    }
+
+    @Override
+    public List<String> getAllLogbook() {
+        List<String> result = new ArrayList<>();
+        Query query = new Query();
+        query.fields().include("name");
+        List<Logbook> l = mongoTemplate.find(query, Logbook.class);
+        for (Logbook lb:
+             l) {
+            result.add(lb.getName());
+        }
+        return result;
     }
 }

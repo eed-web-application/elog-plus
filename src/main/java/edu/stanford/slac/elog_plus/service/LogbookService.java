@@ -17,8 +17,7 @@ import edu.stanford.slac.elog_plus.utility.StringUtilities;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
@@ -236,5 +235,28 @@ public class LogbookService {
                         .errorDomain(domain)
                         .build()
         );
+    }
+
+    public List<TagDTO> getAllTagsByLogbooksName(List<String> logbooks) {
+        List<TagDTO> result = new ArrayList<>();
+
+        if(logbooks == null || logbooks.isEmpty()){
+            logbooks = wrapCatch(
+                    () -> logbookRepository.getAllLogbook(),
+                    -1,
+                    "LogbookService:getAllTagsByLogbooksName"
+            );
+        }
+
+        for (String logbookName:
+             logbooks) {
+            if(!exist(logbookName)) {
+                continue;
+            }
+            LogbookDTO lbDTO = getLogbookByName(logbookName);
+            result.removeAll(lbDTO.tags());
+            result.addAll(lbDTO.tags());
+        }
+        return result;
     }
 }
