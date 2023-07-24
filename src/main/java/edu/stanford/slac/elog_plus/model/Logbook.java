@@ -5,6 +5,9 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.Collections;
+import java.util.List;
+
 @Getter
 @Setter
 @Builder
@@ -17,4 +20,7 @@ public class Logbook {
     private String id;
     @Indexed(unique = true)
     private String name;
+    @Indexed
+    @Builder.Default
+    private List<Tag> tags = Collections.emptyList();
 }

@@ -7,6 +7,7 @@ import edu.stanford.slac.elog_plus.api.v1.mapper.QueryParameterMapper;
 import edu.stanford.slac.elog_plus.exception.*;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.repository.EntryRepository;
+import edu.stanford.slac.elog_plus.utility.StringUtilities;
 import lombok.AllArgsConstructor;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Safelist;
@@ -25,7 +26,6 @@ import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
 @Service
 @AllArgsConstructor
 public class EntryService {
-    final private TagService tagService;
     final private EntryRepository entryRepository;
     final private LogbookService logbookService;
     final private AttachmentService attachmentService;
@@ -64,7 +64,7 @@ public class EntryService {
                     .getTags()
                     .stream()
                     .map(
-                            tagService::tagNameNormalization
+                            StringUtilities::tagNameNormalization
                     )
                     .toList();
             newEntry.setTags(
@@ -72,21 +72,19 @@ public class EntryService {
             );
         }
 
-        //check logbook
-        assertion(
-                () -> logbookService.exist(entryNewDTO.logbook()),
-                NotebookNotFound.notebookNotFoundBuilder()
-                        .errorCode(-1)
-                        .errorDomain("LogService::createNew")
-                        .build()
-        );
+        LogbookDTO lb =
+                wrapCatch(
+                        () -> logbookService.getLogbookByName(entryNewDTO.logbook()),
+                        -1,
+                        "EntryService:createNew"
+                );
 
         newEntry
                 .getTags()
                 .forEach(
                         tagName -> {
                             assertion(
-                                    () -> tagService.existsByName(tagName),
+                                    () -> logbookService.tagExistForLogbook(lb.id(), tagName),
                                     TagNotFound.tagNotFoundBuilder()
                                             .errorCode(-2)
                                             .tagName(tagName)

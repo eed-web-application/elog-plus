@@ -2,7 +2,6 @@ package edu.stanford.slac.elog_plus.api.v1.controller;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.service.EntryService;
-import edu.stanford.slac.elog_plus.service.TagService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -23,7 +22,6 @@ import java.util.Optional;
 @Schema(description = "Main set of api for the query on the log data")
 public class EntriesController {
     private EntryService entryService;
-    private TagService tagService;
 
     @PostMapping(produces = {MediaType.APPLICATION_JSON_VALUE})
     @Operation(description = "Perform the query on all log data")

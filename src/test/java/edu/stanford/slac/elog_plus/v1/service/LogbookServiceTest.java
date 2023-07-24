@@ -2,8 +2,11 @@ package edu.stanford.slac.elog_plus.v1.service;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.LogbookDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.NewLogbookDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.NewTagDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.TagDTO;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import edu.stanford.slac.elog_plus.service.LogbookService;
+import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -69,5 +72,43 @@ public class LogbookServiceTest {
         );
 
         assertThat(allLogbook).isNotNull().isNotEmpty();
+    }
+
+    @Test
+    public void createTag() {
+        String newLogbookID = assertDoesNotThrow(
+                () -> logbookService.createNew(
+                        NewLogbookDTO
+                                .builder()
+                                .name("new-logbook")
+                                .build()
+                )
+        );
+        AssertionsForClassTypes.assertThat(newLogbookID).isNotNull().isNotEmpty();
+
+        String newTagID = assertDoesNotThrow(
+                () -> logbookService.createNewTag(
+                        newLogbookID,
+                        NewTagDTO
+                                .builder()
+                                .name("new-tag")
+                                .build()
+                )
+        );
+        AssertionsForClassTypes.assertThat(newTagID).isNotNull().isNotEmpty();
+
+        LogbookDTO fullLogbook = assertDoesNotThrow(
+                () -> logbookService.getLogbook(newLogbookID)
+        );
+        assertThat(fullLogbook).isNotNull();
+        assertThat(fullLogbook.tags()).isNotEmpty();
+
+        List<TagDTO> allTags = assertDoesNotThrow(
+                () -> logbookService.getAllTags(newLogbookID)
+        );
+        assertThat(allTags).isNotNull();
+        assertThat(allTags).isNotEmpty();
+
+        assertThat(fullLogbook.tags()).containsAll(allTags);
     }
 }

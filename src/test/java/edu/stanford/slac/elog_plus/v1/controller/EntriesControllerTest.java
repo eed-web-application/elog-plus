@@ -6,6 +6,7 @@ import edu.stanford.slac.elog_plus.exception.EntryNotFound;
 import edu.stanford.slac.elog_plus.exception.SupersedeAlreadyCreated;
 import edu.stanford.slac.elog_plus.model.Attachment;
 import edu.stanford.slac.elog_plus.model.Entry;
+import edu.stanford.slac.elog_plus.model.Logbook;
 import edu.stanford.slac.elog_plus.model.Tag;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import org.assertj.core.api.AssertionsForClassTypes;
@@ -26,6 +27,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -50,27 +52,16 @@ public class EntriesControllerTest {
     @Autowired
     private TestHelperService testHelperService;
 
-    @BeforeAll
-    public void initLogbook() {
-        if(!logbookService.exist("MCC")) {
-            logbookService.createNew(
-                    NewLogbookDTO
-                            .builder()
-                            .name("MCC")
-                            .build()
-            );
-        }
-    }
-
     @BeforeEach
     public void preTest() {
         mongoTemplate.remove(new Query(), Entry.class);
         mongoTemplate.remove(new Query(), Attachment.class);
-        mongoTemplate.remove(new Query(), Tag.class);
+        mongoTemplate.remove(new Query(), Logbook.class);
     }
 
     @Test
     public void createNewLog() throws Exception {
+        var newLogBookResult = getTestLogbook();
         ApiResultResponse<String> newLogID =
                 assertDoesNotThrow(
                         () ->
@@ -79,7 +70,7 @@ public class EntriesControllerTest {
                                         status().isCreated(),
                                         EntryNewDTO
                                                 .builder()
-                                                .logbook("MCC")
+                                                .logbook(newLogBookResult.getPayload().name())
                                                 .text("This is a log for test")
                                                 .title("A very wonderful log")
                                                 .build()
@@ -92,6 +83,7 @@ public class EntriesControllerTest {
 
     @Test
     public void createNewLogAndSearchWithPaging() throws Exception {
+        var newLogBookResult = getTestLogbook();
         ApiResultResponse<String> newLogID =
                 assertDoesNotThrow(
                         () ->
@@ -100,7 +92,7 @@ public class EntriesControllerTest {
                                         status().isCreated(),
                                         EntryNewDTO
                                                 .builder()
-                                                .logbook("MCC")
+                                                .logbook(newLogBookResult.getPayload().name())
                                                 .text("This is a log for test")
                                                 .title("A very wonderful log")
                                                 .build()
@@ -141,6 +133,7 @@ public class EntriesControllerTest {
 
     @Test
     public void fetchFullLog() {
+        var newLogBookResult = getTestLogbook();
         ApiResultResponse<String> newLogID =
                 assertDoesNotThrow(
                         () ->
@@ -149,7 +142,7 @@ public class EntriesControllerTest {
                                         status().isCreated(),
                                         EntryNewDTO
                                                 .builder()
-                                                .logbook("MCC")
+                                                .logbook(newLogBookResult.getPayload().name())
                                                 .text("This is a log for test")
                                                 .title("A very wonderful log")
                                                 .build()
@@ -171,6 +164,7 @@ public class EntriesControllerTest {
 
     @Test
     public void createNewSupersedeLog() throws Exception {
+        var newLogBookResult = getTestLogbook();
         ApiResultResponse<String> newLogIDResult =
                 assertDoesNotThrow(
                         () ->
@@ -179,7 +173,7 @@ public class EntriesControllerTest {
                                         status().isCreated(),
                                         EntryNewDTO
                                                 .builder()
-                                                .logbook("MCC")
+                                                .logbook(newLogBookResult.getPayload().name())
                                                 .text("This is a log for test")
                                                 .title("A very wonderful log")
                                                 .build()
@@ -196,7 +190,7 @@ public class EntriesControllerTest {
                         newLogIDResult.getPayload(),
                         EntryNewDTO
                                 .builder()
-                                .logbook("MCC")
+                                .logbook(newLogBookResult.getPayload().name())
                                 .text("This is a log for test")
                                 .title("A very wonderful supersede log")
                                 .build()
@@ -217,7 +211,7 @@ public class EntriesControllerTest {
         assertThat(oldFull.getPayload().supersedeBy()).isEqualTo(newSupersedeLogIDResult.getPayload());
 
         // the search api now should return only the new log and not the superseded on
-        var queryResult  = testHelperService.submitSearchByGetWithAnchor(
+        var queryResult = testHelperService.submitSearchByGetWithAnchor(
                 mockMvc,
                 status().isOk(),
                 Optional.empty(),
@@ -234,6 +228,7 @@ public class EntriesControllerTest {
 
     @Test
     public void createDoubleSupersedeFailed() throws Exception {
+        var newLogBookResult = getTestLogbook();
         ApiResultResponse<String> newLogIDResult =
                 assertDoesNotThrow(
                         () ->
@@ -242,7 +237,7 @@ public class EntriesControllerTest {
                                         status().isCreated(),
                                         EntryNewDTO
                                                 .builder()
-                                                .logbook("MCC")
+                                                .logbook(newLogBookResult.getPayload().name())
                                                 .text("This is a log for test")
                                                 .title("A very wonderful log")
                                                 .build()
@@ -259,7 +254,7 @@ public class EntriesControllerTest {
                         newLogIDResult.getPayload(),
                         EntryNewDTO
                                 .builder()
-                                .logbook("MCC")
+                                .logbook(newLogBookResult.getPayload().name())
                                 .text("This is a log for test")
                                 .title("A very wonderful supersede log")
                                 .build()
@@ -276,7 +271,7 @@ public class EntriesControllerTest {
                         newLogIDResult.getPayload(),
                         EntryNewDTO
                                 .builder()
-                                .logbook("MCC")
+                                .logbook(newLogBookResult.getPayload().name())
                                 .text("This is a log for test")
                                 .title("A very wonderful supersede log")
                                 .build()
@@ -287,6 +282,7 @@ public class EntriesControllerTest {
 
     @Test
     public void createSupersedeFailedOnNotFoundEntry() throws Exception {
+        var newLogBookResult = getTestLogbook();
         //create supersede
         EntryNotFound exception = assertThrows(
                 EntryNotFound.class,
@@ -296,7 +292,7 @@ public class EntriesControllerTest {
                         "not found superseded log",
                         EntryNewDTO
                                 .builder()
-                                .logbook("MCC")
+                                .logbook(newLogBookResult.getPayload().name())
                                 .text("This is a log for test")
                                 .title("A very wonderful supersede log")
                                 .build()
@@ -307,6 +303,7 @@ public class EntriesControllerTest {
 
     @Test
     public void getLogHistoryAndFollowingLog() throws Exception {
+        var newLogBookResult = getTestLogbook();
         ApiResultResponse<String> newLogIDResult =
                 assertDoesNotThrow(
                         () ->
@@ -315,7 +312,7 @@ public class EntriesControllerTest {
                                         status().isCreated(),
                                         EntryNewDTO
                                                 .builder()
-                                                .logbook("MCC")
+                                                .logbook(newLogBookResult.getPayload().name())
                                                 .text("This is a log for test")
                                                 .title("A very wonderful log")
                                                 .build()
@@ -332,7 +329,7 @@ public class EntriesControllerTest {
                         newLogIDResult.getPayload(),
                         EntryNewDTO
                                 .builder()
-                                .logbook("MCC")
+                                .logbook(newLogBookResult.getPayload().name())
                                 .text("This is a log for test")
                                 .title("A very wonderful supersede log")
                                 .build()
@@ -347,7 +344,7 @@ public class EntriesControllerTest {
                         newSupersedeLogIDResult1.getPayload(),
                         EntryNewDTO
                                 .builder()
-                                .logbook("MCC")
+                                .logbook(newLogBookResult.getPayload().name())
                                 .text("This is a log for test")
                                 .title("A very wonderful supersede log of supersede")
                                 .build()
@@ -376,6 +373,7 @@ public class EntriesControllerTest {
 
     @Test
     public void createNewFollowUpLogsAndFetch() throws Exception {
+        var newLogBookResult = getTestLogbook();
         ApiResultResponse<String> newLogIDResult =
                 assertDoesNotThrow(
                         () ->
@@ -384,7 +382,7 @@ public class EntriesControllerTest {
                                         status().isCreated(),
                                         EntryNewDTO
                                                 .builder()
-                                                .logbook("MCC")
+                                                .logbook(newLogBookResult.getPayload().name())
                                                 .text("This is a log for test")
                                                 .title("A very wonderful log")
                                                 .build()
@@ -402,7 +400,7 @@ public class EntriesControllerTest {
                         newLogIDResult.getPayload(),
                         EntryNewDTO
                                 .builder()
-                                .logbook("MCC")
+                                .logbook(newLogBookResult.getPayload().name())
                                 .text("This is a log for test")
                                 .title("A very wonderful followup log one")
                                 .build()
@@ -417,7 +415,7 @@ public class EntriesControllerTest {
                         newLogIDResult.getPayload(),
                         EntryNewDTO
                                 .builder()
-                                .logbook("MCC")
+                                .logbook(newLogBookResult.getPayload().name())
                                 .text("This is a log for test")
                                 .title("A very wonderful followup log two")
                                 .build()
@@ -481,6 +479,7 @@ public class EntriesControllerTest {
 
     @Test
     public void searchWithAnchor() {
+        var newLogBookResult = getTestLogbook();
         // create some data
         for (int idx = 0; idx < 100; idx++) {
             int finalIdx = idx;
@@ -491,7 +490,7 @@ public class EntriesControllerTest {
                                     status().isCreated(),
                                     EntryNewDTO
                                             .builder()
-                                            .logbook("MCC")
+                                            .logbook(newLogBookResult.getPayload().name())
                                             .text("This is a log for test")
                                             .title("A very wonderful log")
                                             .segment(String.valueOf(finalIdx))
@@ -607,13 +606,16 @@ public class EntriesControllerTest {
 
     @Test
     public void searchWithTags() {
+        ApiResultResponse<LogbookDTO> logbookCreationResult = getTestLogbook();
+        // create new logbook
         // create some data
         for (int idx = 0; idx < 100; idx++) {
             int finalIdx = idx;
             ApiResultResponse<String> newTagID = assertDoesNotThrow(
-                    () -> testHelperService.createNewTag(
+                    () -> testHelperService.createNewLogbookTags(
                             mockMvc,
                             status().isCreated(),
+                            logbookCreationResult.getPayload().id(),
                             NewTagDTO
                                     .builder()
                                     .name(String.valueOf(finalIdx))
@@ -623,12 +625,13 @@ public class EntriesControllerTest {
             assertThat(newTagID.getErrorCode()).isEqualTo(0);
 
             newTagID = assertDoesNotThrow(
-                    () -> testHelperService.createNewTag(
+                    () -> testHelperService.createNewLogbookTags(
                             mockMvc,
                             status().isCreated(),
+                            logbookCreationResult.getPayload().id(),
                             NewTagDTO
                                     .builder()
-                                    .name(String.valueOf("tags-"+ (100 + finalIdx)))
+                                    .name(String.valueOf("tags-" + (100 + finalIdx)))
                                     .build()
                     ));
             assertThat(newTagID).isNotNull();
@@ -641,11 +644,11 @@ public class EntriesControllerTest {
                                     status().isCreated(),
                                     EntryNewDTO
                                             .builder()
-                                            .logbook("MCC")
+                                            .logbook(logbookCreationResult.getPayload().name())
                                             .text("This is a log for test")
                                             .title("A very wonderful log")
                                             .segment(String.valueOf(finalIdx))
-                                            .tags(List.of(String.valueOf(finalIdx), "tags-"+ (100 + finalIdx)))
+                                            .tags(List.of(String.valueOf(finalIdx), "tags-" + (100 + finalIdx)))
                                             .build()
                             )
                     );
@@ -692,8 +695,30 @@ public class EntriesControllerTest {
         assertThat(findTags.getPayload().get(2).tags()).contains("0");
     }
 
+    private ApiResultResponse<LogbookDTO> getTestLogbook() {
+        ApiResultResponse<String> logbookCreationResult = assertDoesNotThrow(
+                () -> testHelperService.createNewLogbook(
+                        mockMvc,
+                        status().isCreated(),
+                        NewLogbookDTO
+                                .builder()
+                                .name(UUID.randomUUID().toString())
+                                .build()
+                ));
+        assertThat(logbookCreationResult).isNotNull();
+        assertThat(logbookCreationResult.getErrorCode()).isEqualTo(0);
+        return assertDoesNotThrow(
+                () -> testHelperService.getLogbookByID(
+                        mockMvc,
+                        status().isOk(),
+                        logbookCreationResult.getPayload()
+                )
+        );
+    }
+
     @Test
     public void searchWithText() {
+        var newLogBookResult = getTestLogbook();
         // create some data
         for (int idx = 0; idx < 100; idx++) {
             int finalIdx = idx;
@@ -704,10 +729,10 @@ public class EntriesControllerTest {
                                     status().isCreated(),
                                     EntryNewDTO
                                             .builder()
-                                            .logbook("MCC")
+                                            .logbook(newLogBookResult.getPayload().name())
                                             .text("This is a log for test")
                                             .segment(String.valueOf(finalIdx))
-                                            .title("A very wonderful log for index="+finalIdx)
+                                            .title("A very wonderful log for index=" + finalIdx)
                                             .build()
                             )
                     );
@@ -734,6 +759,7 @@ public class EntriesControllerTest {
 
     @Test
     public void createLogWithTagFailWithNoSave() {
+        var newLogBookResult = getTestLogbook();
         ControllerLogicException exception =
                 assertThrows(
                         ControllerLogicException.class,
@@ -743,7 +769,7 @@ public class EntriesControllerTest {
                                         status().is4xxClientError(),
                                         EntryNewDTO
                                                 .builder()
-                                                .logbook("MCC")
+                                                .logbook(newLogBookResult.getPayload().name())
                                                 .text("This is a log for test")
                                                 .title("A very wonderful log")
                                                 .tags(List.of("tag-1", "tag-2"))
@@ -755,12 +781,14 @@ public class EntriesControllerTest {
 
     @Test
     public void createLogWithTagOK() {
+        ApiResultResponse<LogbookDTO> logbookCreationResult = getTestLogbook();
         ApiResultResponse<String> tag01Id =
                 assertDoesNotThrow(
                         () ->
-                                testHelperService.createNewTag(
+                                testHelperService.createNewLogbookTags(
                                         mockMvc,
                                         status().isCreated(),
+                                        logbookCreationResult.getPayload().id(),
                                         NewTagDTO
                                                 .builder()
                                                 .name("tag-1")
@@ -770,9 +798,10 @@ public class EntriesControllerTest {
         ApiResultResponse<String> tag02Id =
                 assertDoesNotThrow(
                         () ->
-                                testHelperService.createNewTag(
+                                testHelperService.createNewLogbookTags(
                                         mockMvc,
                                         status().isCreated(),
+                                        logbookCreationResult.getPayload().id(),
                                         NewTagDTO
                                                 .builder()
                                                 .name("tag-2")
@@ -787,7 +816,7 @@ public class EntriesControllerTest {
                                         status().isCreated(),
                                         EntryNewDTO
                                                 .builder()
-                                                .logbook("MCC")
+                                                .logbook(logbookCreationResult.getPayload().name())
                                                 .text("This is a log for test")
                                                 .title("A very wonderful log")
                                                 .tags(List.of("tag-1", "tag-2"))
@@ -799,12 +828,14 @@ public class EntriesControllerTest {
 
     @Test
     public void getAllTags() {
+        ApiResultResponse<LogbookDTO> logbookCreationResult = getTestLogbook();
         ApiResultResponse<String> tag01Id =
                 assertDoesNotThrow(
                         () ->
-                                testHelperService.createNewTag(
+                                testHelperService.createNewLogbookTags(
                                         mockMvc,
                                         status().isCreated(),
+                                        logbookCreationResult.getPayload().id(),
                                         NewTagDTO
                                                 .builder()
                                                 .name("tag-1")
@@ -814,9 +845,10 @@ public class EntriesControllerTest {
         ApiResultResponse<String> tag02Id =
                 assertDoesNotThrow(
                         () ->
-                                testHelperService.createNewTag(
+                                testHelperService.createNewLogbookTags(
                                         mockMvc,
                                         status().isCreated(),
+                                        logbookCreationResult.getPayload().id(),
                                         NewTagDTO
                                                 .builder()
                                                 .name("tag-2")
@@ -826,9 +858,10 @@ public class EntriesControllerTest {
         ApiResultResponse<List<TagDTO>> allTags =
                 assertDoesNotThrow(
                         () ->
-                                testHelperService.getAllTags(
+                                testHelperService.getLogbookTags(
                                         mockMvc,
-                                        status().isOk()
+                                        status().isOk(),
+                                        logbookCreationResult.getPayload().id()
                                 )
                 );
         AssertionsForInterfaceTypes.assertThat(
