@@ -6,6 +6,7 @@ import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.exception.EntryNotFound;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.FileObjectDescription;
+import edu.stanford.slac.elog_plus.model.Logbook;
 import edu.stanford.slac.elog_plus.service.AttachmentService;
 import edu.stanford.slac.elog_plus.service.EntryService;
 import edu.stanford.slac.elog_plus.service.LogbookService;
@@ -26,6 +27,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -46,29 +48,34 @@ public class EntryServiceTest {
     @Autowired
     MongoTemplate mongoTemplate;
 
-    @BeforeAll
-    public void initLogbook() {
-        if(!logbookService.exist("MCC")) {
-            logbookService.createNew(
-                    NewLogbookDTO
-                            .builder()
-                            .name("MCC")
-                            .build()
-            );
-        }
-    }
-
     @BeforeEach
     public void preTest() {
         mongoTemplate.remove(new Query(), Entry.class);
+        mongoTemplate.remove(new Query(), Logbook.class);
+    }
+
+    private LogbookDTO getTestLogbook() {
+        String logbookId =
+                assertDoesNotThrow(
+                        () -> logbookService.createNew(
+                                NewLogbookDTO
+                                        .builder()
+                                        .name(UUID.randomUUID().toString())
+                                        .build()
+                        )
+                );
+        return assertDoesNotThrow(
+                () -> logbookService.getLogbook(logbookId)
+        );
     }
 
     @Test
     public void testLogCreation() {
+        var logbook = getTestLogbook();
         String newLogID = entryService.createNew(
                 EntryNewDTO
                         .builder()
-                        .logbook("MCC")
+                        .logbook(logbook.name())
                         .text("This is a log for test")
                         .title("A very wonderful log")
                         .build()
@@ -79,10 +86,11 @@ public class EntryServiceTest {
 
     @Test
     public void testLogTextSanitization() {
+        var logbook = getTestLogbook();
         String newLogID = entryService.createNew(
                 EntryNewDTO
                         .builder()
-                        .logbook("MCC")
+                        .logbook(logbook.name())
                         .text("<p><a href='http://example.com/' onclick='stealCookies()'>Link</a></p>")
                         .title("A very wonderful log")
                         .build()
@@ -99,13 +107,14 @@ public class EntryServiceTest {
 
     @Test
     public void testFailBadTags() {
+        var logbook = getTestLogbook();
         ControllerLogicException ex =
                 assertThrows(
                         ControllerLogicException.class,
                         () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
-                                        .logbook("MCC")
+                                        .logbook(logbook.name())
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
                                         .tags(List.of("wrong tags"))
@@ -117,13 +126,14 @@ public class EntryServiceTest {
 
     @Test
     public void testFailBadAttachmentID() {
+        var logbook = getTestLogbook();
         ControllerLogicException ex =
                 assertThrows(
                         ControllerLogicException.class,
                         () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
-                                        .logbook("MCC")
+                                        .logbook(logbook.name())
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
                                         .attachments(List.of("wrong id"))
@@ -145,12 +155,13 @@ public class EntryServiceTest {
 
     @Test
     public void testFetchFullLog() {
+        var logbook = getTestLogbook();
         String newLogID =
                 assertDoesNotThrow(
                         () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
-                                        .logbook("MCC")
+                                        .logbook(logbook.name())
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
                                         .build()
@@ -166,6 +177,7 @@ public class EntryServiceTest {
 
     @Test
     public void testEventAtFetchFullLog() {
+        var logbook = getTestLogbook();
         var eventAt = LocalDateTime.of(
                 2023,
                 7,
@@ -179,7 +191,7 @@ public class EntryServiceTest {
                         () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
-                                        .logbook("MCC")
+                                        .logbook(logbook.name())
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
                                         .eventAt(
@@ -198,13 +210,14 @@ public class EntryServiceTest {
     }
 
     @Test
-    public void testWitoutEventAtFetchFullLog() {
+    public void testWithoutEventAtFetchFullLog() {
+        var logbook = getTestLogbook();
         String newLogID =
                 assertDoesNotThrow(
                         () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
-                                        .logbook("MCC")
+                                        .logbook(logbook.name())
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
                                         .build()
@@ -221,13 +234,14 @@ public class EntryServiceTest {
 
     @Test
     public void testSupersedeCreationFailOnWrongRootLog() {
+        var logbook = getTestLogbook();
         ControllerLogicException exception = assertThrows(
                 ControllerLogicException.class,
                 () -> entryService.createNewSupersede(
                         "bad id",
                         EntryNewDTO
                                 .builder()
-                                .logbook("MCC")
+                                .logbook(logbook.name())
                                 .text("This is a log for test")
                                 .title("A very wonderful log")
                                 .build()
@@ -239,12 +253,13 @@ public class EntryServiceTest {
 
     @Test
     public void testSupersedeOK() {
+        var logbook = getTestLogbook();
         String supersededLogID =
                 assertDoesNotThrow(
                         () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
-                                        .logbook("MCC")
+                                        .logbook(logbook.name())
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
                                         .build()
@@ -257,7 +272,7 @@ public class EntryServiceTest {
                                 supersededLogID,
                                 EntryNewDTO
                                         .builder()
-                                        .logbook("MCC")
+                                        .logbook(logbook.name())
                                         .text("This is a log for test")
                                         .title("A very wonderful log updated for supersede")
                                         .build()
@@ -281,12 +296,13 @@ public class EntryServiceTest {
 
     @Test
     public void testHistory() {
+        var logbook = getTestLogbook();
         String supersededLogID =
                 assertDoesNotThrow(
                         () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
-                                        .logbook("MCC")
+                                        .logbook(logbook.name())
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
                                         .build()
@@ -299,7 +315,7 @@ public class EntryServiceTest {
                                 supersededLogID,
                                 EntryNewDTO
                                         .builder()
-                                        .logbook("MCC")
+                                        .logbook(logbook.name())
                                         .text("This is a log for test")
                                         .title("A very wonderful log updated for supersede")
                                         .build()
@@ -312,7 +328,7 @@ public class EntryServiceTest {
                                 supersededLogIDTwo,
                                 EntryNewDTO
                                         .builder()
-                                        .logbook("MCC")
+                                        .logbook(logbook.name())
                                         .text("This is a log for test")
                                         .title("A very wonderful log updated for supersede of supersede")
                                         .build()
@@ -328,12 +344,13 @@ public class EntryServiceTest {
 
     @Test
     public void testSupersedeErrorOnDoubleSuperseding() {
+        var logbook = getTestLogbook();
         String supersededLogID =
                 assertDoesNotThrow(
                         () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
-                                        .logbook("MCC")
+                                        .logbook(logbook.name())
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
                                         .build()
@@ -347,7 +364,7 @@ public class EntryServiceTest {
                                 supersededLogID,
                                 EntryNewDTO
                                         .builder()
-                                        .logbook("MCC")
+                                        .logbook(logbook.name())
                                         .text("This is a log for test")
                                         .title("A very wonderful log updated for supersede")
                                         .build()
@@ -362,7 +379,7 @@ public class EntryServiceTest {
                                 supersededLogID,
                                 EntryNewDTO
                                         .builder()
-                                        .logbook("MCC")
+                                        .logbook(logbook.name())
                                         .text("This is a log for test")
                                         .title("A very wonderful log updated for supersede one more time")
                                         .build()
@@ -373,13 +390,14 @@ public class EntryServiceTest {
 
     @Test
     public void testFollowUpCreationFailOnWrongRootLog() {
+        var logbook = getTestLogbook();
         ControllerLogicException exception = assertThrows(
                 ControllerLogicException.class,
                 () -> entryService.createNewFollowUp(
                         "bad root id",
                         EntryNewDTO
                                 .builder()
-                                .logbook("MCC")
+                                .logbook(logbook.name())
                                 .text("This is a log for test")
                                 .title("A very wonderful log")
                                 .build()
@@ -391,12 +409,13 @@ public class EntryServiceTest {
 
     @Test
     public void testFollowUpCreation() {
+        var logbook = getTestLogbook();
         String rootLogID =
                 assertDoesNotThrow(
                         () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
-                                        .logbook("MCC")
+                                        .logbook(logbook.name())
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
                                         .build()
@@ -410,7 +429,7 @@ public class EntryServiceTest {
                                 rootLogID,
                                 EntryNewDTO
                                         .builder()
-                                        .logbook("MCC")
+                                        .logbook(logbook.name())
                                         .text("This is a log for test")
                                         .title("A very wonderful log updated for followUp one")
                                         .build()
@@ -424,7 +443,7 @@ public class EntryServiceTest {
                                 rootLogID,
                                 EntryNewDTO
                                         .builder()
-                                        .logbook("MCC")
+                                        .logbook(logbook.name())
                                         .text("This is a log for test")
                                         .title("A very wonderful log updated for followUp two")
                                         .build()
@@ -445,12 +464,13 @@ public class EntryServiceTest {
 
     @Test
     public void testFollowingUpIngFullLog() {
+        var logbook = getTestLogbook();
         String rootLogID =
                 assertDoesNotThrow(
                         () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
-                                        .logbook("MCC")
+                                        .logbook(logbook.name())
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
                                         .build()
@@ -464,7 +484,7 @@ public class EntryServiceTest {
                                 rootLogID,
                                 EntryNewDTO
                                         .builder()
-                                        .logbook("MCC")
+                                        .logbook(logbook.name())
                                         .text("This is a log for test")
                                         .title("A very wonderful log updated for followUp one")
                                         .build()
@@ -489,6 +509,7 @@ public class EntryServiceTest {
 
     @Test
     public void testLogAttachmentOnFullDTO() {
+        var logbook = getTestLogbook();
         Faker f = new Faker();
         String fileName = f.file().fileName(
                 null,
@@ -518,7 +539,7 @@ public class EntryServiceTest {
                         () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
-                                        .logbook("MCC")
+                                        .logbook(logbook.name())
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
                                         .attachments(List.of(attachmentID))
@@ -539,6 +560,7 @@ public class EntryServiceTest {
 
     @Test
     public void testLogAttachmentOnSearchDTO() {
+        var logbook = getTestLogbook();
         Faker f = new Faker();
         String fileName = f.file().fileName(
                 null,
@@ -568,7 +590,7 @@ public class EntryServiceTest {
                         () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
-                                        .logbook("MCC")
+                                        .logbook(logbook.name())
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
                                         .attachments(List.of(attachmentID))
@@ -595,6 +617,7 @@ public class EntryServiceTest {
 
     @Test
     public void searchLogsByAnchor() {
+        var logbook = getTestLogbook();
         String anchorID = null;
         // create some data
         for (int idx = 0; idx < 100; idx++) {
@@ -604,7 +627,7 @@ public class EntryServiceTest {
                             () -> entryService.createNew(
                                     EntryNewDTO
                                             .builder()
-                                            .logbook("MCC")
+                                            .logbook(logbook.name())
                                             .text("This is a log for test")
                                             .title("A very wonderful log")
                                             .segment(String.valueOf(finalIdx))
