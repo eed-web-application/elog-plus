@@ -82,6 +82,64 @@ public class EntriesControllerTest {
     }
 
     @Test
+    public void createNewLogWitTag() throws Exception {
+        var newLogBookResult = getTestLogbook();
+
+        ApiResultResponse<String> newTagID = assertDoesNotThrow(
+                () ->
+                        testHelperService.createNewLogbookTags(
+                                mockMvc,
+                                status().isCreated(),
+                                newLogBookResult.getPayload().id(),
+                                NewTagDTO
+                                        .builder()
+                                        .name("TaG 2")
+                                        .build()
+                        )
+        );
+
+        ApiResultResponse<String> newLogID =
+                assertDoesNotThrow(
+                        () ->
+                                testHelperService.createNewLog(
+                                        mockMvc,
+                                        status().isCreated(),
+                                        EntryNewDTO
+                                                .builder()
+                                                .logbook(newLogBookResult.getPayload().name())
+                                                .text("This is a log for test")
+                                                .title("A very wonderful log")
+                                                .tags(
+                                                        List.of(
+                                                                "tag-1",
+                                                                "TaG 2",
+                                                                "tag-3"
+                                                        )
+                                                )
+                                                .build()
+                                )
+                );
+
+        assertThat(newLogID).isNotNull();
+        assertThat(newLogID.getErrorCode()).isEqualTo(0);
+
+        ApiResultResponse<List<TagDTO>> allTags = assertDoesNotThrow(
+                () ->
+                        testHelperService.getLogbookTags(
+                                mockMvc,
+                                status().isOk(),
+                                newLogBookResult.getPayload().id()
+                        )
+        );
+        assertThat(allTags).isNotNull();
+        assertThat(allTags.getErrorCode()).isEqualTo(0);
+        assertThat(allTags.getPayload())
+                .hasSize(3)
+                .extracting("name")
+                .contains("tag-1", "tag-2", "tag-3");
+    }
+
+    @Test
     public void createNewLogAndSearchWithPaging() throws Exception {
         var newLogBookResult = getTestLogbook();
         ApiResultResponse<String> newLogID =
