@@ -10,6 +10,7 @@ import org.mapstruct.factory.Mappers;
 @Mapper
 public interface TagMapper {
     TagMapper INSTANCE = Mappers.getMapper( TagMapper.class );
+
     TagDTO fromModel(Tag model);
     @Mapping(target = "id", ignore = true)
     Tag fromDTO(NewTagDTO dto);

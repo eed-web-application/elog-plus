@@ -5,10 +5,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
+import java.util.List;
+
 @Builder(toBuilder=true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "Identify the single logbook")
 public record LogbookDTO (
     String id,
-    String name){}
+    String name,
+    List<TagDTO> tags){}

@@ -8,7 +8,7 @@ import lombok.Builder;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "DTO for the tags")
-@Builder
+@Builder(toBuilder = true)
 public record NewTagDTO(
     String name
 ){}

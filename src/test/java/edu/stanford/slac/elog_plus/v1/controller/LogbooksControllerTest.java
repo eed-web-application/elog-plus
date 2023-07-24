@@ -2,9 +2,9 @@ package edu.stanford.slac.elog_plus.v1.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
-import edu.stanford.slac.elog_plus.api.v1.dto.LogbookDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.NewLogbookDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.*;
+import edu.stanford.slac.elog_plus.exception.LogbookAlreadyExists;
+import edu.stanford.slac.elog_plus.exception.TagAlreadyExists;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import edu.stanford.slac.elog_plus.service.LogbookService;
@@ -27,6 +27,7 @@ import java.util.List;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -41,7 +42,7 @@ public class LogbooksControllerTest {
     @Autowired
     private MongoTemplate mongoTemplate;
     @Autowired
-    private LogbookService logbookService;
+    private TestHelperService testHelperService;
 
     @BeforeEach
     public void preTest() {
@@ -50,43 +51,149 @@ public class LogbooksControllerTest {
     }
 
     @Test
-    public void fetchLogbooks() throws Exception {
-        String newID =
-                assertDoesNotThrow(
-                        () -> logbookService.createNew(
-                                NewLogbookDTO
-                                        .builder()
-                                        .name("test-logbook")
-                                        .build()
-                        )
-                );
-        var queryParameter = getLogbooks();
-        assertThat(queryParameter).isNotNull();
-        assertThat(queryParameter.getErrorCode()).isEqualTo(0);
-        assertThat(queryParameter.getPayload()).isNotNull();
-        assertThat(queryParameter.getPayload().size())
-                .isEqualTo(
-                       1
-                );
-        assertThat(queryParameter.getPayload())
-                .extracting("id").containsAll(
-                        List.of(newID)
-                );
+    public void createNewLogbookAndGet() throws Exception {
+        ApiResultResponse<String> creationResult =  assertDoesNotThrow(
+                () -> testHelperService.createNewLogbook(
+                        mockMvc,
+                        status().isCreated(),
+                        NewLogbookDTO.builder()
+                                .name("new-logbook")
+                                .build()
+                )
+        );
+
+        assertThat(creationResult).isNotNull();
+        assertThat(creationResult.getErrorCode()).isEqualTo(0);
+        assertThat(creationResult.getPayload()).isNotEmpty();
+
+        ApiResultResponse<LogbookDTO> getLogResult = assertDoesNotThrow(
+                () -> testHelperService.getLogbookByID(
+                        mockMvc,
+                        status().isOk(),
+                        creationResult.getPayload()
+                )
+        );
+        assertThat(getLogResult).isNotNull();
+        assertThat(getLogResult.getPayload().id()).isEqualTo(creationResult.getPayload());
     }
 
-    private ApiResultResponse<List<LogbookDTO>> getLogbooks() throws Exception {
-        MvcResult result = mockMvc.perform(
-                        get("/v1/logbooks")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .accept(MediaType.APPLICATION_JSON)
-                )
-                .andExpect(status().isOk())
-                .andReturn();
 
-        ApiResultResponse<List<LogbookDTO>> queryParameterConfiguration = new ObjectMapper().readValue(
-                result.getResponse().getContentAsString(),
-                new TypeReference<>() {
-                });
-        return queryParameterConfiguration;
+    @Test
+    public void failCreatingTwoSameLogbook() {
+        ApiResultResponse<String> creationResult =  assertDoesNotThrow(
+                () -> testHelperService.createNewLogbook(
+                        mockMvc,
+                        status().isCreated(),
+                        NewLogbookDTO.builder()
+                                .name("new-logbook")
+                                .build()
+                )
+        );
+        assertThat(creationResult).isNotNull();
+        assertThat(creationResult.getErrorCode()).isEqualTo(0);
+        assertThat(creationResult.getPayload()).isNotEmpty();
+
+        LogbookAlreadyExists alreadyExistsException =  assertThrows(
+                LogbookAlreadyExists.class,
+                () -> testHelperService.createNewLogbook(
+                        mockMvc,
+                        status().isConflict(),
+                        NewLogbookDTO.builder()
+                                .name("New Logbook")
+                                .build()
+                )
+        );
+        assertThat(alreadyExistsException.getErrorCode()).isEqualTo(-2);
+    }
+
+    @Test
+    public void createAndGetLogbookTags() throws Exception {
+        ApiResultResponse<String> creationResult =  assertDoesNotThrow(
+                () -> testHelperService.createNewLogbook(
+                        mockMvc,
+                        status().isCreated(),
+                        NewLogbookDTO.builder()
+                                .name("new-logbook")
+                                .build()
+                )
+        );
+
+        assertThat(creationResult).isNotNull();
+        assertThat(creationResult.getErrorCode()).isEqualTo(0);
+        assertThat(creationResult.getPayload()).isNotEmpty();
+
+        ApiResultResponse<String> newTagResult = assertDoesNotThrow(
+                () -> testHelperService.createNewLogbookTags(
+                        mockMvc,
+                        status().isCreated(),
+                        creationResult.getPayload(),
+                        NewTagDTO
+                                .builder()
+                                .name("new-tag")
+                                .build()
+                )
+        );
+        assertThat(newTagResult).isNotNull();
+        assertThat(newTagResult.getErrorCode()).isEqualTo(0);
+        assertThat(newTagResult.getPayload()).isNotEmpty();
+
+        ApiResultResponse<List<TagDTO>> allTagResult = assertDoesNotThrow(
+                () -> testHelperService.getLogbookTags(
+                        mockMvc,
+                        status().isOk(),
+                        creationResult.getPayload()
+                )
+        );
+
+        assertThat(allTagResult).isNotNull();
+        assertThat(allTagResult.getErrorCode()).isEqualTo(0);
+        assertThat(allTagResult.getPayload()).hasSize(1);
+        assertThat(allTagResult.getPayload()).extracting("name").contains("new-tag");
+    }
+
+
+    @Test
+    public void failCreatingTwoSameTagsOnTheSameLogbook() {
+        ApiResultResponse<String> creationResult =  assertDoesNotThrow(
+                () -> testHelperService.createNewLogbook(
+                        mockMvc,
+                        status().isCreated(),
+                        NewLogbookDTO.builder()
+                                .name("new-logbook")
+                                .build()
+                )
+        );
+        assertThat(creationResult).isNotNull();
+        assertThat(creationResult.getErrorCode()).isEqualTo(0);
+        assertThat(creationResult.getPayload()).isNotEmpty();
+
+        ApiResultResponse<String> newTagResult = assertDoesNotThrow(
+                () -> testHelperService.createNewLogbookTags(
+                        mockMvc,
+                        status().isCreated(),
+                        creationResult.getPayload(),
+                        NewTagDTO
+                                .builder()
+                                .name("new-tag")
+                                .build()
+                )
+        );
+        assertThat(newTagResult).isNotNull();
+        assertThat(newTagResult.getErrorCode()).isEqualTo(0);
+        assertThat(newTagResult.getPayload()).isNotEmpty();
+
+        TagAlreadyExists tagAlreadyExistsException = assertThrows(
+                TagAlreadyExists.class,
+                () -> testHelperService.createNewLogbookTags(
+                        mockMvc,
+                        status().isConflict(),
+                        creationResult.getPayload(),
+                        NewTagDTO
+                                .builder()
+                                .name("New Tag")
+                                .build()
+                )
+        );
+        assertThat(tagAlreadyExistsException.getErrorCode()).isEqualTo(-2);
     }
 }

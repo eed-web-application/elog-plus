@@ -1,5 +1,6 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
@@ -13,6 +14,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import java.io.UnsupportedEncodingException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -260,9 +262,78 @@ public class TestHelperService {
                 });
     }
 
-    public ApiResultResponse<String> createNewTag(MockMvc mockMvc, ResultMatcher resultMatcher, NewTagDTO newTagDTO) throws Exception {
+    public ApiResultResponse<String> createNewLogbook(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            NewLogbookDTO newLogbookDTO) throws Exception {
         MvcResult result = mockMvc.perform(
-                        post("/v1/tags")
+                        post("/v1/logbooks")
+                                .content(
+                                        new ObjectMapper().writeValueAsString(
+                                                newLogbookDTO
+                                        )
+                                )
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .accept(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
+
+    public ApiResultResponse<List<LogbookDTO>> getAllLogbook(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher) throws Exception {
+
+        MockHttpServletRequestBuilder getBuilder =
+                get("/v1/logbooks")
+                        .accept(MediaType.APPLICATION_JSON);
+
+        MvcResult result = mockMvc.perform(
+                        getBuilder
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
+
+    public ApiResultResponse<LogbookDTO> getLogbookByID(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            String logbookID) throws Exception {
+
+        MockHttpServletRequestBuilder getBuilder =
+                get("/v1/logbooks/{logbookId}", logbookID)
+                        .accept(MediaType.APPLICATION_JSON);
+
+        MvcResult result = mockMvc.perform(
+                        getBuilder
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
+
+    public ApiResultResponse<String> createNewLogbookTags(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            String logbookId,
+            NewTagDTO newTagDTO) throws Exception {
+        MvcResult result = mockMvc.perform(
+                        post("/v1/logbooks/{logbookId}/tags", logbookId)
                                 .content(
                                         new ObjectMapper().writeValueAsString(
                                                 newTagDTO
@@ -283,19 +354,20 @@ public class TestHelperService {
                 });
     }
 
-    public ApiResultResponse<List<TagDTO>> getAllTags(
+    public ApiResultResponse<List<TagDTO>> getLogbookTags(
             MockMvc mockMvc,
-            ResultMatcher resultMatcher) throws Exception {
-
-        MockHttpServletRequestBuilder getBuilder =
-                get("/v1/tags")
-                        .accept(MediaType.APPLICATION_JSON);
-
+            ResultMatcher resultMatcher,
+            String logbookId) throws Exception {
         MvcResult result = mockMvc.perform(
-                        getBuilder
+                        get("/v1/logbooks/{logbookId}/tags", logbookId)
+                                .accept(MediaType.APPLICATION_JSON)
                 )
                 .andExpect(resultMatcher)
                 .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
         return new ObjectMapper().readValue(
                 result.getResponse().getContentAsString(),
                 new TypeReference<>() {
