@@ -84,7 +84,9 @@ public class EntryService {
                 .forEach(
                         tagName -> {
                             assertion(
-                                    () -> logbookService.tagExistForLogbook(lb.id(), tagName),
+                                    () -> lb.tags().stream().anyMatch(
+                                            t->t.name().compareTo(tagName)==0
+                                    ),
                                     TagNotFound.tagNotFoundBuilder()
                                             .errorCode(-2)
                                             .tagName(tagName)
@@ -97,9 +99,9 @@ public class EntryService {
         newEntry
                 .getAttachments()
                 .forEach(
-                        attachementID -> {
-                            if (!attachmentService.exists(attachementID)) {
-                                String error = String.format("The attachment id '%s' has not been found", attachementID);
+                        attachmentID -> {
+                            if (!attachmentService.exists(attachmentID)) {
+                                String error = String.format("The attachment id '%s' has not been found", attachmentID);
                                 throw ControllerLogicException.of(
                                         -3,
                                         error,
