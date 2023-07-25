@@ -52,7 +52,7 @@ public class LogbooksControllerTest {
 
     @Test
     public void createNewLogbookAndGet() throws Exception {
-        ApiResultResponse<String> creationResult =  assertDoesNotThrow(
+        ApiResultResponse<String> creationResult = assertDoesNotThrow(
                 () -> testHelperService.createNewLogbook(
                         mockMvc,
                         status().isCreated(),
@@ -80,7 +80,7 @@ public class LogbooksControllerTest {
 
     @Test
     public void failCreatingTwoSameLogbook() {
-        ApiResultResponse<String> creationResult =  assertDoesNotThrow(
+        ApiResultResponse<String> creationResult = assertDoesNotThrow(
                 () -> testHelperService.createNewLogbook(
                         mockMvc,
                         status().isCreated(),
@@ -93,7 +93,7 @@ public class LogbooksControllerTest {
         assertThat(creationResult.getErrorCode()).isEqualTo(0);
         assertThat(creationResult.getPayload()).isNotEmpty();
 
-        LogbookAlreadyExists alreadyExistsException =  assertThrows(
+        LogbookAlreadyExists alreadyExistsException = assertThrows(
                 LogbookAlreadyExists.class,
                 () -> testHelperService.createNewLogbook(
                         mockMvc,
@@ -108,7 +108,7 @@ public class LogbooksControllerTest {
 
     @Test
     public void createAndGetLogbookTags() throws Exception {
-        ApiResultResponse<String> creationResult =  assertDoesNotThrow(
+        ApiResultResponse<String> creationResult = assertDoesNotThrow(
                 () -> testHelperService.createNewLogbook(
                         mockMvc,
                         status().isCreated(),
@@ -154,7 +154,7 @@ public class LogbooksControllerTest {
 
     @Test
     public void failCreatingTwoSameTagsOnTheSameLogbook() {
-        ApiResultResponse<String> creationResult =  assertDoesNotThrow(
+        ApiResultResponse<String> creationResult = assertDoesNotThrow(
                 () -> testHelperService.createNewLogbook(
                         mockMvc,
                         status().isCreated(),
@@ -195,5 +195,118 @@ public class LogbooksControllerTest {
                 )
         );
         assertThat(tagAlreadyExistsException.getErrorCode()).isEqualTo(-2);
+    }
+
+    @Test
+    public void createAndGetShifts() throws Exception {
+        ApiResultResponse<String> creationResult = assertDoesNotThrow(
+                () -> testHelperService.createNewLogbook(
+                        mockMvc,
+                        status().isCreated(),
+                        NewLogbookDTO.builder()
+                                .name("new-logbook")
+                                .build()
+                )
+        );
+
+        assertThat(creationResult).isNotNull();
+        assertThat(creationResult.getErrorCode()).isEqualTo(0);
+        assertThat(creationResult.getPayload()).isNotEmpty();
+
+        ApiResultResponse<Boolean> replacementResult = assertDoesNotThrow(
+                () -> testHelperService.replaceShiftForLogbook(
+                        mockMvc,
+                        status().isCreated(),
+                        creationResult.getPayload(),
+                        List.of(
+                                ShiftDTO.builder()
+                                        .name("Shift A")
+                                        .from("08:00")
+                                        .to("10:59")
+                                        .build()
+                        )
+                )
+        );
+        assertThat(replacementResult).isNotNull();
+        assertThat(replacementResult.getErrorCode()).isEqualTo(0);
+
+        ApiResultResponse<LogbookDTO> logbookResult = assertDoesNotThrow(
+                () -> testHelperService.getLogbookByID(
+                        mockMvc,
+                        status().isOk(),
+                        creationResult.getPayload()
+                )
+        );
+
+        assertThat(logbookResult).isNotNull();
+        assertThat(logbookResult.getErrorCode()).isEqualTo(0);
+        assertThat(logbookResult.getPayload().shifts()).extracting("name").contains("Shift A");
+
+        // replace and remove the old one
+
+        replacementResult = assertDoesNotThrow(
+                () -> testHelperService.replaceShiftForLogbook(
+                        mockMvc,
+                        status().isCreated(),
+                        creationResult.getPayload(),
+                        List.of(
+                                ShiftDTO.builder()
+                                        .name("Shift B")
+                                        .from("08:00")
+                                        .to("10:59")
+                                        .build()
+                        )
+                )
+        );
+        assertThat(replacementResult).isNotNull();
+        assertThat(replacementResult.getErrorCode()).isEqualTo(0);
+
+        //check
+        logbookResult = assertDoesNotThrow(
+                () -> testHelperService.getLogbookByID(
+                        mockMvc,
+                        status().isOk(),
+                        creationResult.getPayload()
+                )
+        );
+
+        assertThat(logbookResult).isNotNull();
+        assertThat(logbookResult.getErrorCode()).isEqualTo(0);
+        assertThat(logbookResult.getPayload().shifts()).extracting("name").contains("Shift B");
+
+        // update Shift B and create new one
+        ApiResultResponse<LogbookDTO> finalLogbookResult = logbookResult;
+        replacementResult = assertDoesNotThrow(
+                () -> testHelperService.replaceShiftForLogbook(
+                        mockMvc,
+                        status().isCreated(),
+                        creationResult.getPayload(),
+                        List.of(
+                                finalLogbookResult.getPayload().shifts().get(0).toBuilder()
+                                        .from("07:00")
+                                        .to("07:59")
+                                        .build(),
+                                ShiftDTO.builder()
+                                        .name("New After B")
+                                        .from("08:00")
+                                        .to("10:59")
+                                        .build()
+                        )
+                )
+        );
+        assertThat(replacementResult).isNotNull();
+        assertThat(replacementResult.getErrorCode()).isEqualTo(0);
+
+        logbookResult = assertDoesNotThrow(
+                () -> testHelperService.getLogbookByID(
+                        mockMvc,
+                        status().isOk(),
+                        creationResult.getPayload()
+                )
+        );
+
+        assertThat(logbookResult).isNotNull();
+        assertThat(logbookResult.getErrorCode()).isEqualTo(0);
+        assertThat(logbookResult.getPayload().shifts()).extracting("from").contains("07:00", "08:00");
     }
 }

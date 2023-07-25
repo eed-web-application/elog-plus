@@ -11,4 +11,13 @@ public class StringUtilities {
                 ).replaceAll("[^\\p{ASCII}]", "")
                 .replaceAll(" ", "-");
     }
+
+    static public String shiftNameNormalization(String tagName) {
+        return Normalizer
+                .normalize(
+                        tagName.trim(),
+                        Normalizer.Form.NFD
+                ).replaceAll("[^\\p{ASCII}]", "")
+                .replaceAll(" ", "-");
+    }
 }

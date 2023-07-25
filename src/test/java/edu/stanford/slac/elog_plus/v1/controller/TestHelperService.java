@@ -195,16 +195,17 @@ public class TestHelperService {
     public ApiResultResponse<EntryDTO> getFullLog(MockMvc mockMvc, ResultMatcher resultMatcher, String id, boolean includeFollowUps) throws Exception {
         return getFullLog(mockMvc, resultMatcher, id, includeFollowUps, false, false);
     }
+
     public ApiResultResponse<EntryDTO> getFullLog(MockMvc mockMvc, ResultMatcher resultMatcher, String id, boolean includeFollowUps, boolean includeFollowingUps, boolean includeHistory) throws Exception {
         MockHttpServletRequestBuilder request = get("/v1/entries/{id}", id)
                 .accept(MediaType.APPLICATION_JSON);
-        if(includeFollowUps) {
+        if (includeFollowUps) {
             request.param("includeFollowUps", String.valueOf(true));
         }
-        if(includeFollowingUps) {
+        if (includeFollowingUps) {
             request.param("includeFollowingUps", String.valueOf(true));
         }
-        if(includeHistory) {
+        if (includeHistory) {
             request.param("includeHistory", String.valueOf(true));
         }
 
@@ -379,7 +380,7 @@ public class TestHelperService {
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<List<String>> logbooksName) throws Exception {
-        MockHttpServletRequestBuilder getRequest =  get("/v1/tags")
+        MockHttpServletRequestBuilder getRequest = get("/v1/tags")
                 .accept(MediaType.APPLICATION_JSON);
         logbooksName.ifPresent(lb -> {
             String[] lbArray = new String[lb.size()];
@@ -389,6 +390,36 @@ public class TestHelperService {
 
         MvcResult result = mockMvc.perform(
                         getRequest
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
+
+    public ApiResultResponse<Boolean> replaceShiftForLogbook(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            String logbookId,
+            List<ShiftDTO> replacementShiftDTO) throws Exception {
+        MockHttpServletRequestBuilder putRequest =
+                put("/v1/logbooks/{logbookId}/shifts", logbookId)
+                .content(
+                        new ObjectMapper().writeValueAsString(
+                                replacementShiftDTO
+                        )
+                )
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON);
+
+        MvcResult result = mockMvc.perform(
+                        putRequest
                 )
                 .andExpect(resultMatcher)
                 .andReturn();
