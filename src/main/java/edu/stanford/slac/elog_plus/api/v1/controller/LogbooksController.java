@@ -74,4 +74,20 @@ public class LogbooksController {
                 logbookService.getAllTags(logbookId)
         );
     }
+
+    @PutMapping(
+            path = "/{logbookId}/shifts",
+            consumes = {MediaType.APPLICATION_JSON_VALUE},
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResultResponse<Boolean> updateShift(
+            @PathVariable String logbookId,
+            @RequestBody List<ShiftDTO> shiftReplacement
+    ) {
+        logbookService.replaceShift(logbookId, shiftReplacement);
+        return ApiResultResponse.of(
+                true
+        );
+    }
 }

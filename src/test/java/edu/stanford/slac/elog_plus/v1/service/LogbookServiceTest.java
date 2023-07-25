@@ -17,7 +17,9 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -325,6 +327,313 @@ public class LogbookServiceTest {
 
         assertThat(fullLogbook).isNotNull();
         assertThat(fullLogbook.shifts()).extracting("id").contains(shiftId1, shiftId2, shiftId3);
+    }
+
+    @Test
+    public void shiftReplaceOKWithEmptyLogbook() {
+        String newLogbookID = getTestLogbook();
+        List<ShiftDTO> replaceShifts = new ArrayList<>();
+        replaceShifts.add(
+                ShiftDTO
+                        .builder()
+                        .name("Shift1")
+                        .from("00:00")
+                        .to("00:59")
+                        .build()
+        );
+        replaceShifts.add(
+                ShiftDTO
+                        .builder()
+                        .name("Shift2")
+                        .from("02:00")
+                        .to("02:59")
+                        .build()
+        );
+        replaceShifts.add(
+                ShiftDTO
+                        .builder()
+                        .name("Shift3")
+                        .from("01:00")
+                        .to("01:59")
+                        .build()
+        );
+
+        assertDoesNotThrow(
+                () -> {
+                    logbookService.replaceShift(
+                            newLogbookID,
+                            replaceShifts
+                    );
+                    return null;
+                }
+        );
+
+        LogbookDTO fullLogbook = assertDoesNotThrow(
+                () -> logbookService.getLogbook(
+                        newLogbookID
+                )
+        );
+
+        assertThat(fullLogbook).isNotNull();
+        assertThat(fullLogbook.shifts()).extracting("name").contains("Shift1", "Shift2", "Shift3");
+    }
+
+    @Test
+    public void shiftReplaceFailWithWrongID() {
+        String newLogbookID = getTestLogbook();
+        List<ShiftDTO> replaceShifts = new ArrayList<>();
+        replaceShifts.add(
+                ShiftDTO
+                        .builder()
+                        .name("Shift1")
+                        .from("00:00")
+                        .to("00:59")
+                        .build()
+        );
+        replaceShifts.add(
+                ShiftDTO
+                        .builder()
+                        .name("Shift2")
+                        .from("01:00")
+                        .to("01:59")
+                        .build()
+        );
+        replaceShifts.add(
+                ShiftDTO
+                        .builder()
+                        .name("Shift3")
+                        .from("02:00")
+                        .to("02:59")
+                        .build()
+        );
+
+        assertDoesNotThrow(
+                () -> {
+                    logbookService.replaceShift(
+                            newLogbookID,
+                            replaceShifts
+                    );
+                    return null;
+                }
+        );
+
+        LogbookDTO fullLogbook = assertDoesNotThrow(
+                () -> logbookService.getLogbook(
+                        newLogbookID
+                )
+        );
+
+        assertThat(fullLogbook).isNotNull();
+        assertThat(fullLogbook.shifts()).extracting("name").contains("Shift1", "Shift2", "Shift3");
+
+        List<ShiftDTO> toReplaceShiftSecondRound = new ArrayList<>();
+        List<ShiftDTO> allShift = fullLogbook.shifts();
+        // replace the first and the third, removing the second and creating new one
+        toReplaceShiftSecondRound.add(
+                allShift.get(0).toBuilder()
+                        .from("13:00")
+                        .to("13:59")
+                        .build()
+        );
+        // here i change the id for simulate and id not present
+        toReplaceShiftSecondRound.add(
+                allShift.get(2).toBuilder()
+                        .id(UUID.randomUUID().toString())
+                        .from("14:00")
+                        .to("14:59")
+                        .build()
+        );
+        toReplaceShiftSecondRound.add(
+                ShiftDTO.builder()
+                        .name("New Shift")
+                        .from("15:00")
+                        .to("15:59")
+                        .build()
+        );
+        ControllerLogicException replaceException = assertThrows(
+                ControllerLogicException.class,
+                () -> logbookService.replaceShift(
+                            newLogbookID,
+                            toReplaceShiftSecondRound
+                    )
+        );
+        assertThat(replaceException.getErrorCode()).isEqualTo(-3);
+        assertThat(replaceException.getErrorMessage()).contains(".*Shift3.*not been found");
+    }
+
+    @Test
+    public void shiftReplaceOk() {
+        String newLogbookID = getTestLogbook();
+        List<ShiftDTO> replaceShifts = new ArrayList<>();
+        replaceShifts.add(
+                ShiftDTO
+                        .builder()
+                        .name("Shift1")
+                        .from("00:00")
+                        .to("00:59")
+                        .build()
+        );
+        replaceShifts.add(
+                ShiftDTO
+                        .builder()
+                        .name("Shift2")
+                        .from("01:00")
+                        .to("01:59")
+                        .build()
+        );
+        replaceShifts.add(
+                ShiftDTO
+                        .builder()
+                        .name("Shift3")
+                        .from("02:00")
+                        .to("02:59")
+                        .build()
+        );
+
+        assertDoesNotThrow(
+                () -> {
+                    logbookService.replaceShift(
+                            newLogbookID,
+                            replaceShifts
+                    );
+                    return null;
+                }
+        );
+
+        LogbookDTO fullLogbook = assertDoesNotThrow(
+                () -> logbookService.getLogbook(
+                        newLogbookID
+                )
+        );
+
+        assertThat(fullLogbook).isNotNull();
+        assertThat(fullLogbook.shifts()).extracting("name").contains("Shift1", "Shift2", "Shift3");
+
+        List<ShiftDTO> toReplaceShiftSecondRound = new ArrayList<>();
+        List<ShiftDTO> allShift = fullLogbook.shifts();
+        // replace the first and the third, removing the second and creating new one
+        toReplaceShiftSecondRound.add(
+                allShift.get(0).toBuilder()
+                        .from("13:00")
+                        .to("13:59")
+                        .build()
+        );
+        toReplaceShiftSecondRound.add(
+                allShift.get(2).toBuilder()
+                        .from("14:00")
+                        .to("14:59")
+                        .build()
+        );
+        toReplaceShiftSecondRound.add(
+                ShiftDTO.builder()
+                        .name("New Shift")
+                        .from("15:00")
+                        .to("15:59")
+                        .build()
+        );
+        assertDoesNotThrow(
+                () -> {
+                    logbookService.replaceShift(
+                            newLogbookID,
+                            toReplaceShiftSecondRound
+                    );
+                    return null;
+                }
+        );
+
+        fullLogbook = assertDoesNotThrow(
+                () -> logbookService.getLogbook(
+                        newLogbookID
+                )
+        );
+
+        assertThat(fullLogbook).isNotNull();
+        assertThat(fullLogbook.shifts()).extracting("name").contains("Shift1", "Shift3", "New Shift");
+    }
+
+    @Test
+    public void shiftReplaceFailsAndRestoreOld() {
+        String newLogbookID = getTestLogbook();
+        List<ShiftDTO> replaceShifts = new ArrayList<>();
+        replaceShifts.add(
+                ShiftDTO
+                        .builder()
+                        .name("Shift1")
+                        .from("00:00")
+                        .to("00:59")
+                        .build()
+        );
+        replaceShifts.add(
+                ShiftDTO
+                        .builder()
+                        .name("Shift2")
+                        .from("02:00")
+                        .to("02:59")
+                        .build()
+        );
+        replaceShifts.add(
+                ShiftDTO
+                        .builder()
+                        .name("Shift3")
+                        .from("01:00")
+                        .to("01:59")
+                        .build()
+        );
+
+        assertDoesNotThrow(
+                () -> {
+                    logbookService.replaceShift(
+                            newLogbookID,
+                            replaceShifts
+                    );
+                    return null;
+                }
+        );
+        //replace new shifts
+        replaceShifts.clear();
+        replaceShifts.add(
+                ShiftDTO
+                        .builder()
+                        .name("Shift4")
+                        .from("05:00")
+                        .to("05:59")
+                        .build()
+        );
+        replaceShifts.add(
+                ShiftDTO
+                        .builder()
+                        .name("Shift5")
+                        .from("06:00")
+                        .to("06:59")
+                        .build()
+        );
+        replaceShifts.add(
+                ShiftDTO
+                        .builder()
+                        .name("Shift6")
+                        .from("07:00")
+                        .to("08:59")
+                        .build()
+        );
+
+        ControllerLogicException replaceException = assertThrows(
+                ControllerLogicException.class,
+                () -> logbookService.replaceShift(
+                        newLogbookID,
+                        replaceShifts
+                )
+        );
+
+        assertThat(replaceException.getErrorCode()).isEqualTo(-4);
+
+        LogbookDTO fullLogbook = assertDoesNotThrow(
+                () -> logbookService.getLogbook(
+                        newLogbookID
+                )
+        );
+
+        assertThat(fullLogbook).isNotNull();
+        assertThat(fullLogbook.shifts()).extracting("name").contains("Shift4", "Shift5", "Shift6");
     }
 
     private String getTestLogbook() {

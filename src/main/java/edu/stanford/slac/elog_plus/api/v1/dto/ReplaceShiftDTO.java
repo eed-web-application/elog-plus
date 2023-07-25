@@ -7,12 +7,10 @@ import lombok.Builder;
 
 import java.util.List;
 
-@Builder(toBuilder=true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@Schema(description = "Identify the single logbook")
-public record LogbookDTO (
-    String id,
-    String name,
-    List<TagDTO> tags,
-    List<ShiftDTO> shifts){}
+@Schema(description = "DTO for the shift creation")
+@Builder(toBuilder = true)
+public record ReplaceShiftDTO (
+    List<ShiftDTO> replacementShifts)
+{}
