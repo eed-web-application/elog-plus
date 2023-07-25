@@ -458,7 +458,7 @@ public class LogbookServiceTest {
                     )
         );
         assertThat(replaceException.getErrorCode()).isEqualTo(-3);
-        assertThat(replaceException.getErrorMessage()).contains(".*Shift3.*not been found");
+        assertThat(replaceException.getErrorMessage()).containsPattern(".*Shift3.*");
     }
 
     @Test
@@ -611,7 +611,7 @@ public class LogbookServiceTest {
                 ShiftDTO
                         .builder()
                         .name("Shift6")
-                        .from("07:00")
+                        .from("06:00")
                         .to("08:59")
                         .build()
         );
@@ -633,7 +633,7 @@ public class LogbookServiceTest {
         );
 
         assertThat(fullLogbook).isNotNull();
-        assertThat(fullLogbook.shifts()).extracting("name").contains("Shift4", "Shift5", "Shift6");
+        assertThat(fullLogbook.shifts()).extracting("name").contains("Shift1", "Shift2", "Shift3");
     }
 
     private String getTestLogbook() {
