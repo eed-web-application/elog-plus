@@ -4,19 +4,24 @@ import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.GregorianCalendar;
+
 /**
  * Represent the shift during the day
  */
-@Getter
-@Setter
-@Builder
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
+@Builder(toBuilder = true)
 public class Shift {
-    @Id
     private String id;
     private String name;
-    private Integer from;
-    private Integer to;
+    private String from;
+    private String to;
+    // calculated fields
+    private LocalTime fromTime;
+    private LocalTime toTime;
 }

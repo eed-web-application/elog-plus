@@ -3,6 +3,7 @@ package edu.stanford.slac.elog_plus.repository;
 import com.mongodb.client.result.UpdateResult;
 import edu.stanford.slac.elog_plus.exception.LogbookNotFound;
 import edu.stanford.slac.elog_plus.model.Logbook;
+import edu.stanford.slac.elog_plus.model.Shift;
 import edu.stanford.slac.elog_plus.model.Tag;
 import lombok.AllArgsConstructor;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -94,5 +95,23 @@ public class LogbookRepositoryImpl implements LogbookRepositoryCustom {
             result.add(lb.getName());
         }
         return result;
+    }
+
+    @Override
+    public List<Shift> getAllShift(String logbookID) {
+        Query q = new Query();
+        q.addCriteria(
+                Criteria.where("id").is(logbookID)
+        );
+        q.fields().include("shifts");
+        Logbook lb = mongoTemplate.findOne(q, Logbook.class);
+        assertion(
+                () -> lb != null,
+                LogbookNotFound.logbookNotFoundBuilder()
+                        .errorCode(-1)
+                        .errorDomain("LogbookRepositoryImpl:getAllShift")
+                        .build()
+        );
+        return Objects.requireNonNull(lb).getShifts();
     }
 }

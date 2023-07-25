@@ -14,4 +14,5 @@ import java.util.List;
 public record LogbookDTO (
     String id,
     String name,
-    List<TagDTO> tags){}
+    List<TagDTO> tags,
+    List<TagDTO> shifts){}

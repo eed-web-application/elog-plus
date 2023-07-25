@@ -1,23 +1,25 @@
 package edu.stanford.slac.elog_plus.service;
 
-import edu.stanford.slac.elog_plus.api.v1.dto.LogbookDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.NewLogbookDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.NewTagDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.TagDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.api.v1.mapper.LogbookMapper;
+import edu.stanford.slac.elog_plus.api.v1.mapper.ShiftMapper;
 import edu.stanford.slac.elog_plus.api.v1.mapper.TagMapper;
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.exception.LogbookAlreadyExists;
 import edu.stanford.slac.elog_plus.exception.LogbookNotFound;
 import edu.stanford.slac.elog_plus.exception.TagAlreadyExists;
 import edu.stanford.slac.elog_plus.model.Logbook;
+import edu.stanford.slac.elog_plus.model.Shift;
 import edu.stanford.slac.elog_plus.model.Tag;
 import edu.stanford.slac.elog_plus.repository.LogbookRepository;
 import edu.stanford.slac.elog_plus.utility.StringUtilities;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalTime;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
@@ -105,6 +107,7 @@ public class LogbookService {
 
     /**
      * Return a full log indetified by its name
+     *
      * @param logbookName the name of the logbook
      * @return the full logbook
      */
@@ -116,7 +119,7 @@ public class LogbookService {
         );
         return LogbookMapper.INSTANCE.fromModel(
                 lb.orElseThrow(
-                        ()-> LogbookNotFound.logbookNotFoundBuilder()
+                        () -> LogbookNotFound.logbookNotFoundBuilder()
                                 .errorCode(-1)
                                 .errorDomain("LogbookService:getLogbookByName")
                                 .build()
@@ -183,10 +186,11 @@ public class LogbookService {
 
     /**
      * Check if a tag exist for the log
-     *
+     * <p>
      * the name is normalized before checking
+     *
      * @param logbookId the id of the logbook
-     * @param tagName the name of the tag
+     * @param tagName   the name of the tag
      * @return true if the tag exists
      */
     public Boolean tagExistForLogbook(String logbookId, String tagName) {
@@ -240,7 +244,7 @@ public class LogbookService {
     public List<TagDTO> getAllTagsByLogbooksName(List<String> logbooks) {
         List<TagDTO> result = new ArrayList<>();
 
-        if(logbooks == null || logbooks.isEmpty()){
+        if (logbooks == null || logbooks.isEmpty()) {
             logbooks = wrapCatch(
                     () -> logbookRepository.getAllLogbook(),
                     -1,
@@ -248,9 +252,9 @@ public class LogbookService {
             );
         }
 
-        for (String logbookName:
-             logbooks) {
-            if(!exist(logbookName)) {
+        for (String logbookName :
+                logbooks) {
+            if (!exist(logbookName)) {
                 continue;
             }
             LogbookDTO lbDTO = getLogbookByName(logbookName);
@@ -258,5 +262,187 @@ public class LogbookService {
             result.addAll(lbDTO.tags());
         }
         return result;
+    }
+
+    /**
+     * Add new shift checking for the correctness
+     *
+     * @param logbookId   the id of the logbook from which we want to add the shift
+     * @param newShiftDTO the shift description
+     */
+    public String addShift(String logbookId, NewShiftDTO newShiftDTO) {
+        // validate the shift
+        Shift newShift = validateShift(newShiftDTO, -1, "LogbookService:addShift");
+
+        // normalize shift name
+        newShift.setName(
+                StringUtilities.shiftNameNormalization(
+                        newShift.getName()
+                )
+        );
+
+        Optional<Logbook> lb =
+                wrapCatch(
+                        () -> logbookRepository.findById(
+                                logbookId
+                        ),
+                        -3,
+                        "LogbookService:addShift"
+                );
+        assertion(
+                lb::isPresent,
+                LogbookNotFound.logbookNotFoundBuilder()
+                        .errorCode(-2)
+                        .errorDomain("LogbookService:addShift")
+                        .build()
+        );
+
+        Logbook lbToSave = lb.get();
+
+        //create ID
+        newShift.setId(UUID.randomUUID().toString());
+
+        // get all shift already saved
+        List<Shift> allShift = lbToSave.getShifts();
+
+        // check if the new shift is not overlapped with the other
+        checkShiftAmongAllOther(
+                newShift,
+                allShift,
+                -3,
+                "LogbookService:addShift");
+
+        // we can add the shift
+        lbToSave.getShifts().add(newShift);
+
+        // save shift
+        wrapCatch(
+                () -> logbookRepository.save(
+                        lbToSave
+                ),
+                -3,
+                "LogbookService:addShift"
+        );
+        return newShift.getId();
+    }
+
+    private static void checkShiftAmongAllOther(
+            Shift newShift,
+            List<Shift> allShift,
+            Integer errorCode,
+            String errorDomain) {
+        for (Shift savedShift :
+                allShift) {
+            // check from field
+            if(
+                    newShift.getFromTime().isBefore(savedShift.getToTime()) &&
+                            newShift.getFromTime().isAfter(savedShift.getFromTime())
+            ) {
+                throw ControllerLogicException.of(
+                        errorCode,
+                        String.format("New shift 'from' field overlap with the shift %s", savedShift.getName()),
+                        errorDomain
+                );
+            }
+
+            if(
+                    newShift.getToTime().isBefore(savedShift.getToTime()) &&
+                            newShift.getToTime().isAfter(savedShift.getFromTime())
+            ) {
+                throw ControllerLogicException.of(
+                        errorCode,
+                        String.format("New shift 'to' field overlap with the shif %s", savedShift.getName()),
+                        errorDomain
+                );
+            }
+        }
+    }
+
+    /**
+     * Validate the shift
+     *
+     * @param newShiftDTO is the shift to validate
+     */
+    private Shift validateShift(NewShiftDTO newShiftDTO, Integer errorCode, String errorDomain) {
+        final String timeRegex = "^(0?[0-9]|1[0-9]|2[0-3]):([0-5][0-9])$";
+        final Pattern pattern = Pattern.compile(timeRegex, Pattern.MULTILINE);
+
+        assertion(
+                () -> newShiftDTO != null,
+                ControllerLogicException.of(
+                        errorCode,
+                        "The shift cannot be null",
+                        errorDomain
+                )
+        );
+
+        // check 'name'
+        assertion(
+                () -> newShiftDTO.name() != null && !newShiftDTO.name().isEmpty(),
+                ControllerLogicException.of(
+                        errorCode,
+                        "The shift 'name' is mandatory",
+                        errorDomain
+                )
+        );
+
+        //check 'from' field
+        assertion(
+                () -> newShiftDTO.from() != null && !newShiftDTO.name().isEmpty(),
+                ControllerLogicException.of(
+                        errorCode,
+                        "The shift 'from' field is mandatory",
+                        errorDomain
+                )
+        );
+        Matcher fromMatcher = pattern.matcher(newShiftDTO.from());
+        assertion(
+                () -> fromMatcher.matches() && fromMatcher.groupCount() == 2,
+                ControllerLogicException.of(
+                        errorCode,
+                        "The shift 'from' field need to be a time in the range 00:01-23:59",
+                        errorDomain
+                )
+        );
+
+        //check 'to' field
+        assertion(
+                () -> newShiftDTO.to() != null && !newShiftDTO.to().isEmpty(),
+                ControllerLogicException.of(
+                        errorCode,
+                        "The shift 'to' field is mandatory",
+                        errorDomain
+                )
+        );
+        Matcher toMatcher = pattern.matcher(newShiftDTO.to());
+        assertion(
+                () -> toMatcher.matches() && toMatcher.groupCount() == 2,
+                ControllerLogicException.of(
+                        errorCode,
+                        "The shift 'to' field need to be a time in the range 00:01-23:59",
+                        errorDomain
+                )
+        );
+        LocalTime fromTime = LocalTime.of(
+                Integer.parseInt(fromMatcher.group(1)),
+                Integer.parseInt(fromMatcher.group(2))
+        );
+        LocalTime toTime = LocalTime.of(
+                Integer.parseInt(toMatcher.group(1)),
+                Integer.parseInt(toMatcher.group(2))
+        );
+        assertion(
+                () -> fromTime.isBefore(toTime),
+                ControllerLogicException.of(
+                        errorCode,
+                        "The shift 'from' time should be before 'to' time",
+                        errorDomain
+                )
+        );
+        return ShiftMapper.INSTANCE.fromDTO(
+                newShiftDTO,
+                fromTime,
+                toTime
+        );
     }
 }
