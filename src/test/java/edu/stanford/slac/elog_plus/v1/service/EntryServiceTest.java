@@ -91,7 +91,7 @@ public class EntryServiceTest {
                 EntryNewDTO
                         .builder()
                         .logbook(logbook.name())
-                        .text("<p><a href='http://example.com/' onclick='stealCookies()'>Link</a></p>")
+                        .text("<h1>H1</h1><h2>H2</h2><p><a href='http://example.com/' onclick='stealCookies()'>Link</a></p>")
                         .title("A very wonderful log")
                         .build()
         );
@@ -102,7 +102,7 @@ public class EntryServiceTest {
                                 newLogID
                         )
                 );
-        assertThat(fullLog.text()).isEqualTo("<p><a href=\"http://example.com/\" rel=\"nofollow\">Link</a></p>");
+        assertThat(fullLog.text()).isEqualTo("<h1>H1</h1>\n<h2>H2</h2>\n<p><a href=\"http://example.com/\" rel=\"nofollow\">Link</a></p>");
     }
 
     @Test
