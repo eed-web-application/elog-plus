@@ -1,17 +1,14 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
-import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.exception.EntryNotFound;
 import edu.stanford.slac.elog_plus.exception.SupersedeAlreadyCreated;
 import edu.stanford.slac.elog_plus.model.Attachment;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
-import edu.stanford.slac.elog_plus.model.Tag;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.assertj.core.api.AssertionsForInterfaceTypes;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -501,7 +498,7 @@ public class EntriesControllerTest {
         );
 
         assertThat(fullLog.getErrorCode()).isEqualTo(0);
-        assertThat(fullLog.getPayload().followUp()).isNull();
+        assertThat(fullLog.getPayload().followUps()).isNull();
 
         //get full log without followUPs
         ApiResultResponse<EntryDTO> fullLogWitFollowUps = assertDoesNotThrow(
@@ -514,8 +511,8 @@ public class EntriesControllerTest {
         );
 
         assertThat(fullLogWitFollowUps.getErrorCode()).isEqualTo(0);
-        assertThat(fullLogWitFollowUps.getPayload().followUp()).isNotNull();
-        assertThat(fullLogWitFollowUps.getPayload().followUp().size()).isEqualTo(2);
+        assertThat(fullLogWitFollowUps.getPayload().followUps()).isNotNull();
+        assertThat(fullLogWitFollowUps.getPayload().followUps().size()).isEqualTo(2);
 
         // check for full log with the following up one
         ApiResultResponse<EntryDTO> fullLogWithFollowingUp = assertDoesNotThrow(

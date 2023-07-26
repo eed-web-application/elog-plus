@@ -20,12 +20,12 @@ public interface EntryMapper {
 
     @Mapping(target = "loggedBy", expression = "java(entry.getFirstName() + \" \" + entry.getLastName())")
     @Mapping(target = "attachments", source = "attachments", qualifiedByName = "mapAttachments")
-    @Mapping(target = "followUp", ignore = true)
+    @Mapping(target = "followUps", ignore = true)
     EntryDTO fromModel(Entry entry, @Context AttachmentService attachmentService);
 
     @Mapping(target = "loggedBy", expression = "java(entry.getFirstName() + \" \" + entry.getLastName())")
     @Mapping(target = "attachments", ignore = true)
-    @Mapping(target = "followUp", ignore = true)
+    @Mapping(target = "followUps", ignore = true)
     EntryDTO fromModelNoAttachment(Entry entry);
 
     @Mapping(target = "loggedBy", expression = "java(entry.getFirstName() + \" \" + entry.getLastName())")

@@ -179,19 +179,19 @@ public class EntryService {
         );
 
         if (includeFollowUps.isPresent() && includeFollowUps.get()) {
-            List<EntryDTO> list = new ArrayList<>(foundEntry.get().getFollowUp().size());
-            for (String fID : foundEntry.get().getFollowUp()) {
+            List<EntryDTO> list = new ArrayList<>(foundEntry.get().getFollowUps().size());
+            for (String fID : foundEntry.get().getFollowUps()) {
                 list.add(getFullLog(fID));
 
             }
             result = result.toBuilder()
-                    .followUp(list)
+                    .followUps(list)
                     .build();
         }
 
         if (includeFollowingUps.isPresent() && includeFollowingUps.get()) {
             Optional<Entry> followingLog = wrapCatch(
-                    () -> entryRepository.findByFollowUpContains(id),
+                    () -> entryRepository.findByFollowUpsContains(id),
                     -3,
                     "LogService::getFullLog"
             );
@@ -319,7 +319,7 @@ public class EntryService {
         Entry l = rootLog.get();
         String newFollowupLogID = createNew(newLog);
         // update supersede
-        l.getFollowUp().add(newFollowupLogID);
+        l.getFollowUps().add(newFollowupLogID);
         wrapCatch(
                 () -> entryRepository.save(l),
                 -4,
@@ -349,14 +349,14 @@ public class EntryService {
                         .build()
         );
         assertion(
-                () -> (rootLog.get().getFollowUp().size() > 0),
+                () -> (rootLog.get().getFollowUps().size() > 0),
                 -3,
                 "The log has not been found",
                 "LogService::getAllFollowUpForALog"
         );
         List<Entry> followUp =
                 wrapCatch(
-                        () -> entryRepository.findAllByIdIn(rootLog.get().getFollowUp()),
+                        () -> entryRepository.findAllByIdIn(rootLog.get().getFollowUps()),
                         -1,
                         "LogService::getAllFollowUpForALog"
                 );

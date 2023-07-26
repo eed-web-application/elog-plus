@@ -412,7 +412,7 @@ public class EntryServiceTest {
                                         .builder()
                                         .logbook(logbook.name())
                                         .text("This is a log for test")
-                                        .title("A very wonderful log updated for followUp one")
+                                        .title("A very wonderful log updated for followUps one")
                                         .build()
                         )
                 );
@@ -426,7 +426,7 @@ public class EntryServiceTest {
                                         .builder()
                                         .logbook(logbook.name())
                                         .text("This is a log for test")
-                                        .title("A very wonderful log updated for followUp two")
+                                        .title("A very wonderful log updated for followUps two")
                                         .build()
                         )
                 );
@@ -467,7 +467,7 @@ public class EntryServiceTest {
                                         .builder()
                                         .logbook(logbook.name())
                                         .text("This is a log for test")
-                                        .title("A very wonderful log updated for followUp one")
+                                        .title("A very wonderful log updated for followUps one")
                                         .build()
                         )
                 );
