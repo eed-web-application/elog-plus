@@ -4,14 +4,14 @@ import com.github.javafaker.Faker;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.api.v1.mapper.EntryMapper;
 import edu.stanford.slac.elog_plus.api.v1.mapper.QueryParameterMapper;
-import edu.stanford.slac.elog_plus.exception.*;
+import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
+import edu.stanford.slac.elog_plus.exception.EntryNotFound;
+import edu.stanford.slac.elog_plus.exception.SupersedeAlreadyCreated;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.repository.EntryRepository;
 import edu.stanford.slac.elog_plus.utility.StringUtilities;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.jsoup.Jsoup;
-import org.jsoup.safety.Safelist;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -124,10 +124,10 @@ public class EntryService {
 
         //sanitize title and text
         newEntry.setTitle(
-                Jsoup.clean(newEntry.getTitle(), Safelist.basic())
+                StringUtilities.sanitizeEntryTitle(newEntry.getTitle())
         );
         newEntry.setText(
-                Jsoup.clean(newEntry.getText(), Safelist.basicWithImages())
+                StringUtilities.sanitizeEntryText(newEntry.getText())
         );
 
         // other check
