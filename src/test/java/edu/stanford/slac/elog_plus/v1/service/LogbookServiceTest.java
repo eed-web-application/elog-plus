@@ -3,6 +3,7 @@ package edu.stanford.slac.elog_plus.v1.service;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.model.Logbook;
+import edu.stanford.slac.elog_plus.model.Shift;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,8 +18,10 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -634,6 +637,117 @@ public class LogbookServiceTest {
 
         assertThat(fullLogbook).isNotNull();
         assertThat(fullLogbook.shifts()).extracting("name").contains("Shift1", "Shift2", "Shift3");
+    }
+
+    @Test
+    public void getShiftByLocalTime() {
+        String newLogbookID = getTestLogbook();
+        List<ShiftDTO> replaceShifts = new ArrayList<>();
+        replaceShifts.add(
+                ShiftDTO
+                        .builder()
+                        .name("Shift1")
+                        .from("00:00")
+                        .to("00:59")
+                        .build()
+        );
+        replaceShifts.add(
+                ShiftDTO
+                        .builder()
+                        .name("Shift2")
+                        .from("01:00")
+                        .to("01:59")
+                        .build()
+        );
+        replaceShifts.add(
+                ShiftDTO
+                        .builder()
+                        .name("Shift3")
+                        .from("02:00")
+                        .to("02:59")
+                        .build()
+        );
+
+        assertDoesNotThrow(
+                () -> {
+                    logbookService.replaceShift(
+                            newLogbookID,
+                            replaceShifts
+                    );
+                    return null;
+                }
+        );
+
+        Optional<ShiftDTO> foundShift = assertDoesNotThrow(
+                () ->
+                    logbookService.findShiftByLocalTime(
+                            newLogbookID,
+                            LocalTime.of(
+                                    1,
+                                    30
+                            )
+                    )
+
+        );
+
+        assertThat(foundShift).isNotNull();
+        assertThat(foundShift.isPresent()).isTrue();
+        assertThat(foundShift.get().name()).isEqualTo("Shift2");
+    }
+
+    @Test
+    public void getNoShiftByWrongLocalTime() {
+        String newLogbookID = getTestLogbook();
+        List<ShiftDTO> replaceShifts = new ArrayList<>();
+        replaceShifts.add(
+                ShiftDTO
+                        .builder()
+                        .name("Shift1")
+                        .from("00:00")
+                        .to("00:59")
+                        .build()
+        );
+        replaceShifts.add(
+                ShiftDTO
+                        .builder()
+                        .name("Shift2")
+                        .from("01:00")
+                        .to("01:59")
+                        .build()
+        );
+        replaceShifts.add(
+                ShiftDTO
+                        .builder()
+                        .name("Shift3")
+                        .from("02:00")
+                        .to("02:59")
+                        .build()
+        );
+
+        assertDoesNotThrow(
+                () -> {
+                    logbookService.replaceShift(
+                            newLogbookID,
+                            replaceShifts
+                    );
+                    return null;
+                }
+        );
+
+        Optional<ShiftDTO> foundShift = assertDoesNotThrow(
+                () ->
+                        logbookService.findShiftByLocalTime(
+                                newLogbookID,
+                                LocalTime.of(
+                                        3,
+                                        30
+                                )
+                        )
+
+        );
+
+        assertThat(foundShift).isNotNull();
+        assertThat(foundShift.isPresent()).isFalse();
     }
 
     private String getTestLogbook() {

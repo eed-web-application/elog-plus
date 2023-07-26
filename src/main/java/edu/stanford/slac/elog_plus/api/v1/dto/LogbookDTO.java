@@ -7,12 +7,17 @@ import lombok.Builder;
 
 import java.util.List;
 
-@Builder(toBuilder=true)
+@Builder(toBuilder = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "Identify the single logbook")
-public record LogbookDTO (
-    String id,
-    String name,
-    List<TagDTO> tags,
-    List<ShiftDTO> shifts){}
+public record LogbookDTO(
+        @Schema(description = "Unique identifier")
+        String id,
+        @Schema(description = "The name of the logbook")
+        String name,
+        @Schema(description = "The tags associated to the logbook")
+        List<TagDTO> tags,
+        @Schema(description = "The shift associated to the logbook")
+        List<ShiftDTO> shifts) {
+}

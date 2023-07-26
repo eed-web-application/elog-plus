@@ -5,11 +5,14 @@ import edu.stanford.slac.elog_plus.api.v1.dto.ShiftDTO;
 import edu.stanford.slac.elog_plus.model.Shift;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
 import org.mapstruct.factory.Mappers;
 
 import java.time.LocalTime;
 
-@Mapper
+@Mapper(
+        unmappedTargetPolicy = ReportingPolicy.IGNORE
+)
 public interface ShiftMapper {
     ShiftMapper INSTANCE = Mappers.getMapper( ShiftMapper.class );
     @Mapping(target = "id", ignore = true)
@@ -18,4 +21,5 @@ public interface ShiftMapper {
 
     Shift fromDTO(ShiftDTO shiftDTO);
     Shift fromDTO(NewShiftDTO shiftDTO);
+    ShiftDTO fromModel(Shift shift);
 }

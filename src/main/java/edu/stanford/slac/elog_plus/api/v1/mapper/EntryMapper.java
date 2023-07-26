@@ -1,9 +1,6 @@
 package edu.stanford.slac.elog_plus.api.v1.mapper;
 
-import edu.stanford.slac.elog_plus.api.v1.dto.AttachmentDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.EntryNewDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.EntryDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.EntrySummaryDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.service.AttachmentService;
 import org.mapstruct.*;
