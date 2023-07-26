@@ -346,9 +346,8 @@ public class LogbookService {
      */
     @Transactional(propagation = Propagation.NESTED)
     public String addShift(String logbookId, NewShiftDTO newShiftDTO) {
-        Shift shiftToAdd = ShiftMapper.INSTANCE.fromDTO(newShiftDTO);
         // validate the shift
-        shiftToAdd = validateShift(shiftToAdd, -1, "LogbookService:addShift");
+        Shift shiftToAdd = validateShift(ShiftMapper.INSTANCE.fromDTO(newShiftDTO), -1, "LogbookService:addShift");
 
         // normalize shift name
         shiftToAdd.setName(
@@ -581,24 +580,50 @@ public class LogbookService {
                         errorDomain
                 )
         );
-        LocalTime fromTime = LocalTime.of(
-                Integer.parseInt(fromMatcher.group(1)),
-                Integer.parseInt(fromMatcher.group(2))
-        );
-        LocalTime toTime = LocalTime.of(
-                Integer.parseInt(toMatcher.group(1)),
-                Integer.parseInt(toMatcher.group(2))
-        );
+//        LocalTime fromTime = LocalTime.of(
+//                Integer.parseInt(fromMatcher.group(1)),
+//                Integer.parseInt(fromMatcher.group(2))
+//        );
+//        LocalTime toTime = LocalTime.of(
+//                Integer.parseInt(toMatcher.group(1)),
+//                Integer.parseInt(toMatcher.group(2))
+//        );
         assertion(
-                () -> fromTime.isBefore(toTime),
+                () -> shiftToAdd.getFromTime().isBefore(shiftToAdd.getToTime()),
                 ControllerLogicException.of(
                         errorCode,
                         "The shift 'from' time should be before 'to' time",
                         errorDomain
                 )
         );
-        shiftToAdd.setFromTime(fromTime);
-        shiftToAdd.setToTime(toTime);
+        shiftToAdd.setFromMinutesSinceMidnight(
+                shiftToAdd.getFromTime().getHour() * 60 + shiftToAdd.getFromTime().getMinute()
+        );
+        shiftToAdd.setToMinutesSinceMidnight(
+                shiftToAdd.getToTime().getHour() * 60 + shiftToAdd.getToTime().getMinute()
+        );
+        //shiftToAdd.setFromTime(fromTime);
+        //.setToTime(toTime);
         return shiftToAdd;
+    }
+
+    /**
+     * Return the shift which the date fall in its range
+     * @param logbookId the logbook unique identifier
+     * @param localTime the time of the event in the day
+     * @return the found shift, if eny matches
+     */
+    public Optional<ShiftDTO> findShiftByLocalTime(String logbookId, LocalTime localTime) {
+        assertOnLogbook(logbookId, -1, "LogbookService:getShiftByLocalTime");
+        return wrapCatch(
+                ()->logbookRepository.findShiftFromLocalTime(
+                        logbookId,
+                        localTime
+                ).map(
+                        ShiftMapper.INSTANCE::fromModel
+                ),
+                -2,
+                "LogbookService:getShiftByLocalTime"
+        );
     }
 }

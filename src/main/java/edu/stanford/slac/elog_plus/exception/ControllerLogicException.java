@@ -3,11 +3,13 @@ package edu.stanford.slac.elog_plus.exception;
 import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
+@Getter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -28,24 +30,12 @@ public class ControllerLogicException extends RuntimeException {
         return result;
     }
 
-    public int getErrorCode() {
-        return errorCode;
-    }
-
     public void setErrorCode(int errorCode) {
         this.errorCode = errorCode;
     }
 
-    public String getErrorMessage() {
-        return errorMessage;
-    }
-
     public void setErrorMessage(String errorMessage) {
         this.errorMessage = errorMessage;
-    }
-
-    public String getErrorDomain() {
-        return errorDomain;
     }
 
     public void setErrorDomain(String errorDomain) {

@@ -204,7 +204,6 @@ public class EntryService {
                         )
                         .build();
             }
-
         }
 
         if (followHistory.isPresent() && followHistory.get()) {

@@ -12,10 +12,8 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.time.LocalTime;
+import java.util.*;
 
 import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
 
@@ -90,8 +88,8 @@ public class LogbookRepositoryImpl implements LogbookRepositoryCustom {
         Query query = new Query();
         query.fields().include("name");
         List<Logbook> l = mongoTemplate.find(query, Logbook.class);
-        for (Logbook lb:
-             l) {
+        for (Logbook lb :
+                l) {
             result.add(lb.getName());
         }
         return result;
@@ -113,5 +111,32 @@ public class LogbookRepositoryImpl implements LogbookRepositoryCustom {
                         .build()
         );
         return Objects.requireNonNull(lb).getShifts();
+    }
+
+    @Override
+    public Optional<Shift> findShiftFromLocalTime(String logbookId, LocalTime localTime) {
+        Optional<Shift> result = null;
+        int minutesFromMidnight = localTime.getHour() * 60 + localTime.getMinute();
+        Query q = new Query();
+        q.addCriteria(
+                Criteria.where("id").is(logbookId)
+        );
+        q.fields()
+                .include("shifts");
+        Logbook l = mongoTemplate.findOne(q, Logbook.class);
+        if (l != null) {
+            result = l.getShifts()
+                    .stream()
+                    .filter(
+                            s ->
+                                    (localTime.equals(s.getFromTime()) || localTime.equals(s.getToTime())) ||
+                                            (
+                                                    localTime.isAfter(s.getFromTime()) && localTime.isBefore(s.getToTime())
+                                            )
+
+                    )
+                    .findFirst();
+        }
+        return result;
     }
 }

@@ -34,6 +34,8 @@ public record EntryDTO(
         List<EntryDTO> followUps,
         EntryDTO followingUp,
         List<EntryDTO> history,
+        @Schema(description = "The shift which the entry belong, if any match the event date")
+        String shift,
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)
         LocalDateTime loggedAt,
