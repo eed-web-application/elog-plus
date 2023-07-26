@@ -31,7 +31,7 @@ public record EntryDTO(
         String text,
         String loggedBy,
         List<AttachmentDTO> attachments,
-        List<EntryDTO> followUp,
+        List<EntryDTO> followUps,
         EntryDTO followingUp,
         List<EntryDTO> history,
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)

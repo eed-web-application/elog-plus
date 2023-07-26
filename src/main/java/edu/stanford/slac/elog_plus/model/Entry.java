@@ -7,7 +7,6 @@ import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.index.TextIndexed;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -44,7 +43,7 @@ public class Entry {
     private List<String> attachments = new ArrayList<>();
     @Indexed
     @Builder.Default
-    private List<String> followUp = new ArrayList<>();
+    private List<String> followUps = new ArrayList<>();
     private String filePs;
     private String filePreview;
     @Indexed

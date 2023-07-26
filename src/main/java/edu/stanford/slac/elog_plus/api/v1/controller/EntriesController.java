@@ -76,7 +76,7 @@ public class EntriesController {
     @ResponseStatus(HttpStatus.OK)
     public ApiResultResponse<EntryDTO> getFullLog(
             @PathVariable String id,
-            @Parameter(name = "includeFollowUps", description = "If true the API return all the followUp")
+            @Parameter(name = "includeFollowUps", description = "If true the API return all the followUps")
             @RequestParam("includeFollowUps") Optional<Boolean> includeFollowUps,
             @Parameter(name = "includeFollowingUps", description = "If true the API return all the followingUp")
             @RequestParam("includeFollowingUps") Optional<Boolean> includeFollowingUps,

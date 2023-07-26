@@ -16,9 +16,9 @@ public interface EntryRepository extends MongoRepository<Entry, String>, EntryRe
     Optional<Entry> findBySupersedeBy(String id);
 
     /**
-     * Return the log that the one identified by id is his followUp
+     * Return the log that the one identified by id is his followUps
      * @param id the id of the followup record
      * @return the following up record
      */
-    Optional<Entry> findByFollowUpContains(String id);
+    Optional<Entry> findByFollowUpsContains(String id);
 }
