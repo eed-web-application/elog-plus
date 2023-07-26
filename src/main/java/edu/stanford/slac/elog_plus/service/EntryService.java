@@ -44,7 +44,18 @@ public class EntryService {
         );
         return found.stream().map(
                 log -> {
-                    return EntryMapper.INSTANCE.toSearchResultFromDTO(log, attachmentService);
+                    var shift = logbookService.findShiftByLocalTimeWithLogbookName(
+                            log.getLogbook(),
+                            log.getEventAt().toLocalTime()
+                    );
+                    EntrySummaryDTO es = EntryMapper.INSTANCE.toSearchResultFromDTO(
+                            log,
+                            attachmentService
+                    );
+                    return es.toBuilder()
+                            .shift(
+                                    shift.map(ShiftDTO::name).orElse(null)
+                            ).build();
                 }
 
         ).collect(Collectors.toList());
@@ -206,6 +217,7 @@ public class EntryService {
             }
         }
 
+        // fill history
         if (followHistory.isPresent() && followHistory.get()) {
             // load all the history
             List<EntryDTO> logHistory = new ArrayList<>();
@@ -215,6 +227,17 @@ public class EntryService {
                         .history(logHistory)
                         .build();
             }
+        }
+
+        // fill shift
+        Optional<ShiftDTO> entryShift = logbookService.findShiftByLocalTimeWithLogbookName(
+                foundEntry.get().getLogbook(),
+                foundEntry.get().getEventAt().toLocalTime()
+        );
+        if(entryShift.isPresent()) {
+            result = result.toBuilder()
+                    .shift(entryShift.get().name())
+                    .build();
         }
         return result;
     }

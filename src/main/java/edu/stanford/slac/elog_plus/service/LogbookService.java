@@ -626,4 +626,23 @@ public class LogbookService {
                 "LogbookService:getShiftByLocalTime"
         );
     }
+
+    /**
+     * Return the shift which the date fall in its range
+     * @param logbookName the logbook unique name identifier
+     * @param localTime the time of the event in the day
+     * @return the found shift, if eny matches
+     */
+    public Optional<ShiftDTO> findShiftByLocalTimeWithLogbookName(String logbookName, LocalTime localTime) {
+        return wrapCatch(
+                ()->logbookRepository.findShiftFromLocalTimeWithLogbookName(
+                        logbookName,
+                        localTime
+                ).map(
+                        ShiftMapper.INSTANCE::fromModel
+                ),
+                -2,
+                "LogbookService:getShiftByLocalTime"
+        );
+    }
 }

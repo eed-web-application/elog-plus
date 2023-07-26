@@ -10,6 +10,7 @@ import edu.stanford.slac.elog_plus.model.Logbook;
 import edu.stanford.slac.elog_plus.service.AttachmentService;
 import edu.stanford.slac.elog_plus.service.EntryService;
 import edu.stanford.slac.elog_plus.service.LogbookService;
+import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -23,12 +24,12 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.time.LocalTime;
+import java.util.*;
 
+import static org.assertj.core.api.AssertionsForClassTypes.anyOf;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -719,5 +720,210 @@ public class EntryServiceTest {
         assertThat(prevAndNextPageByMiddlePin.size()).isEqualTo(20);
         assertThat(prevAndNextPageByMiddlePin.get(0).segment()).isEqualTo("58");
         assertThat(prevAndNextPageByMiddlePin.get(19).segment()).isEqualTo("39");
+    }
+
+    @Test
+    public void searchLogResultShowCorrectShift() {
+        var logbook = getTestLogbook();
+
+        //add shifts
+        logbookService.replaceShift(
+                logbook.id(),
+                List.of(
+                        ShiftDTO
+                                .builder()
+                                .name("Shift1")
+                                .from("00:00")
+                                .to("07:59")
+                                .build(),
+                        ShiftDTO
+                                .builder()
+                                .name("Shift2")
+                                .from("08:00")
+                                .to("12:59")
+                                .build(),
+                        ShiftDTO
+                                .builder()
+                                .name("Shift3")
+                                .from("13:00")
+                                .to("17:59")
+                                .build()
+                )
+        );
+
+        String anchorID = null;
+        // create some data
+        Random random = new Random();
+        for (int idx = 0; idx < 30; idx++) {
+            String newLogID =
+                    assertDoesNotThrow(
+                            () -> entryService.createNew(
+                                    EntryNewDTO
+                                            .builder()
+                                            .logbook(logbook.name())
+                                            .text("This is a log for test")
+                                            .title("A very wonderful log")
+                                            .eventAt(
+                                                    LocalDateTime.now().withHour(
+                                                                    random.nextInt(24)
+                                                            )
+                                                            .withMinute(
+                                                                    random.nextInt(60)
+                                                            )
+                                            )
+                                            .build()
+                            )
+                    );
+            assertThat(newLogID).isNotNull();
+        }
+
+        // initial search
+        List<EntrySummaryDTO> firstPage = assertDoesNotThrow(
+                () -> entryService.searchAll(
+                        QueryWithAnchorDTO
+                                .builder()
+                                .limit(30)
+                                .build()
+                )
+        );
+        assertThat(firstPage).isNotNull();
+        assertThat(firstPage.size()).isEqualTo(30);
+
+        Condition<EntrySummaryDTO> shift1Condition = new Condition<>(
+                e -> e.shift() != null && e.shift().compareTo("Shift1") == 0 &&
+                        e.eventAt().toLocalTime().equals(
+                                LocalTime.of(
+                                        0,
+                                        0
+                                )
+                        ) || (
+                            e.eventAt().toLocalTime().isAfter(
+                                    LocalTime.of(
+                                            0,
+                                            0
+                                    )
+                            ) &&
+                                e.eventAt().toLocalTime().isBefore(
+                                        LocalTime.of(
+                                                7,
+                                                59
+                                        )
+                                )
+                        ) ||
+                        e.eventAt().toLocalTime().equals(
+                                LocalTime.of(
+                                        7,
+                                        59
+                                )
+                        ),
+                "Shift1"
+        );
+        Condition<EntrySummaryDTO> shift2Condition = new Condition<>(
+                e -> e.shift() != null && e.shift().compareTo("Shift2") == 0 &&
+                        e.eventAt().toLocalTime().equals(
+                                LocalTime.of(
+                                        8,
+                                        0
+                                )
+                        ) ||
+                        (e.eventAt().toLocalTime().isAfter(
+                                LocalTime.of(
+                                        8,
+                                        0
+                                )
+                        ) &&
+                        e.eventAt().toLocalTime().isBefore(
+                                LocalTime.of(
+                                        12,
+                                        59
+                                )
+                        )) ||
+                        e.eventAt().toLocalTime().equals(
+                                LocalTime.of(
+                                        12,
+                                        59
+                                )
+                        ),
+                "Shift2"
+        );
+        Condition<EntrySummaryDTO> shift3Condition = new Condition<>(
+                e -> e.shift() != null && e.shift().compareTo("Shift3") == 0 &&
+                        e.eventAt().toLocalTime().equals(
+                                LocalTime.of(
+                                        13,
+                                        0
+                                )
+                        ) ||
+                        (e.eventAt().toLocalTime().isAfter(
+                                LocalTime.of(
+                                        13,
+                                        0
+                                )
+                        ) &&
+                        e.eventAt().toLocalTime().isBefore(
+                                LocalTime.of(
+                                        17,
+                                        59
+                                )
+                        )) ||
+                        e.eventAt().toLocalTime().equals(
+                                LocalTime.of(
+                                        17,
+                                        59
+                                )
+                        ),
+                "Shift3"
+        );
+        Condition<EntrySummaryDTO> shiftNullCondition = new Condition<>(
+                e -> e.shift() == null &&
+                        e.eventAt().toLocalTime().equals(
+                                LocalTime.of(
+                                        18,
+                                        0
+                                )
+                        ) ||
+                        (e.eventAt().toLocalTime().isAfter(
+                                LocalTime.of(
+                                        18,
+                                        0
+                                )
+                        ) &&
+                        e.eventAt().toLocalTime().isBefore(
+                                LocalTime.of(
+                                        23,
+                                        59
+                                )
+                        )) ||
+                        e.eventAt().toLocalTime().equals(
+                                LocalTime.of(
+                                        23,
+                                        59
+                                )
+                        ),
+                "Shift2"
+        );
+
+        //check all shift
+        assertThat(firstPage)
+                .filteredOn
+                        (
+                                anyOf(
+                                        shift1Condition,
+                                        shift2Condition,
+                                        shift3Condition,
+                                        shiftNullCondition
+                                )
+                        ).hasSize(30);
+
+        // check summary against full entry
+
+        for (EntrySummaryDTO es:
+             firstPage) {
+            EntryDTO fullEntry = entryService.getFullLog(
+                    es.id()
+            );
+            assertThat(fullEntry).isNotNull();
+            assertThat(fullEntry.shift()).isEqualTo(es.shift());
+        }
     }
 }
