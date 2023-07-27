@@ -20,17 +20,16 @@ import java.util.List;
 public record EntryNewDTO(
         @Schema(description = "Is the logbook where the new log belong")
         String logbook,
-        @Schema(description = "Is the segment associated to the log")
-        String segment,
         @Schema(description = "The title of the log")
         String title,
         @Schema(description = "The content of the log")
         String text,
+        @Schema(description = "Is the general note field")
+        String note,
         @Schema(description = "The tags describes represent the log")
         List<String> tags,
         @Schema(description = "The list of the attachment of the log")
         List<String> attachments,
-
         String summarizeShift,
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)

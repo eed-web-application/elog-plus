@@ -38,6 +38,7 @@ public class Entry {
     private String title;
     @TextIndexed
     private String text;
+    String note;
     private String lastName;
     private String firstName;
     private String userName;

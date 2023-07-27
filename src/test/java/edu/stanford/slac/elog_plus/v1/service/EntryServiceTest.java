@@ -612,7 +612,7 @@ public class EntryServiceTest {
                                             .logbook(logbook.name())
                                             .text("This is a log for test")
                                             .title("A very wonderful log")
-                                            .segment(String.valueOf(finalIdx))
+                                            .note(String.valueOf(finalIdx))
                                             .build()
                             )
                     );
@@ -633,17 +633,17 @@ public class EntryServiceTest {
         );
         assertThat(firstPage).isNotNull();
         assertThat(firstPage.size()).isEqualTo(10);
-        String lastSegment = null;
+        String note = null;
         for (EntrySummaryDTO l :
                 firstPage) {
-            if (lastSegment == null) {
-                lastSegment = l.segment();
+            if (note == null) {
+                note = l.note();
                 continue;
             }
-            assertThat(Integer.valueOf(lastSegment)).isGreaterThan(
-                    Integer.valueOf(l.segment())
+            assertThat(Integer.valueOf(note)).isGreaterThan(
+                    Integer.valueOf(l.note())
             );
-            lastSegment = l.segment();
+            note = l.note();
         }
         var testAnchorLog = firstPage.get(firstPage.size() - 1);
         // load next page
@@ -662,14 +662,14 @@ public class EntryServiceTest {
         // check that the first of next page is not the last of the previous
         assertThat(nextPage.get(0).id()).isNotEqualTo(firstPage.get(firstPage.size() - 1).id());
 
-        lastSegment = nextPage.get(0).segment();
+        note = nextPage.get(0).note();
         nextPage.remove(0);
         for (EntrySummaryDTO l :
                 nextPage) {
-            assertThat(Integer.valueOf(lastSegment)).isGreaterThan(
-                    Integer.valueOf(l.segment())
+            assertThat(Integer.valueOf(note)).isGreaterThan(
+                    Integer.valueOf(l.note())
             );
-            lastSegment = l.segment();
+            note = l.note();
         }
 
         // now get all the record upside and downside
@@ -718,8 +718,8 @@ public class EntryServiceTest {
         );
         assertThat(prevAndNextPageByMiddlePin).isNotNull();
         assertThat(prevAndNextPageByMiddlePin.size()).isEqualTo(20);
-        assertThat(prevAndNextPageByMiddlePin.get(0).segment()).isEqualTo("58");
-        assertThat(prevAndNextPageByMiddlePin.get(19).segment()).isEqualTo("39");
+        assertThat(prevAndNextPageByMiddlePin.get(0).note()).isEqualTo("58");
+        assertThat(prevAndNextPageByMiddlePin.get(19).note()).isEqualTo("39");
     }
 
     @Test
