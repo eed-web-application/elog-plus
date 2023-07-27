@@ -23,6 +23,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -308,5 +309,64 @@ public class LogbooksControllerTest {
         assertThat(logbookResult).isNotNull();
         assertThat(logbookResult.getErrorCode()).isEqualTo(0);
         assertThat(logbookResult.getPayload().shifts()).extracting("from").contains("07:00", "08:00");
+    }
+
+    @Test
+    public void updateLogbook() throws Exception {
+        ApiResultResponse<String> creationResult = assertDoesNotThrow(
+                () -> testHelperService.createNewLogbook(
+                        mockMvc,
+                        status().isCreated(),
+                        NewLogbookDTO.builder()
+                                .name("new-logbook")
+                                .build()
+                )
+        );
+
+        assertThat(creationResult).isNotNull();
+        assertThat(creationResult.getErrorCode()).isEqualTo(0);
+        assertThat(creationResult.getPayload()).isNotEmpty();
+
+        ApiResultResponse<Boolean> replacementResult = assertDoesNotThrow(
+                () -> testHelperService.updateLogbook(
+                        mockMvc,
+                        status().isCreated(),
+                        creationResult.getPayload(),
+                        UpdateLogbookDTO
+                                .builder()
+                                .name("updated name")
+                                .tags(
+                                        List.of(
+                                                TagDTO.builder()
+                                                        .name("tag-1")
+                                                        .build()
+                                        )
+                                )
+                                .shifts(
+                                        List.of(
+                                                ShiftDTO.builder()
+                                                        .name("Shift A")
+                                                        .from("08:00")
+                                                        .to("10:59")
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(replacementResult).isNotNull();
+        assertThat(replacementResult.getErrorCode()).isEqualTo(0);
+
+        ApiResultResponse<LogbookDTO> fullLogbook = assertDoesNotThrow(
+                () -> testHelperService.getLogbookByID(
+                        mockMvc,
+                        status().isOk(),
+                        creationResult.getPayload()
+                )
+        );
+        assertThat(fullLogbook.getErrorCode()).isEqualTo(0);
+        assertThat(fullLogbook.getPayload().name()).isEqualTo("updated-name");
+        assertThat(fullLogbook.getPayload().tags()).hasSize(1).extracting("name").contains("tag-1");
+        assertThat(fullLogbook.getPayload().shifts()).hasSize(1).extracting("name").contains("Shift A");
     }
 }

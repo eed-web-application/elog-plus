@@ -89,10 +89,10 @@ public class LogbookService {
      * @param logbookDTO the updated logbook
      */
     @Transactional
-    public void update(LogbookDTO logbookDTO) {
+    public void update(String logbookId, UpdateLogbookDTO logbookDTO) {
         // check if id exists
         Optional<Logbook> logBook = wrapCatch(
-                () -> logbookRepository.findById(logbookDTO.id()),
+                () -> logbookRepository.findById(logbookId),
                 -1,
                 "LogbookService::update"
         );
@@ -102,6 +102,30 @@ public class LogbookService {
                 logBook::isPresent,
                 LogbookNotFound.logbookNotFoundBuilder()
                         .errorCode(-2)
+                        .errorDomain("LogbookService::update")
+                        .build()
+        );
+        assertion(
+                ()->logBook.get().getName()!= null && !logBook.get().getName().isEmpty(),
+                ControllerLogicException.builder()
+                        .errorCode(-3)
+                        .errorMessage("The name field is mandatory")
+                        .errorDomain("LogbookService::update")
+                        .build()
+        );
+        assertion(
+                ()->logBook.get().getTags()!= null,
+                ControllerLogicException.builder()
+                        .errorCode(-3)
+                        .errorMessage("The tags field is mandatory")
+                        .errorDomain("LogbookService::update")
+                        .build()
+        );
+        assertion(
+                ()->logBook.get().getTags()!= null,
+                ControllerLogicException.builder()
+                        .errorCode(-3)
+                        .errorMessage("The shift field is mandatory")
                         .errorDomain("LogbookService::update")
                         .build()
         );
@@ -115,21 +139,21 @@ public class LogbookService {
         verifyShiftAndUpdate(
                 updateLogbookInfo.getShifts(),
                 lbToUpdated.getShifts(),
-                -3,
+                -4,
                 "LogbookService:update");
 
         // check that all tags id are present, the tag with no id it's ok because he will be created
         verifyTagAndUpdate(
                 updateLogbookInfo.getTags(),
                 lbToUpdated.getTags(),
-                -4,
+                -5,
                 "LogbookService:update"
         );
 
         //we can save the logbook
         wrapCatch(
                 () -> logbookRepository.save(lbToUpdated),
-                -4,
+                -6,
                 "LogbookService:update"
         );
     }
