@@ -10,6 +10,8 @@ import java.util.Optional;
  * Repository for the logbook managements
  */
 public interface LogbookRepository extends MongoRepository<Logbook, String>, LogbookRepositoryCustom{
+    boolean existsById(String id);
+
     boolean existsByName(String name);
 
     Optional<Logbook> findByName(String logbookName);

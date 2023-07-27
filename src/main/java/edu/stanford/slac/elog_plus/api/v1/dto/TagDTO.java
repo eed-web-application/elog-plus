@@ -9,7 +9,7 @@ import lombok.EqualsAndHashCode;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "DTO for the tags")
-@Builder
+@Builder(toBuilder = true)
 public record TagDTO(
         String id,
         String name

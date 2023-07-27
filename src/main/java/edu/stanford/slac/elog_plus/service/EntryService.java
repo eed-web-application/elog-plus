@@ -152,7 +152,6 @@ public class EntryService {
                         "LogService::createNew"
                 );
         return newEntry.getId();
-
     }
 
     public EntryDTO getFullLog(String id) {
@@ -222,7 +221,7 @@ public class EntryService {
             // load all the history
             List<EntryDTO> logHistory = new ArrayList<>();
             getLogHistory(id, logHistory);
-            if (logHistory.size() > 0) {
+            if (!logHistory.isEmpty()) {
                 result = result.toBuilder()
                         .history(logHistory)
                         .build();

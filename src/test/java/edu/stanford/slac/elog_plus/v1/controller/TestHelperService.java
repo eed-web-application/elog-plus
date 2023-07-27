@@ -432,4 +432,34 @@ public class TestHelperService {
                 new TypeReference<>() {
                 });
     }
+
+    public ApiResultResponse<Boolean> updateLogbook(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            String logbookId,
+            UpdateLogbookDTO updateLogbookDTO) throws Exception {
+        MockHttpServletRequestBuilder putRequest =
+                put("/v1/logbooks/{logbookId}", logbookId)
+                        .content(
+                                new ObjectMapper().writeValueAsString(
+                                        updateLogbookDTO
+                                )
+                        )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON);
+
+        MvcResult result = mockMvc.perform(
+                        putRequest
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
 }

@@ -48,6 +48,21 @@ public class LogbooksController {
         );
     }
 
+    @PutMapping(
+            path = "/{logbookId}",
+            consumes = {MediaType.APPLICATION_JSON_VALUE},
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResultResponse<Boolean> updateLogbook(
+            @PathVariable String logbookId,
+            @RequestBody UpdateLogbookDTO updateLogbookDTO) {
+        logbookService.update(logbookId, updateLogbookDTO);
+        return ApiResultResponse.of(
+                true
+        );
+    }
+
     @PostMapping(
             path = "/{logbookId}/tags",
             consumes = {MediaType.APPLICATION_JSON_VALUE},
