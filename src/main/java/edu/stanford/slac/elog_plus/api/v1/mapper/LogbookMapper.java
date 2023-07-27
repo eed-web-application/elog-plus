@@ -13,4 +13,5 @@ public interface LogbookMapper {
 
     LogbookDTO fromModel(Logbook log);
     Logbook fromDTO(NewLogbookDTO logbookDTO);
+    Logbook fromDTO(LogbookDTO logbookDTO);
 }

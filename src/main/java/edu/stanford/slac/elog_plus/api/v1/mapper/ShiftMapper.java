@@ -9,6 +9,7 @@ import org.mapstruct.ReportingPolicy;
 import org.mapstruct.factory.Mappers;
 
 import java.time.LocalTime;
+import java.util.List;
 
 @Mapper(
         unmappedTargetPolicy = ReportingPolicy.IGNORE
@@ -22,4 +23,5 @@ public interface ShiftMapper {
     Shift fromDTO(ShiftDTO shiftDTO);
     Shift fromDTO(NewShiftDTO shiftDTO);
     ShiftDTO fromModel(Shift shift);
+    List<Shift> fromDTO(List<ShiftDTO> allNewShift);
 }

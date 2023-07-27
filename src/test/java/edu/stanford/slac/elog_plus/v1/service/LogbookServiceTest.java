@@ -2,6 +2,8 @@ package edu.stanford.slac.elog_plus.v1.service;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
+import edu.stanford.slac.elog_plus.exception.ShiftNotFound;
+import edu.stanford.slac.elog_plus.exception.TagNotFound;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import edu.stanford.slac.elog_plus.model.Shift;
 import edu.stanford.slac.elog_plus.service.LogbookService;
@@ -627,7 +629,7 @@ public class LogbookServiceTest {
                 )
         );
 
-        assertThat(replaceException.getErrorCode()).isEqualTo(-4);
+        assertThat(replaceException.getErrorCode()).isEqualTo(-3);
 
         LogbookDTO fullLogbook = assertDoesNotThrow(
                 () -> logbookService.getLogbook(
@@ -761,5 +763,201 @@ public class LogbookServiceTest {
         );
         AssertionsForClassTypes.assertThat(newLogbookID).isNotNull().isNotEmpty();
         return newLogbookID;
+    }
+
+    @Test
+    public void updateLogbookTagOK() {
+        String logbookID = getTestLogbook();
+        LogbookDTO logbookDTO = assertDoesNotThrow(
+                () -> logbookService.getLogbook(
+                        logbookID
+                )
+        );
+
+        // update with tags
+        logbookDTO.tags().addAll(
+                List.of(
+                TagDTO.builder()
+                        .name("tag-1")
+                        .build(),
+                TagDTO.builder()
+                        .name("tag-2")
+                        .build()
+                )
+        );
+
+        LogbookDTO finalLogbookDTO = logbookDTO;
+        assertDoesNotThrow(
+                () -> logbookService.update(
+                        finalLogbookDTO
+                )
+        );
+
+        logbookDTO = assertDoesNotThrow(
+                () -> logbookService.getLogbook(
+                        logbookID
+                )
+        );
+
+        assertThat(
+                logbookDTO.tags()
+        ).filteredOn(
+                t->t.id()!=null &&
+                        (
+                                t.name().equalsIgnoreCase("tag-1") ||
+                                        t.name().equalsIgnoreCase("tag-2")
+                        )
+        ).hasSize(2);
+
+        // update tag-2 and remove 1
+        List<TagDTO> updatedTag = new ArrayList<>();
+        updatedTag.add(
+                logbookDTO.tags().get(1).toBuilder()
+                        .name("tag-2-updated")
+                        .build()
+        );
+        logbookDTO = logbookDTO.toBuilder()
+                .tags(
+                        updatedTag
+                ).build();
+        LogbookDTO finalLogbookDTO1 = logbookDTO;
+        assertDoesNotThrow(
+                () -> logbookService.update(
+                        finalLogbookDTO1
+                )
+        );
+
+        logbookDTO = assertDoesNotThrow(
+                () -> logbookService.getLogbook(
+                        logbookID
+                )
+        );
+        assertThat(
+                logbookDTO.tags()
+        )
+                .hasSize(1)
+                .extracting("name")
+                .contains("tag-2-updated");
+
+        // fail update tags that not exists
+        updatedTag = new ArrayList<>();
+        updatedTag.add(
+                logbookDTO.tags().get(0).toBuilder()
+                        .id("id change for simulate incoherent update")
+                        .name("tag-2-updated")
+                        .build()
+        );
+        logbookDTO = logbookDTO.toBuilder()
+                .tags(
+                        updatedTag
+                ).build();
+        LogbookDTO finalLogbookDTO2 = logbookDTO;
+        TagNotFound tagNotFound = assertThrows(
+                TagNotFound.class,
+                () -> logbookService.update(
+                        finalLogbookDTO2
+                )
+        );
+        assertThat(tagNotFound.getErrorCode()).isEqualTo(-4);
+    }
+
+    @Test
+    public void updateLogbookShiftOK() {
+        String logbookID = getTestLogbook();
+        LogbookDTO logbookDTO = assertDoesNotThrow(
+                () -> logbookService.getLogbook(
+                        logbookID
+                )
+        );
+
+        // update with tags
+        logbookDTO.shifts().addAll(
+                List.of(
+                        ShiftDTO.builder()
+                                .name("shift-1")
+                                .from("00:00")
+                                .to("00:59")
+                                .build(),
+                        ShiftDTO.builder()
+                                .name("shift-2")
+                                .from("01:00")
+                                .to("01:59")
+                                .build()
+                )
+        );
+
+        LogbookDTO finalLogbookDTO = logbookDTO;
+        assertDoesNotThrow(
+                () -> logbookService.update(
+                        finalLogbookDTO
+                )
+        );
+
+        logbookDTO = assertDoesNotThrow(
+                () -> logbookService.getLogbook(
+                        logbookID
+                )
+        );
+
+        assertThat(
+                logbookDTO.shifts()
+        ).filteredOn(
+                t->t.id()!=null &&
+                        (
+                                t.name().equalsIgnoreCase("shift-1") ||
+                                        t.name().equalsIgnoreCase("shift-2")
+                        )
+        ).hasSize(2);
+
+        // update shift-2 and remove 1
+        List<ShiftDTO> updatedShift = new ArrayList<>();
+        updatedShift.add(
+                logbookDTO.shifts().get(1).toBuilder()
+                        .name("shift-2-updated")
+                        .build()
+        );
+        logbookDTO = logbookDTO.toBuilder()
+                .shifts(
+                        updatedShift
+                ).build();
+        LogbookDTO finalLogbookDTO1 = logbookDTO;
+        assertDoesNotThrow(
+                () -> logbookService.update(
+                        finalLogbookDTO1
+                )
+        );
+
+        logbookDTO = assertDoesNotThrow(
+                () -> logbookService.getLogbook(
+                        logbookID
+                )
+        );
+        assertThat(
+                logbookDTO.shifts()
+        )
+                .hasSize(1)
+                .extracting("name")
+                .contains("shift-2-updated");
+
+        // fail update tags that not exists
+        updatedShift = new ArrayList<>();
+        updatedShift.add(
+                logbookDTO.shifts().get(0).toBuilder()
+                        .id("id change for simulate incoherent update")
+                        .name("shift-2-updated")
+                        .build()
+        );
+        logbookDTO = logbookDTO.toBuilder()
+                .shifts(
+                        updatedShift
+                ).build();
+        LogbookDTO finalLogbookDTO2 = logbookDTO;
+        ShiftNotFound tagNotFound = assertThrows(
+                ShiftNotFound.class,
+                () -> logbookService.update(
+                        finalLogbookDTO2
+                )
+        );
+        assertThat(tagNotFound.getErrorCode()).isEqualTo(-3);
     }
 }

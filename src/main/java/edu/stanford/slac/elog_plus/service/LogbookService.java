@@ -58,7 +58,7 @@ public class LogbookService {
                 .name(StringUtilities.tagNameNormalization(newLogbookDTO.name()))
                 .build();
 
-        // check for tag with the same name
+        // check for logbook with the same name
         NewLogbookDTO finalNewLogbookDTO = newLogbookDTO;
         boolean exists = wrapCatch(
                 () -> logbookRepository.existsByName(
@@ -81,6 +81,134 @@ public class LogbookService {
                 -3,
                 "LogbookService::createNew");
         return newLogbook.getId();
+    }
+
+    /**
+     * Update an existing logbook
+     *
+     * @param logbookDTO the updated logbook
+     */
+    @Transactional
+    public void update(LogbookDTO logbookDTO) {
+        // check if id exists
+        Optional<Logbook> logBook = wrapCatch(
+                () -> logbookRepository.findById(logbookDTO.id()),
+                -1,
+                "LogbookService::update"
+        );
+
+        // assert on logbook presence
+        assertion(
+                logBook::isPresent,
+                LogbookNotFound.logbookNotFoundBuilder()
+                        .errorCode(-2)
+                        .errorDomain("LogbookService::update")
+                        .build()
+        );
+        Logbook updateLogbookInfo = LogbookMapper.INSTANCE.fromDTO(logbookDTO);
+        Logbook lbToUpdated = logBook.get();
+        // update name
+        lbToUpdated.setName(
+                StringUtilities.tagNameNormalization(logbookDTO.name())
+        );
+        // check that all shifts id are present, the shift with no id it's ok because he will be created
+        verifyShiftAndUpdate(
+                updateLogbookInfo.getShifts(),
+                lbToUpdated.getShifts(),
+                -3,
+                "LogbookService:update");
+
+        // check that all tags id are present, the tag with no id it's ok because he will be created
+        verifyTagAndUpdate(
+                updateLogbookInfo.getTags(),
+                lbToUpdated.getTags(),
+                -4,
+                "LogbookService:update"
+        );
+
+        //we can save the logbook
+        wrapCatch(
+                () -> logbookRepository.save(lbToUpdated),
+                -4,
+                "LogbookService:update"
+        );
+    }
+
+    /**
+     * verify and updates the tags
+     * @param updateTagList the list of the tags updates
+     * @param actualTagList the list of actual tags
+     */
+    private void verifyTagAndUpdate(List<Tag> updateTagList, List<Tag> actualTagList, int errorCode, String errorDomain) {
+        for (Tag tagToUpdate :
+                updateTagList) {
+            if (tagToUpdate.getId() == null) {
+                // generate new ID
+                tagToUpdate.setId(UUID.randomUUID().toString());
+                continue;
+            }
+            boolean exists = actualTagList.stream().anyMatch(
+                    s -> s.getId().compareTo(tagToUpdate.getId()) == 0
+            );
+            // check if the script with the same id exists, in case fire exception
+            assertion(
+                    () -> exists,
+                    TagNotFound.tagNotFoundBuilder()
+                            .errorCode(errorCode)
+                            .tagName(tagToUpdate.getName())
+                            .errorDomain(errorDomain)
+                            .build()
+            );
+        }
+        // we can update the tags
+        actualTagList.clear();
+        actualTagList.addAll(updateTagList);
+    }
+
+    /**
+     * Update the actual list of shift with the updated shift list
+     * @param updatedShifts a list that contains the shift updates
+     * @param actualShift a list that contains the actual shift list
+     * @param errorCode is the error code to generate in case of fails
+     * @param errorDomain is the error domain in case of fail
+     */
+    private void verifyShiftAndUpdate(List<Shift> updatedShifts, List<Shift> actualShift, int errorCode, String errorDomain) {
+        for (Shift shiftToUpdate :
+                updatedShifts) {
+            if (shiftToUpdate.getId() == null) {
+                // generate new ID
+                shiftToUpdate.setId(UUID.randomUUID().toString());
+                continue;
+            }
+            boolean exists = actualShift.stream().anyMatch(
+                    s -> s.getId().compareTo(shiftToUpdate.getId()) == 0
+            );
+            // check if the script with the same id exists, in case fire exception
+            assertion(
+                    () -> exists,
+                    ShiftNotFound.shiftNotFoundBuilder()
+                            .errorCode(errorCode)
+                            .shiftName(shiftToUpdate.getName())
+                            .errorDomain(errorDomain)
+                            .build()
+            );
+        }
+
+        actualShift.clear();
+        for (Shift shift :
+                updatedShifts) {
+            Shift shiftToAdd = validateShift(
+                    shift,
+                    errorCode,
+                    errorDomain
+            );
+            checkShiftAmongAllOther(shiftToAdd, actualShift, errorCode, errorDomain);
+
+            if (shiftToAdd.getId() == null) {
+                shiftToAdd.setId(UUID.randomUUID().toString());
+            }
+            actualShift.add(shiftToAdd);
+        }
     }
 
     /**
@@ -265,10 +393,11 @@ public class LogbookService {
 
     /**
      * Replace the shift in this way
-     *
+     * <p>
      * if a shift as no id it will be created as new, if it has an ID,
      * it will be used for find it within all the shift, in case is not found an exception will be thrown
-     * @param logbookId the logbook id
+     *
+     * @param logbookId   the logbook id
      * @param allNewShift all the new shift
      */
     @Transactional()
@@ -291,43 +420,13 @@ public class LogbookService {
 
         Logbook lbToSave = lb.get();
 
-        // check that all id are present, the shift with no id it's ok because he will be created
-        for (ShiftDTO shiftToCheckForID :
-                allNewShift) {
-            if (shiftToCheckForID.id() == null) {
-                continue;
-            }
-            boolean exists  = lbToSave.getShifts().stream().anyMatch(
-                    s -> s.getId().compareTo(shiftToCheckForID.id()) == 0
-            );
-            // check if the script with the same id exists, in case fire exception
-            assertion(
-                    ()->exists,
-                    ShiftNotFound.shiftNotFoundBuilder()
-                            .errorCode(-3)
-                            .shiftName(shiftToCheckForID.name())
-                            .errorDomain("LogbookService:replaceShift")
-                            .build()
-            );
-
-        }
-
-        lbToSave.setShifts(new ArrayList<>());
-
-        for (ShiftDTO shiftDTO :
-                allNewShift) {
-            Shift shiftToAdd = validateShift(
-                    ShiftMapper.INSTANCE.fromDTO(shiftDTO),
-                    -4,
-                    "LogbookService:replaceShift"
-            );
-            checkShiftAmongAllOther(shiftToAdd, lbToSave.getShifts(), -4, "LogbookService:replaceShift");
-
-            if (shiftToAdd.getId() == null) {
-                shiftToAdd.setId(UUID.randomUUID().toString());
-            }
-            lbToSave.getShifts().add(shiftToAdd);
-        }
+        // verify and update the shifts
+        verifyShiftAndUpdate(
+                ShiftMapper.INSTANCE.fromDTO(allNewShift),
+                lbToSave.getShifts(),
+                -3,
+                "LogbookService:replaceShift"
+        );
 
         wrapCatch(
                 () -> logbookRepository.save(
@@ -609,6 +708,7 @@ public class LogbookService {
 
     /**
      * Return the shift which the date fall in its range
+     *
      * @param logbookId the logbook unique identifier
      * @param localTime the time of the event in the day
      * @return the found shift, if eny matches
@@ -616,7 +716,7 @@ public class LogbookService {
     public Optional<ShiftDTO> findShiftByLocalTime(String logbookId, LocalTime localTime) {
         assertOnLogbook(logbookId, -1, "LogbookService:getShiftByLocalTime");
         return wrapCatch(
-                ()->logbookRepository.findShiftFromLocalTime(
+                () -> logbookRepository.findShiftFromLocalTime(
                         logbookId,
                         localTime
                 ).map(
@@ -629,13 +729,14 @@ public class LogbookService {
 
     /**
      * Return the shift which the date fall in its range
+     *
      * @param logbookName the logbook unique name identifier
-     * @param localTime the time of the event in the day
+     * @param localTime   the time of the event in the day
      * @return the found shift, if eny matches
      */
     public Optional<ShiftDTO> findShiftByLocalTimeWithLogbookName(String logbookName, LocalTime localTime) {
         return wrapCatch(
-                ()->logbookRepository.findShiftFromLocalTimeWithLogbookName(
+                () -> logbookRepository.findShiftFromLocalTimeWithLogbookName(
                         logbookName,
                         localTime
                 ).map(
