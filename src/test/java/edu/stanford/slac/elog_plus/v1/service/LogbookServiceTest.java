@@ -867,7 +867,7 @@ public class LogbookServiceTest {
                         finalLogbookDTO2
                 )
         );
-        assertThat(tagNotFound.getErrorCode()).isEqualTo(-4);
+        assertThat(tagNotFound.getErrorCode()).isEqualTo(-5);
     }
 
     @Test
