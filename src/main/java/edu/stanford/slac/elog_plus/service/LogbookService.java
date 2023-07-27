@@ -131,6 +131,12 @@ public class LogbookService {
         );
         Logbook updateLogbookInfo = LogbookMapper.INSTANCE.fromDTO(logbookDTO);
         Logbook lbToUpdated = logBook.get();
+        if(lbToUpdated.getShifts()==null){
+            lbToUpdated.setShifts(new ArrayList<>());
+        }
+        if(lbToUpdated.getTags()==null){
+            lbToUpdated.setTags(new ArrayList<>());
+        }
         // update name
         lbToUpdated.setName(
                 StringUtilities.tagNameNormalization(logbookDTO.name())
