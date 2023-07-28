@@ -63,7 +63,6 @@ public class MapperTest {
                 .builder()
                 .attachments(List.of("att_1", "arr_2"))
                 .title("title")
-                .segment("segment")
                 .text("text")
                 .tags(List.of("tags1", "tags2"))
                 .logbook("Logbook")
@@ -73,7 +72,6 @@ public class MapperTest {
         AssertionsForClassTypes.assertThat(logModel.getText()).isEqualTo("text");
         AssertionsForClassTypes.assertThat(logModel.getAttachments()).isEqualTo(List.of("att_1", "arr_2"));
         AssertionsForClassTypes.assertThat(logModel.getTitle()).isEqualTo("title");
-        AssertionsForClassTypes.assertThat(logModel.getSegment()).isEqualTo("segment");
         AssertionsForClassTypes.assertThat(logModel.getTags()).isEqualTo(List.of("tags1", "tags2"));
         AssertionsForClassTypes.assertThat(logModel.getLogbook()).isEqualTo("Logbook");
         AssertionsForClassTypes.assertThat(logModel.getUserName()).isNotNull();

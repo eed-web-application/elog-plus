@@ -24,8 +24,10 @@ public record EntryDTO(
         String filePs,
         String filePreview,
         String logbook,
-        String priority,
-        String segment,
+        String summarizeShift,
+        @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+        @JsonSerialize(using = LocalDateTimeSerializer.class)
+        LocalDateTime summaryDate,
         List<String> tags,
         String title,
         String text,

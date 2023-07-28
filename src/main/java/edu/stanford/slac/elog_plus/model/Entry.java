@@ -1,5 +1,9 @@
 package edu.stanford.slac.elog_plus.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
@@ -26,12 +30,15 @@ public class Entry {
     private String entryType;
     @Indexed
     private String logbook;
-    private String priority;
-    private String segment;
+    private String summarizeShift;
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    private LocalDateTime summaryDate;
     @TextIndexed
     private String title;
     @TextIndexed
     private String text;
+    String note;
     private String lastName;
     private String firstName;
     private String userName;

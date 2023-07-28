@@ -20,13 +20,12 @@ public record EntrySummaryDTO(
         @Schema(description = "record primary key")
         String id,
         String logbook,
-        String priority,
-        String segment,
         String title,
         String loggedBy,
         List<String> tags,
         List<AttachmentDTO> attachments,
         String shift,
+        String note,
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)
         LocalDateTime loggedAt,

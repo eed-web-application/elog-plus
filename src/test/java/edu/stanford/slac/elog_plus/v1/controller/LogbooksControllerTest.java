@@ -369,4 +369,59 @@ public class LogbooksControllerTest {
         assertThat(fullLogbook.getPayload().tags()).hasSize(1).extracting("name").contains("tag-1");
         assertThat(fullLogbook.getPayload().shifts()).hasSize(1).extracting("name").contains("Shift A");
     }
+
+    @Test
+    public void updateLogbookOnlyShifts() throws Exception {
+        ApiResultResponse<String> creationResult = assertDoesNotThrow(
+                () -> testHelperService.createNewLogbook(
+                        mockMvc,
+                        status().isCreated(),
+                        NewLogbookDTO.builder()
+                                .name("new-logbook")
+                                .build()
+                )
+        );
+
+        assertThat(creationResult).isNotNull();
+        assertThat(creationResult.getErrorCode()).isEqualTo(0);
+        assertThat(creationResult.getPayload()).isNotEmpty();
+
+        ApiResultResponse<Boolean> replacementResult = assertDoesNotThrow(
+                () -> testHelperService.updateLogbook(
+                        mockMvc,
+                        status().isCreated(),
+                        creationResult.getPayload(),
+                        UpdateLogbookDTO
+                                .builder()
+                                .name("updated name")
+                                .tags(
+                                        Collections.emptyList()
+                                )
+                                .shifts(
+                                        List.of(
+                                                ShiftDTO.builder()
+                                                        .id(null)
+                                                        .name("Morning shift")
+                                                        .from("16:09")
+                                                        .to("17:09")
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(replacementResult).isNotNull();
+        assertThat(replacementResult.getErrorCode()).isEqualTo(0);
+
+        ApiResultResponse<LogbookDTO> fullLogbook = assertDoesNotThrow(
+                () -> testHelperService.getLogbookByID(
+                        mockMvc,
+                        status().isOk(),
+                        creationResult.getPayload()
+                )
+        );
+        assertThat(fullLogbook.getErrorCode()).isEqualTo(0);
+        assertThat(fullLogbook.getPayload().name()).isEqualTo("updated-name");
+        assertThat(fullLogbook.getPayload().shifts()).hasSize(1).extracting("name").contains("Morning shift");
+    }
 }

@@ -548,7 +548,7 @@ public class EntriesControllerTest {
                                             .logbook(newLogBookResult.getPayload().name())
                                             .text("This is a log for test")
                                             .title("A very wonderful log")
-                                            .segment(String.valueOf(finalIdx))
+                                            .note(String.valueOf(finalIdx))
                                             .build()
                             )
                     );
@@ -573,17 +573,17 @@ public class EntriesControllerTest {
         List<EntrySummaryDTO> firstPage = firstPageResult.getPayload();
         AssertionsForInterfaceTypes.assertThat(firstPage).isNotNull();
         AssertionsForClassTypes.assertThat(firstPage.size()).isEqualTo(10);
-        String lastSegment = null;
+        String note = null;
         for (EntrySummaryDTO l :
                 firstPage) {
-            if (lastSegment == null) {
-                lastSegment = l.segment();
+            if (note == null) {
+                note = l.note();
                 continue;
             }
-            AssertionsForClassTypes.assertThat(Integer.valueOf(lastSegment)).isGreaterThan(
-                    Integer.valueOf(l.segment())
+            AssertionsForClassTypes.assertThat(Integer.valueOf(note)).isGreaterThan(
+                    Integer.valueOf(l.note())
             );
-            lastSegment = l.segment();
+            note = l.note();
         }
         var testAnchorDate = firstPage.get(firstPage.size() - 1).loggedAt();
         // load next page
@@ -607,14 +607,14 @@ public class EntriesControllerTest {
         // check that the first of next page is not the last of the previous
         AssertionsForClassTypes.assertThat(nextPage.get(0).id()).isNotEqualTo(firstPage.get(firstPage.size() - 1).id());
 
-        lastSegment = nextPage.get(0).segment();
+        note = nextPage.get(0).note();
         nextPage.remove(0);
         for (EntrySummaryDTO l :
                 nextPage) {
-            AssertionsForClassTypes.assertThat(Integer.valueOf(lastSegment)).isGreaterThan(
-                    Integer.valueOf(l.segment())
+            AssertionsForClassTypes.assertThat(Integer.valueOf(note)).isGreaterThan(
+                    Integer.valueOf(l.note())
             );
-            lastSegment = l.segment();
+            note = l.note();
         }
 
         // now get all the record upside and downside
@@ -702,7 +702,7 @@ public class EntriesControllerTest {
                                             .logbook(logbookCreationResult.getPayload().name())
                                             .text("This is a log for test")
                                             .title("A very wonderful log")
-                                            .segment(String.valueOf(finalIdx))
+                                            .note(String.valueOf(finalIdx))
                                             .tags(List.of(String.valueOf(finalIdx), "tags-" + (100 + finalIdx)))
                                             .build()
                             )
@@ -786,7 +786,7 @@ public class EntriesControllerTest {
                                             .builder()
                                             .logbook(newLogBookResult.getPayload().name())
                                             .text("This is a log for test")
-                                            .segment(String.valueOf(finalIdx))
+                                            .note(String.valueOf(finalIdx))
                                             .title("A very wonderful log for index=" + finalIdx)
                                             .build()
                             )
