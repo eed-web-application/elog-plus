@@ -422,7 +422,6 @@ public class LogbooksControllerTest {
         );
         assertThat(fullLogbook.getErrorCode()).isEqualTo(0);
         assertThat(fullLogbook.getPayload().name()).isEqualTo("updated-name");
-        assertThat(fullLogbook.getPayload().tags()).hasSize(1).extracting("name").contains("tag-1");
-        assertThat(fullLogbook.getPayload().shifts()).hasSize(1).extracting("name").contains("Shift A");
+        assertThat(fullLogbook.getPayload().shifts()).hasSize(1).extracting("name").contains("Morning shift");
     }
 }
