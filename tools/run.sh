@@ -1,2 +1,3 @@
 #!/bin/sh
-exec java -jar /home/app/app.jar
+/app/wait
+exec java -jar /app/app.jar

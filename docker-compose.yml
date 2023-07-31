@@ -1,4 +1,3 @@
-name: elog_plus
 services:
   mongodb-primary:
     image: ghcr.io/zcube/bitnami-compat/mongodb:6.0.5
@@ -17,8 +16,6 @@ services:
       - "27017:27017"
     volumes:
       - db-data:/bitnami/mongodb
-    networks:
-      - back-tier
 
   minio:
     image: minio/minio
@@ -32,8 +29,6 @@ services:
       - MINIO_ROOT_USER=minio
       - MINIO_ROOT_PASSWORD=minio123
     command: server --console-address ":9001" /data
-    networks:
-      - back-tier
 
   kafka:
     image: docker.io/bitnami/kafka:3.4
@@ -50,11 +45,6 @@ services:
       - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
       - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
       - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT
-    networks:
-      - back-tier
-
-networks:
-  back-tier: {}
 
 volumes:
   db-data:
