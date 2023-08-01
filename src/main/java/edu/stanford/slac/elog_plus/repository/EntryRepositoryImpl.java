@@ -4,22 +4,32 @@ import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.QueryParameterWithAnchor;
 import lombok.AllArgsConstructor;
+import org.bson.types.ObjectId;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.TextCriteria;
-import org.springframework.data.mongodb.core.query.TextQuery;
+import org.springframework.data.mongodb.core.query.*;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
 
 @Repository
 @AllArgsConstructor
 public class EntryRepositoryImpl implements EntryRepositoryCustom {
     final private MongoTemplate mongoTemplate;
+
+    private Entry getEntryByIDWithOnlyDate(String id) {
+        Entry result = null;
+        Query q = new Query();
+        q.addCriteria(
+                Criteria.where("id").is(id)
+        ).fields().include("eventAt", "loggedAt");
+        return mongoTemplate.findOne(q, Entry.class);
+    }
 
     @Override
     public List<Entry> searchAll(QueryParameterWithAnchor queryWithAnchor) {
@@ -37,6 +47,12 @@ public class EntryRepositoryImpl implements EntryRepositoryCustom {
                     "LogRepositoryImpl::searchUsingAnchor"
             );
         }
+
+        Entry anchorEntry = null;
+        if(queryWithAnchor.getAnchorID() !=null) {
+            anchorEntry = getEntryByIDWithOnlyDate(queryWithAnchor.getAnchorID());
+        }
+
         List<Criteria> allCriteria = new ArrayList<>();
         if (!queryWithAnchor.getLogbooks().isEmpty()) {
             allCriteria.add(
@@ -46,7 +62,7 @@ public class EntryRepositoryImpl implements EntryRepositoryCustom {
             );
         }
 
-        if(!queryWithAnchor.getTags().isEmpty()) {
+        if (!queryWithAnchor.getTags().isEmpty()) {
             allCriteria.add(
                     Criteria.where("tags").in(
                             queryWithAnchor.getTags()
@@ -65,18 +81,27 @@ public class EntryRepositoryImpl implements EntryRepositoryCustom {
         if (
                 queryWithAnchor.getContextSize() != null
                         && queryWithAnchor.getContextSize() > 0
-                        && queryWithAnchor.getEndDate() != null
+                        && queryWithAnchor.getAnchorID() != null
         ) {
+            List<Criteria> localAllCriteria = allCriteria;
             Query q = getDefaultQuery(queryWithAnchor.getSearch());
-            q.addCriteria(new Criteria().andOperator(
-                            allCriteria
+            q.addCriteria(
+                    Criteria.where(
+                            getSortedField(queryWithAnchor)
+                    ).gte(
+                            getAnchorValueDate(queryWithAnchor, anchorEntry)
                     )
-            ).addCriteria(
-                    Criteria.where("loggedAt")
-                            .gte(queryWithAnchor.getEndDate())
+            );
+            applyDateCriteriaForContextEntries(localAllCriteria, queryWithAnchor);
+            q.addCriteria(
+                    // all general criteria
+                    new Criteria().andOperator(
+                            localAllCriteria
+                    )
+
             ).with(
                     Sort.by(
-                            Sort.Direction.ASC, "loggedAt")
+                            Sort.Direction.ASC, getSortedField(queryWithAnchor))
             ).limit(queryWithAnchor.getContextSize());
             logsBeforeAnchor.addAll(mongoTemplate.find(
                             q,
@@ -87,18 +112,24 @@ public class EntryRepositoryImpl implements EntryRepositoryCustom {
         }
 
         if (queryWithAnchor.getLimit() != null && queryWithAnchor.getLimit() > 0) {
+            List<Criteria> localAllCriteria = allCriteria;
             Query q = getDefaultQuery(queryWithAnchor.getSearch());
-            if (queryWithAnchor.getEndDate() != null) {
+            applyDateCriteriaForLimitEntries(localAllCriteria, queryWithAnchor);
+            if(anchorEntry != null) {
                 q.addCriteria(
-                        Criteria.where("loggedAt").lt(queryWithAnchor.getEndDate())
+                        Criteria.where(
+                                getSortedField(queryWithAnchor)
+                        ).lt(
+                                getAnchorValueDate(queryWithAnchor, anchorEntry)
+                        )
                 );
             }
             q.addCriteria(new Criteria().andOperator(
-                            allCriteria
+                    localAllCriteria
                     )
             ).with(
                     Sort.by(
-                            Sort.Direction.DESC, "loggedAt")
+                            Sort.Direction.DESC, getSortedField(queryWithAnchor))
             ).limit(queryWithAnchor.getLimit());
             logsAfterAnchor = mongoTemplate.find(
                     q,
@@ -116,7 +147,7 @@ public class EntryRepositoryImpl implements EntryRepositoryCustom {
     }
 
     private Query getDefaultQuery(String textSearch) {
-        if(textSearch!=null && !textSearch.isEmpty()) {
+        if (textSearch != null && !textSearch.isEmpty()) {
             //{$text: {$search:'log' }}
             return TextQuery.queryText(TextCriteria.forDefaultLanguage()
                     .matchingAny(textSearch.split(" "))
@@ -124,5 +155,38 @@ public class EntryRepositoryImpl implements EntryRepositoryCustom {
         } else {
             return new Query();
         }
+    }
+
+    private void applyDateCriteriaForContextEntries(List<Criteria> allCriteria, QueryParameterWithAnchor queryWithAnchor) {
+        if(queryWithAnchor.getEndDate() != null) {
+            allCriteria.add(
+                    Criteria.where(getSortedField(queryWithAnchor))
+                            .gte(queryWithAnchor.getEndDate())
+            );
+        }
+    }
+
+    private void applyDateCriteriaForLimitEntries(List<Criteria> allCriteria, QueryParameterWithAnchor queryWithAnchor) {
+        if (queryWithAnchor.getEndDate() != null) {
+            allCriteria.add(
+                    Criteria.where(getSortedField(queryWithAnchor)).lte(queryWithAnchor.getEndDate())
+            );
+        }
+        if (queryWithAnchor.getStartDate() != null) {
+            allCriteria.add(
+                    Criteria.where(getSortedField(queryWithAnchor)).gte(queryWithAnchor.getStartDate())
+            );
+        }
+
+
+    }
+
+    private String getSortedField(QueryParameterWithAnchor queryWithAnchor) {
+        return (queryWithAnchor.getSortByLogDate() != null && queryWithAnchor.getSortByLogDate()) ? "loggedAt" : "eventAt";
+    }
+
+    private LocalDateTime getAnchorValueDate(QueryParameterWithAnchor queryWithAnchor, Entry anchorEntry) {
+        return (queryWithAnchor.getSortByLogDate() != null && queryWithAnchor.getSortByLogDate()) ?
+                anchorEntry.getLoggedAt() : anchorEntry.getEventAt();
     }
 }

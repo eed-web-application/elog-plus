@@ -17,6 +17,8 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "The query parameter")
 public record QueryWithAnchorDTO(
+        @Schema(description = "Is the id to point to as starting point in the search")
+        String anchorID,
         @Schema(description = "Only include entries after this date. Defaults to current time.")
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)
@@ -34,4 +36,7 @@ public record QueryWithAnchorDTO(
         @Schema(description = "Only include entries that use one of these tags.")
         List<String> tags,
         @Schema(description = "Only include entries that belong to one of these logbooks.")
-        List<String> logbooks) {}
+        List<String> logbooks,
+        @Schema(description = "Sort by log date (the default is for event date)")
+        Boolean sortByLogDate
+        ) {}

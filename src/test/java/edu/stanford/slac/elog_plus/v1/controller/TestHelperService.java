@@ -227,22 +227,26 @@ public class TestHelperService {
     public ApiResultResponse<List<EntrySummaryDTO>> submitSearchByGetWithAnchor(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
+            Optional<String> anchorId,
             Optional<LocalDateTime> startDate,
             Optional<LocalDateTime> endDate,
             Optional<Integer> contextSize,
             Optional<Integer> limit,
             Optional<String> search,
             Optional<List<String>> tags,
-            Optional<List<String>> logBook) throws Exception {
+            Optional<List<String>> logBook,
+            Optional<Boolean> sortByLogDate) throws Exception {
 
         MockHttpServletRequestBuilder getBuilder =
                 get("/v1/entries")
                         .accept(MediaType.APPLICATION_JSON);
+        anchorId.ifPresent(string -> getBuilder.param("anchorId", string));
         startDate.ifPresent(localDateTime -> getBuilder.param("startDate", String.valueOf(localDateTime)));
         endDate.ifPresent(localDateTime -> getBuilder.param("endDate", String.valueOf(localDateTime)));
         contextSize.ifPresent(size -> getBuilder.param("contextSize", String.valueOf(size)));
         limit.ifPresent(size -> getBuilder.param("limit", String.valueOf(size)));
         search.ifPresent(text -> getBuilder.param("search", text));
+        sortByLogDate.ifPresent(b->getBuilder.param("sortByLogDate",  String.valueOf(b)));
         tags.ifPresent(tl -> {
             String[] tlArray = new String[tl.size()];
             tl.toArray(tlArray);

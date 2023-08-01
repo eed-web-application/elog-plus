@@ -651,7 +651,7 @@ public class EntryServiceTest {
                 () -> entryService.searchAll(
                         QueryWithAnchorDTO
                                 .builder()
-                                .startDate(testAnchorLog.loggedAt())
+                                .anchorID(testAnchorLog.id())
                                 .limit(10)
                                 .build()
                 )
@@ -677,7 +677,7 @@ public class EntryServiceTest {
                 () -> entryService.searchAll(
                         QueryWithAnchorDTO
                                 .builder()
-                                .endDate(testAnchorLog.loggedAt())
+                                .anchorID(testAnchorLog.id())
                                 .contextSize(10)
                                 .limit(0)
                                 .build()
@@ -691,7 +691,7 @@ public class EntryServiceTest {
                 () -> entryService.searchAll(
                         QueryWithAnchorDTO
                                 .builder()
-                                .endDate(testAnchorLog.loggedAt())
+                                .anchorID(testAnchorLog.id())
                                 .contextSize(10)
                                 .limit(10)
                                 .build()
@@ -710,9 +710,143 @@ public class EntryServiceTest {
                 () -> entryService.searchAll(
                         QueryWithAnchorDTO
                                 .builder()
-                                .endDate(middleAnchorLog.loggedAt())
+                                .anchorID(middleAnchorLog.id())
                                 .contextSize(10)
                                 .limit(10)
+                                .build()
+                )
+        );
+        assertThat(prevAndNextPageByMiddlePin).isNotNull();
+        assertThat(prevAndNextPageByMiddlePin.size()).isEqualTo(20);
+        assertThat(prevAndNextPageByMiddlePin.get(0).note()).isEqualTo("58");
+        assertThat(prevAndNextPageByMiddlePin.get(19).note()).isEqualTo("39");
+    }
+
+    @Test
+    public void searchLogsByAnchorReverseEventAtAndOrderedByLogged() {
+        LocalDateTime now = LocalDateTime.now();
+        var logbook = getTestLogbook();
+        String anchorID = null;
+        // create some data
+        for (int idx = 0; idx < 100; idx++) {
+            int finalIdx = idx;
+            String newLogID =
+                    assertDoesNotThrow(
+                            () -> entryService.createNew(
+                                    EntryNewDTO
+                                            .builder()
+                                            .logbook(logbook.name())
+                                            .text("This is a log for test")
+                                            .title("A very wonderful log")
+                                            .note(String.valueOf(finalIdx))
+                                            .eventAt(
+                                                    now.minusDays(finalIdx)
+                                            )
+                                            .build()
+                            )
+                    );
+            assertThat(newLogID).isNotNull();
+            if (idx == 49) {
+                anchorID = newLogID;
+            }
+        }
+
+        // initial search
+        List<EntrySummaryDTO> firstPage = assertDoesNotThrow(
+                () -> entryService.searchAll(
+                        QueryWithAnchorDTO
+                                .builder()
+                                .limit(10)
+                                .sortByLogDate(true)
+                                .build()
+                )
+        );
+        assertThat(firstPage).isNotNull();
+        assertThat(firstPage.size()).isEqualTo(10);
+        String note = null;
+        for (EntrySummaryDTO l :
+                firstPage) {
+            if (note == null) {
+                note = l.note();
+                continue;
+            }
+            assertThat(Integer.valueOf(note)).isGreaterThan(
+                    Integer.valueOf(l.note())
+            );
+            note = l.note();
+        }
+        var testAnchorLog = firstPage.get(firstPage.size() - 1);
+        // load next page
+        List<EntrySummaryDTO> nextPage = assertDoesNotThrow(
+                () -> entryService.searchAll(
+                        QueryWithAnchorDTO
+                                .builder()
+                                .anchorID(testAnchorLog.id())
+                                .limit(10)
+                                .sortByLogDate(true)
+                                .build()
+                )
+        );
+
+        assertThat(nextPage).isNotNull();
+        assertThat(nextPage.size()).isEqualTo(10);
+        // check that the first of next page is not the last of the previous
+        assertThat(nextPage.get(0).id()).isNotEqualTo(firstPage.get(firstPage.size() - 1).id());
+
+        note = nextPage.get(0).note();
+        nextPage.remove(0);
+        for (EntrySummaryDTO l :
+                nextPage) {
+            assertThat(Integer.valueOf(note)).isGreaterThan(
+                    Integer.valueOf(l.note())
+            );
+            note = l.note();
+        }
+
+        // now get all the record upside and downside
+        List<EntrySummaryDTO> prevPageByPin = assertDoesNotThrow(
+                () -> entryService.searchAll(
+                        QueryWithAnchorDTO
+                                .builder()
+                                .anchorID(testAnchorLog.id())
+                                .contextSize(10)
+                                .limit(0)
+                                .sortByLogDate(true)
+                                .build()
+                )
+        );
+        assertThat(prevPageByPin).isNotNull();
+        assertThat(prevPageByPin.size()).isEqualTo(10);
+        assertThat(prevPageByPin).isEqualTo(firstPage);
+
+        List<EntrySummaryDTO> prevAndNextPageByPin = assertDoesNotThrow(
+                () -> entryService.searchAll(
+                        QueryWithAnchorDTO
+                                .builder()
+                                .anchorID(testAnchorLog.id())
+                                .contextSize(10)
+                                .limit(10)
+                                .sortByLogDate(true)
+                                .build()
+                )
+        );
+
+        assertThat(prevAndNextPageByPin).isNotNull();
+        assertThat(prevAndNextPageByPin.size()).isEqualTo(20);
+        assertThat(prevAndNextPageByPin).containsAll(firstPage);
+        assertThat(prevAndNextPageByPin).containsAll(nextPage);
+
+
+        // now search in the middle of the data set
+        EntryDTO middleAnchorLog = entryService.getFullLog(anchorID);
+        List<EntrySummaryDTO> prevAndNextPageByMiddlePin = assertDoesNotThrow(
+                () -> entryService.searchAll(
+                        QueryWithAnchorDTO
+                                .builder()
+                                .anchorID(middleAnchorLog.id())
+                                .contextSize(10)
+                                .limit(10)
+                                .sortByLogDate(true)
                                 .build()
                 )
         );

@@ -151,6 +151,7 @@ public class EntryService {
                         -2,
                         "LogService::createNew"
                 );
+        log.info("New entry '{}' created", newEntry.getTitle());
         return newEntry.getId();
     }
 
@@ -313,6 +314,7 @@ public class EntryService {
                 -4,
                 "LogService::createNewSupersede"
         );
+        log.info("New supersede for '{}' created with id '{}'", l.getTitle(), newLogID);
         return newLogID;
     }
 
@@ -346,6 +348,7 @@ public class EntryService {
                 -4,
                 "LogService::createNewSupersede"
         );
+        log.info("New followup for '{}' created with id '{}'", l.getTitle(), newFollowupLogID);
         return newFollowupLogID;
     }
 

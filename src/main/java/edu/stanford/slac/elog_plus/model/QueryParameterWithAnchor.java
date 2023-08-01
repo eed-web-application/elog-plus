@@ -13,6 +13,8 @@ import java.util.List;
 @AllArgsConstructor
 public class QueryParameterWithAnchor {
     @Builder.Default
+    String anchorID = null;
+    @Builder.Default
     LocalDateTime startDate = null;
     @Builder.Default
     LocalDateTime endDate = null;
@@ -27,8 +29,5 @@ public class QueryParameterWithAnchor {
     @Builder.Default
     List<String> logbooks = Collections.emptyList();
     @Builder.Default
-    private LocalDateTime from = null;
-    @Builder.Default
-    private LocalDateTime to = null;
-
+    private Boolean sortByLogDate = false;
 }

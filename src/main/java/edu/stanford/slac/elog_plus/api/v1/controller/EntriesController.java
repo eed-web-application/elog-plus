@@ -97,17 +97,12 @@ public class EntriesController {
                     @ApiResponse(
                             responseCode = "200",
                             description = "Successful response"
-//                            content = @Content(
-//                                    array = @ArraySchema(
-//                                            schema = @Schema(
-//                                                    implementation = EntrySummaryDTO.class
-//                                            )
-//                                    )
-//                            )
                     )
             }
     )
     public ApiResultResponse<List<EntrySummaryDTO>> search(
+            @Parameter(name = "anchorId", description = "Is the id of an entry from where start the search")
+            @RequestParam("anchorId") Optional<String> anchorId,
             @Parameter(name = "startDate", description = "Only include entries after this date. Defaults to current time.")
             @RequestParam("startDate") Optional<LocalDateTime> startDate,
             @Parameter(name = "endDate", description = "Only include entries before this date. If not supplied, then does not apply any filter")
@@ -121,11 +116,14 @@ public class EntriesController {
             @Parameter(name = "tags", description = "Only include entries that use one of these tags")
             @RequestParam("tags") Optional<List<String>> tags,
             @Parameter(name = "logbooks", description = "Only include entries that belong to one of these logbooks")
-            @RequestParam("logbooks") Optional<List<String>> logBook) {
+            @RequestParam("logbooks") Optional<List<String>> logBook,
+            @Parameter(name = "sortByLogDate", description = "Sort entries by log date instead event date")
+            @RequestParam("sortByLogDate") Optional<Boolean> sortByLogDate) {
         return ApiResultResponse.of(
                 entryService.searchAll(
                         QueryWithAnchorDTO
                                 .builder()
+                                .anchorID(anchorId.orElse(null))
                                 .startDate(startDate.orElse(null))
                                 .endDate(endDate.orElse(null))
                                 .contextSize(contextSize.orElse(0))
@@ -133,6 +131,7 @@ public class EntriesController {
                                 .search(search.orElse(null))
                                 .tags(tags.orElse(Collections.emptyList()))
                                 .logbooks(logBook.orElse(Collections.emptyList()))
+                                .sortByLogDate(sortByLogDate.orElse(false))
                                 .build()
                 )
         );
