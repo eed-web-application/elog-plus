@@ -8,6 +8,7 @@ import edu.stanford.slac.elog_plus.model.FileObjectDescription;
 import edu.stanford.slac.elog_plus.repository.AttachmentRepository;
 import edu.stanford.slac.elog_plus.repository.StorageRepository;
 import lombok.AllArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,7 @@ import java.util.Optional;
 import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
 import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
 
+@Log4j2
 @Service
 @AllArgsConstructor
 public class AttachmentService {
@@ -55,6 +57,7 @@ public class AttachmentService {
         if(createPreview) {
             attachmentProducer.send(appProperties.getImagePreviewTopic(), att);
         }
+        log.info("New attachment created with id {}", newAttachmentID.getId());
         return newAttachmentID.getId();
     }
 

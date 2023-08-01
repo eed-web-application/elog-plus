@@ -11,6 +11,7 @@ import edu.stanford.slac.elog_plus.model.Tag;
 import edu.stanford.slac.elog_plus.repository.LogbookRepository;
 import edu.stanford.slac.elog_plus.utility.StringUtilities;
 import lombok.AllArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
 import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
 
+@Log4j2
 @Service
 @AllArgsConstructor
 public class LogbookService {
@@ -80,6 +82,7 @@ public class LogbookService {
                 ),
                 -3,
                 "LogbookService::createNew");
+        log.info("New logbook '{}' created", newLogbook.getName());
         return newLogbook.getId();
     }
 
@@ -162,6 +165,7 @@ public class LogbookService {
                 -6,
                 "LogbookService:update"
         );
+        log.info("Logbook '{}' has been updated", lbToUpdated.getName());
     }
 
     /**
