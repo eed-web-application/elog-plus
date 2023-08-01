@@ -22,6 +22,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -163,7 +164,9 @@ public class EntriesControllerTest {
                 Optional.empty(),
                 Optional.empty(),
                 Optional.empty(),
+                Optional.empty(),
                 Optional.of(10),
+                Optional.empty(),
                 Optional.empty(),
                 Optional.empty(),
                 Optional.empty()
@@ -272,7 +275,9 @@ public class EntriesControllerTest {
                 Optional.empty(),
                 Optional.empty(),
                 Optional.empty(),
+                Optional.empty(),
                 Optional.of(10),
+                Optional.empty(),
                 Optional.empty(),
                 Optional.empty(),
                 Optional.empty()
@@ -563,7 +568,9 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
+                        Optional.empty(),
                         Optional.of(10),
+                        Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty()
@@ -585,16 +592,18 @@ public class EntriesControllerTest {
             );
             note = l.note();
         }
-        var testAnchorDate = firstPage.get(firstPage.size() - 1).loggedAt();
+        var testAnchorLog = firstPage.get(firstPage.size() - 1);
         // load next page
         ApiResultResponse<List<EntrySummaryDTO>> nextPageResult = assertDoesNotThrow(
                 () -> testHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(testAnchorLog.id()),
                         Optional.empty(),
-                        Optional.of(testAnchorDate),
+                        Optional.empty(),
                         Optional.empty(),
                         Optional.of(10),
+                        Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty()
@@ -622,9 +631,11 @@ public class EntriesControllerTest {
                 () -> testHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(testAnchorLog.id()),
                         Optional.empty(),
-                        Optional.of(testAnchorDate),
+                        Optional.empty(),
                         Optional.of(10),
+                        Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
@@ -642,10 +653,12 @@ public class EntriesControllerTest {
                 () -> testHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(testAnchorLog.id()),
                         Optional.empty(),
-                        Optional.of(testAnchorDate),
+                        Optional.empty(),
                         Optional.of(10),
                         Optional.of(10),
+                        Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty()
@@ -718,9 +731,11 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
+                        Optional.empty(),
                         Optional.of(10),
                         Optional.empty(),
                         Optional.of(List.of("99", "49", "0")),
+                        Optional.empty(),
                         Optional.empty()
                 )
         );
@@ -737,9 +752,11 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
+                        Optional.empty(),
                         Optional.of(10),
                         Optional.empty(),
                         Optional.of(List.of("99", "49", "tags-100")),
+                        Optional.empty(),
                         Optional.empty()
                 )
         );
@@ -802,8 +819,10 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
+                        Optional.empty(),
                         Optional.of(10),
                         Optional.of("index=0"),
+                        Optional.empty(),
                         Optional.empty(),
                         Optional.empty()
                 )
@@ -815,7 +834,7 @@ public class EntriesControllerTest {
     @Test
     public void createLogWithTagFailWithNoSave() {
         var newLogBookResult = getTestLogbook();
-        ApiResultResponse<String>  newCreationResult =
+        ApiResultResponse<String> newCreationResult =
                 assertDoesNotThrow(
                         () ->
                                 testHelperService.createNewLog(
@@ -925,5 +944,425 @@ public class EntriesControllerTest {
                 .containsAll(
                         List.of("tag-1", "tag-2")
                 );
+    }
+
+    @Test
+    public void searchWithAnchorUsingLoggedAtInsteadEventAt() {
+        var newLogBookResult = getTestLogbook();
+        // create some data
+        for (int idx = 0; idx < 100; idx++) {
+            int finalIdx = idx;
+            ApiResultResponse<String> newLogID =
+                    assertDoesNotThrow(
+                            () -> testHelperService.createNewLog(
+                                    mockMvc,
+                                    status().isCreated(),
+                                    EntryNewDTO
+                                            .builder()
+                                            .logbook(newLogBookResult.getPayload().name())
+                                            .text("This is a log for test")
+                                            .title("A very wonderful log")
+                                            .note(String.valueOf(finalIdx))
+                                            .eventAt(
+                                                    LocalDateTime.now()
+                                                            .minusDays(finalIdx)
+                                            )
+                                            .build()
+                            )
+                    );
+            AssertionsForClassTypes.assertThat(newLogID).isNotNull();
+        }
+
+        // initial search
+        ApiResultResponse<List<EntrySummaryDTO>> firstPageResult = assertDoesNotThrow(
+                () -> testHelperService.submitSearchByGetWithAnchor(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(10),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(true)
+                )
+        );
+        AssertionsForInterfaceTypes.assertThat(firstPageResult.getErrorCode()).isEqualTo(0);
+        List<EntrySummaryDTO> firstPage = firstPageResult.getPayload();
+        AssertionsForInterfaceTypes.assertThat(firstPage).isNotNull();
+        AssertionsForClassTypes.assertThat(firstPage.size()).isEqualTo(10);
+        String note = null;
+        for (EntrySummaryDTO l :
+                firstPage) {
+            if (note == null) {
+                note = l.note();
+                continue;
+            }
+            AssertionsForClassTypes.assertThat(Integer.valueOf(note)).isGreaterThan(
+                    Integer.valueOf(l.note())
+            );
+            note = l.note();
+        }
+        var testAnchorLog = firstPage.get(firstPage.size() - 1);
+        // load next page
+        ApiResultResponse<List<EntrySummaryDTO>> nextPageResult = assertDoesNotThrow(
+                () -> testHelperService.submitSearchByGetWithAnchor(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of(testAnchorLog.id()),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(10),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(true)
+                )
+        );
+        AssertionsForInterfaceTypes.assertThat(nextPageResult.getErrorCode()).isEqualTo(0);
+        List<EntrySummaryDTO> nextPage = nextPageResult.getPayload();
+        AssertionsForInterfaceTypes.assertThat(nextPage).isNotNull();
+        AssertionsForClassTypes.assertThat(nextPage.size()).isEqualTo(10);
+        // check that the first of next page is not the last of the previous
+        AssertionsForClassTypes.assertThat(nextPage.get(0).id()).isNotEqualTo(firstPage.get(firstPage.size() - 1).id());
+
+        note = nextPage.get(0).note();
+        nextPage.remove(0);
+        for (EntrySummaryDTO l :
+                nextPage) {
+            AssertionsForClassTypes.assertThat(Integer.valueOf(note)).isGreaterThan(
+                    Integer.valueOf(l.note())
+            );
+            note = l.note();
+        }
+
+        // now get all the record upside and downside
+        ApiResultResponse<List<EntrySummaryDTO>> prevPageByPinResult = assertDoesNotThrow(
+                () -> testHelperService.submitSearchByGetWithAnchor(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of(testAnchorLog.id()),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(10),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(true)
+                )
+        );
+        AssertionsForInterfaceTypes.assertThat(prevPageByPinResult.getErrorCode()).isEqualTo(0);
+        List<EntrySummaryDTO> prevPageByPin = prevPageByPinResult.getPayload();
+        AssertionsForInterfaceTypes.assertThat(prevPageByPin).isNotNull();
+        AssertionsForClassTypes.assertThat(prevPageByPin.size()).isEqualTo(10);
+        AssertionsForInterfaceTypes.assertThat(prevPageByPin).isEqualTo(firstPage);
+
+        // test prev and next
+        ApiResultResponse<List<EntrySummaryDTO>> prevAndNextPageByPinResult = assertDoesNotThrow(
+                () -> testHelperService.submitSearchByGetWithAnchor(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of(testAnchorLog.id()),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(10),
+                        Optional.of(10),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(true)
+                )
+        );
+        AssertionsForInterfaceTypes.assertThat(prevAndNextPageByPinResult.getErrorCode()).isEqualTo(0);
+        List<EntrySummaryDTO> prevAndNextPageByPin = prevAndNextPageByPinResult.getPayload();
+        AssertionsForInterfaceTypes.assertThat(prevAndNextPageByPin).isNotNull();
+        AssertionsForClassTypes.assertThat(prevAndNextPageByPin.size()).isEqualTo(20);
+        AssertionsForInterfaceTypes.assertThat(prevAndNextPageByPin).containsAll(firstPage);
+        AssertionsForInterfaceTypes.assertThat(prevAndNextPageByPin).containsAll(nextPage);
+    }
+
+    @Test
+    public void searchWithAnchorUsingReversedEventAtAndDefaultOrder() {
+        var newLogBookResult = getTestLogbook();
+        // create some data
+        for (int idx = 0; idx < 100; idx++) {
+            int finalIdx = idx;
+            ApiResultResponse<String> newLogID =
+                    assertDoesNotThrow(
+                            () -> testHelperService.createNewLog(
+                                    mockMvc,
+                                    status().isCreated(),
+                                    EntryNewDTO
+                                            .builder()
+                                            .logbook(newLogBookResult.getPayload().name())
+                                            .text("This is a log for test")
+                                            .title("A very wonderful log")
+                                            .note(String.valueOf(finalIdx))
+                                            .eventAt(
+                                                    LocalDateTime.now()
+                                                            .minusDays(finalIdx)
+                                            )
+                                            .build()
+                            )
+                    );
+            AssertionsForClassTypes.assertThat(newLogID).isNotNull();
+        }
+
+        // initial search
+        ApiResultResponse<List<EntrySummaryDTO>> firstPageResult = assertDoesNotThrow(
+                () -> testHelperService.submitSearchByGetWithAnchor(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(10),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty()
+                )
+        );
+        AssertionsForInterfaceTypes.assertThat(firstPageResult.getErrorCode()).isEqualTo(0);
+        List<EntrySummaryDTO> firstPage = firstPageResult.getPayload();
+        AssertionsForInterfaceTypes.assertThat(firstPage).isNotNull();
+        AssertionsForClassTypes.assertThat(firstPage.size()).isEqualTo(10);
+        String note = null;
+        for (EntrySummaryDTO l :
+                firstPage) {
+            if (note == null) {
+                note = l.note();
+                continue;
+            }
+            AssertionsForClassTypes.assertThat(Integer.valueOf(note)).isLessThan(
+                    Integer.valueOf(l.note())
+            );
+            note = l.note();
+        }
+        var testAnchorLog = firstPage.get(firstPage.size() - 1);
+        // load next page
+        ApiResultResponse<List<EntrySummaryDTO>> nextPageResult = assertDoesNotThrow(
+                () -> testHelperService.submitSearchByGetWithAnchor(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of(testAnchorLog.id()),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(10),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty()
+                )
+        );
+        AssertionsForInterfaceTypes.assertThat(nextPageResult.getErrorCode()).isEqualTo(0);
+        List<EntrySummaryDTO> nextPage = nextPageResult.getPayload();
+        AssertionsForInterfaceTypes.assertThat(nextPage).isNotNull();
+        AssertionsForClassTypes.assertThat(nextPage.size()).isEqualTo(10);
+        // check that the first of next page is not the last of the previous
+        AssertionsForClassTypes.assertThat(nextPage.get(0).id()).isNotEqualTo(firstPage.get(firstPage.size() - 1).id());
+
+        note = nextPage.get(0).note();
+        nextPage.remove(0);
+        for (EntrySummaryDTO l :
+                nextPage) {
+            AssertionsForClassTypes.assertThat(Integer.valueOf(note)).isLessThan(
+                    Integer.valueOf(l.note())
+            );
+            note = l.note();
+        }
+
+        // now get all the record upside and downside
+        ApiResultResponse<List<EntrySummaryDTO>> prevPageByPinResult = assertDoesNotThrow(
+                () -> testHelperService.submitSearchByGetWithAnchor(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of(testAnchorLog.id()),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(10),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty()
+                )
+        );
+        AssertionsForInterfaceTypes.assertThat(prevPageByPinResult.getErrorCode()).isEqualTo(0);
+        List<EntrySummaryDTO> prevPageByPin = prevPageByPinResult.getPayload();
+        AssertionsForInterfaceTypes.assertThat(prevPageByPin).isNotNull();
+        AssertionsForClassTypes.assertThat(prevPageByPin.size()).isEqualTo(10);
+        AssertionsForInterfaceTypes.assertThat(prevPageByPin).isEqualTo(firstPage);
+
+        // test prev and next
+        ApiResultResponse<List<EntrySummaryDTO>> prevAndNextPageByPinResult = assertDoesNotThrow(
+                () -> testHelperService.submitSearchByGetWithAnchor(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of(testAnchorLog.id()),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(10),
+                        Optional.of(10),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty()
+                )
+        );
+        AssertionsForInterfaceTypes.assertThat(prevAndNextPageByPinResult.getErrorCode()).isEqualTo(0);
+        List<EntrySummaryDTO> prevAndNextPageByPin = prevAndNextPageByPinResult.getPayload();
+        AssertionsForInterfaceTypes.assertThat(prevAndNextPageByPin).isNotNull();
+        AssertionsForClassTypes.assertThat(prevAndNextPageByPin.size()).isEqualTo(20);
+        AssertionsForInterfaceTypes.assertThat(prevAndNextPageByPin).containsAll(firstPage);
+        AssertionsForInterfaceTypes.assertThat(prevAndNextPageByPin).containsAll(nextPage);
+    }
+
+
+    @Test
+    public void searchWithAnchorUsingReversedEventAtAndDefaultOrderWithDateLimit() {
+        LocalDateTime now = LocalDateTime.now();
+        var newLogBookResult = getTestLogbook();
+        // create some data
+        for (int idx = 0; idx < 100; idx++) {
+            int finalIdx = idx;
+            ApiResultResponse<String> newLogID =
+                    assertDoesNotThrow(
+                            () -> testHelperService.createNewLog(
+                                    mockMvc,
+                                    status().isCreated(),
+                                    EntryNewDTO
+                                            .builder()
+                                            .logbook(newLogBookResult.getPayload().name())
+                                            .text("This is a log for test")
+                                            .title("A very wonderful log")
+                                            .note(String.valueOf(finalIdx))
+                                            .eventAt(
+                                                    now.minusDays(finalIdx)
+                                            )
+                                            .build()
+                            )
+                    );
+            AssertionsForClassTypes.assertThat(newLogID).isNotNull();
+        }
+
+        // initial with past limit
+        ApiResultResponse<List<EntrySummaryDTO>> firstPageResult = assertDoesNotThrow(
+                () -> testHelperService.submitSearchByGetWithAnchor(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.empty(),
+                        Optional.of(now.minusDays(10)),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(20),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty()
+                )
+        );
+        AssertionsForInterfaceTypes.assertThat(firstPageResult.getErrorCode()).isEqualTo(0);
+        List<EntrySummaryDTO> firstPage = firstPageResult.getPayload();
+        AssertionsForInterfaceTypes.assertThat(firstPage).isNotNull();
+        AssertionsForClassTypes.assertThat(firstPage.size()).isEqualTo(11);
+        AssertionsForClassTypes.assertThat(firstPage.get(0).eventAt().getDayOfMonth()).isEqualTo(now.getDayOfMonth());
+        AssertionsForClassTypes.assertThat(firstPage.get(10).eventAt().getDayOfMonth()).isEqualTo(now.minusDays(10).getDayOfMonth());
+
+
+        // end and start limit
+        ApiResultResponse<List<EntrySummaryDTO>> secondPageResult = assertDoesNotThrow(
+                () -> testHelperService.submitSearchByGetWithAnchor(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.empty(),
+                        Optional.of(now.minusDays(10)),
+                        Optional.of(now.minusDays(5)),
+                        Optional.empty(),
+                        Optional.of(20),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty()
+                )
+        );
+        AssertionsForInterfaceTypes.assertThat(secondPageResult.getErrorCode()).isEqualTo(0);
+        List<EntrySummaryDTO> secondPage = secondPageResult.getPayload();
+        AssertionsForInterfaceTypes.assertThat(secondPage).isNotNull();
+        AssertionsForClassTypes.assertThat(secondPage.size()).isEqualTo(6);
+        AssertionsForClassTypes.assertThat(secondPage.get(0).eventAt().getDayOfMonth()).isEqualTo(now.minusDays(5).getDayOfMonth());
+        AssertionsForClassTypes.assertThat(secondPage.get(5).eventAt().getDayOfMonth()).isEqualTo(now.minusDays(10).getDayOfMonth());
+    }
+
+    @Test
+    public void searchWithAnchorUsingReversedEventAtAndDefaultOrderWithDateLimitAndPaging() {
+        LocalDateTime now = LocalDateTime.now();
+        var newLogBookResult = getTestLogbook();
+        // create some data
+        for (int idx = 0; idx < 100; idx++) {
+            int finalIdx = idx;
+            ApiResultResponse<String> newLogID =
+                    assertDoesNotThrow(
+                            () -> testHelperService.createNewLog(
+                                    mockMvc,
+                                    status().isCreated(),
+                                    EntryNewDTO
+                                            .builder()
+                                            .logbook(newLogBookResult.getPayload().name())
+                                            .text("This is a log for test")
+                                            .title("A very wonderful log")
+                                            .note(String.valueOf(finalIdx))
+                                            .eventAt(
+                                                    now.minusDays(finalIdx)
+                                            )
+                                            .build()
+                            )
+                    );
+            AssertionsForClassTypes.assertThat(newLogID).isNotNull();
+        }
+
+        boolean getNextPage = true;
+        EntrySummaryDTO anchorEntry = null;
+        EntrySummaryDTO firstEntryFirstPage = null;
+        EntrySummaryDTO lastEntryLastPage = null;
+        while(getNextPage) {
+            // initial with past limit
+            EntrySummaryDTO finalAnchorEntry = anchorEntry;
+            ApiResultResponse<List<EntrySummaryDTO>> nextPage = assertDoesNotThrow(
+                    () -> testHelperService.submitSearchByGetWithAnchor(
+                            mockMvc,
+                            status().isOk(),
+                            (finalAnchorEntry ==null)?Optional.empty():Optional.of(finalAnchorEntry.id()),
+                            Optional.of(now.minusDays(50)),
+                            Optional.of(now.minusDays(1)),
+                            Optional.empty(),
+                            Optional.of(10),
+                            Optional.empty(),
+                            Optional.empty(),
+                            Optional.empty(),
+                            Optional.empty()
+                    )
+            );
+            AssertionsForInterfaceTypes.assertThat(nextPage.getErrorCode()).isEqualTo(0);
+            if(firstEntryFirstPage == null) {
+                firstEntryFirstPage = nextPage.getPayload().get(0);
+            } else if(!nextPage.getPayload().isEmpty()){
+                lastEntryLastPage = nextPage.getPayload().get(nextPage.getPayload().size()-1);
+            }
+
+            if(nextPage.getPayload().size() < 10) {
+                getNextPage = false;
+            } else {
+                anchorEntry = nextPage.getPayload().get(9);
+            }
+        }
+        assertThat(firstEntryFirstPage.eventAt().getDayOfMonth()).isEqualTo(now.minusDays(1).getDayOfMonth());
+        assertThat(lastEntryLastPage.eventAt().getDayOfMonth()).isEqualTo(now.minusDays(50).getDayOfMonth());
     }
 }
