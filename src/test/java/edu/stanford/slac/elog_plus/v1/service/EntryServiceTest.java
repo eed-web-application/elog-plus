@@ -1060,4 +1060,58 @@ public class EntryServiceTest {
             assertThat(fullEntry.shift()).isEqualTo(es.shift());
         }
     }
+
+    @Test
+    public void testSummarization() {
+        var logbookTest = getTestLogbook();
+        assertDoesNotThrow(
+                ()-> {
+                    logbookService.replaceShift(
+                            logbookTest.id(),
+                            List.of(
+                                    ShiftDTO
+                                            .builder()
+                                            .name("Shift1")
+                                            .from("00:00")
+                                            .to("07:59")
+                                            .build(),
+                                    ShiftDTO
+                                            .builder()
+                                            .name("Shift2")
+                                            .from("08:00")
+                                            .to("12:59")
+                                            .build(),
+                                    ShiftDTO
+                                            .builder()
+                                            .name("Shift3")
+                                            .from("13:00")
+                                            .to("17:59")
+                                            .build()
+                            )
+                    );
+                    return null;
+                }
+        );
+
+        //try to save a summary
+        String entryID = assertDoesNotThrow(
+                ()-> entryService.createNew(
+                        EntryNewDTO
+                                .builder()
+                                .title("title")
+                                .text("text")
+                                .logbook(logbookTest.name())
+                                .summarizes(
+                                        SummarizesDTO
+                                                .builder()
+                                                .shift("Shift1")
+                                                .date(LocalDate.now())
+                                                .build()
+                                )
+                                .build()
+                )
+        );
+
+        assertThat(entryID).isNotNull().isNotEmpty();
+    }
 }

@@ -6,8 +6,10 @@ import edu.stanford.slac.elog_plus.api.v1.mapper.EntryMapper;
 import edu.stanford.slac.elog_plus.api.v1.mapper.QueryParameterMapper;
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.exception.EntryNotFound;
+import edu.stanford.slac.elog_plus.exception.ShiftNotFound;
 import edu.stanford.slac.elog_plus.exception.SupersedeAlreadyCreated;
 import edu.stanford.slac.elog_plus.model.Entry;
+import edu.stanford.slac.elog_plus.model.Summarizes;
 import edu.stanford.slac.elog_plus.repository.EntryRepository;
 import edu.stanford.slac.elog_plus.utility.StringUtilities;
 import lombok.AllArgsConstructor;
@@ -72,6 +74,17 @@ public class EntryService {
         Faker faker = new Faker();
         Entry newEntry = EntryMapper.INSTANCE.fromDTO(entryNewDTO, faker.name().firstName(), faker.name().lastName(), faker.name().username());
 
+        //get and check for logbook
+        LogbookDTO lb =
+                wrapCatch(
+                        () -> logbookService.getLogbookByName(entryNewDTO.logbook()),
+                        -1,
+                        "EntryService:createNew"
+                );
+        // check for summarization
+        checkForSummarization(lb, newEntry.getSummarizes());
+
+        // normalize tag name
         if (newEntry.getTags() != null) {
             List<String> tagsNormalizedNames = newEntry
                     .getTags()
@@ -85,30 +98,23 @@ public class EntryService {
             );
         }
 
-        LogbookDTO lb =
-                wrapCatch(
-                        () -> logbookService.getLogbookByName(entryNewDTO.logbook()),
-                        -1,
-                        "EntryService:createNew"
-                );
-
         newEntry
                 .getTags()
                 .forEach(
                         tagName -> {
                             if (
                                     lb.tags().stream().noneMatch(
-                                    t -> t.name().compareTo(tagName) == 0)
-                            ){
+                                            t -> t.name().compareTo(tagName) == 0)
+                            ) {
                                 // we need to create a tag for the user
                                 String newTagID = wrapCatch(
                                         () -> logbookService.createNewTag(
-                                        lb.id(),
-                                        NewTagDTO
-                                                .builder()
-                                                .name(tagName)
-                                                .build()
-                                ),
+                                                lb.id(),
+                                                NewTagDTO
+                                                        .builder()
+                                                        .name(tagName)
+                                                        .build()
+                                        ),
                                         -2,
                                         "EntryService:createNew"
                                 );
@@ -134,8 +140,27 @@ public class EntryService {
                 );
 
         //sanitize title and text
+        Entry finalNewEntry1 = newEntry;
+        assertion(
+                ()->(finalNewEntry1.getTitle()!=null && !finalNewEntry1.getTitle().isEmpty()),
+                ControllerLogicException
+                        .builder()
+                        .errorCode(-4)
+                        .errorMessage("The title is mandatory")
+                        .errorDomain("LogService::createNew")
+                        .build()
+        );
         newEntry.setTitle(
                 StringUtilities.sanitizeEntryTitle(newEntry.getTitle())
+        );
+        assertion(
+                ()->(finalNewEntry1.getText()!=null && !finalNewEntry1.getText().isEmpty()),
+                ControllerLogicException
+                        .builder()
+                        .errorCode(-4)
+                        .errorMessage("The body is mandatory")
+                        .errorDomain("LogService::createNew")
+                        .build()
         );
         newEntry.setText(
                 StringUtilities.sanitizeEntryText(newEntry.getText())
@@ -148,7 +173,7 @@ public class EntryService {
                         () -> entryRepository.insert(
                                 finalNewEntry
                         ),
-                        -2,
+                        -5,
                         "LogService::createNew"
                 );
         log.info("New entry '{}' created", newEntry.getTitle());
@@ -234,7 +259,7 @@ public class EntryService {
                 foundEntry.get().getLogbook(),
                 foundEntry.get().getEventAt().toLocalTime()
         );
-        if(entryShift.isPresent()) {
+        if (entryShift.isPresent()) {
             result = result.toBuilder()
                     .shift(entryShift.get().name())
                     .build();
@@ -397,6 +422,32 @@ public class EntryService {
                 entryRepository::getAllTags,
                 -1,
                 "LogService::getAllTags"
+        );
+    }
+
+    /**
+     * In case of summary information this wil check and in case will file the exception
+     *
+     * @param lb        the logbook ofr the current entry
+     * @param summarize the summarization information
+     */
+    private void checkForSummarization(LogbookDTO lb, Summarizes summarize) {
+        if (summarize == null) return;
+        List<ShiftDTO> allShift = lb.shifts();
+        summarize = summarize.toBuilder()
+                .shift(
+                        StringUtilities.shiftNameNormalization(summarize.getShift())
+                )
+                .build();
+        Summarizes finalSummarize = summarize;
+        allShift.stream().filter(
+                s->s.name().compareToIgnoreCase(finalSummarize.getShift())==0
+        ).findAny().orElseThrow(
+                ()-> ShiftNotFound.shiftNotFoundBuilder()
+                        .errorCode(-1)
+                        .shiftName(finalSummarize.getShift())
+                        .errorDomain("EntryService:checkForSummarization")
+                        .build()
         );
     }
 }
