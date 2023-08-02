@@ -1,5 +1,6 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
@@ -12,6 +13,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -85,6 +88,39 @@ public class TestHelperService {
         Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
         if (someException.isPresent()) {
             throw someException.get();
+        }
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
+
+    public ApiResultResponse<String> uploadWholeEntry(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            EntryNewDTO entryNew,
+            MockMultipartFile[] attachement) throws Exception {
+        MockMultipartHttpServletRequestBuilder multiPartBuilder = multipart("/v1/upload");
+        if (entryNew != null) {
+            multiPartBuilder.param(
+                    "entry",
+                    new ObjectMapper().writeValueAsString(
+                            entryNew
+                    )
+            );
+        }
+
+        for (MockMultipartFile a :
+                attachement) {
+            multiPartBuilder.file(a);
+        }
+        MvcResult result = mockMvc.perform(
+                        multiPartBuilder
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        if (result.getResolvedException() != null) {
+            throw result.getResolvedException();
         }
         return new ObjectMapper().readValue(
                 result.getResponse().getContentAsString(),
@@ -243,7 +279,7 @@ public class TestHelperService {
         contextSize.ifPresent(size -> getBuilder.param("contextSize", String.valueOf(size)));
         limit.ifPresent(size -> getBuilder.param("limit", String.valueOf(size)));
         search.ifPresent(text -> getBuilder.param("search", text));
-        sortByLogDate.ifPresent(b->getBuilder.param("sortByLogDate",  String.valueOf(b)));
+        sortByLogDate.ifPresent(b -> getBuilder.param("sortByLogDate", String.valueOf(b)));
         tags.ifPresent(tl -> {
             String[] tlArray = new String[tl.size()];
             tl.toArray(tlArray);
@@ -411,13 +447,13 @@ public class TestHelperService {
             List<ShiftDTO> replacementShiftDTO) throws Exception {
         MockHttpServletRequestBuilder putRequest =
                 put("/v1/logbooks/{logbookId}/shifts", logbookId)
-                .content(
-                        new ObjectMapper().writeValueAsString(
-                                replacementShiftDTO
+                        .content(
+                                new ObjectMapper().writeValueAsString(
+                                        replacementShiftDTO
+                                )
                         )
-                )
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON);
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON);
 
         MvcResult result = mockMvc.perform(
                         putRequest

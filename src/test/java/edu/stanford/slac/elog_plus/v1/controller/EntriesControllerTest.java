@@ -19,8 +19,10 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -1364,5 +1366,37 @@ public class EntriesControllerTest {
         }
         assertThat(firstEntryFirstPage.eventAt().getDayOfMonth()).isEqualTo(now.minusDays(1).getDayOfMonth());
         assertThat(lastEntryLastPage.eventAt().getDayOfMonth()).isEqualTo(now.minusDays(50).getDayOfMonth());
+    }
+
+    @Test
+    public void uploadEntryFailsWithNoEntry() {
+        MissingServletRequestPartException exception = assertThrows(
+                MissingServletRequestPartException.class,
+                () -> testHelperService.uploadWholeEntry(
+                        mockMvc, status().is4xxClientError(),
+                        null,
+                        new MockMultipartFile[]{}
+                )
+        );
+
+        assertThat(exception.getMessage()).containsPattern(".*entry.*");
+    }
+
+    @Test
+    public void uploadEntryWithNoAttachment() {
+        var testLogbook = getTestLogbook();
+        EntryNewDTO dto = EntryNewDTO
+                .builder()
+                .title("Sample Title")
+                .text("sample text")
+                .logbook(testLogbook.getPayload().name())
+                .build();
+
+        ApiResultResponse<String> uploadResult = assertDoesNotThrow(
+                () -> testHelperService.uploadWholeEntry(mockMvc, status().isCreated(), dto, new MockMultipartFile[]{})
+        );
+
+        assertThat(uploadResult.getErrorCode()).isEqualTo(0);
+        assertThat(uploadResult.getPayload()).isNotEmpty();
     }
 }
