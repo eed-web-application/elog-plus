@@ -1,5 +1,6 @@
 package edu.stanford.slac.elog_plus.api.v1.controller;
 
+import edu.stanford.slac.elog_plus.annotations.RequestJsonParam;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.service.EntryService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -10,8 +11,10 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -26,7 +29,7 @@ public class EntriesController {
     @PostMapping(produces = {MediaType.APPLICATION_JSON_VALUE})
     @Operation(description = "Perform the query on all log data")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResultResponse<String> newLog(@RequestBody EntryNewDTO newEntry) {
+    public ApiResultResponse<String> newEntry(@RequestBody EntryNewDTO newEntry) {
         return ApiResultResponse.of(
                 entryService.createNew(newEntry)
         );
@@ -38,7 +41,7 @@ public class EntriesController {
     )
     @Operation(description = "Create a new supersede for the log identified by the id")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResultResponse<String> newSupersedeLog(@PathVariable String id, @RequestBody EntryNewDTO newLog) {
+    public ApiResultResponse<String> newSupersede(@PathVariable String id, @RequestBody EntryNewDTO newLog) {
         return ApiResultResponse.of(
                 entryService.createNewSupersede(id, newLog)
         );
@@ -50,7 +53,7 @@ public class EntriesController {
     )
     @Operation(description = "Create a new follow-up log for the the log identified by the id")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResultResponse<String> newFollowupLog(@PathVariable String id, @RequestBody EntryNewDTO newLog) {
+    public ApiResultResponse<String> newFollowup(@PathVariable String id, @RequestBody EntryNewDTO newLog) {
         return ApiResultResponse.of(
                 entryService.createNewFollowUp(id, newLog)
         );
@@ -62,7 +65,7 @@ public class EntriesController {
     )
     @Operation(description = "Return all the follow-up logs for a specific log identified by the id")
     @ResponseStatus(HttpStatus.OK)
-    public ApiResultResponse<List<EntrySummaryDTO>> getAllFollowUpLog(@PathVariable String id) {
+    public ApiResultResponse<List<EntrySummaryDTO>> getAllFollowUp(@PathVariable String id) {
         return ApiResultResponse.of(
                 entryService.getAllFollowUpForALog(id)
         );
@@ -74,7 +77,7 @@ public class EntriesController {
     )
     @Operation(description = "Return the full log information")
     @ResponseStatus(HttpStatus.OK)
-    public ApiResultResponse<EntryDTO> getFullLog(
+    public ApiResultResponse<EntryDTO> getFull(
             @PathVariable String id,
             @Parameter(name = "includeFollowUps", description = "If true the API return all the followUps")
             @RequestParam("includeFollowUps") Optional<Boolean> includeFollowUps,
@@ -110,7 +113,7 @@ public class EntriesController {
             @Parameter(name = "contextSize", description = "Include this number of entries before the startDate (used for highlighting entries)")
             @RequestParam("contextSize") Optional<Integer> contextSize,
             @Parameter(name = "limit", description = "Limit the number the number of entries after the start date.")
-            @RequestParam(value = "limit") Optional<Integer>  limit,
+            @RequestParam(value = "limit") Optional<Integer> limit,
             @Parameter(name = "search", description = "Typical search functionality")
             @RequestParam("search") Optional<String> search,
             @Parameter(name = "tags", description = "Only include entries that use one of these tags")
