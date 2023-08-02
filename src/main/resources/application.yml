@@ -30,7 +30,6 @@ spring:
       enabled: true
       file-size-threshold: 1MB
 
-
 edu:
   stanford:
     slac:
