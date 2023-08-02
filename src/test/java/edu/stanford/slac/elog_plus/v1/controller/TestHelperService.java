@@ -99,7 +99,7 @@ public class TestHelperService {
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             EntryNewDTO entryNew,
-            MockMultipartFile[] attachement) throws Exception {
+            MockMultipartFile... attachement) throws Exception {
         MockMultipartHttpServletRequestBuilder multiPartBuilder = multipart("/v1/upload");
         if (entryNew != null) {
             multiPartBuilder.param(
