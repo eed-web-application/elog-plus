@@ -10,6 +10,10 @@ group = 'edu.stanford.slac'
 version = '1.0.0'
 sourceCompatibility = '19'
 
+springBoot {
+    buildInfo()
+}
+
 configurations {
     compileOnly {
         extendsFrom annotationProcessor

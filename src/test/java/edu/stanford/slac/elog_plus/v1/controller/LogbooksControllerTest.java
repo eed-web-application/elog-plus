@@ -25,6 +25,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -423,5 +424,126 @@ public class LogbooksControllerTest {
         assertThat(fullLogbook.getErrorCode()).isEqualTo(0);
         assertThat(fullLogbook.getPayload().name()).isEqualTo("updated-name");
         assertThat(fullLogbook.getPayload().shifts()).hasSize(1).extracting("name").contains("Morning shift");
+    }
+
+
+    @Test
+    public void testGetOneLogbookTags() {
+        ApiResultResponse<String> newLogbookResult = assertDoesNotThrow(
+                () -> testHelperService.createNewLogbook(
+                        mockMvc,
+                        status().isCreated(),
+                        NewLogbookDTO
+                                .builder()
+                                .name("Logbook1")
+                                .build()
+                )
+        );
+        assertThat(newLogbookResult).isNotNull();
+        assertThat(newLogbookResult.getErrorCode()).isEqualTo(0);
+
+        for(int idx = 0; idx <= 99; idx++) {
+            int finalIdx = idx;
+            ApiResultResponse<String> newTagResult =  assertDoesNotThrow(
+                    () -> testHelperService.createNewLogbookTags(
+                            mockMvc,
+                            status().isCreated(),
+                            newLogbookResult.getPayload(),
+                            NewTagDTO
+                                    .builder()
+                                    .name(String.format("Tag-%d", finalIdx))
+                                    .build()
+                    )
+            );
+            assertThat(newTagResult).isNotNull();
+            assertThat(newTagResult.getErrorCode()).isEqualTo(0);
+        }
+
+        ApiResultResponse<List<TagDTO>> allTagsResult = assertDoesNotThrow(
+                () -> testHelperService.getLogbookTagsFromTagsController(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.empty()
+                )
+        );
+        assertThat(allTagsResult).isNotNull();
+        assertThat(allTagsResult.getErrorCode()).isEqualTo(0);
+        assertThat(allTagsResult.getPayload().size()).isEqualTo(100);
+    }
+
+    @Test
+    public void testGetFromAllLogbookTags() {
+        //add first logbook
+        ApiResultResponse<String> newLogbookResult = assertDoesNotThrow(
+                () -> testHelperService.createNewLogbook(
+                        mockMvc,
+                        status().isCreated(),
+                        NewLogbookDTO
+                                .builder()
+                                .name("Logbook1")
+                                .build()
+                )
+        );
+        assertThat(newLogbookResult).isNotNull();
+        assertThat(newLogbookResult.getErrorCode()).isEqualTo(0);
+
+        for(int idx = 0; idx <= 99; idx++) {
+            int finalIdx = idx;
+            ApiResultResponse<String> newTagResult =  assertDoesNotThrow(
+                    () -> testHelperService.createNewLogbookTags(
+                            mockMvc,
+                            status().isCreated(),
+                            newLogbookResult.getPayload(),
+                            NewTagDTO
+                                    .builder()
+                                    .name(String.format("Tag-%d", finalIdx))
+                                    .build()
+                    )
+            );
+            assertThat(newTagResult).isNotNull();
+            assertThat(newTagResult.getErrorCode()).isEqualTo(0);
+        }
+
+        //add second logbook
+        ApiResultResponse<String> newLogbookResultTwo = assertDoesNotThrow(
+                () -> testHelperService.createNewLogbook(
+                        mockMvc,
+                        status().isCreated(),
+                        NewLogbookDTO
+                                .builder()
+                                .name("Logbook2")
+                                .build()
+                )
+        );
+        assertThat(newLogbookResultTwo).isNotNull();
+        assertThat(newLogbookResultTwo.getErrorCode()).isEqualTo(0);
+
+        for(int idx = 50; idx <= 149; idx++) {
+            int finalIdx = idx;
+            ApiResultResponse<String> newTagResult =  assertDoesNotThrow(
+                    () -> testHelperService.createNewLogbookTags(
+                            mockMvc,
+                            status().isCreated(),
+                            newLogbookResultTwo.getPayload(),
+                            NewTagDTO
+                                    .builder()
+                                    .name(String.format("Tag-%d", finalIdx))
+                                    .build()
+                    )
+            );
+            assertThat(newTagResult).isNotNull();
+            assertThat(newTagResult.getErrorCode()).isEqualTo(0);
+        }
+
+        ApiResultResponse<List<TagDTO>> allTagsResult = assertDoesNotThrow(
+                () -> testHelperService.getLogbookTagsFromTagsController(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.empty()
+                )
+        );
+        assertThat(allTagsResult).isNotNull();
+        assertThat(allTagsResult.getErrorCode()).isEqualTo(0);
+        assertThat(allTagsResult.getPayload().size()).isEqualTo(200);
     }
 }
