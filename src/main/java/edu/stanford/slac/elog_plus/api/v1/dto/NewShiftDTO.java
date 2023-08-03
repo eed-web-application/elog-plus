@@ -3,6 +3,8 @@ package edu.stanford.slac.elog_plus.api.v1.dto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
 /**
@@ -16,10 +18,16 @@ import lombok.Builder;
 @Schema(description = "DTO for the shift creation")
 @Builder(toBuilder = true)
 public record NewShiftDTO(
+        @NotNull
+        @NotEmpty
         @Schema(description = "Is the name of the shift")
         String name,
-        @Schema(description = "Is the time where the shift start in the day with the form HH:MM")
+        @NotNull
+        @NotEmpty
+        @Schema(description = "Is the time where the shift start in the day with the form HH:MM in UTC timezone")
         String from,
-        @Schema(description = "Is the time where the shift ends in the day with the form HH:MM")
+        @NotNull
+        @NotEmpty
+        @Schema(description = "Is the time where the shift ends in the day with the form HH:MM in UTC timezone")
         String to
 ){}

@@ -11,6 +11,7 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "DTO for the shift creation")
 @Builder(toBuilder = true)
-public record ReplaceShiftDTO (
-    List<ShiftDTO> replacementShifts)
-{}
+public record ReplaceShiftDTO(
+        List<ShiftDTO> replacementShifts
+) {
+}

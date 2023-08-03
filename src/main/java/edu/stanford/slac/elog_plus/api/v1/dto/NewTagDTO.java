@@ -3,6 +3,8 @@ package edu.stanford.slac.elog_plus.api.v1.dto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -10,5 +12,8 @@ import lombok.Builder;
 @Schema(description = "DTO for the tags")
 @Builder(toBuilder = true)
 public record NewTagDTO(
-    String name
-){}
+        @NotNull
+        @NotEmpty
+        String name
+) {
+}
