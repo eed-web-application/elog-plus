@@ -180,11 +180,11 @@ public class EntryService {
                 StringUtilities.sanitizeEntryTitle(newEntry.getTitle())
         );
         assertion(
-                () -> (finalNewEntry1.getText() != null && !finalNewEntry1.getText().isEmpty()),
+                () -> (finalNewEntry1.getText() != null),
                 ControllerLogicException
                         .builder()
                         .errorCode(-4)
-                        .errorMessage("The body is mandatory")
+                        .errorMessage("The body is mandatory also if empty")
                         .errorDomain("LogService::createNew")
                         .build()
         );
