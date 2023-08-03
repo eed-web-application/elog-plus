@@ -12,6 +12,7 @@ import edu.stanford.slac.elog_plus.model.QueryParameterWithAnchor;
 import edu.stanford.slac.elog_plus.service.AttachmentService;
 import edu.stanford.slac.elog_plus.service.EntryService;
 import edu.stanford.slac.elog_plus.service.LogbookService;
+import edu.stanford.slac.elog_plus.utility.DateUtilities;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -870,20 +871,42 @@ public class EntryServiceTest {
                         ShiftDTO
                                 .builder()
                                 .name("Shift1")
-                                .from("00:00")
-                                .to("07:59")
+                                .from(
+                                        DateUtilities.toUTCString(
+                                                LocalTime.of(
+                                                        0,
+                                                        0
+                                                )
+                                        )
+                                )
+                                .to(
+                                        DateUtilities.toUTCString(
+                                                LocalTime.of(
+                                                        7,
+                                                        59
+                                                )
+                                        )
+                                )
                                 .build(),
                         ShiftDTO
                                 .builder()
                                 .name("Shift2")
-                                .from("08:00")
-                                .to("12:59")
-                                .build(),
-                        ShiftDTO
-                                .builder()
-                                .name("Shift3")
-                                .from("13:00")
-                                .to("17:59")
+                                .from(
+                                        DateUtilities.toUTCString(
+                                                LocalTime.of(
+                                                        8,
+                                                        0
+                                                )
+                                        )
+                                )
+                                .to(
+                                        DateUtilities.toUTCString(
+                                                LocalTime.of(
+                                                        12,
+                                                        59
+                                                )
+                                        )
+                                )
                                 .build()
                 )
         );
@@ -983,61 +1006,37 @@ public class EntryServiceTest {
                         ),
                 "Shift2"
         );
-        Condition<EntrySummaryDTO> shift3Condition = new Condition<>(
-                e -> e.shift() != null && e.shift().name().compareTo("Shift3") == 0 &&
-                        e.eventAt().toLocalTime().equals(
-                                LocalTime.of(
-                                        13,
-                                        0
-                                )
-                        ) ||
-                        (e.eventAt().toLocalTime().isAfter(
-                                LocalTime.of(
-                                        13,
-                                        0
-                                )
-                        ) &&
-                                e.eventAt().toLocalTime().isBefore(
-                                        LocalTime.of(
-                                                17,
-                                                59
-                                        )
-                                )) ||
-                        e.eventAt().toLocalTime().equals(
-                                LocalTime.of(
-                                        17,
-                                        59
-                                )
-                        ),
-                "Shift3"
-        );
+
         Condition<EntrySummaryDTO> shiftNullCondition = new Condition<>(
-                e -> e.shift() == null &&
-                        e.eventAt().toLocalTime().equals(
-                                LocalTime.of(
-                                        18,
-                                        0
-                                )
-                        ) ||
-                        (e.eventAt().toLocalTime().isAfter(
-                                LocalTime.of(
-                                        18,
-                                        0
-                                )
-                        ) &&
-                                e.eventAt().toLocalTime().isBefore(
-                                        LocalTime.of(
-                                                23,
-                                                59
-                                        )
-                                )) ||
-                        e.eventAt().toLocalTime().equals(
-                                LocalTime.of(
-                                        23,
-                                        59
-                                )
-                        ),
-                "Shift2"
+                e -> {
+                    boolean ret = e.shift() == null &&
+                            e.eventAt().toLocalTime().equals(
+                                    LocalTime.of(
+                                            13,
+                                            0
+                                    )
+                            ) ||
+                            (e.eventAt().toLocalTime().isAfter(
+                                    LocalTime.of(
+                                            13,
+                                            0
+                                    )
+                            ) &&
+                                    e.eventAt().toLocalTime().isBefore(
+                                            LocalTime.of(
+                                                    23,
+                                                    59
+                                            )
+                                    )) ||
+                            e.eventAt().toLocalTime().equals(
+                                    LocalTime.of(
+                                            23,
+                                            59
+                                    )
+                            );
+                    return ret;
+                },
+                "null condition"
         );
 
         //check all shift
@@ -1047,7 +1046,6 @@ public class EntryServiceTest {
                                 anyOf(
                                         shift1Condition,
                                         shift2Condition,
-                                        shift3Condition,
                                         shiftNullCondition
                                 )
                         ).hasSize(30);

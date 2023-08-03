@@ -67,8 +67,9 @@ public class EntryService {
 
     /**
      * Find the entry id by shift name ad a date
+     *
      * @param shiftId the shift name
-     * @param date the date of the summary to find
+     * @param date    the date of the summary to find
      * @return the id of te summary
      */
     public String findSummaryIdForShiftIdAndDate(String shiftId, LocalDate date) {
@@ -81,7 +82,7 @@ public class EntryService {
                 "EntryService:getSummaryIdForShiftIdAndDate"
         );
         return summary.orElseThrow(
-                ()->EntryNotFound.entryNotFoundBuilder()
+                () -> EntryNotFound.entryNotFoundBuilder()
                         .errorCode(-2)
                         .errorDomain("EntryService:getSummaryIdForShiftIdAndDat")
                         .build()
@@ -167,7 +168,7 @@ public class EntryService {
         //sanitize title and text
         Entry finalNewEntry1 = newEntry;
         assertion(
-                ()->(finalNewEntry1.getTitle()!=null && !finalNewEntry1.getTitle().isEmpty()),
+                () -> (finalNewEntry1.getTitle() != null && !finalNewEntry1.getTitle().isEmpty()),
                 ControllerLogicException
                         .builder()
                         .errorCode(-4)
@@ -179,7 +180,7 @@ public class EntryService {
                 StringUtilities.sanitizeEntryTitle(newEntry.getTitle())
         );
         assertion(
-                ()->(finalNewEntry1.getText()!=null && !finalNewEntry1.getText().isEmpty()),
+                () -> (finalNewEntry1.getText() != null && !finalNewEntry1.getText().isEmpty()),
                 ControllerLogicException
                         .builder()
                         .errorCode(-4)
@@ -284,12 +285,10 @@ public class EntryService {
                 foundEntry.get().getLogbook(),
                 foundEntry.get().getEventAt().toLocalTime()
         );
-        if (entryShift.isPresent()) {
-            result = result.toBuilder()
-                    .shift(entryShift.get().name())
-                    .build();
-        }
-        return result;
+
+        return result.toBuilder()
+                .shift(entryShift.orElse(null))
+                .build();
     }
 
     /**
@@ -459,7 +458,7 @@ public class EntryService {
     private void checkForSummarization(LogbookDTO lb, Summarizes summarize) {
         if (summarize == null) return;
         assertion(
-                ()->((lb.shifts() != null && !lb.shifts().isEmpty())),
+                () -> ((lb.shifts() != null && !lb.shifts().isEmpty())),
                 ControllerLogicException
                         .builder()
                         .errorCode(-1)
@@ -469,7 +468,7 @@ public class EntryService {
         );
 
         assertion(
-                ()->(summarize.getShiftId()!=null && !summarize.getShiftId().isEmpty()),
+                () -> (summarize.getShiftId() != null && !summarize.getShiftId().isEmpty()),
                 ControllerLogicException
                         .builder()
                         .errorCode(-2)
@@ -478,7 +477,7 @@ public class EntryService {
                         .build()
         );
         assertion(
-                ()->(summarize.getDate()!=null),
+                () -> (summarize.getDate() != null),
                 ControllerLogicException
                         .builder()
                         .errorCode(-3)
@@ -488,9 +487,9 @@ public class EntryService {
         );
         List<ShiftDTO> allShift = lb.shifts();
         allShift.stream().filter(
-                s->s.id().compareToIgnoreCase(summarize.getShiftId())==0
+                s -> s.id().compareToIgnoreCase(summarize.getShiftId()) == 0
         ).findAny().orElseThrow(
-                ()-> ShiftNotFound.shiftNotFoundBuilder()
+                () -> ShiftNotFound.shiftNotFoundBuilder()
                         .errorCode(-4)
                         .shiftName(summarize.getShiftId())
                         .errorDomain("EntryService:checkForSummarization")
