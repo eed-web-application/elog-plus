@@ -96,7 +96,7 @@ public class UploadControllerTest {
     }
 
     @Test
-    public void uploadEntryWithAttachement() {
+    public void uploadEntryWithAttachment() {
         var testLogbook = getTestLogbook();
         EntryNewDTO dto = EntryNewDTO
                 .builder()
@@ -122,7 +122,7 @@ public class UploadControllerTest {
                             new MockMultipartFile(
                                     "attachments",
                                     "test.jpg",
-                                    MediaType.IMAGE_PNG_VALUE,
+                                    MediaType.IMAGE_JPEG_VALUE,
                                     isJpg
                             ))
             );

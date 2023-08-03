@@ -2,6 +2,7 @@ package edu.stanford.slac.elog_plus.migration;
 
 
 import edu.stanford.slac.elog_plus.model.Attachment;
+import edu.stanford.slac.elog_plus.model.Logbook;
 import io.mongock.api.annotations.ChangeUnit;
 import io.mongock.api.annotations.Execution;
 import io.mongock.api.annotations.RollbackExecution;
@@ -21,15 +22,15 @@ public class InitLogbookIndex {
     public void changeSet() {
         //entry index
         MongoDDLOps.createIndex(
-                Attachment.class,
+                Logbook.class,
                 mongoTemplate,
                 new Index().on(
                         "name",
                         Sort.Direction.ASC
-                ).unique()
+                )
         );
         MongoDDLOps.createIndex(
-                Attachment.class,
+                Logbook.class,
                 mongoTemplate,
                 new Index().on(
                         "tags",
@@ -37,7 +38,7 @@ public class InitLogbookIndex {
                 )
         );
         MongoDDLOps.createIndex(
-                Attachment.class,
+                Logbook.class,
                 mongoTemplate,
                 new Index().on(
                         "shifts",

@@ -1094,8 +1094,22 @@ public class EntryServiceTest {
                                     ShiftDTO
                                             .builder()
                                             .name("Shift1")
-                                            .from("00:00")
-                                            .to("07:59")
+                                            .from(
+                                                    DateUtilities.toUTCString(
+                                                    LocalTime.of(
+                                                            0,
+                                                            0
+                                                    )
+                                            )
+                                            )
+                                            .to(
+                                                    DateUtilities.toUTCString(
+                                                            LocalTime.of(
+                                                                    7,
+                                                                    59
+                                                            )
+                                                    )
+                                            )
                                             .build()
                             )
                     );
@@ -1176,20 +1190,62 @@ public class EntryServiceTest {
                                     ShiftDTO
                                             .builder()
                                             .name("Shift1")
-                                            .from("00:00")
-                                            .to("07:59")
+                                            .from(
+                                                    DateUtilities.toUTCString(
+                                                            LocalTime.of(
+                                                                    0,
+                                                                    0
+                                                            )
+                                                    )
+                                            )
+                                            .to(
+                                                    DateUtilities.toUTCString(
+                                                            LocalTime.of(
+                                                                    7,
+                                                                    59
+                                                            )
+                                                    )
+                                            )
                                             .build(),
                                     ShiftDTO
                                             .builder()
                                             .name("Shift2")
-                                            .from("08:00")
-                                            .to("12:59")
+                                            .from(
+                                                    DateUtilities.toUTCString(
+                                                            LocalTime.of(
+                                                                    8,
+                                                                    0
+                                                            )
+                                                    )
+                                            )
+                                            .to(
+                                                    DateUtilities.toUTCString(
+                                                            LocalTime.of(
+                                                                    12,
+                                                                    59
+                                                            )
+                                                    )
+                                            )
                                             .build(),
                                     ShiftDTO
                                             .builder()
                                             .name("Shift3")
-                                            .from("13:00")
-                                            .to("17:59")
+                                            .from(
+                                                    DateUtilities.toUTCString(
+                                                            LocalTime.of(
+                                                                    13,
+                                                                    0
+                                                            )
+                                                    )
+                                            )
+                                            .to(
+                                                    DateUtilities.toUTCString(
+                                                            LocalTime.of(
+                                                                    17,
+                                                                    59
+                                                            )
+                                                    )
+                                            )
                                             .build()
                             )
                     );
@@ -1236,20 +1292,62 @@ public class EntryServiceTest {
                                     ShiftDTO
                                             .builder()
                                             .name("Shift1")
-                                            .from("00:00")
-                                            .to("07:59")
+                                            .from(
+                                                    DateUtilities.toUTCString(
+                                                            LocalTime.of(
+                                                                    0,
+                                                                    0
+                                                            )
+                                                    )
+                                            )
+                                            .to(
+                                                    DateUtilities.toUTCString(
+                                                            LocalTime.of(
+                                                                    7,
+                                                                    59
+                                                            )
+                                                    )
+                                            )
                                             .build(),
                                     ShiftDTO
                                             .builder()
                                             .name("Shift2")
-                                            .from("08:00")
-                                            .to("12:59")
+                                            .from(
+                                                    DateUtilities.toUTCString(
+                                                            LocalTime.of(
+                                                                    8,
+                                                                    0
+                                                            )
+                                                    )
+                                            )
+                                            .to(
+                                                    DateUtilities.toUTCString(
+                                                            LocalTime.of(
+                                                                    12,
+                                                                    59
+                                                            )
+                                                    )
+                                            )
                                             .build(),
                                     ShiftDTO
                                             .builder()
                                             .name("Shift3")
-                                            .from("13:00")
-                                            .to("17:59")
+                                            .from(
+                                                    DateUtilities.toUTCString(
+                                                            LocalTime.of(
+                                                                    13,
+                                                                    0
+                                                            )
+                                                    )
+                                            )
+                                            .to(
+                                                    DateUtilities.toUTCString(
+                                                            LocalTime.of(
+                                                                    17,
+                                                                    59
+                                                            )
+                                                    )
+                                            )
                                             .build()
                             )
                     );
@@ -1327,20 +1425,62 @@ public class EntryServiceTest {
                                     ShiftDTO
                                             .builder()
                                             .name("Shift1")
-                                            .from("00:00")
-                                            .to("07:59")
+                                            .from(
+                                                    DateUtilities.toUTCString(
+                                                            LocalTime.of(
+                                                                    0,
+                                                                    0
+                                                            )
+                                                    )
+                                            )
+                                            .to(
+                                                    DateUtilities.toUTCString(
+                                                            LocalTime.of(
+                                                                    7,
+                                                                    59
+                                                            )
+                                                    )
+                                            )
                                             .build(),
                                     ShiftDTO
                                             .builder()
                                             .name("Shift2")
-                                            .from("08:00")
-                                            .to("12:59")
+                                            .from(
+                                                    DateUtilities.toUTCString(
+                                                            LocalTime.of(
+                                                                    8,
+                                                                    0
+                                                            )
+                                                    )
+                                            )
+                                            .to(
+                                                    DateUtilities.toUTCString(
+                                                            LocalTime.of(
+                                                                    12,
+                                                                    59
+                                                            )
+                                                    )
+                                            )
                                             .build(),
                                     ShiftDTO
                                             .builder()
                                             .name("Shift3")
-                                            .from("13:00")
-                                            .to("17:59")
+                                            .from(
+                                                    DateUtilities.toUTCString(
+                                                            LocalTime.of(
+                                                                    13,
+                                                                    0
+                                                            )
+                                                    )
+                                            )
+                                            .to(
+                                                    DateUtilities.toUTCString(
+                                                            LocalTime.of(
+                                                                    17,
+                                                                    59
+                                                            )
+                                                    )
+                                            )
                                             .build()
                             )
                     );
@@ -1418,20 +1558,60 @@ public class EntryServiceTest {
                                     ShiftDTO
                                             .builder()
                                             .name("Shift1")
-                                            .from("00:00")
-                                            .to("07:59")
+                                            .from(
+                                                    DateUtilities.toUTCString(
+                                                            LocalTime.of(
+                                                                    0,
+                                                                    0
+                                                            )
+                                                    )
+                                            )
+                                            .to(
+                                                    DateUtilities.toUTCString(
+                                                            LocalTime.of(
+                                                                    7,
+                                                                    59
+                                                            )
+                                                    )
+                                            )
                                             .build(),
                                     ShiftDTO
                                             .builder()
                                             .name("Shift2")
-                                            .from("08:00")
-                                            .to("12:59")
+                                            .from(
+                                                    DateUtilities.toUTCString(
+                                                            LocalTime.of(
+                                                                    8,
+                                                                    0
+                                                            )
+                                                    )
+                                            )
+                                            .to(
+                                                    DateUtilities.toUTCString(
+                                                            LocalTime.of(
+                                                                    12,
+                                                                    59
+                                                            )
+                                                    )
+                                            )
                                             .build(),
                                     ShiftDTO
                                             .builder()
                                             .name("Shift3")
-                                            .from("13:00")
-                                            .to("17:59")
+                                            .from(DateUtilities.toUTCString(
+                                                    LocalTime.of(
+                                                            13,
+                                                            0
+                                                    )
+                                            ))
+                                            .to(
+                                                    DateUtilities.toUTCString(
+                                                            LocalTime.of(
+                                                                    17,
+                                                                    59
+                                                            )
+                                                    )
+                                            )
                                             .build()
                             )
                     );
