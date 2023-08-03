@@ -18,7 +18,7 @@ import java.time.LocalDate;
 @Schema(description = "DTO for shift summarization")
 @Builder(toBuilder = true)
 public record SummarizesDTO(
-        String shift,
+        String shiftId,
         @JsonDeserialize(using = LocalDateDeserializer.class)
         @JsonSerialize(using = LocalDateSerializer.class)
         LocalDate date

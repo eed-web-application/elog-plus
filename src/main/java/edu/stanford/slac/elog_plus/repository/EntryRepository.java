@@ -26,10 +26,10 @@ public interface EntryRepository extends MongoRepository<Entry, String>, EntryRe
 
     /**
      * Return the summary associated to the shift and date
-     * @param shift the shift name
-     * @param date the date
+     * @param summarizesShiftId the shift name
+     * @param summarizesDate the date
      * @return
      */
     @Query(fields = "{ 'summarizes' : 1}")
-    Optional<Entry> findBySummarizes_ShiftAndSummarizes_Date(String summarizesShift, LocalDate summarizesDate);
+    Optional<Entry> findBySummarizes_ShiftIdAndSummarizes_Date(String summarizesShiftId, LocalDate summarizesDate);
 }

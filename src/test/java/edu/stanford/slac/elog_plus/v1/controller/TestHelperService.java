@@ -502,13 +502,13 @@ public class TestHelperService {
     public ApiResultResponse<String> findSummaryIdByShiftNameAndDate(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
-            String shiftName,
+            String shiftId,
             LocalDate date
     ) throws Exception {
         MockHttpServletRequestBuilder putRequest =
                 get(
-                        "/v1/entries/{shiftName}/summaries/{date}",
-                        shiftName,
+                        "/v1/entries/{shiftId}/summaries/{date}",
+                        shiftId,
                         date
                 )
                         .accept(MediaType.APPLICATION_JSON);

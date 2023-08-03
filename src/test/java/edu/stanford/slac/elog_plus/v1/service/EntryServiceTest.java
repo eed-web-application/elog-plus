@@ -1135,7 +1135,7 @@ public class EntryServiceTest {
                                 .summarizes(
                                         SummarizesDTO
                                                 .builder()
-                                                .shift("wrong Name")
+                                                .shiftId("wrong id")
                                                 .build()
                                 )
                                 .build()
@@ -1155,7 +1155,7 @@ public class EntryServiceTest {
                                 .summarizes(
                                         SummarizesDTO
                                                 .builder()
-                                                .shift("wrong Name")
+                                                .shiftId("wrong id")
                                                 .date(LocalDate.now())
                                                 .build()
                                 )
@@ -1198,6 +1198,12 @@ public class EntryServiceTest {
                 }
         );
 
+        LogbookDTO lb = assertDoesNotThrow(
+                () -> logbookService.getLogbookByName(
+                        logbookTest.name()
+                )
+        );
+
         //try to save a summary
         String entryID = assertDoesNotThrow(
                 () -> entryService.createNew(
@@ -1209,7 +1215,7 @@ public class EntryServiceTest {
                                 .summarizes(
                                         SummarizesDTO
                                                 .builder()
-                                                .shift("Shift1")
+                                                .shiftId(lb.shifts().get(0).id())
                                                 .date(LocalDate.now())
                                                 .build()
                                 )
@@ -1221,7 +1227,7 @@ public class EntryServiceTest {
     }
 
     @Test
-    public void testSearchFilterinOnSummaries() {
+    public void testSearchFilteringOnSummaries() {
         var logbookTest = getTestLogbook();
         assertDoesNotThrow(
                 () -> {
@@ -1251,6 +1257,11 @@ public class EntryServiceTest {
                     return null;
                 }
         );
+        LogbookDTO lb = assertDoesNotThrow(
+                () -> logbookService.getLogbookByName(
+                        logbookTest.name()
+                )
+        );
 
         //try to save a summary
         String entryID = assertDoesNotThrow(
@@ -1263,7 +1274,7 @@ public class EntryServiceTest {
                                 .summarizes(
                                         SummarizesDTO
                                                 .builder()
-                                                .shift("Shift1")
+                                                .shiftId(lb.shifts().get(0).id())
                                                 .date(LocalDate.now())
                                                 .build()
                                 )
@@ -1337,7 +1348,11 @@ public class EntryServiceTest {
                     return null;
                 }
         );
-
+        LogbookDTO lb = assertDoesNotThrow(
+                () -> logbookService.getLogbookByName(
+                        logbookTest.name()
+                )
+        );
         //try to save a summary
         String entryID1 = assertDoesNotThrow(
                 () -> entryService.createNew(
@@ -1349,7 +1364,7 @@ public class EntryServiceTest {
                                 .summarizes(
                                         SummarizesDTO
                                                 .builder()
-                                                .shift("Shift1")
+                                                .shiftId(lb.shifts().get(0).id())
                                                 .date(LocalDate.now())
                                                 .build()
                                 )
@@ -1367,7 +1382,7 @@ public class EntryServiceTest {
                                 .summarizes(
                                         SummarizesDTO
                                                 .builder()
-                                                .shift("Shift1")
+                                                .shiftId(lb.shifts().get(0).id())
                                                 .date(LocalDate.now().minusDays(1))
                                                 .build()
                                 )
@@ -1378,7 +1393,7 @@ public class EntryServiceTest {
 
         String idFound1 = assertDoesNotThrow(
                 () -> entryService.findSummaryIdForShiftIdAndDate(
-                        "Shift1",
+                        lb.shifts().get(0).id(),
                         LocalDate.now()
                 )
         );
@@ -1386,7 +1401,7 @@ public class EntryServiceTest {
 
         String idFound2 = assertDoesNotThrow(
                 () -> entryService.findSummaryIdForShiftIdAndDate(
-                        "Shift1",
+                        lb.shifts().get(0).id(),
                         LocalDate.now().minusDays(1)
                 )
         );
