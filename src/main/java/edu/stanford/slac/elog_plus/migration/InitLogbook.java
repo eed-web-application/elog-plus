@@ -19,7 +19,7 @@ import static java.util.Arrays.asList;
 @Log4j2
 @Profile("!test")
 @AllArgsConstructor
-@ChangeUnit(id = "logbook-initializer", order = "2", author = "bisegni")
+@ChangeUnit(id = "logbook-initializer", order = "4", author = "bisegni")
 public class InitLogbook {
     private final LogbookService logbookService;
     private final MongoTemplate mongoTemplate;
@@ -69,9 +69,6 @@ public class InitLogbook {
     );
     @Execution
     public void changeSet() {
-        // create logbook index
-        MongoDDLOps.createIndex(Logbook.class, mongoTemplate, mongoMappingContext);
-
         // fill logbook
         for (String logbookName:
                 logbookNames) {
