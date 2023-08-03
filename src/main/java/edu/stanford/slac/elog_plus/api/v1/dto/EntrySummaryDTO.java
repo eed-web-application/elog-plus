@@ -17,20 +17,29 @@ import java.util.List;
 @Schema(description = "Contains the minimal set of information of the entry")
 @Builder(toBuilder = true)
 public record EntrySummaryDTO(
-        @Schema(description = "record primary key")
+        @Schema(description = "Unique identifier of the entry")
         String id,
+        @Schema(description = "The logbook which the entry is associated")
         String logbook,
+        @Schema(description = "The title of the logbook")
         String title,
+        @Schema(description = "The user tha insert the entry")
         String loggedBy,
+        @Schema(description = "The tags that describes the entry")
         List<String> tags,
+        @Schema(description = "The attachment list of the entry")
         List<AttachmentDTO> attachments,
+        @Schema(description = "The shift which the entry belong, if any")
         ShiftDTO shift,
+        @Schema(description = "The entry notes")
         String note,
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)
+        @Schema(description = "The timestamp when the entry has been created")
         LocalDateTime loggedAt,
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)
+        @Schema(description = "The timestamp when the event described by the entry happened")
         LocalDateTime eventAt
 ) {
 }

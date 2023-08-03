@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
@@ -18,11 +20,15 @@ import java.util.List;
 @Builder
 @Schema(description = "Is the model for the new ELog creation")
 public record EntryNewDTO(
+        @NotNull
         @Schema(description = "Is the logbook where the new log belong")
         String logbook,
+        @NotNull
+        @NotEmpty
         @Schema(description = "The title of the log")
         String title,
         @Schema(description = "The content of the log")
+        @NotNull
         String text,
         @Schema(description = "Is the general note field")
         String note,
