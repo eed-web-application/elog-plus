@@ -4,6 +4,7 @@ import com.github.javafaker.Faker;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.api.v1.mapper.EntryMapper;
 import edu.stanford.slac.elog_plus.api.v1.mapper.QueryParameterMapper;
+import edu.stanford.slac.elog_plus.api.v1.mapper.ShiftMapper;
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.exception.EntryNotFound;
 import edu.stanford.slac.elog_plus.exception.ShiftNotFound;
@@ -57,7 +58,7 @@ public class EntryService {
                     );
                     return es.toBuilder()
                             .shift(
-                                    shift.map(ShiftDTO::name).orElse(null)
+                                    shift.orElse(null)
                             ).build();
                 }
 

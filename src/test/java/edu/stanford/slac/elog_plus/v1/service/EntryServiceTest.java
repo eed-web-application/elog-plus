@@ -927,7 +927,7 @@ public class EntryServiceTest {
         assertThat(firstPage.size()).isEqualTo(30);
 
         Condition<EntrySummaryDTO> shift1Condition = new Condition<>(
-                e -> e.shift() != null && e.shift().compareTo("Shift1") == 0 &&
+                e -> e.shift() != null && e.shift().name().compareTo("Shift1") == 0 &&
                         e.eventAt().toLocalTime().equals(
                                 LocalTime.of(
                                         0,
@@ -956,7 +956,7 @@ public class EntryServiceTest {
                 "Shift1"
         );
         Condition<EntrySummaryDTO> shift2Condition = new Condition<>(
-                e -> e.shift() != null && e.shift().compareTo("Shift2") == 0 &&
+                e -> e.shift() != null && e.shift().name().compareTo("Shift2") == 0 &&
                         e.eventAt().toLocalTime().equals(
                                 LocalTime.of(
                                         8,
@@ -984,7 +984,7 @@ public class EntryServiceTest {
                 "Shift2"
         );
         Condition<EntrySummaryDTO> shift3Condition = new Condition<>(
-                e -> e.shift() != null && e.shift().compareTo("Shift3") == 0 &&
+                e -> e.shift() != null && e.shift().name().compareTo("Shift3") == 0 &&
                         e.eventAt().toLocalTime().equals(
                                 LocalTime.of(
                                         13,
