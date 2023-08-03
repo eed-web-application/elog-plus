@@ -10,6 +10,6 @@ import java.time.LocalDate;
 @ToString
 @Builder(toBuilder = true)
 public class Summarizes {
-    private String shift;
+    private String shiftId;
     private LocalDate date;
 }

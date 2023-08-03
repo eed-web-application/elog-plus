@@ -1375,14 +1375,15 @@ public class EntriesControllerTest {
     @Test
     public void findSummaryId() {
         var newLogBookResult = getTestLogbook();
+        ApiResultResponse<LogbookDTO> finalNewLogBookResult2 = newLogBookResult;
         ApiResultResponse<Boolean> replacementResult = assertDoesNotThrow(
                 () -> testHelperService.updateLogbook(
                         mockMvc,
                         status().isCreated(),
-                        newLogBookResult.getPayload().id(),
+                        finalNewLogBookResult2.getPayload().id(),
                         UpdateLogbookDTO
                                 .builder()
-                                .name(newLogBookResult.getPayload().name())
+                                .name(finalNewLogBookResult2.getPayload().name())
                                 .tags(
                                         Collections.emptyList()
                                 )
@@ -1400,6 +1401,16 @@ public class EntriesControllerTest {
                 )
         );
 
+        ApiResultResponse<LogbookDTO> finalNewLogBookResult = newLogBookResult;
+        newLogBookResult = assertDoesNotThrow(
+                () -> testHelperService.getLogbookByID(
+                        mockMvc,
+                        status().isOk(),
+                        finalNewLogBookResult.getPayload().id()
+                )
+        );
+
+        ApiResultResponse<LogbookDTO> finalNewLogBookResult1 = newLogBookResult;
         ApiResultResponse<String> newLogID =
                 assertDoesNotThrow(
                         () ->
@@ -1408,13 +1419,13 @@ public class EntriesControllerTest {
                                         status().isCreated(),
                                         EntryNewDTO
                                                 .builder()
-                                                .logbook(newLogBookResult.getPayload().name())
+                                                .logbook(finalNewLogBookResult1.getPayload().name())
                                                 .text("This is a log for test")
                                                 .title("A very wonderful log")
                                                 .summarizes(
                                                         SummarizesDTO
                                                                 .builder()
-                                                                .shift("Morning Shift")
+                                                                .shiftId(finalNewLogBookResult1.getPayload().shifts().get(0).id())
                                                                 .date(LocalDate.now())
                                                                 .build()
                                                 )
@@ -1430,7 +1441,7 @@ public class EntriesControllerTest {
                         testHelperService.findSummaryIdByShiftNameAndDate(
                                 mockMvc,
                                 status().isOk(),
-                                "Morning Shift",
+                                finalNewLogBookResult1.getPayload().shifts().get(0).id(),
                                 LocalDate.now()
                         )
         );

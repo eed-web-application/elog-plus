@@ -140,7 +140,7 @@ public class EntriesController {
     }
 
     @GetMapping(
-            path = "/{shiftName}/summaries/{date}",
+            path = "/{shiftId}/summaries/{date}",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(
@@ -148,12 +148,12 @@ public class EntriesController {
     )
     @ResponseStatus(HttpStatus.OK)
     public ApiResultResponse<String> findSummaryForShiftAndDate(
-            @PathVariable String shiftName,
+            @PathVariable String shiftId,
             @PathVariable LocalDate date
     ) {
         return ApiResultResponse.of(
                 entryService.findSummaryIdForShiftIdAndDate(
-                        shiftName,
+                        shiftId,
                         date
                 )
         );

@@ -66,14 +66,14 @@ public class EntryService {
 
     /**
      * Find the entry id by shift name ad a date
-     * @param shiftName the shift name
+     * @param shiftId the shift name
      * @param date the date of the summary to find
      * @return the id of te summary
      */
-    public String findSummaryIdForShiftIdAndDate(String shiftName, LocalDate date) {
+    public String findSummaryIdForShiftIdAndDate(String shiftId, LocalDate date) {
         Optional<Entry> summary = wrapCatch(
-                () -> entryRepository.findBySummarizes_ShiftAndSummarizes_Date(
-                        shiftName,
+                () -> entryRepository.findBySummarizes_ShiftIdAndSummarizes_Date(
+                        shiftId,
                         date
                 ),
                 -1,
@@ -466,9 +466,9 @@ public class EntryService {
                         .errorDomain("EntryService:checkForSummarization")
                         .build()
         );
-        Summarizes finalSummarize1 = summarize;
+
         assertion(
-                ()->(finalSummarize1.getShift()!=null && !finalSummarize1.getShift().isEmpty()),
+                ()->(summarize.getShiftId()!=null && !summarize.getShiftId().isEmpty()),
                 ControllerLogicException
                         .builder()
                         .errorCode(-2)
@@ -477,7 +477,7 @@ public class EntryService {
                         .build()
         );
         assertion(
-                ()->(finalSummarize1.getDate()!=null),
+                ()->(summarize.getDate()!=null),
                 ControllerLogicException
                         .builder()
                         .errorCode(-3)
@@ -486,18 +486,12 @@ public class EntryService {
                         .build()
         );
         List<ShiftDTO> allShift = lb.shifts();
-        summarize = summarize.toBuilder()
-                .shift(
-                        StringUtilities.shiftNameNormalization(summarize.getShift())
-                )
-                .build();
-        Summarizes finalSummarize = summarize;
         allShift.stream().filter(
-                s->s.name().compareToIgnoreCase(finalSummarize.getShift())==0
+                s->s.id().compareToIgnoreCase(summarize.getShiftId())==0
         ).findAny().orElseThrow(
                 ()-> ShiftNotFound.shiftNotFoundBuilder()
                         .errorCode(-4)
-                        .shiftName(finalSummarize.getShift())
+                        .shiftName(summarize.getShiftId())
                         .errorDomain("EntryService:checkForSummarization")
                         .build()
         );
