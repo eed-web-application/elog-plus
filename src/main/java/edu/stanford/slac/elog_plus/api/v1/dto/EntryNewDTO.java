@@ -30,11 +30,8 @@ public record EntryNewDTO(
         List<String> tags,
         @Schema(description = "The list of the attachment of the log")
         List<String> attachments,
-        String summarizeShift,
-        @JsonDeserialize(using = LocalDateTimeDeserializer.class)
-        @JsonSerialize(using = LocalDateTimeSerializer.class)
-        LocalDateTime summaryDate,
-
+        @Schema(description = "Identify the entry as summarize of a shift")
+        SummarizesDTO summarizes,
         @Schema(description = "The timestamp when the event is occurred")
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)

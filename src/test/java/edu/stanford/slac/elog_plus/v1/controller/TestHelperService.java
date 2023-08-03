@@ -1,6 +1,5 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
@@ -14,8 +13,8 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
-import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -483,6 +482,35 @@ public class TestHelperService {
                                 )
                         )
                         .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON);
+
+        MvcResult result = mockMvc.perform(
+                        putRequest
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
+
+    public ApiResultResponse<String> findSummaryIdByShiftNameAndDate(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            String shiftName,
+            LocalDate date
+    ) throws Exception {
+        MockHttpServletRequestBuilder putRequest =
+                get(
+                        "/v1/entries/{shiftName}/summaries/{date}",
+                        shiftName,
+                        date
+                )
                         .accept(MediaType.APPLICATION_JSON);
 
         MvcResult result = mockMvc.perform(

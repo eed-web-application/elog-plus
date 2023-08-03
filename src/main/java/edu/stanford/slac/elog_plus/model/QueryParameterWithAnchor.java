@@ -30,4 +30,6 @@ public class QueryParameterWithAnchor {
     List<String> logbooks = Collections.emptyList();
     @Builder.Default
     private Boolean sortByLogDate = false;
+    @Builder.Default
+    private Boolean hideSummaries = false;
 }

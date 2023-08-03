@@ -30,10 +30,8 @@ public class Entry {
     private String entryType;
     @Indexed
     private String logbook;
-    private String summarizeShift;
-    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
-    @JsonSerialize(using = LocalDateTimeSerializer.class)
-    private LocalDateTime summaryDate;
+    @Indexed
+    private Summarizes summarizes;
     @TextIndexed
     private String title;
     @TextIndexed

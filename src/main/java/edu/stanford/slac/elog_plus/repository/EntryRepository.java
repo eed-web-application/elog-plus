@@ -4,7 +4,9 @@ import edu.stanford.slac.elog_plus.model.Entry;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,4 +23,13 @@ public interface EntryRepository extends MongoRepository<Entry, String>, EntryRe
      * @return the following up record
      */
     Optional<Entry> findByFollowUpsContains(String id);
+
+    /**
+     * Return the summary associated to the shift and date
+     * @param shift the shift name
+     * @param date the date
+     * @return
+     */
+    @Query(fields = "{ 'summarizes' : 1}")
+    Optional<Entry> findBySummarizes_ShiftAndSummarizes_Date(String summarizesShift, LocalDate summarizesDate);
 }

@@ -20,8 +20,7 @@ public class StringUtilities {
                 .normalize(
                         tagName.trim(),
                         Normalizer.Form.NFD
-                ).replaceAll("[^\\p{ASCII}]", "")
-                .replaceAll(" ", "-");
+                ).replaceAll("[^\\p{ASCII}]", "");
     }
 
     public static String sanitizeEntryTitle(String title) {

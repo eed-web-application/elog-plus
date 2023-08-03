@@ -26,7 +26,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.io.InputStream;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -1335,14 +1337,14 @@ public class EntriesControllerTest {
         EntrySummaryDTO anchorEntry = null;
         EntrySummaryDTO firstEntryFirstPage = null;
         EntrySummaryDTO lastEntryLastPage = null;
-        while(getNextPage) {
+        while (getNextPage) {
             // initial with past limit
             EntrySummaryDTO finalAnchorEntry = anchorEntry;
             ApiResultResponse<List<EntrySummaryDTO>> nextPage = assertDoesNotThrow(
                     () -> testHelperService.submitSearchByGetWithAnchor(
                             mockMvc,
                             status().isOk(),
-                            (finalAnchorEntry ==null)?Optional.empty():Optional.of(finalAnchorEntry.id()),
+                            (finalAnchorEntry == null) ? Optional.empty() : Optional.of(finalAnchorEntry.id()),
                             Optional.of(now.minusDays(50)),
                             Optional.of(now.minusDays(1)),
                             Optional.empty(),
@@ -1354,13 +1356,13 @@ public class EntriesControllerTest {
                     )
             );
             AssertionsForInterfaceTypes.assertThat(nextPage.getErrorCode()).isEqualTo(0);
-            if(firstEntryFirstPage == null) {
+            if (firstEntryFirstPage == null) {
                 firstEntryFirstPage = nextPage.getPayload().get(0);
-            } else if(!nextPage.getPayload().isEmpty()){
-                lastEntryLastPage = nextPage.getPayload().get(nextPage.getPayload().size()-1);
+            } else if (!nextPage.getPayload().isEmpty()) {
+                lastEntryLastPage = nextPage.getPayload().get(nextPage.getPayload().size() - 1);
             }
 
-            if(nextPage.getPayload().size() < 10) {
+            if (nextPage.getPayload().size() < 10) {
                 getNextPage = false;
             } else {
                 anchorEntry = nextPage.getPayload().get(9);
@@ -1368,5 +1370,72 @@ public class EntriesControllerTest {
         }
         assertThat(firstEntryFirstPage.eventAt().getDayOfMonth()).isEqualTo(now.minusDays(1).getDayOfMonth());
         assertThat(lastEntryLastPage.eventAt().getDayOfMonth()).isEqualTo(now.minusDays(50).getDayOfMonth());
+    }
+
+    @Test
+    public void findSummaryId() {
+        var newLogBookResult = getTestLogbook();
+        ApiResultResponse<Boolean> replacementResult = assertDoesNotThrow(
+                () -> testHelperService.updateLogbook(
+                        mockMvc,
+                        status().isCreated(),
+                        newLogBookResult.getPayload().id(),
+                        UpdateLogbookDTO
+                                .builder()
+                                .name(newLogBookResult.getPayload().name())
+                                .tags(
+                                        Collections.emptyList()
+                                )
+                                .shifts(
+                                        List.of(
+                                                ShiftDTO.builder()
+                                                        .id(null)
+                                                        .name("Morning Shift")
+                                                        .from("16:09")
+                                                        .to("17:09")
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+
+        ApiResultResponse<String> newLogID =
+                assertDoesNotThrow(
+                        () ->
+                                testHelperService.createNewLog(
+                                        mockMvc,
+                                        status().isCreated(),
+                                        EntryNewDTO
+                                                .builder()
+                                                .logbook(newLogBookResult.getPayload().name())
+                                                .text("This is a log for test")
+                                                .title("A very wonderful log")
+                                                .summarizes(
+                                                        SummarizesDTO
+                                                                .builder()
+                                                                .shift("Morning Shift")
+                                                                .date(LocalDate.now())
+                                                                .build()
+                                                )
+                                                .build()
+                                )
+                );
+
+        AssertionsForClassTypes.assertThat(newLogID).isNotNull();
+        AssertionsForClassTypes.assertThat(newLogID.getErrorCode()).isEqualTo(0);
+
+        ApiResultResponse<String> foundSummaryID = assertDoesNotThrow(
+                () ->
+                        testHelperService.findSummaryIdByShiftNameAndDate(
+                                mockMvc,
+                                status().isOk(),
+                                "Morning Shift",
+                                LocalDate.now()
+                        )
+        );
+        AssertionsForClassTypes.assertThat(foundSummaryID).isNotNull();
+        AssertionsForClassTypes.assertThat(foundSummaryID.getErrorCode()).isEqualTo(0);
+        AssertionsForClassTypes.assertThat(foundSummaryID.getPayload()).isEqualTo(newLogID.getPayload());
     }
 }
