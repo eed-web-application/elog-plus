@@ -31,6 +31,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.AssertionsForClassTypes.anyOf;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -1406,5 +1407,157 @@ public class EntryServiceTest {
                 )
         );
         assertThat(idFound2).isNotNull().isNotEmpty().isEqualTo(entryID2);
+    }
+
+    @Test
+    public void failingDeletingShiftAssociatedToASummary() {
+        var logbookTest = getTestLogbook();
+        assertDoesNotThrow(
+                () -> {
+                    logbookService.replaceShift(
+                            logbookTest.id(),
+                            List.of(
+                                    ShiftDTO
+                                            .builder()
+                                            .name("Shift1")
+                                            .from("00:00")
+                                            .to("07:59")
+                                            .build(),
+                                    ShiftDTO
+                                            .builder()
+                                            .name("Shift2")
+                                            .from("08:00")
+                                            .to("12:59")
+                                            .build(),
+                                    ShiftDTO
+                                            .builder()
+                                            .name("Shift3")
+                                            .from("13:00")
+                                            .to("17:59")
+                                            .build()
+                            )
+                    );
+                    return null;
+                }
+        );
+        LogbookDTO lb = assertDoesNotThrow(
+                () -> logbookService.getLogbookByName(
+                        logbookTest.name()
+                )
+        );
+        assertThat(lb.shifts()).isNotNull().hasSize(3);
+        //try to save a summary
+        String entryID = assertDoesNotThrow(
+                () -> entryService.createNew(
+                        EntryNewDTO
+                                .builder()
+                                .title("title summary")
+                                .text("text summary")
+                                .logbook(logbookTest.name())
+                                .summarizes(
+                                        SummarizesDTO
+                                                .builder()
+                                                .shiftId(lb.shifts().get(1).id())
+                                                .date(LocalDate.now())
+                                                .build()
+                                )
+                                .build()
+                )
+        );
+        assertThat(entryID).isNotNull().isNotEmpty();
+
+        //try to delete the shift used by the summary
+        ControllerLogicException deleteException = assertThrows(
+                ControllerLogicException.class,
+                () -> {
+                    logbookService.replaceShift(
+                            logbookTest.id(),
+                            List.of(
+                                    ShiftDTO
+                                            .builder()
+                                            .id(lb.shifts().get(2).id())
+                                            .name("Shift3Modified")
+                                            .from("13:00")
+                                            .to("17:59")
+                                            .build()
+                            )
+                    );
+                }
+        );
+
+        assertThat(deleteException.getErrorCode()).isEqualTo(-2);
+    }
+
+    @Test
+    public void failingDeletingTagsAssociatedToASummary() {
+        var logbookTest = getTestLogbook();
+        assertDoesNotThrow(
+                () -> {
+                    logbookService.update(
+                            logbookTest.id(),
+                            UpdateLogbookDTO
+                                    .builder()
+                                    .name(logbookTest.name())
+                                    .shifts(
+                                            emptyList()
+                                    )
+                                    .tags(
+                                            List.of(
+                                                    TagDTO
+                                                            .builder()
+                                                            .name("tag1")
+                                                            .build()
+                                            )
+                                    )
+                                    .build()
+                    );
+                    return null;
+                }
+        );
+
+        //try to save a summary
+        String entryID = assertDoesNotThrow(
+                () -> entryService.createNew(
+                        EntryNewDTO
+                                .builder()
+                                .title("title summary")
+                                .text("text summary")
+                                .logbook(logbookTest.name())
+                                .tags(
+                                        List.of(
+                                                "tag1"
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(entryID).isNotNull().isNotEmpty();
+
+        //try to delete the shift used by the summary
+        ControllerLogicException failForDeleteAssignedTag = assertThrows(
+                ControllerLogicException.class,
+                () -> {
+                    logbookService.update(
+                            logbookTest.id(),
+                            UpdateLogbookDTO
+                                    .builder()
+                                    .name(logbookTest.name())
+                                    .shifts(
+                                            emptyList()
+                                    )
+                                    .tags(
+                                            List.of(
+                                                    TagDTO
+                                                            .builder()
+                                                            .name("tag2")
+                                                            .build()
+                                            )
+                                    )
+                                    .build()
+                    );
+                }
+        );
+
+        assertThat(failForDeleteAssignedTag.getErrorCode()).isEqualTo(-2);
     }
 }

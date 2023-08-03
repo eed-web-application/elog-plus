@@ -7,6 +7,7 @@ import edu.stanford.slac.elog_plus.exception.TagNotFound;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import edu.stanford.slac.elog_plus.model.Shift;
 import edu.stanford.slac.elog_plus.service.LogbookService;
+import edu.stanford.slac.elog_plus.utility.DateUtilities;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -195,6 +196,80 @@ public class LogbookServiceTest {
     }
 
     @Test
+    public void shiftAddFailWrongDates() {
+        String newLogbookID = getTestLogbook();
+
+        ControllerLogicException exceptNoLogbook = assertThrows(
+                ControllerLogicException.class,
+                () -> logbookService.replaceShift(
+                        newLogbookID,
+                        List.of(
+                                ShiftDTO
+                                        .builder()
+                                        .name("Shift1")
+                                        .from(
+                                                DateUtilities.toUTCString(
+                                                        LocalTime.of(
+                                                                7,
+                                                                0
+                                                        )
+                                                )
+                                        )
+                                        .to(
+                                                DateUtilities.toUTCString(
+                                                        LocalTime.of(
+                                                                11,
+                                                                59
+                                                        )
+                                                ))
+                                        .build(),
+                                ShiftDTO
+                                        .builder()
+                                        .name("Shift2")
+                                        .from(
+                                                DateUtilities.toUTCString(
+                                                        LocalTime.of(
+                                                                12,
+                                                                0
+                                                        )
+                                                )
+                                        )
+                                        .to(
+                                                DateUtilities.toUTCString(
+                                                        LocalTime.of(
+                                                                13,
+                                                                0
+                                                        )
+                                                )
+                                        )
+                                        .build(),
+                                ShiftDTO
+                                        .builder()
+                                        .name("Shift3")
+                                        .from(
+                                                DateUtilities.toUTCString(
+                                                        LocalTime.of(
+                                                                8,
+                                                                0
+                                                        )
+                                                )
+                                        )
+                                        .to(
+                                                DateUtilities.toUTCString(
+                                                        LocalTime.of(
+                                                                6,
+                                                                59
+                                                        )
+                                                )
+                                        )
+                                        .build()
+                        )
+                )
+        );
+        AssertionsForClassTypes.assertThat(exceptNoLogbook.getErrorCode()).isEqualTo(-3);
+    }
+
+    @Test
     public void shiftAddOk() {
         String newLogbookID = getTestLogbook();
         String shiftId = assertDoesNotThrow(
@@ -203,8 +278,18 @@ public class LogbookServiceTest {
                         NewShiftDTO
                                 .builder()
                                 .name("Shift1")
-                                .from("00:01")
-                                .to("03:59")
+                                .from(DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                0,
+                                                1
+                                        )
+                                ))
+                                .to(DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                3,
+                                                59
+                                        )
+                                ))
                                 .build()
                 )
         );
@@ -229,8 +314,21 @@ public class LogbookServiceTest {
                         NewShiftDTO
                                 .builder()
                                 .name("Shift1")
-                                .from("00:01")
-                                .to("00:59")
+                                .from(
+                                        DateUtilities.toUTCString(
+                                                LocalTime.of(
+                                                        0,
+                                                        1
+                                                )
+                                        ))
+                                .to(
+                                        DateUtilities.toUTCString(
+                                                LocalTime.of(
+                                                        0,
+                                                        59
+                                                )
+                                        )
+                                )
                                 .build()
                 )
         );
@@ -242,8 +340,22 @@ public class LogbookServiceTest {
                         NewShiftDTO
                                 .builder()
                                 .name("Shift2")
-                                .from("02:01")
-                                .to("02:59")
+                                .from(
+                                        DateUtilities.toUTCString(
+                                                LocalTime.of(
+                                                        2,
+                                                        1
+                                                )
+                                        )
+                                )
+                                .to(
+                                        DateUtilities.toUTCString(
+                                                LocalTime.of(
+                                                        2,
+                                                        59
+                                                )
+                                        )
+                                )
                                 .build()
                 )
         );
@@ -258,8 +370,20 @@ public class LogbookServiceTest {
                         NewShiftDTO
                                 .builder()
                                 .name("ShiftFails")
-                                .from("00:30")
-                                .to("02:20")
+                                .from(DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                0,
+                                                30
+                                        )
+                                ))
+                                .to(
+                                        DateUtilities.toUTCString(
+                                                LocalTime.of(
+                                                        2,
+                                                        20
+                                                )
+                                        )
+                                )
                                 .build()
                 )
         );
@@ -273,8 +397,22 @@ public class LogbookServiceTest {
                         NewShiftDTO
                                 .builder()
                                 .name("ShiftFails")
-                                .from("01:00")
-                                .to("02:20")
+                                .from(
+                                        DateUtilities.toUTCString(
+                                                LocalTime.of(
+                                                        1,
+                                                        0
+                                                )
+                                        )
+                                )
+                                .to(
+                                        DateUtilities.toUTCString(
+                                                LocalTime.of(
+                                                        2,
+                                                        20
+                                                )
+                                        )
+                                )
                                 .build()
                 )
         );
@@ -291,8 +429,22 @@ public class LogbookServiceTest {
                         NewShiftDTO
                                 .builder()
                                 .name("Shift1")
-                                .from("00:00")
-                                .to("00:59")
+                                .from(
+                                        DateUtilities.toUTCString(
+                                                LocalTime.of(
+                                                        0,
+                                                        0
+                                                )
+                                        )
+                                )
+                                .to(
+                                        DateUtilities.toUTCString(
+                                                LocalTime.of(
+                                                        0,
+                                                        59
+                                                )
+                                        )
+                                )
                                 .build()
                 )
         );
@@ -304,8 +456,22 @@ public class LogbookServiceTest {
                         NewShiftDTO
                                 .builder()
                                 .name("Shift2")
-                                .from("02:00")
-                                .to("02:59")
+                                .from(
+                                        DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                2,
+                                                0
+                                        )
+                                )
+                                )
+                                .to(
+                                        DateUtilities.toUTCString(
+                                                LocalTime.of(
+                                                        2,
+                                                        59
+                                                )
+                                        )
+                                )
                                 .build()
                 )
         );
@@ -317,8 +483,22 @@ public class LogbookServiceTest {
                         NewShiftDTO
                                 .builder()
                                 .name("Shift3")
-                                .from("01:00")
-                                .to("01:59")
+                                .from(
+                                        DateUtilities.toUTCString(
+                                                LocalTime.of(
+                                                        1,
+                                                        0
+                                                )
+                                        )
+                                )
+                                .to(
+                                        DateUtilities.toUTCString(
+                                                LocalTime.of(
+                                                        1,
+                                                        59
+                                                )
+                                        )
+                                )
                                 .build()
                 )
         );
@@ -343,24 +523,66 @@ public class LogbookServiceTest {
                 ShiftDTO
                         .builder()
                         .name("Shift1")
-                        .from("00:00")
-                        .to("00:59")
+                        .from(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                0,
+                                                0
+                                        )
+                                )
+                        )
+                        .to(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                0,
+                                                59
+                                        )
+                                )
+                        )
                         .build()
         );
         replaceShifts.add(
                 ShiftDTO
                         .builder()
                         .name("Shift2")
-                        .from("02:00")
-                        .to("02:59")
+                        .from(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                2,
+                                                0
+                                        )
+                                )
+                        )
+                        .to(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                2,
+                                                59
+                                        )
+                                )
+                        )
                         .build()
         );
         replaceShifts.add(
                 ShiftDTO
                         .builder()
                         .name("Shift3")
-                        .from("01:00")
-                        .to("01:59")
+                        .from(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                1,
+                                                0
+                                        )
+                                )
+                        )
+                        .to(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                1,
+                                                59
+                                        )
+                                )
+                        )
                         .build()
         );
 
@@ -392,24 +614,66 @@ public class LogbookServiceTest {
                 ShiftDTO
                         .builder()
                         .name("Shift1")
-                        .from("00:00")
-                        .to("00:59")
+                        .from(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                0,
+                                                0
+                                        )
+                                )
+                        )
+                        .to(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                0,
+                                                59
+                                        )
+                                )
+                        )
                         .build()
         );
         replaceShifts.add(
                 ShiftDTO
                         .builder()
                         .name("Shift2")
-                        .from("01:00")
-                        .to("01:59")
+                        .from(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                1,
+                                                0
+                                        )
+                                )
+                        )
+                        .to(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                1,
+                                                59
+                                        )
+                                )
+                        )
                         .build()
         );
         replaceShifts.add(
                 ShiftDTO
                         .builder()
                         .name("Shift3")
-                        .from("02:00")
-                        .to("02:59")
+                        .from(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                2,
+                                                0
+                                        )
+                                )
+                        )
+                        .to(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                2,
+                                                59
+                                        )
+                                )
+                        )
                         .build()
         );
 
@@ -437,23 +701,63 @@ public class LogbookServiceTest {
         // replace the first and the third, removing the second and creating new one
         toReplaceShiftSecondRound.add(
                 allShift.get(0).toBuilder()
-                        .from("13:00")
-                        .to("13:59")
+                        .from(DateUtilities.toUTCString(
+                                LocalTime.of(
+                                        13,
+                                        0
+                                )
+                        ))
+                        .to(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                13,
+                                                59
+                                        )
+                                )
+                        )
                         .build()
         );
         // here i change the id for simulate and id not present
         toReplaceShiftSecondRound.add(
                 allShift.get(2).toBuilder()
                         .id(UUID.randomUUID().toString())
-                        .from("14:00")
-                        .to("14:59")
+                        .from(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                14,
+                                                0
+                                        )
+                                )
+                        )
+                        .to(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                14,
+                                                59
+                                        )
+                                )
+                        )
                         .build()
         );
         toReplaceShiftSecondRound.add(
                 ShiftDTO.builder()
                         .name("New Shift")
-                        .from("15:00")
-                        .to("15:59")
+                        .from(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                15,
+                                                0
+                                        )
+                                )
+                        )
+                        .to(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                15,
+                                                59
+                                        )
+                                )
+                        )
                         .build()
         );
         ControllerLogicException replaceException = assertThrows(
@@ -475,24 +779,66 @@ public class LogbookServiceTest {
                 ShiftDTO
                         .builder()
                         .name("Shift1")
-                        .from("00:00")
-                        .to("00:59")
+                        .from(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                0,
+                                                0
+                                        )
+                                )
+                        )
+                        .to(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                0,
+                                                59
+                                        )
+                                )
+                        )
                         .build()
         );
         replaceShifts.add(
                 ShiftDTO
                         .builder()
                         .name("Shift2")
-                        .from("01:00")
-                        .to("01:59")
+                        .from(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                1,
+                                                0
+                                        )
+                                )
+                        )
+                        .to(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                1,
+                                                59
+                                        )
+                                )
+                        )
                         .build()
         );
         replaceShifts.add(
                 ShiftDTO
                         .builder()
                         .name("Shift3")
-                        .from("02:00")
-                        .to("02:59")
+                        .from(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                2,
+                                                0
+                                        )
+                                )
+                        )
+                        .to(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                2,
+                                                59
+                                        )
+                                )
+                        )
                         .build()
         );
 
@@ -520,21 +866,63 @@ public class LogbookServiceTest {
         // replace the first and the third, removing the second and creating new one
         toReplaceShiftSecondRound.add(
                 allShift.get(0).toBuilder()
-                        .from("13:00")
-                        .to("13:59")
+                        .from(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                13,
+                                                0
+                                        )
+                                )
+                        )
+                        .to(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                13,
+                                                59
+                                        )
+                                )
+                        )
                         .build()
         );
         toReplaceShiftSecondRound.add(
                 allShift.get(2).toBuilder()
-                        .from("14:00")
-                        .to("14:59")
+                        .from(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                14,
+                                                0
+                                        )
+                                )
+                        )
+                        .to(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                14,
+                                                59
+                                        )
+                                )
+                        )
                         .build()
         );
         toReplaceShiftSecondRound.add(
                 ShiftDTO.builder()
                         .name("New Shift")
-                        .from("15:00")
-                        .to("15:59")
+                        .from(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                15,
+                                                0
+                                        )
+                                )
+                        )
+                        .to(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                15,
+                                                59
+                                        )
+                                )
+                        )
                         .build()
         );
         assertDoesNotThrow(
@@ -565,24 +953,66 @@ public class LogbookServiceTest {
                 ShiftDTO
                         .builder()
                         .name("Shift1")
-                        .from("00:00")
-                        .to("00:59")
+                        .from(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                0,
+                                                0
+                                        )
+                                )
+                        )
+                        .to(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                0,
+                                                59
+                                        )
+                                )
+                        )
                         .build()
         );
         replaceShifts.add(
                 ShiftDTO
                         .builder()
                         .name("Shift2")
-                        .from("02:00")
-                        .to("02:59")
+                        .from(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                2,
+                                                0
+                                        )
+                                )
+                        )
+                        .to(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                2,
+                                                59
+                                        )
+                                )
+                        )
                         .build()
         );
         replaceShifts.add(
                 ShiftDTO
                         .builder()
                         .name("Shift3")
-                        .from("01:00")
-                        .to("01:59")
+                        .from(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                1,
+                                                0
+                                        )
+                                )
+                        )
+                        .to(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                1,
+                                                59
+                                        )
+                                )
+                        )
                         .build()
         );
 
@@ -601,24 +1031,66 @@ public class LogbookServiceTest {
                 ShiftDTO
                         .builder()
                         .name("Shift4")
-                        .from("05:00")
-                        .to("05:59")
+                        .from(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                5,
+                                                0
+                                        )
+                                )
+                        )
+                        .to(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                5,
+                                                59
+                                        )
+                                )
+                        )
                         .build()
         );
         replaceShifts.add(
                 ShiftDTO
                         .builder()
                         .name("Shift5")
-                        .from("06:00")
-                        .to("06:59")
+                        .from(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                6,
+                                                0
+                                        )
+                                )
+                        )
+                        .to(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                6,
+                                                59
+                                        )
+                                )
+                        )
                         .build()
         );
         replaceShifts.add(
                 ShiftDTO
                         .builder()
                         .name("Shift6")
-                        .from("06:00")
-                        .to("08:59")
+                        .from(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                6,
+                                                0
+                                        )
+                                )
+                        )
+                        .to(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                8,
+                                                59
+                                        )
+                                )
+                        )
                         .build()
         );
 
@@ -650,24 +1122,66 @@ public class LogbookServiceTest {
                 ShiftDTO
                         .builder()
                         .name("Shift1")
-                        .from("00:00")
-                        .to("00:59")
+                        .from(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                0,
+                                                0
+                                        )
+                                )
+                        )
+                        .to(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                0,
+                                                59
+                                        )
+                                )
+                        )
                         .build()
         );
         replaceShifts.add(
                 ShiftDTO
                         .builder()
                         .name("Shift2")
-                        .from("01:00")
-                        .to("01:59")
+                        .from(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                1,
+                                                0
+                                        )
+                                )
+                        )
+                        .to(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                1,
+                                                59
+                                        )
+                                )
+                        )
                         .build()
         );
         replaceShifts.add(
                 ShiftDTO
                         .builder()
                         .name("Shift3")
-                        .from("02:00")
-                        .to("02:59")
+                        .from(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                2,
+                                                0
+                                        )
+                                )
+                        )
+                        .to(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                2,
+                                                59
+                                        )
+                                )
+                        )
                         .build()
         );
 
@@ -706,24 +1220,66 @@ public class LogbookServiceTest {
                 ShiftDTO
                         .builder()
                         .name("Shift1")
-                        .from("00:00")
-                        .to("00:59")
+                        .from(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                0,
+                                                0
+                                        )
+                                )
+                        )
+                        .to(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                0,
+                                                59
+                                        )
+                                )
+                        )
                         .build()
         );
         replaceShifts.add(
                 ShiftDTO
                         .builder()
                         .name("Shift2")
-                        .from("01:00")
-                        .to("01:59")
+                        .from(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                1,
+                                                0
+                                        )
+                                )
+                        )
+                        .to(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                1,
+                                                59
+                                        )
+                                )
+                                )
                         .build()
         );
         replaceShifts.add(
                 ShiftDTO
                         .builder()
                         .name("Shift3")
-                        .from("02:00")
-                        .to("02:59")
+                        .from(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                2,
+                                                0
+                                        )
+                                )
+                        )
+                        .to(
+                                DateUtilities.toUTCString(
+                                        LocalTime.of(
+                                                2,
+                                                59
+                                        )
+                                )
+                        )
                         .build()
         );
 
@@ -882,13 +1438,41 @@ public class LogbookServiceTest {
                         List.of(
                                 ShiftDTO.builder()
                                         .name("shift-1")
-                                        .from("00:00")
-                                        .to("00:59")
+                                        .from(
+                                                DateUtilities.toUTCString(
+                                                        LocalTime.of(
+                                                                0,
+                                                                0
+                                                        )
+                                                )
+                                        )
+                                        .to(
+                                                DateUtilities.toUTCString(
+                                                        LocalTime.of(
+                                                                0,
+                                                                59
+                                                        )
+                                                )
+                                        )
                                         .build(),
                                 ShiftDTO.builder()
                                         .name("shift-2")
-                                        .from("01:00")
-                                        .to("01:59")
+                                        .from(
+                                                DateUtilities.toUTCString(
+                                                        LocalTime.of(
+                                                                1,
+                                                                0
+                                                        )
+                                                )
+                                        )
+                                        .to(
+                                                DateUtilities.toUTCString(
+                                                        LocalTime.of(
+                                                                1,
+                                                                59
+                                                        )
+                                                )
+                                        )
                                         .build()
                         )
                 )

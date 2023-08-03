@@ -1,10 +1,14 @@
 package edu.stanford.slac.elog_plus.model;
 
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
+import edu.stanford.slac.elog_plus.utility.DateUtilities;
 import lombok.*;
 import org.springframework.data.annotation.Transient;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,7 +41,7 @@ public class Shift {
     private LocalTime toTime = null;
 
     public LocalTime getFromTime() {
-        if( from!= null && fromTime == null ){
+        if (from != null && fromTime == null) {
             Matcher m = pattern.matcher(from);
             assertion(
                     () -> m.matches() && m.groupCount() == 2,
@@ -47,16 +51,18 @@ public class Shift {
                             "Shift"
                     )
             );
-            fromTime = LocalTime.of(
-                    Integer.parseInt(m.group(1)),
-                    Integer.parseInt(m.group(2))
+            fromTime = DateUtilities.fromUTCString(
+                    String.format("%s:%s",
+                            m.group(1),
+                            m.group(2)
+                    )
             );
         }
         return fromTime;
     }
 
     public LocalTime getToTime() {
-        if( to != null && toTime == null ){
+        if (to != null && toTime == null) {
             Matcher m = pattern.matcher(to);
             assertion(
                     () -> m.matches() && m.groupCount() == 2,
@@ -66,9 +72,11 @@ public class Shift {
                             String.format("Shift %s", name)
                     )
             );
-            toTime = LocalTime.of(
-                    Integer.parseInt(m.group(1)),
-                    Integer.parseInt(m.group(2))
+            toTime = DateUtilities.fromUTCString(
+                    String.format("%s:%s",
+                            m.group(1),
+                            m.group(2)
+                    )
             );
         }
         return toTime;
