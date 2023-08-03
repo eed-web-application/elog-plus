@@ -69,7 +69,11 @@ public class EntryRepositoryImpl implements EntryRepositoryCustom {
                     )
             );
         }
-
+        if (queryWithAnchor.getHideSummaries()!= null && queryWithAnchor.getHideSummaries()) {
+            allCriteria.add(
+                    Criteria.where("summarizes").exists(false)
+            );
+        }
         // supersede criteria
         allCriteria.add(
                 Criteria.where("supersedeBy").exists(false)

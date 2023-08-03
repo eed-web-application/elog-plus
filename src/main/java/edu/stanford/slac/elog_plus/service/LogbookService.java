@@ -140,7 +140,7 @@ public class LogbookService {
         if(lbToUpdated.getTags()==null){
             lbToUpdated.setTags(new ArrayList<>());
         }
-        // update name
+        // normalize name and shift
         lbToUpdated.setName(
                 StringUtilities.tagNameNormalization(logbookDTO.name())
         );
@@ -174,6 +174,15 @@ public class LogbookService {
      * @param actualTagList the list of actual tags
      */
     private void verifyTagAndUpdate(List<Tag> updateTagList, List<Tag> actualTagList, int errorCode, String errorDomain) {
+        //normalize tag
+        updateTagList.forEach(
+                t->t.setName(
+                        StringUtilities.tagNameNormalization(
+                                t.getName()
+                        )
+                )
+        );
+
         for (Tag tagToUpdate :
                 updateTagList) {
             if (tagToUpdate.getId() == null) {
@@ -207,6 +216,14 @@ public class LogbookService {
      * @param errorDomain is the error domain in case of fail
      */
     private void verifyShiftAndUpdate(List<Shift> updatedShifts, List<Shift> actualShift, int errorCode, String errorDomain) {
+        //normalize tag
+        updatedShifts.forEach(
+                s->s.setName(
+                        StringUtilities.shiftNameNormalization(
+                                s.getName()
+                        )
+                )
+        );
         for (Shift shiftToUpdate :
                 updatedShifts) {
             if (shiftToUpdate.getId() == null) {

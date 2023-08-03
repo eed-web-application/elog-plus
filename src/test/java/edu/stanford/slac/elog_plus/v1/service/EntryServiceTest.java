@@ -4,9 +4,11 @@ import com.github.javafaker.Faker;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.exception.EntryNotFound;
+import edu.stanford.slac.elog_plus.exception.ShiftNotFound;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.FileObjectDescription;
 import edu.stanford.slac.elog_plus.model.Logbook;
+import edu.stanford.slac.elog_plus.model.QueryParameterWithAnchor;
 import edu.stanford.slac.elog_plus.service.AttachmentService;
 import edu.stanford.slac.elog_plus.service.EntryService;
 import edu.stanford.slac.elog_plus.service.LogbookService;
@@ -931,19 +933,19 @@ public class EntryServiceTest {
                                         0
                                 )
                         ) || (
-                            e.eventAt().toLocalTime().isAfter(
-                                    LocalTime.of(
-                                            0,
-                                            0
-                                    )
-                            ) &&
+                        e.eventAt().toLocalTime().isAfter(
+                                LocalTime.of(
+                                        0,
+                                        0
+                                )
+                        ) &&
                                 e.eventAt().toLocalTime().isBefore(
                                         LocalTime.of(
                                                 7,
                                                 59
                                         )
                                 )
-                        ) ||
+                ) ||
                         e.eventAt().toLocalTime().equals(
                                 LocalTime.of(
                                         7,
@@ -966,12 +968,12 @@ public class EntryServiceTest {
                                         0
                                 )
                         ) &&
-                        e.eventAt().toLocalTime().isBefore(
-                                LocalTime.of(
-                                        12,
-                                        59
-                                )
-                        )) ||
+                                e.eventAt().toLocalTime().isBefore(
+                                        LocalTime.of(
+                                                12,
+                                                59
+                                        )
+                                )) ||
                         e.eventAt().toLocalTime().equals(
                                 LocalTime.of(
                                         12,
@@ -994,12 +996,12 @@ public class EntryServiceTest {
                                         0
                                 )
                         ) &&
-                        e.eventAt().toLocalTime().isBefore(
-                                LocalTime.of(
-                                        17,
-                                        59
-                                )
-                        )) ||
+                                e.eventAt().toLocalTime().isBefore(
+                                        LocalTime.of(
+                                                17,
+                                                59
+                                        )
+                                )) ||
                         e.eventAt().toLocalTime().equals(
                                 LocalTime.of(
                                         17,
@@ -1022,12 +1024,12 @@ public class EntryServiceTest {
                                         0
                                 )
                         ) &&
-                        e.eventAt().toLocalTime().isBefore(
-                                LocalTime.of(
-                                        23,
-                                        59
-                                )
-                        )) ||
+                                e.eventAt().toLocalTime().isBefore(
+                                        LocalTime.of(
+                                                23,
+                                                59
+                                        )
+                                )) ||
                         e.eventAt().toLocalTime().equals(
                                 LocalTime.of(
                                         23,
@@ -1051,8 +1053,8 @@ public class EntryServiceTest {
 
         // check summary against full entry
 
-        for (EntrySummaryDTO es:
-             firstPage) {
+        for (EntrySummaryDTO es :
+                firstPage) {
             EntryDTO fullEntry = entryService.getFullLog(
                     es.id()
             );
@@ -1062,10 +1064,113 @@ public class EntryServiceTest {
     }
 
     @Test
+    public void testSummarizationFailWrongShiftAndDate() {
+        var logbookTest = getTestLogbook();
+
+        //try to save a summary without any shift on logbook
+        ControllerLogicException exceptionOnNoShiftOnLogbook = assertThrows(
+                ControllerLogicException.class,
+                () -> entryService.createNew(
+                        EntryNewDTO
+                                .builder()
+                                .title("title")
+                                .text("text")
+                                .logbook(logbookTest.name())
+                                .summarizes(
+                                        SummarizesDTO
+                                                .builder()
+                                                .build()
+                                )
+                                .build()
+                )
+        );
+
+        assertThat(exceptionOnNoShiftOnLogbook.getErrorCode()).isEqualTo(-1);
+
+        assertDoesNotThrow(
+                () -> {
+                    logbookService.replaceShift(
+                            logbookTest.id(),
+                            List.of(
+                                    ShiftDTO
+                                            .builder()
+                                            .name("Shift1")
+                                            .from("00:00")
+                                            .to("07:59")
+                                            .build()
+                            )
+                    );
+                    return null;
+                }
+        );
+
+        //try to save a summary
+        ControllerLogicException exceptionOnNoShiftName = assertThrows(
+                ControllerLogicException.class,
+                () -> entryService.createNew(
+                        EntryNewDTO
+                                .builder()
+                                .title("title")
+                                .text("text")
+                                .logbook(logbookTest.name())
+                                .summarizes(
+                                        SummarizesDTO
+                                                .builder()
+                                                .build()
+                                )
+                                .build()
+                )
+        );
+
+        assertThat(exceptionOnNoShiftName.getErrorCode()).isEqualTo(-2);
+
+        ControllerLogicException exceptionOnNoDate = assertThrows(
+                ControllerLogicException.class,
+                () -> entryService.createNew(
+                        EntryNewDTO
+                                .builder()
+                                .title("title")
+                                .text("text")
+                                .logbook(logbookTest.name())
+                                .summarizes(
+                                        SummarizesDTO
+                                                .builder()
+                                                .shift("wrong Name")
+                                                .build()
+                                )
+                                .build()
+                )
+        );
+
+        assertThat(exceptionOnNoDate.getErrorCode()).isEqualTo(-3);
+
+        ShiftNotFound exceptionOnNotFoundShiftName = assertThrows(
+                ShiftNotFound.class,
+                () -> entryService.createNew(
+                        EntryNewDTO
+                                .builder()
+                                .title("title")
+                                .text("text")
+                                .logbook(logbookTest.name())
+                                .summarizes(
+                                        SummarizesDTO
+                                                .builder()
+                                                .shift("wrong Name")
+                                                .date(LocalDate.now())
+                                                .build()
+                                )
+                                .build()
+                )
+        );
+
+        assertThat(exceptionOnNotFoundShiftName.getErrorCode()).isEqualTo(-4);
+    }
+
+    @Test
     public void testSummarization() {
         var logbookTest = getTestLogbook();
         assertDoesNotThrow(
-                ()-> {
+                () -> {
                     logbookService.replaceShift(
                             logbookTest.id(),
                             List.of(
@@ -1095,7 +1200,7 @@ public class EntryServiceTest {
 
         //try to save a summary
         String entryID = assertDoesNotThrow(
-                ()-> entryService.createNew(
+                () -> entryService.createNew(
                         EntryNewDTO
                                 .builder()
                                 .title("title")
@@ -1113,5 +1218,178 @@ public class EntryServiceTest {
         );
 
         assertThat(entryID).isNotNull().isNotEmpty();
+    }
+
+    @Test
+    public void testSearchFilterinOnSummaries() {
+        var logbookTest = getTestLogbook();
+        assertDoesNotThrow(
+                () -> {
+                    logbookService.replaceShift(
+                            logbookTest.id(),
+                            List.of(
+                                    ShiftDTO
+                                            .builder()
+                                            .name("Shift1")
+                                            .from("00:00")
+                                            .to("07:59")
+                                            .build(),
+                                    ShiftDTO
+                                            .builder()
+                                            .name("Shift2")
+                                            .from("08:00")
+                                            .to("12:59")
+                                            .build(),
+                                    ShiftDTO
+                                            .builder()
+                                            .name("Shift3")
+                                            .from("13:00")
+                                            .to("17:59")
+                                            .build()
+                            )
+                    );
+                    return null;
+                }
+        );
+
+        //try to save a summary
+        String entryID = assertDoesNotThrow(
+                () -> entryService.createNew(
+                        EntryNewDTO
+                                .builder()
+                                .title("title summary")
+                                .text("text summary")
+                                .logbook(logbookTest.name())
+                                .summarizes(
+                                        SummarizesDTO
+                                                .builder()
+                                                .shift("Shift1")
+                                                .date(LocalDate.now())
+                                                .build()
+                                )
+                                .build()
+                )
+        );
+        assertThat(entryID).isNotNull().isNotEmpty();
+
+        entryID = assertDoesNotThrow(
+                () -> entryService.createNew(
+                        EntryNewDTO
+                                .builder()
+                                .title("title")
+                                .text("text")
+                                .logbook(logbookTest.name())
+                                .build()
+                )
+        );
+        assertThat(entryID).isNotNull().isNotEmpty();
+
+        List<EntrySummaryDTO> found = assertDoesNotThrow(
+                () -> entryService.searchAll(
+                        QueryWithAnchorDTO
+                                .builder()
+                                .limit(10)
+                                .build()
+                )
+        );
+        assertThat(found).isNotNull().hasSize(2);
+
+        found = assertDoesNotThrow(
+                () -> entryService.searchAll(
+                        QueryWithAnchorDTO
+                                .builder()
+                                .hideSummaries(true)
+                                .limit(10)
+                                .build()
+                )
+        );
+        assertThat(found).isNotNull().hasSize(1);
+    }
+
+    @Test
+    public void findSummaryId() {
+        var logbookTest = getTestLogbook();
+        assertDoesNotThrow(
+                () -> {
+                    logbookService.replaceShift(
+                            logbookTest.id(),
+                            List.of(
+                                    ShiftDTO
+                                            .builder()
+                                            .name("Shift1")
+                                            .from("00:00")
+                                            .to("07:59")
+                                            .build(),
+                                    ShiftDTO
+                                            .builder()
+                                            .name("Shift2")
+                                            .from("08:00")
+                                            .to("12:59")
+                                            .build(),
+                                    ShiftDTO
+                                            .builder()
+                                            .name("Shift3")
+                                            .from("13:00")
+                                            .to("17:59")
+                                            .build()
+                            )
+                    );
+                    return null;
+                }
+        );
+
+        //try to save a summary
+        String entryID1 = assertDoesNotThrow(
+                () -> entryService.createNew(
+                        EntryNewDTO
+                                .builder()
+                                .title("title summary")
+                                .text("text summary")
+                                .logbook(logbookTest.name())
+                                .summarizes(
+                                        SummarizesDTO
+                                                .builder()
+                                                .shift("Shift1")
+                                                .date(LocalDate.now())
+                                                .build()
+                                )
+                                .build()
+                )
+        );
+        assertThat(entryID1).isNotNull().isNotEmpty();
+        String entryID2 = assertDoesNotThrow(
+                () -> entryService.createNew(
+                        EntryNewDTO
+                                .builder()
+                                .title("title summary")
+                                .text("text summary")
+                                .logbook(logbookTest.name())
+                                .summarizes(
+                                        SummarizesDTO
+                                                .builder()
+                                                .shift("Shift1")
+                                                .date(LocalDate.now().minusDays(1))
+                                                .build()
+                                )
+                                .build()
+                )
+        );
+        assertThat(entryID2).isNotNull().isNotEmpty();
+
+        String idFound1 = assertDoesNotThrow(
+                () -> entryService.findSummaryIdForShiftIdAndDate(
+                        "Shift1",
+                        LocalDate.now()
+                )
+        );
+        assertThat(idFound1).isNotNull().isNotEmpty().isEqualTo(entryID1);
+
+        String idFound2 = assertDoesNotThrow(
+                () -> entryService.findSummaryIdForShiftIdAndDate(
+                        "Shift1",
+                        LocalDate.now().minusDays(1)
+                )
+        );
+        assertThat(idFound2).isNotNull().isNotEmpty().isEqualTo(entryID2);
     }
 }

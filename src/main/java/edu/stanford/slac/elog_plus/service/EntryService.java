@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -61,6 +62,29 @@ public class EntryService {
                 }
 
         ).collect(Collectors.toList());
+    }
+
+    /**
+     * Find the entry id by shift name ad a date
+     * @param shiftName the shift name
+     * @param date the date of the summary to find
+     * @return the id of te summary
+     */
+    public String findSummaryIdForShiftIdAndDate(String shiftName, LocalDate date) {
+        Optional<Entry> summary = wrapCatch(
+                () -> entryRepository.findBySummarizes_ShiftAndSummarizes_Date(
+                        shiftName,
+                        date
+                ),
+                -1,
+                "EntryService:getSummaryIdForShiftIdAndDate"
+        );
+        return summary.orElseThrow(
+                ()->EntryNotFound.entryNotFoundBuilder()
+                        .errorCode(-2)
+                        .errorDomain("EntryService:getSummaryIdForShiftIdAndDat")
+                        .build()
+        ).getId();
     }
 
     /**
@@ -433,6 +457,34 @@ public class EntryService {
      */
     private void checkForSummarization(LogbookDTO lb, Summarizes summarize) {
         if (summarize == null) return;
+        assertion(
+                ()->((lb.shifts() != null && !lb.shifts().isEmpty())),
+                ControllerLogicException
+                        .builder()
+                        .errorCode(-1)
+                        .errorMessage("The logbook has not any shift")
+                        .errorDomain("EntryService:checkForSummarization")
+                        .build()
+        );
+        Summarizes finalSummarize1 = summarize;
+        assertion(
+                ()->(finalSummarize1.getShift()!=null && !finalSummarize1.getShift().isEmpty()),
+                ControllerLogicException
+                        .builder()
+                        .errorCode(-2)
+                        .errorMessage("Shift name is mandatory on summarizes object")
+                        .errorDomain("EntryService:checkForSummarization")
+                        .build()
+        );
+        assertion(
+                ()->(finalSummarize1.getDate()!=null),
+                ControllerLogicException
+                        .builder()
+                        .errorCode(-3)
+                        .errorMessage("Shift date is mandatory on summarizes object")
+                        .errorDomain("EntryService:checkForSummarization")
+                        .build()
+        );
         List<ShiftDTO> allShift = lb.shifts();
         summarize = summarize.toBuilder()
                 .shift(
@@ -444,7 +496,7 @@ public class EntryService {
                 s->s.name().compareToIgnoreCase(finalSummarize.getShift())==0
         ).findAny().orElseThrow(
                 ()-> ShiftNotFound.shiftNotFoundBuilder()
-                        .errorCode(-1)
+                        .errorCode(-4)
                         .shiftName(finalSummarize.getShift())
                         .errorDomain("EntryService:checkForSummarization")
                         .build()

@@ -38,5 +38,7 @@ public record QueryWithAnchorDTO(
         @Schema(description = "Only include entries that belong to one of these logbooks.")
         List<String> logbooks,
         @Schema(description = "Sort by log date (the default is for event date)")
-        Boolean sortByLogDate
+        Boolean sortByLogDate,
+        @Schema(description = "Hide summaries from the query results")
+        Boolean hideSummaries
         ) {}

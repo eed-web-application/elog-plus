@@ -13,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -95,14 +96,9 @@ public class EntriesController {
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(
-            description = "Perform the query on all log data",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "Successful response"
-                    )
-            }
+            description = "Perform the query on all log data"
     )
+    @ResponseStatus(HttpStatus.OK)
     public ApiResultResponse<List<EntrySummaryDTO>> search(
             @Parameter(name = "anchorId", description = "Is the id of an entry from where start the search")
             @RequestParam("anchorId") Optional<String> anchorId,
@@ -121,7 +117,9 @@ public class EntriesController {
             @Parameter(name = "logbooks", description = "Only include entries that belong to one of these logbooks")
             @RequestParam("logbooks") Optional<List<String>> logBook,
             @Parameter(name = "sortByLogDate", description = "Sort entries by log date instead event date")
-            @RequestParam("sortByLogDate") Optional<Boolean> sortByLogDate) {
+            @RequestParam(value = "sortByLogDate", defaultValue = "false") Optional<Boolean> sortByLogDate,
+            @Parameter(name = "hideSummaries", description = "Hide the summaries from the search(default is false)")
+            @RequestParam(value = "hideSummaries", defaultValue = "false") Optional<Boolean> hideSummaries) {
         return ApiResultResponse.of(
                 entryService.searchAll(
                         QueryWithAnchorDTO
@@ -135,8 +133,30 @@ public class EntriesController {
                                 .tags(tags.orElse(Collections.emptyList()))
                                 .logbooks(logBook.orElse(Collections.emptyList()))
                                 .sortByLogDate(sortByLogDate.orElse(false))
+                                .hideSummaries(hideSummaries.orElse(false))
                                 .build()
                 )
         );
     }
+
+    @GetMapping(
+            path = "/{shiftName}/summaries/{date}",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @Operation(
+            description = "Perform the query on all log data"
+    )
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResultResponse<String> findSummaryForShiftAndDate(
+            @PathVariable String shiftName,
+            @PathVariable LocalDate date
+    ) {
+        return ApiResultResponse.of(
+                entryService.findSummaryIdForShiftIdAndDate(
+                        shiftName,
+                        date
+                )
+        );
+    }
+
 }
