@@ -36,7 +36,7 @@ public class Entry {
     private String title;
     @TextIndexed
     private String text;
-    String note;
+    private String note;
     private String lastName;
     private String firstName;
     private String userName;
@@ -54,6 +54,7 @@ public class Entry {
     @Indexed
     @CreatedDate
     private LocalDateTime loggedAt;
+    @Indexed
     private LocalDateTime eventAt;
     @Version
     private Integer version;
