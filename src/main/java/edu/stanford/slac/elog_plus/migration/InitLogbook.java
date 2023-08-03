@@ -69,9 +69,6 @@ public class InitLogbook {
     );
     @Execution
     public void changeSet() {
-        // create logbook index
-        MongoDDLOps.createIndex(Logbook.class, mongoTemplate, mongoMappingContext);
-
         // fill logbook
         for (String logbookName:
                 logbookNames) {
