@@ -28,8 +28,22 @@ public interface EntryRepository extends MongoRepository<Entry, String>, EntryRe
      * Return the summary associated to the shift and date
      * @param summarizesShiftId the shift name
      * @param summarizesDate the date
-     * @return
+     * @return the found summary, if any
      */
     @Query(fields = "{ 'summarizes' : 1}")
     Optional<Entry> findBySummarizes_ShiftIdAndSummarizes_Date(String summarizesShiftId, LocalDate summarizesDate);
+
+    /**
+     * Return the number of the summary associated to a shift
+     * @param summarizesShiftId the id of the shift
+     * @return the number of summaries associated to the shift
+     */
+    long countBySummarizes_ShiftId(String summarizesShiftId);
+
+    /**
+     * Return the number of entries that are associated to a specific tag
+     * @param tagName is the tag name
+     * @return the number of entries that are associated to the tag
+     */
+    long countByTagsContains(String tagName);
 }

@@ -12,6 +12,7 @@ import edu.stanford.slac.elog_plus.model.QueryParameterWithAnchor;
 import edu.stanford.slac.elog_plus.service.AttachmentService;
 import edu.stanford.slac.elog_plus.service.EntryService;
 import edu.stanford.slac.elog_plus.service.LogbookService;
+import edu.stanford.slac.elog_plus.utility.DateUtilities;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,6 +32,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.AssertionsForClassTypes.anyOf;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -869,20 +871,42 @@ public class EntryServiceTest {
                         ShiftDTO
                                 .builder()
                                 .name("Shift1")
-                                .from("00:00")
-                                .to("07:59")
+                                .from(
+                                        DateUtilities.toUTCString(
+                                                LocalTime.of(
+                                                        0,
+                                                        0
+                                                )
+                                        )
+                                )
+                                .to(
+                                        DateUtilities.toUTCString(
+                                                LocalTime.of(
+                                                        7,
+                                                        59
+                                                )
+                                        )
+                                )
                                 .build(),
                         ShiftDTO
                                 .builder()
                                 .name("Shift2")
-                                .from("08:00")
-                                .to("12:59")
-                                .build(),
-                        ShiftDTO
-                                .builder()
-                                .name("Shift3")
-                                .from("13:00")
-                                .to("17:59")
+                                .from(
+                                        DateUtilities.toUTCString(
+                                                LocalTime.of(
+                                                        8,
+                                                        0
+                                                )
+                                        )
+                                )
+                                .to(
+                                        DateUtilities.toUTCString(
+                                                LocalTime.of(
+                                                        12,
+                                                        59
+                                                )
+                                        )
+                                )
                                 .build()
                 )
         );
@@ -926,7 +950,7 @@ public class EntryServiceTest {
         assertThat(firstPage.size()).isEqualTo(30);
 
         Condition<EntrySummaryDTO> shift1Condition = new Condition<>(
-                e -> e.shift() != null && e.shift().compareTo("Shift1") == 0 &&
+                e -> e.shift() != null && e.shift().name().compareTo("Shift1") == 0 &&
                         e.eventAt().toLocalTime().equals(
                                 LocalTime.of(
                                         0,
@@ -955,7 +979,7 @@ public class EntryServiceTest {
                 "Shift1"
         );
         Condition<EntrySummaryDTO> shift2Condition = new Condition<>(
-                e -> e.shift() != null && e.shift().compareTo("Shift2") == 0 &&
+                e -> e.shift() != null && e.shift().name().compareTo("Shift2") == 0 &&
                         e.eventAt().toLocalTime().equals(
                                 LocalTime.of(
                                         8,
@@ -982,61 +1006,37 @@ public class EntryServiceTest {
                         ),
                 "Shift2"
         );
-        Condition<EntrySummaryDTO> shift3Condition = new Condition<>(
-                e -> e.shift() != null && e.shift().compareTo("Shift3") == 0 &&
-                        e.eventAt().toLocalTime().equals(
-                                LocalTime.of(
-                                        13,
-                                        0
-                                )
-                        ) ||
-                        (e.eventAt().toLocalTime().isAfter(
-                                LocalTime.of(
-                                        13,
-                                        0
-                                )
-                        ) &&
-                                e.eventAt().toLocalTime().isBefore(
-                                        LocalTime.of(
-                                                17,
-                                                59
-                                        )
-                                )) ||
-                        e.eventAt().toLocalTime().equals(
-                                LocalTime.of(
-                                        17,
-                                        59
-                                )
-                        ),
-                "Shift3"
-        );
+
         Condition<EntrySummaryDTO> shiftNullCondition = new Condition<>(
-                e -> e.shift() == null &&
-                        e.eventAt().toLocalTime().equals(
-                                LocalTime.of(
-                                        18,
-                                        0
-                                )
-                        ) ||
-                        (e.eventAt().toLocalTime().isAfter(
-                                LocalTime.of(
-                                        18,
-                                        0
-                                )
-                        ) &&
-                                e.eventAt().toLocalTime().isBefore(
-                                        LocalTime.of(
-                                                23,
-                                                59
-                                        )
-                                )) ||
-                        e.eventAt().toLocalTime().equals(
-                                LocalTime.of(
-                                        23,
-                                        59
-                                )
-                        ),
-                "Shift2"
+                e -> {
+                    boolean ret = e.shift() == null &&
+                            e.eventAt().toLocalTime().equals(
+                                    LocalTime.of(
+                                            13,
+                                            0
+                                    )
+                            ) ||
+                            (e.eventAt().toLocalTime().isAfter(
+                                    LocalTime.of(
+                                            13,
+                                            0
+                                    )
+                            ) &&
+                                    e.eventAt().toLocalTime().isBefore(
+                                            LocalTime.of(
+                                                    23,
+                                                    59
+                                            )
+                                    )) ||
+                            e.eventAt().toLocalTime().equals(
+                                    LocalTime.of(
+                                            23,
+                                            59
+                                    )
+                            );
+                    return ret;
+                },
+                "null condition"
         );
 
         //check all shift
@@ -1046,7 +1046,6 @@ public class EntryServiceTest {
                                 anyOf(
                                         shift1Condition,
                                         shift2Condition,
-                                        shift3Condition,
                                         shiftNullCondition
                                 )
                         ).hasSize(30);
@@ -1406,5 +1405,157 @@ public class EntryServiceTest {
                 )
         );
         assertThat(idFound2).isNotNull().isNotEmpty().isEqualTo(entryID2);
+    }
+
+    @Test
+    public void failingDeletingShiftAssociatedToASummary() {
+        var logbookTest = getTestLogbook();
+        assertDoesNotThrow(
+                () -> {
+                    logbookService.replaceShift(
+                            logbookTest.id(),
+                            List.of(
+                                    ShiftDTO
+                                            .builder()
+                                            .name("Shift1")
+                                            .from("00:00")
+                                            .to("07:59")
+                                            .build(),
+                                    ShiftDTO
+                                            .builder()
+                                            .name("Shift2")
+                                            .from("08:00")
+                                            .to("12:59")
+                                            .build(),
+                                    ShiftDTO
+                                            .builder()
+                                            .name("Shift3")
+                                            .from("13:00")
+                                            .to("17:59")
+                                            .build()
+                            )
+                    );
+                    return null;
+                }
+        );
+        LogbookDTO lb = assertDoesNotThrow(
+                () -> logbookService.getLogbookByName(
+                        logbookTest.name()
+                )
+        );
+        assertThat(lb.shifts()).isNotNull().hasSize(3);
+        //try to save a summary
+        String entryID = assertDoesNotThrow(
+                () -> entryService.createNew(
+                        EntryNewDTO
+                                .builder()
+                                .title("title summary")
+                                .text("text summary")
+                                .logbook(logbookTest.name())
+                                .summarizes(
+                                        SummarizesDTO
+                                                .builder()
+                                                .shiftId(lb.shifts().get(1).id())
+                                                .date(LocalDate.now())
+                                                .build()
+                                )
+                                .build()
+                )
+        );
+        assertThat(entryID).isNotNull().isNotEmpty();
+
+        //try to delete the shift used by the summary
+        ControllerLogicException deleteException = assertThrows(
+                ControllerLogicException.class,
+                () -> {
+                    logbookService.replaceShift(
+                            logbookTest.id(),
+                            List.of(
+                                    ShiftDTO
+                                            .builder()
+                                            .id(lb.shifts().get(2).id())
+                                            .name("Shift3Modified")
+                                            .from("13:00")
+                                            .to("17:59")
+                                            .build()
+                            )
+                    );
+                }
+        );
+
+        assertThat(deleteException.getErrorCode()).isEqualTo(-2);
+    }
+
+    @Test
+    public void failingDeletingTagsAssociatedToASummary() {
+        var logbookTest = getTestLogbook();
+        assertDoesNotThrow(
+                () -> {
+                    logbookService.update(
+                            logbookTest.id(),
+                            UpdateLogbookDTO
+                                    .builder()
+                                    .name(logbookTest.name())
+                                    .shifts(
+                                            emptyList()
+                                    )
+                                    .tags(
+                                            List.of(
+                                                    TagDTO
+                                                            .builder()
+                                                            .name("tag1")
+                                                            .build()
+                                            )
+                                    )
+                                    .build()
+                    );
+                    return null;
+                }
+        );
+
+        //try to save a summary
+        String entryID = assertDoesNotThrow(
+                () -> entryService.createNew(
+                        EntryNewDTO
+                                .builder()
+                                .title("title summary")
+                                .text("text summary")
+                                .logbook(logbookTest.name())
+                                .tags(
+                                        List.of(
+                                                "tag1"
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(entryID).isNotNull().isNotEmpty();
+
+        //try to delete the shift used by the summary
+        ControllerLogicException failForDeleteAssignedTag = assertThrows(
+                ControllerLogicException.class,
+                () -> {
+                    logbookService.update(
+                            logbookTest.id(),
+                            UpdateLogbookDTO
+                                    .builder()
+                                    .name(logbookTest.name())
+                                    .shifts(
+                                            emptyList()
+                                    )
+                                    .tags(
+                                            List.of(
+                                                    TagDTO
+                                                            .builder()
+                                                            .name("tag2")
+                                                            .build()
+                                            )
+                                    )
+                                    .build()
+                    );
+                }
+        );
+
+        assertThat(failForDeleteAssignedTag.getErrorCode()).isEqualTo(-2);
     }
 }

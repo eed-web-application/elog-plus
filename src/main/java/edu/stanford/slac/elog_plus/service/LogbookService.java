@@ -8,6 +8,7 @@ import edu.stanford.slac.elog_plus.exception.*;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import edu.stanford.slac.elog_plus.model.Shift;
 import edu.stanford.slac.elog_plus.model.Tag;
+import edu.stanford.slac.elog_plus.repository.EntryRepository;
 import edu.stanford.slac.elog_plus.repository.LogbookRepository;
 import edu.stanford.slac.elog_plus.utility.StringUtilities;
 import lombok.AllArgsConstructor;
@@ -29,6 +30,7 @@ import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
 @Service
 @AllArgsConstructor
 public class LogbookService {
+    EntryRepository entryRepository;
     LogbookRepository logbookRepository;
 
     /**
@@ -203,6 +205,33 @@ public class LogbookService {
                             .build()
             );
         }
+
+        //check which shift should be removed
+        for (Tag t:
+                actualTagList) {
+            boolean willBeUpdated = updateTagList.stream().anyMatch(
+                    ut -> ut.getId()!=null &&  ut.getId().compareTo(t.getId()) == 0
+            );
+            if(willBeUpdated) continue;
+
+            // in this case the shift will be deleted
+            // now if we need to check if the shift is used
+            long summariesForTagName = wrapCatch(
+                    ()->entryRepository.countByTagsContains(t.getName()),
+                    -1,
+                    "LogbookService:verifyTagAndUpdate"
+            );
+
+            assertion(
+                    ()->summariesForTagName==0,
+                    ControllerLogicException.of(
+                            -2,
+                            String.format("The tag with the id '%s' cannot be deleted because has associated summaries", t.getId()),
+                            "LogbookService:verifyTagAndUpdate"
+                    )
+            );
+        }
+
         // we can update the tags
         actualTagList.clear();
         actualTagList.addAll(updateTagList);
@@ -224,6 +253,8 @@ public class LogbookService {
                         )
                 )
         );
+
+        // check if the shift to update exists and have a valid id
         for (Shift shiftToUpdate :
                 updatedShifts) {
             if (shiftToUpdate.getId() == null) {
@@ -242,6 +273,32 @@ public class LogbookService {
                             .shiftName(shiftToUpdate.getName())
                             .errorDomain(errorDomain)
                             .build()
+            );
+        }
+
+        //check which shift should be removed
+        for (Shift s:
+             actualShift) {
+            boolean willBeUpdated = updatedShifts.stream().anyMatch(
+                    us -> us.getId()!=null &&  us.getId().compareTo(s.getId()) == 0
+            );
+            if(willBeUpdated) continue;
+
+            // in this case the shift will be deleted
+            // now if we need to check if the shift is used
+            long summariesForShift = wrapCatch(
+                    ()->entryRepository.countBySummarizes_ShiftId(s.getId()),
+                    -1,
+                    "LogbookService:verifyShiftAndUpdate"
+            );
+
+            assertion(
+                    ()->summariesForShift==0,
+                    ControllerLogicException.of(
+                            -2,
+                            String.format("The shift with the id '%s' cannot be deleted because has associated summaries", s.getId()),
+                            "LogbookService:verifyShiftAndUpdate"
+                    )
             );
         }
 

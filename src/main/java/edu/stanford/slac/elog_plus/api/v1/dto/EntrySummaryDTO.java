@@ -24,7 +24,7 @@ public record EntrySummaryDTO(
         String loggedBy,
         List<String> tags,
         List<AttachmentDTO> attachments,
-        String shift,
+        ShiftDTO shift,
         String note,
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)
