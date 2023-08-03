@@ -16,6 +16,12 @@ public class MongoDDLOps {
         resolver.resolveIndexFor(clazz).forEach(i->applyIndex(indexFacility, i));
     }
 
+    public static <T> void createIndex(Class<T> clazz, MongoTemplate mongoTemplate, IndexDefinition definition) {
+        final IndexOperations indexFacility = mongoTemplate.indexOps(clazz);
+        applyIndex(indexFacility, definition);
+    }
+
+
     protected static void applyIndex(IndexOperations io, IndexDefinition id) {
         try{
             io.ensureIndex(id);
