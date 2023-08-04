@@ -17,7 +17,7 @@ import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@Builder
+@Builder(toBuilder = true)
 @Schema(description = "Is the model for the new ELog creation")
 public record EntryNewDTO(
         @NotNull

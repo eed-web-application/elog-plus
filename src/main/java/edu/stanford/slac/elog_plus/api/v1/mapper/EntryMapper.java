@@ -45,5 +45,6 @@ public interface EntryMapper {
 
     Entry fromDTO(EntryNewDTO entryNewDTO, String firstName, String lastName, String userName);
 
-    Entry fromDTO(EntryImportDTO entryNewDTO);
+    Entry fromDTO(EntryImportDTO entryNewDTO, List<String> attachments);
+    EntryNewDTO fromImportDTOToNew(EntryImportDTO entryNewDTO);
 }

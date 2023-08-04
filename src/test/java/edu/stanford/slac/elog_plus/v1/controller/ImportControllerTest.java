@@ -24,6 +24,7 @@ import org.springframework.web.multipart.support.MissingServletRequestPartExcept
 
 import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -108,6 +109,24 @@ public class ImportControllerTest {
                 .firstName("First name import")
                 .lastName("Last name import")
                 .userName("Username name import")
+                .eventAt(
+                        LocalDateTime.of(
+                                2021,
+                                1,
+                                1,
+                                1,
+                                1
+                        )
+                )
+                .loggedAt(
+                        LocalDateTime.of(
+                                2021,
+                                2,
+                                1,
+                                1,
+                                1
+                        )
+                )
                 .build();
 
         try {
