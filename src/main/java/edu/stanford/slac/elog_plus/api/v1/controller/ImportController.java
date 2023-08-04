@@ -7,6 +7,8 @@ import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.model.FileObjectDescription;
 import edu.stanford.slac.elog_plus.service.UploadService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -30,11 +32,14 @@ public class ImportController {
     @Operation(description = "Upload data for import an entry")
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(
+            consumes = {MediaType.MULTIPART_FORM_DATA_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     public ApiResultResponse<String> uploadEntryAndAttachment(
-            @RequestJsonParam("entry") EntryImportDTO entryToImport,
-            @RequestParam(value = "attachments", required = false) MultipartFile[] attachment) throws IOException {
+            @Parameter(schema =@Schema(type = "string", implementation = EntryImportDTO.class))
+            @RequestPart("entry")  EntryImportDTO entryToImport,
+            @RequestPart(value = "attachments", required = false)
+            MultipartFile[] attachment) throws IOException {
         List<FileObjectDescription> attachmentList = new ArrayList<>();
         if(attachment != null) {
             attachmentList = Arrays.stream(attachment).map(
