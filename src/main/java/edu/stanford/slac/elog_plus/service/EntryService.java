@@ -92,18 +92,50 @@ public class EntryService {
     /**
      * Create a new log entry
      *
+     * @param entryToImport is a new log information
+     * @return the id of the newly created log
+     */
+    @Transactional(propagation = Propagation.NESTED)
+    public String createNew(EntryImportDTO entryToImport) {
+        return createNew(
+                EntryMapper.INSTANCE.fromDTO(
+                        entryToImport
+                )
+        );
+    }
+
+    /**
+     * Create a new log entry
+     *
      * @param entryNewDTO is a new log information
      * @return the id of the newly created log
      */
     @Transactional(propagation = Propagation.NESTED)
     public String createNew(EntryNewDTO entryNewDTO) {
         Faker faker = new Faker();
-        Entry newEntry = EntryMapper.INSTANCE.fromDTO(entryNewDTO, faker.name().firstName(), faker.name().lastName(), faker.name().username());
+        return createNew(
+                EntryMapper.INSTANCE.fromDTO(
+                        entryNewDTO,
+                        faker.name().firstName(),
+                        faker.name().lastName(),
+                        faker.name().username()
+                )
+        );
+    }
 
+    /**
+     * Create a new log entry
+     *
+     * @param newEntry is a new log information
+     * @return the id of the newly created log
+     */
+    @Transactional(propagation = Propagation.NESTED)
+    public String createNew(Entry newEntry) {
         //get and check for logbook
+        Entry finalNewEntry = newEntry;
         LogbookDTO lb =
                 wrapCatch(
-                        () -> logbookService.getLogbookByName(entryNewDTO.logbook()),
+                        () -> logbookService.getLogbookByName(finalNewEntry.getLogbook()),
                         -1,
                         "EntryService:createNew"
                 );
@@ -193,11 +225,11 @@ public class EntryService {
         );
 
         // other check
-        Entry finalNewEntry = newEntry;
+        Entry finalNewEntryToSave = newEntry;
         newEntry =
                 wrapCatch(
                         () -> entryRepository.insert(
-                                finalNewEntry
+                                finalNewEntryToSave
                         ),
                         -5,
                         "LogService::createNew"

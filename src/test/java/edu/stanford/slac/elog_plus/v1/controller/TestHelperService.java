@@ -97,14 +97,14 @@ public class TestHelperService {
     public ApiResultResponse<String> uploadWholeEntry(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
-            EntryNewDTO entryNew,
+            EntryImportDTO entryToImport,
             MockMultipartFile... attachement) throws Exception {
-        MockMultipartHttpServletRequestBuilder multiPartBuilder = multipart("/v1/upload");
-        if (entryNew != null) {
+        MockMultipartHttpServletRequestBuilder multiPartBuilder = multipart("/v1/import");
+        if (entryToImport != null) {
             multiPartBuilder.param(
                     "entry",
                     new ObjectMapper().writeValueAsString(
-                            entryNew
+                            entryToImport
                     )
             );
         }
