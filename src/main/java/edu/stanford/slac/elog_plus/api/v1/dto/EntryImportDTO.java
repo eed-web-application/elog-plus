@@ -15,9 +15,9 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 
+@Builder(toBuilder=true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@Builder
 @Schema(description = "Is the model for the new ELog creation")
 public record EntryImportDTO(
         @NotNull
@@ -40,10 +40,10 @@ public record EntryImportDTO(
         String note,
         @Schema(description = "The tags describes represent the log")
         List<String> tags,
-        @Schema(description = "The list of the attachment of the log")
-        List<String> attachments,
-        @Schema(description = "Identify the entry as summarize of a shift")
-        SummarizesDTO summarizes,
+        @Schema(description = "The timestamp when the event is occurred")
+        @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+        @JsonSerialize(using = LocalDateTimeSerializer.class)
+        LocalDateTime loggedAt,
         @Schema(description = "The timestamp when the event is occurred")
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)
@@ -51,6 +51,5 @@ public record EntryImportDTO(
 ) {
     public EntryImportDTO {
         if (tags == null) tags = Collections.emptyList();
-        if (attachments == null) attachments = Collections.emptyList();
     }
 }

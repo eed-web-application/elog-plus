@@ -4,6 +4,7 @@ import edu.stanford.slac.elog_plus.api.v1.dto.EntryImportDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.EntryNewDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.LogbookDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.NewTagDTO;
+import edu.stanford.slac.elog_plus.api.v1.mapper.EntryMapper;
 import edu.stanford.slac.elog_plus.model.FileObjectDescription;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import lombok.AllArgsConstructor;
@@ -58,10 +59,9 @@ public class UploadService {
         }
 
         //fill entry with the attachment
-        newEntry.attachments().addAll(attachmentIDList);
-
         return entryService.createNew(
-                newEntry
+                newEntry,
+                attachmentIDList
         );
     }
 }

@@ -52,8 +52,8 @@ public class Entry {
     private String filePs;
     private String filePreview;
     @Indexed
-    @CreatedDate
-    private LocalDateTime loggedAt;
+    @Builder.Default
+    private LocalDateTime loggedAt = LocalDateTime.now();
     @Indexed
     private LocalDateTime eventAt;
     @Version
