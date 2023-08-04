@@ -7,6 +7,7 @@ import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.mock.web.MockPart;
 import org.springframework.stereotype.Service;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -14,6 +15,7 @@ import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -101,11 +103,16 @@ public class TestHelperService {
             MockMultipartFile... attachement) throws Exception {
         MockMultipartHttpServletRequestBuilder multiPartBuilder = multipart("/v1/import");
         if (entryToImport != null) {
-            multiPartBuilder.param(
+            MockPart p = new MockPart(
                     "entry",
-                    new ObjectMapper().writeValueAsString(
-                            entryToImport
-                    )
+                    new ObjectMapper().writeValueAsString(entryToImport).getBytes(StandardCharsets.UTF_8)
+            );
+            p.getHeaders().add(
+                    "Content-Type",
+                    MediaType.APPLICATION_JSON_VALUE
+            );
+            multiPartBuilder.part(
+                   p
             );
         }
 
