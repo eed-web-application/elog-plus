@@ -529,4 +529,16 @@ public class EntryService {
                         .build()
         );
     }
+
+    /**
+     * check if an entry exists using the origin id
+     * @param originId the origin id
+     */
+    public boolean existsByOriginId(String originId) {
+        return wrapCatch(
+                ()->entryRepository.existsByOriginId(originId),
+                -1,
+                "EntryService::existsByOriginId"
+        );
+    }
 }

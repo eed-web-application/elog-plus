@@ -46,4 +46,11 @@ public interface EntryRepository extends MongoRepository<Entry, String>, EntryRe
      * @return the number of entries that are associated to the tag
      */
     long countByTagsContains(String tagName);
+
+    /**
+     * Check if an entry exists using and origin id
+     * @param originId the id from the original system
+     * @return true if the entry exists
+     */
+    boolean existsByOriginId(String originId);
 }

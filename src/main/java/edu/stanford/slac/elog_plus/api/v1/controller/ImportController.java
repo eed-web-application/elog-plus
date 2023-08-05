@@ -1,14 +1,12 @@
 package edu.stanford.slac.elog_plus.api.v1.controller;
 
-import edu.stanford.slac.elog_plus.annotations.RequestJsonParam;
 import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
 import edu.stanford.slac.elog_plus.api.v1.dto.EntryImportDTO;
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.model.FileObjectDescription;
-import edu.stanford.slac.elog_plus.service.UploadService;
+import edu.stanford.slac.elog_plus.service.ImportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -27,7 +25,7 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @Schema(description = "Main set of api for inject data into ELog system")
 public class ImportController {
-    UploadService uploadService;
+    ImportService importService;
 
     @Operation(description = "Upload data for import an entry")
     @ResponseStatus(HttpStatus.CREATED)
@@ -67,6 +65,6 @@ public class ImportController {
                     }
             ).collect(Collectors.toList());
         }
-        return ApiResultResponse.of(uploadService.uploadSingleEntry(entryToImport, attachmentList));
+        return ApiResultResponse.of(importService.importSingleEntry(entryToImport, attachmentList));
     }
 }
