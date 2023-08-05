@@ -21,6 +21,9 @@ import java.util.List;
 @Schema(description = "Is the model for the new ELog creation")
 public record EntryImportDTO(
         @NotNull
+        @Schema(description = "Identifier for unique find the record into the original system")
+        String originId,
+        @NotNull
         @Schema(description = "Is the logbook where the new log belong")
         String logbook,
         @NotNull

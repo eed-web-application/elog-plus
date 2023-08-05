@@ -26,6 +26,7 @@ import java.util.List;
 public class Entry {
     @Id
     private String id;
+    private String originId;
     private String supersedeBy;
     private String entryType;
     @Indexed

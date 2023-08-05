@@ -1,6 +1,7 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
+import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.model.Attachment;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
@@ -28,6 +29,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -98,6 +100,7 @@ public class ImportControllerTest {
         var testLogbook = getTestLogbook();
         EntryImportDTO dto = EntryImportDTO
                 .builder()
+                .originId("origin-id")
                 .title("Sample Title")
                 .text("sample text")
                 .logbook(testLogbook.getPayload().name())
@@ -157,6 +160,23 @@ public class ImportControllerTest {
             throw new RuntimeException(e);
         }
 
+
+        ControllerLogicException alreadyFound = assertThrows(
+                ControllerLogicException.class,
+                () -> testHelperService.uploadWholeEntry(
+                        mockMvc,
+                        status().is5xxServerError(),
+                        EntryImportDTO
+                                .builder()
+                                .originId("origin-id")
+                                .title("Sample Title")
+                                .text("sample text")
+                                .logbook(testLogbook.getPayload().name())
+                                .build()
+                )
+        );
+
+        assertThat(alreadyFound.getErrorCode()).isEqualTo(-1);
     }
 
     private ApiResultResponse<LogbookDTO> getTestLogbook() {
