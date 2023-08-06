@@ -11,6 +11,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
@@ -32,7 +33,6 @@ public class AttachmentService {
      * @param attachment
      * @return
      */
-    @Transactional
     public String createAttachment(FileObjectDescription attachment, boolean createPreview) {
         Attachment att = Attachment
                 .builder()

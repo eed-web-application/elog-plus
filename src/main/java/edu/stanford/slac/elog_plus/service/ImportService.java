@@ -8,6 +8,7 @@ import edu.stanford.slac.elog_plus.model.FileObjectDescription;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -29,6 +30,7 @@ public class ImportService {
      * @param attachment the attachment list to create and associate
      * @return the id of the new entry
      */
+    @Transactional
     public String importSingleEntry(EntryImportDTO entryToUpload, List<FileObjectDescription> attachment) {
         // in case we have the origin id check for record existence
         if(entryToUpload.originId()!=null) {

@@ -95,7 +95,7 @@ public class EntryService {
      * @param entryToImport is a new log information
      * @return the id of the newly created log
      */
-    @Transactional(propagation = Propagation.NESTED)
+    @Transactional()
     public String createNew(EntryImportDTO entryToImport, List<String> attachments) {
         return createNew(
                 EntryMapper.INSTANCE.fromDTO(
