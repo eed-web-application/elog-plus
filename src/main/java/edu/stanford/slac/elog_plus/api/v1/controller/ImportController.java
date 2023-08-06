@@ -36,11 +36,11 @@ public class ImportController {
     public ApiResultResponse<String> uploadEntryAndAttachment(
             @Parameter(schema =@Schema(type = "string", implementation = EntryImportDTO.class))
             @RequestPart("entry")  EntryImportDTO entryToImport,
-            @RequestPart(value = "attachments", required = false)
-            MultipartFile[] attachment) throws IOException {
+            @RequestPart(value = "files", required = false)
+            MultipartFile[] files) throws IOException {
         List<FileObjectDescription> attachmentList = new ArrayList<>();
-        if(attachment != null) {
-            attachmentList = Arrays.stream(attachment).map(
+        if(files != null) {
+            attachmentList = Arrays.stream(files).map(
                     file -> {
                         try {
                             return FileObjectDescription

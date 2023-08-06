@@ -141,13 +141,13 @@ public class ImportControllerTest {
                             status().isCreated(),
                             dto,
                             new MockMultipartFile(
-                                    "attachments",
+                                    "files",
                                     "test.png",
                                     MediaType.IMAGE_PNG_VALUE,
                                     isPng
                             ),
                             new MockMultipartFile(
-                                    "attachments",
+                                    "files",
                                     "test.jpg",
                                     MediaType.IMAGE_JPEG_VALUE,
                                     isJpg
