@@ -100,7 +100,7 @@ public class TestHelperService {
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             EntryImportDTO entryToImport,
-            MockMultipartFile... attachement) throws Exception {
+            MockMultipartFile... files) throws Exception {
         MockMultipartHttpServletRequestBuilder multiPartBuilder = multipart("/v1/import");
         if (entryToImport != null) {
             MockPart p = new MockPart(
@@ -117,7 +117,7 @@ public class TestHelperService {
         }
 
         for (MockMultipartFile a :
-                attachement) {
+                files) {
             multiPartBuilder.file(a);
         }
         MvcResult result = mockMvc.perform(
