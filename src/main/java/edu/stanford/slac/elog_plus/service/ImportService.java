@@ -58,17 +58,11 @@ public class ImportService {
         // ensure tags
         if (entryToUpload.tags() != null) {
             entryToUpload.tags().forEach(
-                    tagName -> {
-                        if (!logbookService.tagExistForLogbook(lb.id(), tagName)) {
-                            logbookService.createNewTag(
+                    tagName ->
+                            logbookService.ensureTag(
                                     lb.id(),
-                                    NewTagDTO
-                                            .builder()
-                                            .name(tagName)
-                                            .build()
-                            );
-                        }
-                    }
+                                    tagName
+                            )
             );
         }
 

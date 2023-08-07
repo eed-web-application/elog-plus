@@ -6,12 +6,16 @@ import edu.stanford.slac.elog_plus.model.Logbook;
 import edu.stanford.slac.elog_plus.model.Shift;
 import edu.stanford.slac.elog_plus.model.Tag;
 import lombok.AllArgsConstructor;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalTime;
 import java.util.*;
 
@@ -43,6 +47,17 @@ public class LogbookRepositoryImpl implements LogbookRepositoryCustom {
                 Logbook.class
         );
         return ur.getModifiedCount() == 1 ? newTag.getId() : null;
+    }
+
+    @Override
+    public void ensureTag(String logbookId, Tag newTag) throws UnsupportedEncodingException, NoSuchAlgorithmException {
+        newTag.setId(getTagId(newTag.getName()));
+        Query query = new Query(Criteria.where("id").is(logbookId));
+
+        Update update = new Update()
+                .addToSet("tags", newTag);
+
+        Logbook lb = mongoTemplate.findAndModify(query, update, Logbook.class);
     }
 
     @Override
@@ -165,5 +180,18 @@ public class LogbookRepositoryImpl implements LogbookRepositoryCustom {
                     .findFirst();
         }
         return result;
+    }
+
+    private String getTagId(String tagName) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+        MessageDigest md = MessageDigest.getInstance("SHA1");
+        md.reset();
+        byte[] buffer = tagName.getBytes("UTF-8");
+        md.update(buffer);
+        byte[] digest = md.digest();
+        String hexStr = "";
+        for (int i = 0; i < digest.length; i++) {
+            hexStr +=  Integer.toString( ( digest[i] & 0xff ) + 0x100, 16).substring( 1 );
+        }
+        return hexStr;
     }
 }
