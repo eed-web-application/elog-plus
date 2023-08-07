@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -46,14 +47,23 @@ public class AttachmentService {
                         ),
                         0,
                         "AttachmentService::createAttachment");
-        wrapCatch(
-                () -> {
-                    storageRepository.uploadFile(newAttachmentID.getId(), attachment);
-                    return null;
-                },
-                -1,
-                "AttachmentService::createAttachment"
-        );
+        try{
+            wrapCatch(
+                    () -> {
+                        storageRepository.uploadFile(newAttachmentID.getId(), attachment);
+                        return null;
+                    },
+                    -1,
+                    "AttachmentService::createAttachment"
+            );
+        } finally {
+            wrapCatch(
+                    () -> {attachment.getIs().close();return null;},
+                    -2,
+                    "AttachmentService::createAttachment"
+            );
+        }
+
         if(createPreview) {
             attachmentProducer.send(appProperties.getImagePreviewTopic(), att);
         }
