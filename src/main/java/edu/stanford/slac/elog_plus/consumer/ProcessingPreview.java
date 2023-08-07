@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 @Log4j2
 @Component
@@ -36,11 +37,12 @@ public class ProcessingPreview {
             Attachment attachment,
             @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
             @Header(KafkaHeaders.OFFSET) long offset
-    ) throws RuntimeException {
+    ) throws RuntimeException, IOException {
         log.info("Process preview for attachment: {} from {} @ {}", attachment, topic, offset);
+        FileObjectDescription fod = null;
         try {
             attachmentService.setPreviewProcessingState(attachment.getId(), Attachment.PreviewProcessingState.Processing);
-            FileObjectDescription fod = attachmentService.getAttachmentContent(attachment.getId());
+            fod = attachmentService.getAttachmentContent(attachment.getId());
             String previewID = String.format("%s-preview", attachment.getId());
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             Thumbnails.of(fod.getIs())
@@ -65,6 +67,10 @@ public class ProcessingPreview {
             attachmentService.setPreviewProcessingState(attachment.getId(), Attachment.PreviewProcessingState.Error);
             log.error("Error during preview generation for the attachment {} with error {}", attachment, e.getCause());
             throw new RuntimeException(e);
+        } finally {
+            if(fod != null && fod.getIs() != null) {
+                fod.getIs().close();
+            }
         }
 
     }

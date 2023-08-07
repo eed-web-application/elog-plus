@@ -8,9 +8,7 @@ import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectResponse;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.IOException;
 
@@ -27,20 +25,21 @@ public class StorageRepository {
     final private StorageProperties objectStorageProperties;
 
     public void uploadFile(String id, FileObjectDescription attachment) throws IOException {
-        assertion(() -> attachment.getContentType()!=null,
+        PutObjectResponse putObjectResponse = null;
+        assertion(() -> attachment.getContentType() != null,
                 -1,
                 "The Content type is mandatory",
                 "AttachmentRepository::uploadFile");
-        assertion(() -> attachment.getFileName()!=null,
+        assertion(() -> attachment.getFileName() != null,
                 -1,
                 "The filename type is mandatory",
                 "AttachmentRepository::uploadFile");
-        assertion(() -> attachment.getIs()!=null,
+        assertion(() -> attachment.getIs() != null,
                 -1,
                 "The input stream is mandatory type is mandatory",
                 "AttachmentRepository::uploadFile");
 
-        s3Client.putObject(
+        putObjectResponse = s3Client.putObject(
                 PutObjectRequest.builder()
                         .bucket(objectStorageProperties.getBucket())
                         .key(id)
