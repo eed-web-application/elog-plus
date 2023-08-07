@@ -26,6 +26,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -97,6 +100,61 @@ public class LogbookServiceTest {
         assertThat(allTags).isNotEmpty();
 
         assertThat(fullLogbook.tags()).containsAll(allTags);
+    }
+
+    @Test
+    public void ensureTag() {
+        String newLogbookID = getTestLogbook();
+        AssertionsForClassTypes.assertThat(newLogbookID).isNotNull().isNotEmpty();
+
+        assertDoesNotThrow(
+                () -> logbookService.ensureTag(
+                        newLogbookID,
+                        "new_tag"
+                )
+        );
+
+        LogbookDTO fullLogbook = assertDoesNotThrow(
+                () -> logbookService.getLogbook(newLogbookID)
+        );
+        assertThat(fullLogbook).isNotNull();
+        assertThat(fullLogbook.tags()).hasSize(1);
+
+        assertDoesNotThrow(
+                () -> logbookService.ensureTag(
+                        newLogbookID,
+                        "new_tag"
+                )
+        );
+        List<TagDTO> allTags = assertDoesNotThrow(
+                () -> logbookService.getAllTags(newLogbookID)
+        );
+
+        assertThat(fullLogbook.tags()).hasSize(1);
+
+        // now test with multithreading
+        int numberOfThreads = 10;
+        ExecutorService service = Executors.newFixedThreadPool(10);
+        CountDownLatch latch = new CountDownLatch(numberOfThreads);
+        for (int i = 0; i < numberOfThreads; i++) {
+            service.execute(() -> {
+                assertDoesNotThrow(
+                        () -> logbookService.ensureTag(
+                                newLogbookID,
+                                "new_tag"
+                        )
+                );
+                latch.countDown();
+            });
+        }
+        assertDoesNotThrow(
+                ()->latch.await()
+        );
+        allTags = assertDoesNotThrow(
+                () -> logbookService.getAllTags(newLogbookID)
+        );
+
+        assertThat(fullLogbook.tags()).hasSize(1);
     }
 
     @Test

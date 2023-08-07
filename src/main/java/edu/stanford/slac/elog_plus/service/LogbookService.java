@@ -88,6 +88,7 @@ public class LogbookService {
         return newLogbook.getId();
     }
 
+
     /**
      * Update an existing logbook
      *
@@ -416,6 +417,33 @@ public class LogbookService {
                 ),
                 -3,
                 "LogbookService:createNewTag"
+        );
+    }
+
+
+    /**
+     * Create new tag just in case it doesn't exist
+     * @param logbookId the logbook id
+     * @param tagName the tag name
+     */
+    public void ensureTag(String logbookId, String tagName) {
+        assertOnLogbook(logbookId, -1, "LogbookService:ensureTag");
+
+        wrapCatch(
+                () -> {
+                    logbookRepository.ensureTag(
+                            logbookId,
+                            TagMapper.INSTANCE.fromDTO(
+                                    NewTagDTO
+                                            .builder()
+                                            .name(tagName)
+                                            .build()
+                            )
+                    );
+                    return null;
+                },
+                -2,
+                "LogbookService:ensureTag"
         );
     }
 
@@ -787,14 +815,7 @@ public class LogbookService {
                         errorDomain
                 )
         );
-//        LocalTime fromTime = LocalTime.of(
-//                Integer.parseInt(fromMatcher.group(1)),
-//                Integer.parseInt(fromMatcher.group(2))
-//        );
-//        LocalTime toTime = LocalTime.of(
-//                Integer.parseInt(toMatcher.group(1)),
-//                Integer.parseInt(toMatcher.group(2))
-//        );
+
         assertion(
                 () -> shiftToAdd.getFromTime().isBefore(shiftToAdd.getToTime()),
                 ControllerLogicException.of(
