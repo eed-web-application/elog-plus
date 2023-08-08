@@ -50,14 +50,48 @@ public class LogbookRepositoryImpl implements LogbookRepositoryCustom {
     }
 
     @Override
-    public void ensureTag(String logbookId, Tag newTag) throws UnsupportedEncodingException, NoSuchAlgorithmException {
-        newTag.setId(getTagId(newTag.getName()));
-        Query query = new Query(Criteria.where("id").is(logbookId));
+    public String ensureTag(String logbookId, Tag newTag) throws UnsupportedEncodingException, NoSuchAlgorithmException {
+        String newID = UUID.randomUUID().toString();
+        newTag.setId(newID);
+        Query query = new Query(
+                Criteria.where("id").is(logbookId)
+                        .and("tags.name").ne(newTag.getName())
+        );
 
         Update update = new Update()
                 .addToSet("tags", newTag);
 
-        Logbook lb = mongoTemplate.findAndModify(query, update, Logbook.class);
+        Logbook lb = mongoTemplate.findAndModify(
+                query,
+                update,
+                Logbook.class
+        );
+        if(lb==null || lb.getTags()==null) {
+            Query queryForTagID = new Query(
+                    Criteria.where("id").is(logbookId)
+            );
+            queryForTagID.fields().include("tags");
+            lb = mongoTemplate.findOne(
+                    queryForTagID,
+                    Logbook.class
+            );
+            if(lb!=null) {
+                newID = lb.getTags().stream().filter(
+                        t->t.getName().compareToIgnoreCase(newTag.getName())==0
+                )
+                        .findFirst()
+                        .map(Tag::getId)
+                        .orElse(null);
+            }
+        } else {
+            newID = lb.getTags().stream().filter(
+                    t->t.getName().compareToIgnoreCase(newTag.getName())==0
+            )
+                    .findFirst()
+                    .map(Tag::getId)
+                    .orElse(newID);
+        }
+        return newID;
     }
 
     @Override
@@ -180,18 +214,5 @@ public class LogbookRepositoryImpl implements LogbookRepositoryCustom {
                     .findFirst();
         }
         return result;
-    }
-
-    private String getTagId(String tagName) throws NoSuchAlgorithmException, UnsupportedEncodingException {
-        MessageDigest md = MessageDigest.getInstance("SHA1");
-        md.reset();
-        byte[] buffer = tagName.getBytes("UTF-8");
-        md.update(buffer);
-        byte[] digest = md.digest();
-        String hexStr = "";
-        for (int i = 0; i < digest.length; i++) {
-            hexStr +=  Integer.toString( ( digest[i] & 0xff ) + 0x100, 16).substring( 1 );
-        }
-        return hexStr;
     }
 }
