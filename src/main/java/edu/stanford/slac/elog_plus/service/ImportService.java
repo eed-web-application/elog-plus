@@ -4,6 +4,7 @@ import edu.stanford.slac.elog_plus.api.v1.dto.EntryImportDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.LogbookDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.NewTagDTO;
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
+import edu.stanford.slac.elog_plus.exception.LogbookNotFound;
 import edu.stanford.slac.elog_plus.model.FileObjectDescription;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -53,18 +54,13 @@ public class ImportService {
         ).toList();
 
         // ensure logbooks exists
-        LogbookDTO lb = logbookService.getLogbookByName(entryToUpload.logbook());
-
-        // ensure tags
-        if (entryToUpload.tags() != null) {
-            entryToUpload.tags().forEach(
-                    tagName ->
-                            logbookService.ensureTag(
-                                    lb.id(),
-                                    tagName
-                            )
-            );
-        }
+        assertion(
+                ()->logbookService.exist(entryToUpload.logbook()),
+                LogbookNotFound.logbookNotFoundBuilder()
+                        .errorCode(-2)
+                        .errorDomain("ImportService:importSingleEntry")
+                        .build()
+        );
 
         //fill entry with the attachment
         return entryService.createNew(
