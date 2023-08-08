@@ -165,19 +165,18 @@ public class EntryService {
                                     lb.tags().stream().noneMatch(
                                             t -> t.name().compareTo(tagName) == 0)
                             ) {
-                                // we need to create a tag for the user
+                                // we need to create a tag for the entry
                                 String newTagID = wrapCatch(
-                                        () -> logbookService.createNewTag(
-                                                lb.id(),
-                                                NewTagDTO
-                                                        .builder()
-                                                        .name(tagName)
-                                                        .build()
-                                        ),
+                                        () -> {
+                                            logbookService.ensureTag(
+                                                    lb.id(),
+                                                    tagName
+                                            );
+                                            return null;
+                                        },
                                         -2,
                                         "EntryService:createNew"
                                 );
-
                                 log.info("Tag automatically created for the logbook {} with name {}", lb.name(), tagName);
                             }
                         }
@@ -252,7 +251,8 @@ public class EntryService {
      * @param followHistory       if true the result will include the log history
      * @return the full log description
      */
-    public EntryDTO getFullLog(String id, Optional<Boolean> includeFollowUps, Optional<Boolean> includeFollowingUps, Optional<Boolean> followHistory) {
+    public EntryDTO getFullLog(String
+                                       id, Optional<Boolean> includeFollowUps, Optional<Boolean> includeFollowingUps, Optional<Boolean> followHistory) {
         EntryDTO result = null;
         Optional<Entry> foundEntry =
                 wrapCatch(
@@ -532,11 +532,12 @@ public class EntryService {
 
     /**
      * check if an entry exists using the origin id
+     *
      * @param originId the origin id
      */
     public boolean existsByOriginId(String originId) {
         return wrapCatch(
-                ()->entryRepository.existsByOriginId(originId),
+                () -> entryRepository.existsByOriginId(originId),
                 -1,
                 "EntryService::existsByOriginId"
         );

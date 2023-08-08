@@ -25,8 +25,5 @@ public class Logbook {
     private List<Tag> tags = Collections.emptyList();
     @Indexed
     @Builder.Default
-    private List<String> tagNames = Collections.emptyList();
-    @Indexed
-    @Builder.Default
     private List<Shift> shifts = Collections.emptyList();
 }

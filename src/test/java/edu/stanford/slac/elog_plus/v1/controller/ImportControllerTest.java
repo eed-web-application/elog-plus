@@ -156,6 +156,15 @@ public class ImportControllerTest {
 
             assertThat(uploadResult).isNotNull();
             assertThat(uploadResult.getErrorCode()).isEqualTo(0);
+
+            ApiResultResponse<EntryDTO> fullLog = assertDoesNotThrow(
+                    () -> testHelperService.getFullLog(
+                            mockMvc,
+                            status().isOk(),
+                            uploadResult.getPayload()
+                            )
+            );
+            assertThat(fullLog.getPayload().tags()).contains("tag-one");
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }

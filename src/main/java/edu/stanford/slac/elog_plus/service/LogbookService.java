@@ -436,7 +436,7 @@ public class LogbookService {
                             TagMapper.INSTANCE.fromDTO(
                                     NewTagDTO
                                             .builder()
-                                            .name(tagName)
+                                            .name(StringUtilities.tagNameNormalization(tagName))
                                             .build()
                             )
                     );
@@ -465,7 +465,7 @@ public class LogbookService {
                         )
                 ),
                 -1,
-                "LogbookService:createNewTag"
+                "LogbookService:tagExistForLogbook"
         );
     }
 
@@ -476,11 +476,11 @@ public class LogbookService {
      * @return all the logbook tags
      */
     public List<TagDTO> getAllTags(String logbookId) {
-        assertOnLogbook(logbookId, -1, "LogbookService:createNewTagForLogbook");
+        assertOnLogbook(logbookId, -1, "LogbookService:getAllTags");
         List<Tag> allTag = wrapCatch(
                 () -> logbookRepository.getAllTagFor(logbookId),
                 -2,
-                "LogbookService:createNewTagForLogbook"
+                "LogbookService:getAllTags"
         );
         return allTag.stream()
                 .map(
