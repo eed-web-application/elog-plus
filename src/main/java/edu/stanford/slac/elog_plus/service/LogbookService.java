@@ -112,7 +112,7 @@ public class LogbookService {
                         .build()
         );
         assertion(
-                ()->logBook.get().getName()!= null && !logBook.get().getName().isEmpty(),
+                () -> logBook.get().getName() != null && !logBook.get().getName().isEmpty(),
                 ControllerLogicException.builder()
                         .errorCode(-3)
                         .errorMessage("The name field is mandatory")
@@ -120,7 +120,7 @@ public class LogbookService {
                         .build()
         );
         assertion(
-                ()->logBook.get().getTags()!= null,
+                () -> logBook.get().getTags() != null,
                 ControllerLogicException.builder()
                         .errorCode(-3)
                         .errorMessage("The tags field is mandatory")
@@ -128,7 +128,7 @@ public class LogbookService {
                         .build()
         );
         assertion(
-                ()->logBook.get().getTags()!= null,
+                () -> logBook.get().getTags() != null,
                 ControllerLogicException.builder()
                         .errorCode(-3)
                         .errorMessage("The shift field is mandatory")
@@ -137,10 +137,10 @@ public class LogbookService {
         );
         Logbook updateLogbookInfo = LogbookMapper.INSTANCE.fromDTO(logbookDTO);
         Logbook lbToUpdated = logBook.get();
-        if(lbToUpdated.getShifts()==null){
+        if (lbToUpdated.getShifts() == null) {
             lbToUpdated.setShifts(new ArrayList<>());
         }
-        if(lbToUpdated.getTags()==null){
+        if (lbToUpdated.getTags() == null) {
             lbToUpdated.setTags(new ArrayList<>());
         }
         // normalize name and shift
@@ -173,13 +173,14 @@ public class LogbookService {
 
     /**
      * verify and updates the tags
+     *
      * @param updateTagList the list of the tags updates
      * @param actualTagList the list of actual tags
      */
     private void verifyTagAndUpdate(List<Tag> updateTagList, List<Tag> actualTagList, int errorCode, String errorDomain) {
         //normalize tag
         updateTagList.forEach(
-                t->t.setName(
+                t -> t.setName(
                         StringUtilities.tagNameNormalization(
                                 t.getName()
                         )
@@ -208,23 +209,23 @@ public class LogbookService {
         }
 
         //check which shift should be removed
-        for (Tag t:
+        for (Tag t :
                 actualTagList) {
             boolean willBeUpdated = updateTagList.stream().anyMatch(
-                    ut -> ut.getId()!=null &&  ut.getId().compareTo(t.getId()) == 0
+                    ut -> ut.getId() != null && ut.getId().compareTo(t.getId()) == 0
             );
-            if(willBeUpdated) continue;
+            if (willBeUpdated) continue;
 
             // in this case the shift will be deleted
             // now if we need to check if the shift is used
             long summariesForTagName = wrapCatch(
-                    ()->entryRepository.countByTagsContains(t.getName()),
+                    () -> entryRepository.countByTagsContains(t.getName()),
                     -1,
                     "LogbookService:verifyTagAndUpdate"
             );
 
             assertion(
-                    ()->summariesForTagName==0,
+                    () -> summariesForTagName == 0,
                     ControllerLogicException.of(
                             -2,
                             String.format("The tag with the id '%s' cannot be deleted because has associated summaries", t.getId()),
@@ -240,15 +241,16 @@ public class LogbookService {
 
     /**
      * Update the actual list of shift with the updated shift list
+     *
      * @param updatedShifts a list that contains the shift updates
-     * @param actualShift a list that contains the actual shift list
-     * @param errorCode is the error code to generate in case of fails
-     * @param errorDomain is the error domain in case of fail
+     * @param actualShift   a list that contains the actual shift list
+     * @param errorCode     is the error code to generate in case of fails
+     * @param errorDomain   is the error domain in case of fail
      */
     private void verifyShiftAndUpdate(List<Shift> updatedShifts, List<Shift> actualShift, int errorCode, String errorDomain) {
         //normalize tag
         updatedShifts.forEach(
-                s->s.setName(
+                s -> s.setName(
                         StringUtilities.shiftNameNormalization(
                                 s.getName()
                         )
@@ -278,23 +280,23 @@ public class LogbookService {
         }
 
         //check which shift should be removed
-        for (Shift s:
-             actualShift) {
+        for (Shift s :
+                actualShift) {
             boolean willBeUpdated = updatedShifts.stream().anyMatch(
-                    us -> us.getId()!=null &&  us.getId().compareTo(s.getId()) == 0
+                    us -> us.getId() != null && us.getId().compareTo(s.getId()) == 0
             );
-            if(willBeUpdated) continue;
+            if (willBeUpdated) continue;
 
             // in this case the shift will be deleted
             // now if we need to check if the shift is used
             long summariesForShift = wrapCatch(
-                    ()->entryRepository.countBySummarizes_ShiftId(s.getId()),
+                    () -> entryRepository.countBySummarizes_ShiftId(s.getId()),
                     -1,
                     "LogbookService:verifyShiftAndUpdate"
             );
 
             assertion(
-                    ()->summariesForShift==0,
+                    () -> summariesForShift == 0,
                     ControllerLogicException.of(
                             -2,
                             String.format("The shift with the id '%s' cannot be deleted because has associated summaries", s.getId()),
@@ -423,25 +425,24 @@ public class LogbookService {
 
     /**
      * Create new tag just in case it doesn't exist
+     *
      * @param logbookId the logbook id
-     * @param tagName the tag name
+     * @param tagName   the tag name
      */
-    public void ensureTag(String logbookId, String tagName) {
+    public String ensureTag(String logbookId, String tagName) {
         assertOnLogbook(logbookId, -1, "LogbookService:ensureTag");
-
-        wrapCatch(
-                () -> {
-                    logbookRepository.ensureTag(
-                            logbookId,
-                            TagMapper.INSTANCE.fromDTO(
-                                    NewTagDTO
-                                            .builder()
-                                            .name(StringUtilities.tagNameNormalization(tagName))
-                                            .build()
-                            )
-                    );
-                    return null;
-                },
+        return wrapCatch(
+                () ->
+                        logbookRepository.ensureTag(
+                                logbookId,
+                                TagMapper.INSTANCE.fromDTO(
+                                        NewTagDTO
+                                                .builder()
+                                                .name(StringUtilities.tagNameNormalization(tagName))
+                                                .build()
+                                )
+                        )
+                ,
                 -2,
                 "LogbookService:ensureTag"
         );

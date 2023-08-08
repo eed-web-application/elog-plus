@@ -22,14 +22,12 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static java.lang.Math.abs;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -106,55 +104,53 @@ public class LogbookServiceTest {
     public void ensureTag() {
         String newLogbookID = getTestLogbook();
         AssertionsForClassTypes.assertThat(newLogbookID).isNotNull().isNotEmpty();
-
-        assertDoesNotThrow(
-                () -> logbookService.ensureTag(
-                        newLogbookID,
-                        "new_tag"
-                )
-        );
-
-        LogbookDTO fullLogbook = assertDoesNotThrow(
-                () -> logbookService.getLogbook(newLogbookID)
-        );
-        assertThat(fullLogbook).isNotNull();
-        assertThat(fullLogbook.tags()).hasSize(1);
-
-        assertDoesNotThrow(
-                () -> logbookService.ensureTag(
-                        newLogbookID,
-                        "new_tag"
-                )
-        );
-        List<TagDTO> allTags = assertDoesNotThrow(
-                () -> logbookService.getAllTags(newLogbookID)
-        );
-
-        assertThat(fullLogbook.tags()).hasSize(1);
-
+        Set<String> returnedTagID = new HashSet<>();
+        Integer counter = 0;
+        Set<String> tagsNameToInsert = new HashSet<String>(){{
+            add("new_tag_1");
+            add("new_tag_2");
+            add("new_tag_3");
+        }};
         // now test with multithreading
         int numberOfThreads = 10;
+        int numberOfExecution = 20;
         ExecutorService service = Executors.newFixedThreadPool(10);
         CountDownLatch latch = new CountDownLatch(numberOfThreads);
-        for (int i = 0; i < numberOfThreads; i++) {
+
+        for (int i = 0; i < numberOfExecution; i++) {
             service.execute(() -> {
-                assertDoesNotThrow(
+                Random rand = new Random();
+                String tagName = null;
+                synchronized (tagsNameToInsert){
+                    tagName = tagsNameToInsert.toArray(new String[tagsNameToInsert.size()])[abs(rand.nextInt()) % 3];
+                }
+                String finalTagName = tagName;
+                var newId = assertDoesNotThrow(
                         () -> logbookService.ensureTag(
                                 newLogbookID,
-                                "new_tag"
+                                finalTagName
                         )
                 );
+                synchronized (returnedTagID) {
+                    returnedTagID.add(
+                            newId
+                    );
+                }
                 latch.countDown();
             });
         }
         assertDoesNotThrow(
-                ()->latch.await()
+                () -> latch.await()
         );
-        allTags = assertDoesNotThrow(
+        var allTags = assertDoesNotThrow(
                 () -> logbookService.getAllTags(newLogbookID)
         );
+        assertThat(returnedTagID).hasSize(3);
+        assertThat(allTags)
+                .hasSize(3)
+                .extracting("id")
+                .containsAll(returnedTagID);
 
-        assertThat(fullLogbook.tags()).hasSize(1);
     }
 
     @Test
@@ -516,11 +512,11 @@ public class LogbookServiceTest {
                                 .name("Shift2")
                                 .from(
                                         DateUtilities.toUTCString(
-                                        LocalTime.of(
-                                                2,
-                                                0
+                                                LocalTime.of(
+                                                        2,
+                                                        0
+                                                )
                                         )
-                                )
                                 )
                                 .to(
                                         DateUtilities.toUTCString(
@@ -1315,7 +1311,7 @@ public class LogbookServiceTest {
                                                 59
                                         )
                                 )
-                                )
+                        )
                         .build()
         );
         replaceShifts.add(

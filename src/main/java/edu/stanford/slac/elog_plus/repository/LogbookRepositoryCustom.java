@@ -17,7 +17,7 @@ public interface LogbookRepositoryCustom {
      * @param logbookId the id of the logbook
      * @param newTag the new tag to create
      */
-    void ensureTag(String logbookId, Tag newTag) throws UnsupportedEncodingException, NoSuchAlgorithmException;
+    String ensureTag(String logbookId, Tag newTag) throws UnsupportedEncodingException, NoSuchAlgorithmException;
 
     List<Tag> getAllTagFor(String logbookId);
 
