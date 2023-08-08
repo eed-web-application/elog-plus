@@ -26,9 +26,10 @@ spring:
       value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
   servlet:
     multipart:
-      max-file-size: 100MB
       enabled: true
       file-size-threshold: 1MB
+      max-file-size: ${ELOG_PLUS_MAX_POST_SIZE:100MB}
+      max-request-size: ${ELOG_PLUS_MAX_POST_SIZE:100MB}
 
 edu:
   stanford:
