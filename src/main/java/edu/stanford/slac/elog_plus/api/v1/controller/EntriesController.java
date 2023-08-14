@@ -1,21 +1,17 @@
 package edu.stanford.slac.elog_plus.api.v1.controller;
 
-import edu.stanford.slac.elog_plus.annotations.RequestJsonParam;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.service.EntryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -88,7 +84,7 @@ public class EntriesController {
             @RequestParam("includeHistory") Optional<Boolean> includeHistory
     ) {
         return ApiResultResponse.of(
-                entryService.getFullLog(id, includeFollowUps, includeFollowingUps, includeHistory)
+                entryService.getFullEntry(id, includeFollowUps, includeFollowingUps, includeHistory)
         );
     }
 
