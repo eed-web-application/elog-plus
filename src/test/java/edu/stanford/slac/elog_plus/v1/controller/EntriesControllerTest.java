@@ -446,6 +446,97 @@ public class EntriesControllerTest {
     }
 
     @Test
+    public void createNewSupersedeOfEntryWithFollowUp() throws Exception {
+        var newLogBookResult = getTestLogbook();
+        ApiResultResponse<String> newLogIDResult =
+                assertDoesNotThrow(
+                        () ->
+                                testHelperService.createNewLog(
+                                        mockMvc,
+                                        status().isCreated(),
+                                        EntryNewDTO
+                                                .builder()
+                                                .logbook(newLogBookResult.getPayload().name())
+                                                .text("This is a log for test")
+                                                .title("A very wonderful log")
+                                                .build()
+                                )
+                );
+
+        AssertionsForClassTypes.assertThat(newLogIDResult).isNotNull();
+        AssertionsForClassTypes.assertThat(newLogIDResult.getErrorCode()).isEqualTo(0);
+
+        // create new followups
+        ApiResultResponse<String> newFollowUpsLogIDResult = assertDoesNotThrow(
+                () -> testHelperService.createNewFollowUpLog(
+                        mockMvc,
+                        status().isCreated(),
+                        newLogIDResult.getPayload(),
+                        EntryNewDTO
+                                .builder()
+                                .logbook(newLogBookResult.getPayload().name())
+                                .text("This is a followup for entry %s".formatted(newLogIDResult.getPayload()))
+                                .title("A very wonderful follow up log %s".formatted(newLogIDResult.getPayload()))
+                                .build()
+                )
+        );
+        AssertionsForClassTypes.assertThat(newFollowUpsLogIDResult).isNotNull();
+        AssertionsForClassTypes.assertThat(newFollowUpsLogIDResult.getErrorCode()).isEqualTo(0);
+
+        // create supersede of followed up logs
+        ApiResultResponse<String> newSupersedeLogIDResult = assertDoesNotThrow(
+                () -> testHelperService.createNewSupersedeLog(
+                        mockMvc,
+                        status().isCreated(),
+                        newLogIDResult.getPayload(),
+                        EntryNewDTO
+                                .builder()
+                                .logbook(newLogBookResult.getPayload().name())
+                                .text("This is a log for test")
+                                .title("A very wonderful supersede log")
+                                .build()
+                )
+        );
+        AssertionsForClassTypes.assertThat(newSupersedeLogIDResult).isNotNull();
+        AssertionsForClassTypes.assertThat(newSupersedeLogIDResult.getErrorCode()).isEqualTo(0);
+
+        //check old log for supersede info
+        ApiResultResponse<EntryDTO> supersededFull = assertDoesNotThrow(
+                () ->
+                        testHelperService.getFullLog(
+                                mockMvc,
+                                status().isOk(),
+                                newLogIDResult.getPayload(),
+                                true
+                        )
+        );
+
+        assertThat(supersededFull.getErrorCode()).isEqualTo(0);
+        assertThat(supersededFull.getPayload().supersedeBy()).isEqualTo(newSupersedeLogIDResult.getPayload());
+        assertThat(supersededFull.getPayload().followUps()).isNotNull().isNotEmpty();
+
+        //check new supersede log and check follow-ups
+        ApiResultResponse<EntryDTO> supersedeFull = assertDoesNotThrow(
+                () ->
+                        testHelperService.getFullLog(
+                                mockMvc,
+                                status().isOk(),
+                                newSupersedeLogIDResult.getPayload(),
+                                true
+                        )
+        );
+
+        assertThat(supersedeFull.getErrorCode()).isEqualTo(0);
+        assertThat(supersedeFull.getPayload().supersedeBy()).isNull();
+
+        assertThat(
+                supersedeFull.getPayload().followUps()
+        ).isEqualTo(
+                supersededFull.getPayload().followUps()
+        );
+    }
+
+    @Test
     public void getLogHistoryAndFollowingLog() throws Exception {
         var newLogBookResult = getTestLogbook();
         ApiResultResponse<String> newLogIDResult =

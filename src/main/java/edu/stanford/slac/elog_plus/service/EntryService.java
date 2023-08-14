@@ -4,7 +4,6 @@ import com.github.javafaker.Faker;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.api.v1.mapper.EntryMapper;
 import edu.stanford.slac.elog_plus.api.v1.mapper.QueryParameterMapper;
-import edu.stanford.slac.elog_plus.api.v1.mapper.ShiftMapper;
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.exception.EntryNotFound;
 import edu.stanford.slac.elog_plus.exception.ShiftNotFound;
@@ -127,6 +126,24 @@ public class EntryService {
     /**
      * Create a new log entry
      *
+     * @param entryNewDTO is a new log information
+     * @return the id of the newly created log
+     */
+    @Transactional(propagation = Propagation.NESTED)
+    public Entry toModelWithAuthorization(EntryNewDTO entryNewDTO) {
+        Faker faker = new Faker();
+        return EntryMapper.INSTANCE.fromDTO(
+                        entryNewDTO,
+                        faker.name().firstName(),
+                        faker.name().lastName(),
+                        faker.name().username()
+
+                );
+    }
+
+    /**
+     * Create a new log entry
+     *
      * @param newEntry is a new log information
      * @return the id of the newly created log
      */
@@ -238,21 +255,26 @@ public class EntryService {
         return newEntry.getId();
     }
 
-    public EntryDTO getFullLog(String id) {
-        return getFullLog(id, Optional.of(false), Optional.of(false), Optional.of(false));
+    /**
+     * Get the full entry
+     *
+     * @param id unique id of the entry
+     * @return the full entry
+     */
+    public EntryDTO getFullEntry(String id) {
+        return getFullEntry(id, Optional.of(false), Optional.of(false), Optional.of(false));
     }
 
     /**
-     * return the full log
+     * Return the full entry
      *
      * @param id                  the unique identifier of the log
      * @param includeFollowUps    if true the result will include the follow-up logs
      * @param includeFollowingUps if true the result will include all the following up of this
      * @param followHistory       if true the result will include the log history
-     * @return the full log description
+     * @return the full entry
      */
-    public EntryDTO getFullLog(String
-                                       id, Optional<Boolean> includeFollowUps, Optional<Boolean> includeFollowingUps, Optional<Boolean> followHistory) {
+    public EntryDTO getFullEntry(String id, Optional<Boolean> includeFollowUps, Optional<Boolean> includeFollowingUps, Optional<Boolean> followHistory) {
         EntryDTO result = null;
         Optional<Entry> foundEntry =
                 wrapCatch(
@@ -276,7 +298,7 @@ public class EntryService {
         if (includeFollowUps.isPresent() && includeFollowUps.get()) {
             List<EntryDTO> list = new ArrayList<>(foundEntry.get().getFollowUps().size());
             for (String fID : foundEntry.get().getFollowUps()) {
-                list.add(getFullLog(fID));
+                list.add(getFullEntry(fID));
 
             }
             result = result.toBuilder()
@@ -364,39 +386,42 @@ public class EntryService {
      */
     @Transactional
     public String createNewSupersede(String id, EntryNewDTO newLog) {
-        Optional<Entry> supersededLog =
+        Entry supersededLog =
                 wrapCatch(
                         () -> entryRepository.findById(id),
                         -1,
                         "LogService::createNewSupersede"
+                ).orElseThrow(
+                        () -> EntryNotFound.entryNotFoundBuilder()
+                                .errorCode(-2)
+                                .errorDomain("LogService::createNewSupersede")
+                                .build()
                 );
         assertion(
-                supersededLog::isPresent,
-                EntryNotFound.entryNotFoundBuilder()
-                        .errorCode(-2)
-                        .errorDomain("LogService::createNewSupersede")
-                        .build()
-        );
-        Entry l = supersededLog.get();
-        assertion(
-                () -> (l.getSupersedeBy() == null ||
-                        l.getSupersedeBy().isEmpty())
+                () -> (supersededLog.getSupersedeBy() == null ||
+                        supersededLog.getSupersedeBy().isEmpty())
                 ,
                 SupersedeAlreadyCreated.supersedeAlreadyCreatedBuilder()
                         .errorCode(-3)
                         .errorDomain("LogService::createNewSupersede")
                         .build()
         );
-        //create supersede
-        String newLogID = createNew(newLog);
+
+        // create supersede
+        Entry newEntryModel = toModelWithAuthorization(newLog);
+        // copy followups to the supersede entry
+        newEntryModel.setFollowUps(supersededLog.getFollowUps());
+        // create entry
+        String newLogID = createNew(newEntryModel);
         // update supersede
-        l.setSupersedeBy(newLogID);
+        supersededLog.setSupersedeBy(newLogID);
+        //update superseded entry
         wrapCatch(
-                () -> entryRepository.save(l),
+                () -> entryRepository.save(supersededLog),
                 -4,
                 "LogService::createNewSupersede"
         );
-        log.info("New supersede for '{}' created with id '{}'", l.getTitle(), newLogID);
+        log.info("New supersede for '{}' created with id '{}'", supersededLog.getTitle(), newLogID);
         return newLogID;
     }
 
@@ -409,28 +434,26 @@ public class EntryService {
      */
     @Transactional
     public String createNewFollowUp(String id, EntryNewDTO newLog) {
-        Optional<Entry> rootLog =
+        Entry rootLog =
                 wrapCatch(
                         () -> entryRepository.findById(id),
                         -1,
                         "LogService::createNewFollowUp"
+                ).orElseThrow(
+                        () -> EntryNotFound.entryNotFoundBuilder()
+                                .errorCode(-2)
+                                .errorDomain("LogService::createNewFollowUp")
+                                .build()
                 );
-        assertion(
-                rootLog::isPresent,
-                -2,
-                "The log to follow-up has not been found",
-                "LogService::createNewFollowUp"
-        );
-        Entry l = rootLog.get();
         String newFollowupLogID = createNew(newLog);
         // update supersede
-        l.getFollowUps().add(newFollowupLogID);
+        rootLog.getFollowUps().add(newFollowupLogID);
         wrapCatch(
-                () -> entryRepository.save(l),
+                () -> entryRepository.save(rootLog),
                 -4,
                 "LogService::createNewSupersede"
         );
-        log.info("New followup for '{}' created with id '{}'", l.getTitle(), newFollowupLogID);
+        log.info("New followup for '{}' created with id '{}'", rootLog.getTitle(), newFollowupLogID);
         return newFollowupLogID;
     }
 
@@ -441,28 +464,26 @@ public class EntryService {
      * @return the list of all the followup of the specific log identified by the id
      */
     public List<EntrySummaryDTO> getAllFollowUpForALog(String id) {
-        Optional<Entry> rootLog =
+        Entry rootLog =
                 wrapCatch(
                         () -> entryRepository.findById(id),
                         -1,
                         "LogService::getAllFollowUpForALog"
+                ).orElseThrow(
+                        () -> EntryNotFound.entryNotFoundBuilder()
+                                .errorCode(-2)
+                                .errorDomain("LogService::getAllFollowUpForALog")
+                                .build()
                 );
         assertion(
-                rootLog::isPresent,
-                EntryNotFound.entryNotFoundBuilder()
-                        .errorCode(-2)
-                        .errorDomain("LogService::getAllFollowUpForALog")
-                        .build()
-        );
-        assertion(
-                () -> (rootLog.get().getFollowUps().size() > 0),
+                () -> !rootLog.getFollowUps().isEmpty(),
                 -3,
                 "The log has not been found",
                 "LogService::getAllFollowUpForALog"
         );
         List<Entry> followUp =
                 wrapCatch(
-                        () -> entryRepository.findAllByIdIn(rootLog.get().getFollowUps()),
+                        () -> entryRepository.findAllByIdIn(rootLog.getFollowUps()),
                         -1,
                         "LogService::getAllFollowUpForALog"
                 );

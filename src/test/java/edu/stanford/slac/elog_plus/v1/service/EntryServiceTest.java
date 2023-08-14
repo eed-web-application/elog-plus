@@ -8,7 +8,6 @@ import edu.stanford.slac.elog_plus.exception.ShiftNotFound;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.FileObjectDescription;
 import edu.stanford.slac.elog_plus.model.Logbook;
-import edu.stanford.slac.elog_plus.model.QueryParameterWithAnchor;
 import edu.stanford.slac.elog_plus.service.AttachmentService;
 import edu.stanford.slac.elog_plus.service.EntryService;
 import edu.stanford.slac.elog_plus.service.LogbookService;
@@ -103,7 +102,7 @@ public class EntryServiceTest {
 
         EntryDTO fullLog =
                 assertDoesNotThrow(
-                        () -> entryService.getFullLog(
+                        () -> entryService.getFullEntry(
                                 newLogID
                         )
                 );
@@ -134,7 +133,7 @@ public class EntryServiceTest {
         EntryNotFound exception =
                 assertThrows(
                         EntryNotFound.class,
-                        () -> entryService.getFullLog("wrong id")
+                        () -> entryService.getFullEntry("wrong id")
                 );
         assertThat(exception.getErrorCode()).isEqualTo(-2);
     }
@@ -156,7 +155,7 @@ public class EntryServiceTest {
 
         EntryDTO fullLog =
                 assertDoesNotThrow(
-                        () -> entryService.getFullLog(newLogID)
+                        () -> entryService.getFullEntry(newLogID)
                 );
         assertThat(fullLog.id()).isEqualTo(newLogID);
     }
@@ -189,7 +188,7 @@ public class EntryServiceTest {
 
         EntryDTO fullLog =
                 assertDoesNotThrow(
-                        () -> entryService.getFullLog(newLogID)
+                        () -> entryService.getFullEntry(newLogID)
                 );
         assertThat(fullLog.id()).isEqualTo(newLogID);
         assertThat(fullLog.eventAt()).isEqualTo(eventAt);
@@ -212,7 +211,7 @@ public class EntryServiceTest {
 
         EntryDTO fullLog =
                 assertDoesNotThrow(
-                        () -> entryService.getFullLog(newLogID)
+                        () -> entryService.getFullEntry(newLogID)
                 );
         assertThat(fullLog.id()).isEqualTo(newLogID);
         assertThat(fullLog.eventAt()).isEqualTo(fullLog.loggedAt());
@@ -266,14 +265,14 @@ public class EntryServiceTest {
                 );
 
         EntryDTO supersededLog = assertDoesNotThrow(
-                () -> entryService.getFullLog(supersededLogID)
+                () -> entryService.getFullEntry(supersededLogID)
         );
 
         assertThat(supersededLog).isNotNull();
         assertThat(supersededLog.supersedeBy()).isEqualTo(newLogID);
 
         EntryDTO fullLog = assertDoesNotThrow(
-                () -> entryService.getFullLog(newLogID)
+                () -> entryService.getFullEntry(newLogID)
         );
 
         assertThat(fullLog).isNotNull();
@@ -480,7 +479,7 @@ public class EntryServiceTest {
 
         EntryDTO logWithFlowingUpLog =
                 assertDoesNotThrow(
-                        () -> entryService.getFullLog(
+                        () -> entryService.getFullEntry(
                                 newFollowUpOneID,
                                 Optional.empty(),
                                 Optional.of(true),
@@ -536,7 +535,7 @@ public class EntryServiceTest {
         // check for the attachment are well filled into dto
         EntryDTO foundLog =
                 assertDoesNotThrow(
-                        () -> entryService.getFullLog(newLogID)
+                        () -> entryService.getFullEntry(newLogID)
                 );
         assertThat(foundLog).isNotNull();
         assertThat(foundLog.attachments().size()).isEqualTo(1);
@@ -709,7 +708,7 @@ public class EntryServiceTest {
 
 
         // now search in the middle of the data set
-        EntryDTO middleAnchorLog = entryService.getFullLog(anchorID);
+        EntryDTO middleAnchorLog = entryService.getFullEntry(anchorID);
         List<EntrySummaryDTO> prevAndNextPageByMiddlePin = assertDoesNotThrow(
                 () -> entryService.searchAll(
                         QueryWithAnchorDTO
@@ -842,7 +841,7 @@ public class EntryServiceTest {
 
 
         // now search in the middle of the data set
-        EntryDTO middleAnchorLog = entryService.getFullLog(anchorID);
+        EntryDTO middleAnchorLog = entryService.getFullEntry(anchorID);
         List<EntrySummaryDTO> prevAndNextPageByMiddlePin = assertDoesNotThrow(
                 () -> entryService.searchAll(
                         QueryWithAnchorDTO
@@ -1054,7 +1053,7 @@ public class EntryServiceTest {
 
         for (EntrySummaryDTO es :
                 firstPage) {
-            EntryDTO fullEntry = entryService.getFullLog(
+            EntryDTO fullEntry = entryService.getFullEntry(
                     es.id()
             );
             assertThat(fullEntry).isNotNull();
