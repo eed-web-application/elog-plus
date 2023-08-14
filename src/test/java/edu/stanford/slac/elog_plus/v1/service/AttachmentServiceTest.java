@@ -1,5 +1,6 @@
 package edu.stanford.slac.elog_plus.v1.service;
 
+import edu.stanford.slac.elog_plus.api.v1.dto.AttachmentDTO;
 import edu.stanford.slac.elog_plus.model.Attachment;
 import edu.stanford.slac.elog_plus.model.FileObjectDescription;
 import edu.stanford.slac.elog_plus.service.AttachmentService;
@@ -26,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
@@ -57,28 +59,38 @@ public class AttachmentServiceTest {
                 () -> documentGenerationService.getTestJpeg()
         )) {
             //save the
-            String attachmentID = attachmentService.createAttachment(
-                    FileObjectDescription
-                            .builder()
-                            .fileName("jpegFileName")
-                            .contentType(MediaType.IMAGE_JPEG_VALUE)
-                            .is(is)
-                            .build(),
-                    true
+            String attachmentID = assertDoesNotThrow(
+                    () -> attachmentService.createAttachment(
+                            FileObjectDescription
+                                    .builder()
+                                    .fileName("jpegFileName")
+                                    .contentType(MediaType.IMAGE_JPEG_VALUE)
+                                    .is(is)
+                                    .build(),
+                            true
+                    )
             );
 
-            await().atMost(10, SECONDS).until(
+            await()
+                    .atMost(30, SECONDS)
+                    .pollDelay(2, SECONDS)
+                    .until(
                     () -> {
                         String state = attachmentService.getPreviewProcessingState(attachmentID);
                         log.info("state {} for attachement id {}", state, attachmentID);
                         return state.compareTo(Attachment.PreviewProcessingState.Completed.name()) == 0;
                     }
             );
+
+            AttachmentDTO attachment = assertDoesNotThrow(
+                    () -> attachmentService.getAttachment(attachmentID)
+            );
+            assertThat(attachment.previewState()).isEqualTo(Attachment.PreviewProcessingState.Completed.name());
         }
     }
 
     @Test
-    public void testPreviewJOngOk() throws IOException {
+    public void testPreviewPNGOk() throws IOException {
         try (InputStream is = assertDoesNotThrow(
                 () -> documentGenerationService.getTestPng()
         )) {
@@ -100,6 +112,11 @@ public class AttachmentServiceTest {
                         return state.compareTo(Attachment.PreviewProcessingState.Completed.name()) == 0;
                     }
             );
+
+            AttachmentDTO attachment = assertDoesNotThrow(
+                    () -> attachmentService.getAttachment(attachmentID)
+            );
+            assertThat(attachment.previewState()).isEqualTo(Attachment.PreviewProcessingState.Completed.name());
         }
     }
 

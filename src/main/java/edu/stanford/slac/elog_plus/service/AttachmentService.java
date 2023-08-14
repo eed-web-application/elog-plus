@@ -3,17 +3,21 @@ package edu.stanford.slac.elog_plus.service;
 import edu.stanford.slac.elog_plus.api.v1.dto.AttachmentDTO;
 import edu.stanford.slac.elog_plus.api.v1.mapper.AttachmentMapper;
 import edu.stanford.slac.elog_plus.config.AppProperties;
+import edu.stanford.slac.elog_plus.exception.AttachmentNotFound;
 import edu.stanford.slac.elog_plus.model.Attachment;
 import edu.stanford.slac.elog_plus.model.FileObjectDescription;
 import edu.stanford.slac.elog_plus.repository.AttachmentRepository;
 import edu.stanford.slac.elog_plus.repository.StorageRepository;
+import jdk.jfr.ContentType;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.http.MediaType;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +34,7 @@ public class AttachmentService {
     final private StorageRepository storageRepository;
     final private AttachmentRepository attachmentRepository;
     final private KafkaTemplate<String, Attachment> attachmentProducer;
+
     /**
      * @param attachment
      * @return
@@ -47,7 +52,7 @@ public class AttachmentService {
                         ),
                         0,
                         "AttachmentService::createAttachment");
-        try{
+        try {
             wrapCatch(
                     () -> {
                         storageRepository.uploadFile(newAttachmentID.getId(), attachment);
@@ -58,13 +63,16 @@ public class AttachmentService {
             );
         } finally {
             wrapCatch(
-                    () -> {attachment.getIs().close();return null;},
+                    () -> {
+                        attachment.getIs().close();
+                        return null;
+                    },
                     -2,
                     "AttachmentService::createAttachment"
             );
         }
 
-        if(createPreview) {
+        if (createPreview) {
             attachmentProducer.send(appProperties.getImagePreviewTopic(), att);
         }
         log.info("New attachment created with id {}", newAttachmentID.getId());
@@ -86,22 +94,21 @@ public class AttachmentService {
     public FileObjectDescription getAttachmentContent(String id) {
         FileObjectDescription attachment = FileObjectDescription.builder().build();
         // fetch
-        Optional<Attachment> foundAttachment = wrapCatch(
+        Attachment foundAttachment = wrapCatch(
                 () -> attachmentRepository.findById(id),
                 -1,
-                "AttachmentService::getAttachment"
+                "AttachmentService::getAttachmentContent"
+        ).orElseThrow(
+                () -> AttachmentNotFound.attachmentNotFoundBuilder()
+                        .errorCode(-2)
+                        .attachmentID(id)
+                        .errorDomain("AttachmentService::getAttachmentContent")
+                        .build()
         );
 
-        //check
-        assertion(
-                foundAttachment::isPresent,
-                -2,
-                "Attachment not found",
-                "AttachmentService::getAttachment"
-        );
 
         // retrieve stored file
-        attachment.setFileName(foundAttachment.get().getFileName());
+        attachment.setFileName(foundAttachment.getFileName());
         wrapCatch(
                 () -> {
                     storageRepository.getFile(id, attachment);
@@ -114,32 +121,29 @@ public class AttachmentService {
     }
 
     /**
-     *
      * @param id
      * @return
      */
     public FileObjectDescription getPreviewContent(String id) {
         FileObjectDescription attachment = FileObjectDescription.builder().build();
         // fetch
-        Optional<Attachment> foundAttachment = wrapCatch(
+        Attachment foundAttachment = wrapCatch(
                 () -> attachmentRepository.findById(id),
                 -1,
                 "AttachmentService::getAttachment"
-        );
-
-        //check
-        assertion(
-                foundAttachment::isPresent,
-                -2,
-                "Attachment not found",
-                "AttachmentService::getAttachment"
+        ).orElseThrow(
+                () -> AttachmentNotFound.attachmentNotFoundBuilder()
+                        .errorCode(-2)
+                        .attachmentID(id)
+                        .errorDomain("AttachmentService::getAttachment")
+                        .build()
         );
 
         // retrieve stored file
-        attachment.setFileName(foundAttachment.get().getFileName());
+        attachment.setFileName(foundAttachment.getFileName());
         wrapCatch(
                 () -> {
-                    storageRepository.getFile(foundAttachment.get().getPreviewID(), attachment);
+                    storageRepository.getFile(foundAttachment.getPreviewID(), attachment);
                     return null;
                 },
                 -1,
@@ -149,131 +153,161 @@ public class AttachmentService {
     }
 
     /**
+     * Return the mini preview object description
+     * @param id the unique identifier of the attachment
+     * @return the object stream of the mini preview
+     */
+    public FileObjectDescription getMiniPreviewContent(String id) {
+        FileObjectDescription attachment = FileObjectDescription.builder().build();
+        // fetch
+        Attachment foundAttachment = wrapCatch(
+                () -> attachmentRepository.findById(id),
+                -1,
+                "AttachmentService::getMiniPreviewContent"
+        ).orElseThrow(
+                () -> AttachmentNotFound.attachmentNotFoundBuilder()
+                        .errorCode(-2)
+                        .attachmentID(id)
+                        .errorDomain("AttachmentService::getMiniPreviewContent")
+                        .build()
+        );
+
+        // retrieve stored mini preview from model
+        attachment.setFileName(foundAttachment.getFileName());
+        attachment.setIs(new ByteArrayInputStream(foundAttachment.getMiniPreview()));
+        attachment.setContentType(MediaType.IMAGE_JPEG_VALUE);
+        return attachment;
+    }
+
+    /**
+     * Return the attachment dto
      *
-     * @param id
-     * @return
+     * @param id the attachment id
+     * @return the attachment dto
      */
     public AttachmentDTO getAttachment(String id) {
         // fetch
-        Optional<Attachment> foundAttachment = wrapCatch(
+        Attachment foundAttachment = wrapCatch(
                 () -> attachmentRepository.findById(id),
                 -1,
                 "AttachmentService::getAttachment"
+        ).orElseThrow(
+                () -> AttachmentNotFound.attachmentNotFoundBuilder()
+                        .errorCode(-2)
+                        .attachmentID(id)
+                        .errorDomain("AttachmentService::getAttachment")
+                        .build()
         );
-
-        //check
-        assertion(
-                foundAttachment::isPresent,
-                -2,
-                "Attachment not found",
-                "AttachmentService::getAttachment"
+        return AttachmentMapper.INSTANCE.fromModel(
+                foundAttachment
         );
-
-       return AttachmentMapper.INSTANCE.fromModel(foundAttachment.get());
     }
 
     /**
-     *
-     * @param ids
-     * @return
+     * Set the preview id
+     * @param id the id of the attachment
+     * @param previewID the preview identifier for fetch it from object store
      */
-    public List<AttachmentDTO> getAttachment(List<String> ids) {
-        List<AttachmentDTO> result = new ArrayList<>();
-        for (String id:
-             ids) {
-            // fetch
-            Optional<Attachment> foundAttachment = wrapCatch(
-                    () -> attachmentRepository.findById(id),
-                    -1,
-                    "AttachmentService::getAttachment"
-            );
-
-            //check
-            assertion(
-                    foundAttachment::isPresent,
-                    -2,
-                    "Attachment not found",
-                    "AttachmentService::getAttachment"
-            );
-            result.add(
-                    AttachmentMapper.INSTANCE.fromModel(foundAttachment.get())
-            );
-        }
-
-        return result;
-    }
-
-    /**
-     *
-     * @param id
-     * @param previewID
-     * @return
-     */
-    public boolean setPreviewID(String id, String previewID) {
+    public void setPreviewID(String id, String previewID) {
         // fetch
-        Optional<Attachment> foundAttachment = wrapCatch(
+        Attachment foundAttachment = wrapCatch(
                 () -> attachmentRepository.findById(id),
                 -1,
                 "AttachmentService::setPreviewID"
+        ).orElseThrow(
+                () -> AttachmentNotFound.attachmentNotFoundBuilder()
+                        .errorCode(-2)
+                        .attachmentID(id)
+                        .errorDomain("AttachmentService::setPreviewID")
+                        .build()
         );
-
-        //check
-        assertion(
-                foundAttachment::isPresent,
-                -2,
-                "Attachment not found",
-                "AttachmentService::setPreviewID"
+        foundAttachment.setPreviewID(previewID);
+        Attachment finalFoundAttachment = foundAttachment;
+        foundAttachment = wrapCatch(
+                () -> attachmentRepository.save(finalFoundAttachment),
+                -3,
+                "AttachmentService::setPreviewProcessingState"
         );
-
-        return attachmentRepository.setPreviewID(id, previewID);
+        log.info("Set the preview id to {} for the attachment {}", previewID, foundAttachment.getId());
     }
 
     /**
+     * Update the processing state of the attachment
      *
-     * @param id
-     * @param processingState
-     * @return
+     * @param id              the unique identifier of the attachment
+     * @param processingState the new state of the attachment
      */
-    public boolean setPreviewProcessingState(String id, Attachment.PreviewProcessingState processingState) {
+    public void setPreviewProcessingState(String id, Attachment.PreviewProcessingState processingState) {
         // fetch
-        Optional<Attachment> foundAttachment = wrapCatch(
+        Attachment foundAttachment = wrapCatch(
                 () -> attachmentRepository.findById(id),
                 -1,
                 "AttachmentService::setPreviewProcessingState"
+        ).orElseThrow(
+                () -> AttachmentNotFound.attachmentNotFoundBuilder()
+                        .errorCode(-2)
+                        .attachmentID(id)
+                        .errorDomain("AttachmentService::setPreviewProcessingState")
+                        .build()
         );
-
-        //check
-        assertion(
-                foundAttachment::isPresent,
-                -2,
-                "Attachment not found",
+        foundAttachment.setPreviewState(processingState);
+        Attachment finalFoundAttachment = foundAttachment;
+        foundAttachment = wrapCatch(
+                () -> attachmentRepository.save(finalFoundAttachment),
+                -3,
                 "AttachmentService::setPreviewProcessingState"
         );
-
-        return attachmentRepository.setPreviewState(id, processingState);
+        log.info("Update the preview processing state to {} for the attachment {}", processingState, foundAttachment.getId());
     }
 
     /**
+     * Return the processing state of the attachment
      *
-     * @param id
-     * @return
+     * @param id the unique id of the attachment
+     * @return The string that represent the processing state
      */
     public String getPreviewProcessingState(String id) {
         // fetch
-        Optional<Attachment> foundAttachment = wrapCatch(
+        Attachment foundAttachment = wrapCatch(
                 () -> attachmentRepository.findById(id),
                 -1,
-                "AttachmentService::setPreviewProcessingState"
+                "AttachmentService::getPreviewProcessingState"
+        ).orElseThrow(
+                () -> AttachmentNotFound.attachmentNotFoundBuilder()
+                        .errorCode(-2)
+                        .attachmentID(id)
+                        .errorDomain("AttachmentService::getPreviewProcessingState")
+                        .build()
+        );
+        return foundAttachment.getPreviewState().name();
+    }
+
+    /**
+     * Set the mini preview of an attachment
+     * @param id the unique identifier of an attachment
+     * @param byteArray the byte array represent the mini preview
+     */
+    public void setMiniPreview(String id, byte[] byteArray) {
+        // fetch
+        Attachment foundAttachment = wrapCatch(
+                () -> attachmentRepository.findById(id),
+                -1,
+                "AttachmentService::setMiniPreview"
+        ).orElseThrow(
+                () -> AttachmentNotFound.attachmentNotFoundBuilder()
+                        .errorCode(-2)
+                        .attachmentID(id)
+                        .errorDomain("AttachmentService::setMiniPreview")
+                        .build()
         );
 
-        //check
-        assertion(
-                foundAttachment::isPresent,
-                -2,
-                "Attachment not found",
-                "AttachmentService::setPreviewProcessingState"
+        foundAttachment.setMiniPreview(byteArray);
+        Attachment finalFoundAttachment = foundAttachment;
+        foundAttachment = wrapCatch(
+                () -> attachmentRepository.save(finalFoundAttachment),
+                -3,
+                "AttachmentService::setMiniPreview"
         );
-
-        return attachmentRepository.getPreviewState(id).name();
+        log.info("Set the mini preview for the attachment {}", foundAttachment.getId());
     }
 }

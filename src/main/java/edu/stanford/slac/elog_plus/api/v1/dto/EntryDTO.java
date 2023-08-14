@@ -21,8 +21,6 @@ public record EntryDTO(
         String supersedeBy,
         @Schema(description = "the type of the entry")
         String entryType,
-        String filePs,
-        String filePreview,
         String logbook,
         String summarizeShift,
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)

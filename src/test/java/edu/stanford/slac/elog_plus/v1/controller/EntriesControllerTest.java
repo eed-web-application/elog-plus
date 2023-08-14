@@ -7,6 +7,7 @@ import edu.stanford.slac.elog_plus.model.Attachment;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import edu.stanford.slac.elog_plus.service.LogbookService;
+import edu.stanford.slac.elog_plus.v1.service.DocumentGenerationService;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.assertj.core.api.AssertionsForInterfaceTypes;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,7 +34,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -55,6 +59,9 @@ public class EntriesControllerTest {
 
     @Autowired
     private TestHelperService testHelperService;
+
+    @Autowired
+    private DocumentGenerationService documentGenerationService;
 
     @BeforeEach
     public void preTest() {
@@ -83,6 +90,77 @@ public class EntriesControllerTest {
 
         AssertionsForClassTypes.assertThat(newLogID).isNotNull();
         AssertionsForClassTypes.assertThat(newLogID.getErrorCode()).isEqualTo(0);
+    }
+
+    @Test
+    public void createNewLogWithAttachement() throws Exception {
+        ApiResultResponse<String> newAttachmentID = null;
+        try (InputStream is = documentGenerationService.getTestPng()) {
+            newAttachmentID = assertDoesNotThrow(
+                    () -> testHelperService.newAttachment(
+                            mockMvc,
+                            status().isCreated(),
+                            new MockMultipartFile(
+                                    "uploadFile",
+                                    "test.png",
+                                    MediaType.IMAGE_PNG_VALUE,
+                                    is
+                            )
+                    )
+            );
+        }
+        assertThat(newAttachmentID.getErrorCode()).isEqualTo(0);
+
+        var newLogBookResult = getTestLogbook();
+        ApiResultResponse<String> finalNewAttachmentID = newAttachmentID;
+        ApiResultResponse<String> newLogID =
+                assertDoesNotThrow(
+                        () ->
+                                testHelperService.createNewLog(
+                                        mockMvc,
+                                        status().isCreated(),
+                                        EntryNewDTO
+                                                .builder()
+                                                .logbook(newLogBookResult.getPayload().name())
+                                                .text("This is a log for test")
+                                                .title("A very wonderful log")
+                                                .attachments(
+                                                        List.of(
+                                                                finalNewAttachmentID.getPayload()
+                                                        )
+                                                )
+                                                .build()
+                                )
+                );
+
+        AssertionsForClassTypes.assertThat(newLogID).isNotNull();
+        AssertionsForClassTypes.assertThat(newLogID.getErrorCode()).isEqualTo(0);
+        await().atMost(30, SECONDS).pollDelay(2, MILLISECONDS).until(
+                () -> {
+                    ApiResultResponse<EntryDTO> logDto = assertDoesNotThrow(
+                            () ->
+                                    testHelperService.getFullLog(
+                                            mockMvc,
+                                            newLogID.getPayload()
+                                    )
+                    );
+                    assertThat(logDto.getErrorCode()).isEqualTo(0);
+                    return logDto.getPayload().attachments().size()==1 &&
+                            logDto.getPayload().attachments().get(0).previewState().compareTo(Attachment.PreviewProcessingState.Completed.name()) ==0;
+                }
+        );
+
+        ApiResultResponse<EntryDTO> logDto = assertDoesNotThrow(
+                () ->
+                        testHelperService.getFullLog(
+                                mockMvc,
+                                newLogID.getPayload()
+                        )
+        );
+        assertThat(logDto.getErrorCode()).isEqualTo(0);
+        assertThat(logDto.getPayload().attachments().size()).isEqualTo(1);
+        assertThat(logDto.getPayload().attachments().get(0).miniPreview()).isNotNull();
+
     }
 
     @Test
