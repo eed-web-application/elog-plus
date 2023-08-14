@@ -10,7 +10,9 @@ public interface AttachmentRepositoryCustom {
      * @param previewID the newly uploaded preview storage unique identifier
      * @return
      */
-    boolean setPreviewID(String id, String previewID);
+    void setPreviewID(String id, String previewID);
+
+    void setMiniPreview(String id, byte[] byteArray);
 
     /**
      * Set the preview processing state for an attachment
@@ -19,7 +21,7 @@ public interface AttachmentRepositoryCustom {
      * @param state is the current state of the preview
      * @return
      */
-    boolean setPreviewState(String id, Attachment.PreviewProcessingState state);
+    void setPreviewState(String id, Attachment.PreviewProcessingState state);
 
     /**
      * retrn the current processing state of a preview

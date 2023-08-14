@@ -43,9 +43,10 @@ public class ProcessingPreview {
         try {
             attachmentService.setPreviewProcessingState(attachment.getId(), Attachment.PreviewProcessingState.Processing);
             fod = attachmentService.getAttachmentContent(attachment.getId());
+            byte[] imageBytes = fod.getIs().readAllBytes();
             String previewID = String.format("%s-preview", attachment.getId());
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            Thumbnails.of(fod.getIs())
+            Thumbnails.of(new ByteArrayInputStream(imageBytes))
                     .size(1024, 1024)
                     .outputFormat("jpg")
                     .toOutputStream(baos);
@@ -59,6 +60,15 @@ public class ProcessingPreview {
                             .build()
             );
             attachmentService.setPreviewID(attachment.getId(), previewID);
+
+            baos = new ByteArrayOutputStream();
+            Thumbnails.of(new ByteArrayInputStream(imageBytes))
+                    .size(32, 32)
+                    .outputFormat("jpg")
+                    .toOutputStream(baos);
+            attachmentService.setMiniPreview(attachment.getId(), baos.toByteArray());
+
+            attachmentService.setPreviewProcessingState(attachment.getId(), Attachment.PreviewProcessingState.Completed);
         } catch (UnsupportedFormatException e) {
             attachmentService.setPreviewProcessingState(attachment.getId(), Attachment.PreviewProcessingState.PreviewNotAvailable);
             // in this case we manage this error with the state of image not available

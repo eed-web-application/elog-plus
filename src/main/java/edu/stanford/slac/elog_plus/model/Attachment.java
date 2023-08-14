@@ -28,6 +28,7 @@ public class Attachment {
     private String contentType;
     private String hasPreview;
     private String previewID;
+    private byte[] miniPreview;
     @Builder.Default
     private PreviewProcessingState previewState = PreviewProcessingState.Waiting;
     @CreatedDate

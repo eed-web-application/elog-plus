@@ -13,5 +13,7 @@ public record AttachmentDTO (
     String id,
     String fileName,
     String contentType,
-    String previewState
+    String previewState,
+
+    byte[] miniPreview
     ){}
