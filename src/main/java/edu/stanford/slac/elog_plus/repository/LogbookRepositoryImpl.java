@@ -191,8 +191,7 @@ public class LogbookRepositoryImpl implements LogbookRepositoryCustom {
 
     @Override
     public Optional<Shift> findShiftFromLocalTimeWithLogbookName(String logbookName, LocalTime localTime) {
-        Optional<Shift> result = null;
-        int minutesFromMidnight = localTime.getHour() * 60 + localTime.getMinute();
+        Optional<Shift> result = Optional.empty();
         Query q = new Query();
         q.addCriteria(
                 Criteria.where("name").is(logbookName)
@@ -214,5 +213,51 @@ public class LogbookRepositoryImpl implements LogbookRepositoryCustom {
                     .findFirst();
         }
         return result;
+    }
+
+    @Override
+    public Optional<Shift> findShiftFromLocalTimeWithLogbookId(String logbookId, LocalTime localTime)  {
+        Optional<Shift> result = Optional.empty();
+        Query q = new Query();
+        q.addCriteria(
+                Criteria.where("id").is(logbookId)
+        );
+        q.fields()
+                .include("shifts");
+        Logbook l = mongoTemplate.findOne(q, Logbook.class);
+        if (l != null) {
+            result = l.getShifts()
+                    .stream()
+                    .filter(
+                            s ->
+                                    (localTime.equals(s.getFromTime()) || localTime.equals(s.getToTime())) ||
+                                            (
+                                                    localTime.isAfter(s.getFromTime()) && localTime.isBefore(s.getToTime())
+                                            )
+
+                    )
+                    .findFirst();
+        }
+        return result;
+    }
+
+    @Override
+    public Optional<Tag> getTagsByID(String tagsId) {
+        Query q = new Query();
+        q.addCriteria(
+                Criteria.where("tags.id").is(tagsId)
+        );
+        q.fields().include("tags");
+        Logbook l = mongoTemplate.findOne(q, Logbook.class);
+        if (l != null) {
+            return l.getTags()
+                    .stream()
+                    .filter(
+                            t-> t.getId().compareTo(tagsId)==0
+                    )
+                    .findFirst();
+        } else {
+            return Optional.empty();
+        }
     }
 }

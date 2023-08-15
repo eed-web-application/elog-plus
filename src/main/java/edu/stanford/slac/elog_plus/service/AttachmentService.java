@@ -30,6 +30,7 @@ import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
 @Service
 @AllArgsConstructor
 public class AttachmentService {
+    final private AttachmentMapper attachmentMapper;
     final private AppProperties appProperties;
     final private StorageRepository storageRepository;
     final private AttachmentRepository attachmentRepository;
@@ -198,7 +199,7 @@ public class AttachmentService {
                         .errorDomain("AttachmentService::getAttachment")
                         .build()
         );
-        return AttachmentMapper.INSTANCE.fromModel(
+        return attachmentMapper.fromModel(
                 foundAttachment
         );
     }

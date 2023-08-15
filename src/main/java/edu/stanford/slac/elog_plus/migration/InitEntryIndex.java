@@ -24,7 +24,7 @@ public class InitEntryIndex {
                 Entry.class,
                 mongoTemplate,
                 new Index().on(
-                        "logbook",
+                        "logbooks",
                         Sort.Direction.ASC
                 )
         );

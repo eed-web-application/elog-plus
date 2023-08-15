@@ -19,7 +19,7 @@ import static java.util.Arrays.asList;
 @Log4j2
 @Profile("!test")
 @AllArgsConstructor
-@ChangeUnit(id = "logbook-initializer", order = "4", author = "bisegni")
+@ChangeUnit(id = "logbooks-initializer", order = "4", author = "bisegni")
 public class InitLogbook {
     private final LogbookService logbookService;
     private final MongoTemplate mongoTemplate;
@@ -69,17 +69,17 @@ public class InitLogbook {
     );
     @Execution
     public void changeSet() {
-        // fill logbook
+        // fill logbooks
         for (String logbookName:
                 logbookNames) {
-            if(!logbookService.exist(logbookName)) {
+            if(!logbookService.existByName(logbookName)) {
                 String id = logbookService.createNew(
                         NewLogbookDTO
                                 .builder()
                                 .name(logbookName)
                                 .build()
                 );
-                log.info("Initialized logbook {} with id {}", logbookName, id);
+                log.info("Initialized logbooks {} with id {}", logbookName, id);
             } else {
                 log.info("Logbook {} already exists", logbookName);
             }

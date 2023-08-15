@@ -28,7 +28,7 @@ public class TagsController {
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     public ApiResultResponse<List<TagDTO>> getAllTags(
-            @Parameter(name = "logbooks", description = "The logbook for filter the tags")
+            @Parameter(name = "logbooks", description = "The logbooks for filter the tags")
             @RequestParam("logbooks") Optional<List<String>> logbooks
     ) {
         return ApiResultResponse.of(

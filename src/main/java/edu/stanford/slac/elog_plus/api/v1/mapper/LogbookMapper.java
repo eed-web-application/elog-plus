@@ -6,13 +6,13 @@ import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 
 @Mapper(
-        unmappedTargetPolicy = ReportingPolicy.IGNORE
+        unmappedTargetPolicy = ReportingPolicy.IGNORE,
+        componentModel = "spring"
 )
-public interface LogbookMapper {
-    LogbookMapper INSTANCE = Mappers.getMapper(LogbookMapper.class);
-
-    LogbookDTO fromModel(Logbook log);
-    Logbook fromDTO(NewLogbookDTO logbookDTO);
-    Logbook fromDTO(LogbookDTO logbookDTO);
-    Logbook fromDTO(UpdateLogbookDTO logbookDTO);
+public abstract class LogbookMapper {
+    public abstract LogbookSummaryDTO fromModelToSummaryDTO(Logbook log);
+    public abstract LogbookDTO fromModel(Logbook log);
+    public abstract Logbook fromDTO(NewLogbookDTO logbookDTO);
+    public abstract Logbook fromDTO(LogbookDTO logbookDTO);
+    public abstract Logbook fromDTO(UpdateLogbookDTO logbookDTO);
 }

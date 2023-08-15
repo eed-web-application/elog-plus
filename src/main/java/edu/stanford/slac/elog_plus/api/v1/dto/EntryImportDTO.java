@@ -24,8 +24,8 @@ public record EntryImportDTO(
         @Schema(description = "Identifier for unique find the record into the original system")
         String originId,
         @NotNull
-        @Schema(description = "Is the logbook where the new log belong")
-        String logbook,
+        @Schema(description = "Is the logbooks where the new log belong")
+        List<String> logbooks,
         @NotNull
         @NotEmpty
         @Schema(description = "The title of the log")

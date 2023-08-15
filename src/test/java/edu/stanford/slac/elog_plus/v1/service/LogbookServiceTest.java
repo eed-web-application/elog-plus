@@ -5,7 +5,6 @@ import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.exception.ShiftNotFound;
 import edu.stanford.slac.elog_plus.exception.TagNotFound;
 import edu.stanford.slac.elog_plus.model.Logbook;
-import edu.stanford.slac.elog_plus.model.Shift;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import edu.stanford.slac.elog_plus.utility.DateUtilities;
 import org.assertj.core.api.AssertionsForClassTypes;
@@ -106,7 +105,7 @@ public class LogbookServiceTest {
         AssertionsForClassTypes.assertThat(newLogbookID).isNotNull().isNotEmpty();
         Set<String> returnedTagID = new HashSet<>();
         Integer counter = 0;
-        Set<String> tagsNameToInsert = new HashSet<String>(){{
+        Set<String> tagsNameToInsert = new HashSet<String>() {{
             add("new_tag_1");
             add("new_tag_2");
             add("new_tag_3");
@@ -121,7 +120,7 @@ public class LogbookServiceTest {
             service.execute(() -> {
                 Random rand = new Random();
                 String tagName = null;
-                synchronized (tagsNameToInsert){
+                synchronized (tagsNameToInsert) {
                     tagName = tagsNameToInsert.toArray(new String[tagsNameToInsert.size()])[abs(rand.nextInt()) % 3];
                 }
                 String finalTagName = tagName;
@@ -1364,11 +1363,15 @@ public class LogbookServiceTest {
     }
 
     private String getTestLogbook() {
+        return getTestLogbook("new-logbooks");
+    }
+
+    private String getTestLogbook(String logbookName) {
         String newLogbookID = assertDoesNotThrow(
                 () -> logbookService.createNew(
                         NewLogbookDTO
                                 .builder()
-                                .name("new-logbook")
+                                .name(logbookName)
                                 .build()
                 )
         );
@@ -1611,5 +1614,32 @@ public class LogbookServiceTest {
                 )
         );
         assertThat(tagNotFound.getErrorCode()).isEqualTo(-4);
+    }
+
+    @Test
+    public void existsTagOnLogbooks() {
+        String logbookIDA = getTestLogbook("logbook-a");
+        String logbookIDB = getTestLogbook("logbook-b");
+        String logbookIDC = getTestLogbook("logbook-c");
+
+        String tagAID = assertDoesNotThrow(
+                () -> logbookService.ensureTag(logbookIDA, "tag-a")
+        );
+        assertThat(tagAID).isNotNull().isNotEmpty();
+
+        Boolean exists = assertDoesNotThrow(
+                () -> logbookService.tagExistForLogbook(logbookIDA, "tag-a")
+        );
+        assertThat(exists).isNotNull().isTrue();
+
+        exists = assertDoesNotThrow(
+                () -> logbookService.tagIdExistInAnyLogbookIds(tagAID, List.of(logbookIDA, logbookIDB))
+        );
+        assertThat(exists).isNotNull().isTrue();
+
+        exists = assertDoesNotThrow(
+                () -> logbookService.tagIdExistInAnyLogbookIds(tagAID, List.of(logbookIDB, logbookIDC))
+        );
+        assertThat(exists).isNotNull().isFalse();
     }
 }

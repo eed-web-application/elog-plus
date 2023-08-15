@@ -30,20 +30,23 @@ import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
 @Service
 @AllArgsConstructor
 public class LogbookService {
-    EntryRepository entryRepository;
-    LogbookRepository logbookRepository;
+    private final TagMapper tagMapper;
+    private final ShiftMapper shiftMapper;
+    private final LogbookMapper logbookMapper;
+    private final EntryRepository entryRepository;
+    private final LogbookRepository logbookRepository;
 
     /**
-     * Return all the logbook
+     * Return all the logbooks
      *
-     * @return the lis tof all logbook
+     * @return the lis tof all logbooks
      */
     public List<LogbookDTO> getAllLogbook() {
         return wrapCatch(
                 () -> logbookRepository.findAll()
                         .stream()
                         .map(
-                                LogbookMapper.INSTANCE::fromModel
+                                logbookMapper::fromModel
                         ).collect(Collectors.toList()),
                 -1,
                 "LogbookService::getAllLogbook"
@@ -51,10 +54,31 @@ public class LogbookService {
     }
 
     /**
-     * Create a new logbook
+     * Get logbook summary by id
+     * @param logbookId the unique id of the logbook
+     * @return return the summary of the logbook
+     */
+    public LogbookSummaryDTO getSummaryById(String logbookId) {
+        return wrapCatch(
+                () -> logbookRepository.findById(logbookId)
+                        .map(
+                                logbookMapper::fromModelToSummaryDTO
+                        ).orElseThrow(
+                                () -> LogbookNotFound.logbookNotFoundBuilder()
+                                        .errorCode(-1)
+                                        .errorDomain("LogbookService::getSummaryById")
+                                        .build()
+                        ),
+                -2,
+                "LogbookService::getSummaryById"
+        );
+    }
+
+    /**
+     * Create a new logbooks
      *
-     * @param newLogbookDTO the new logbook
-     * @return the id of the newly created logbook
+     * @param newLogbookDTO the new logbooks
+     * @return the id of the newly created logbooks
      */
     public String createNew(NewLogbookDTO newLogbookDTO) {
         // normalize the name
@@ -62,57 +86,53 @@ public class LogbookService {
                 .name(StringUtilities.tagNameNormalization(newLogbookDTO.name()))
                 .build();
 
-        // check for logbook with the same name
+        // check for logbooks with the same name
         NewLogbookDTO finalNewLogbookDTO = newLogbookDTO;
-        boolean exists = wrapCatch(
-                () -> logbookRepository.existsByName(
-                        finalNewLogbookDTO.name()
-                ),
-                -1,
-                "LogbookService::createNew");
+
         assertion(
-                () -> !exists,
+                () -> !wrapCatch(
+                        () -> logbookRepository.existsByName(
+                                finalNewLogbookDTO.name()
+                        ),
+                        -1,
+                        "LogbookService::createNew"),
                 LogbookAlreadyExists.logbookAlreadyExistsBuilder()
                         .errorCode(-2)
                         .errorDomain("LogbookService::createNew")
                         .build()
         );
-
+        // create new logbook
         Logbook newLogbook = wrapCatch(
                 () -> logbookRepository.save(
-                        LogbookMapper.INSTANCE.fromDTO(finalNewLogbookDTO)
+                        logbookMapper.fromDTO(finalNewLogbookDTO)
                 ),
                 -3,
                 "LogbookService::createNew");
-        log.info("New logbook '{}' created", newLogbook.getName());
+        log.info("New logbooks '{}' created", newLogbook.getName());
         return newLogbook.getId();
     }
 
 
     /**
-     * Update an existing logbook
+     * Update an existing logbooks
      *
-     * @param logbookDTO the updated logbook
+     * @param logbookDTO the updated logbooks
      */
     @Transactional
-    public void update(String logbookId, UpdateLogbookDTO logbookDTO) {
+    public LogbookDTO update(String logbookId, UpdateLogbookDTO logbookDTO) {
         // check if id exists
-        Optional<Logbook> logBook = wrapCatch(
+        Logbook lbToUpdated = wrapCatch(
                 () -> logbookRepository.findById(logbookId),
                 -1,
                 "LogbookService::update"
-        );
-
-        // assert on logbook presence
-        assertion(
-                logBook::isPresent,
-                LogbookNotFound.logbookNotFoundBuilder()
+        ).orElseThrow(
+                () -> LogbookNotFound.logbookNotFoundBuilder()
                         .errorCode(-2)
                         .errorDomain("LogbookService::update")
                         .build()
         );
         assertion(
-                () -> logBook.get().getName() != null && !logBook.get().getName().isEmpty(),
+                () -> lbToUpdated.getName() != null && !lbToUpdated.getName().isEmpty(),
                 ControllerLogicException.builder()
                         .errorCode(-3)
                         .errorMessage("The name field is mandatory")
@@ -120,7 +140,7 @@ public class LogbookService {
                         .build()
         );
         assertion(
-                () -> logBook.get().getTags() != null,
+                () -> lbToUpdated.getTags() != null,
                 ControllerLogicException.builder()
                         .errorCode(-3)
                         .errorMessage("The tags field is mandatory")
@@ -128,15 +148,14 @@ public class LogbookService {
                         .build()
         );
         assertion(
-                () -> logBook.get().getTags() != null,
+                () -> lbToUpdated.getTags() != null,
                 ControllerLogicException.builder()
                         .errorCode(-3)
                         .errorMessage("The shift field is mandatory")
                         .errorDomain("LogbookService::update")
                         .build()
         );
-        Logbook updateLogbookInfo = LogbookMapper.INSTANCE.fromDTO(logbookDTO);
-        Logbook lbToUpdated = logBook.get();
+        Logbook updateLogbookInfo = logbookMapper.fromDTO(logbookDTO);
         if (lbToUpdated.getShifts() == null) {
             lbToUpdated.setShifts(new ArrayList<>());
         }
@@ -162,13 +181,16 @@ public class LogbookService {
                 "LogbookService:update"
         );
 
-        //we can save the logbook
-        wrapCatch(
+        //we can save the logbooks
+        var updatedLB = wrapCatch(
                 () -> logbookRepository.save(lbToUpdated),
                 -6,
                 "LogbookService:update"
         );
         log.info("Logbook '{}' has been updated", lbToUpdated.getName());
+        return logbookMapper.fromModel(
+                updatedLB
+        );
     }
 
     /**
@@ -219,7 +241,7 @@ public class LogbookService {
             // in this case the shift will be deleted
             // now if we need to check if the shift is used
             long summariesForTagName = wrapCatch(
-                    () -> entryRepository.countByTagsContains(t.getName()),
+                    () -> entryRepository.countByTagsContains(t.getId()),
                     -1,
                     "LogbookService:verifyTagAndUpdate"
             );
@@ -323,17 +345,17 @@ public class LogbookService {
     }
 
     /**
-     * Return the full logbook description
+     * Return the full logbooks description
      *
-     * @param logbookId the logbook id
-     * @return the full logbook
+     * @param logbookId the logbooks id
+     * @return the full logbooks
      */
     public LogbookDTO getLogbook(String logbookId) {
         assertOnLogbook(logbookId, -1, "LogbookService:getLogbook");
         return logbookRepository.findById(
                 logbookId
         ).map(
-                LogbookMapper.INSTANCE::fromModel
+                logbookMapper::fromModel
         ).orElseThrow(
                 () -> ControllerLogicException.builder()
                         .errorCode(-2)
@@ -344,10 +366,10 @@ public class LogbookService {
     }
 
     /**
-     * Return a full log indetified by its name
+     * Return a full log identified by its name
      *
-     * @param logbookName the name of the logbook
-     * @return the full logbook
+     * @param logbookName the name of the logbooks
+     * @return the full logbooks
      */
     public LogbookDTO getLogbookByName(String logbookName) {
         Optional<Logbook> lb = wrapCatch(
@@ -355,7 +377,7 @@ public class LogbookService {
                 -1,
                 "LogbookService:getLogbookByName"
         );
-        return LogbookMapper.INSTANCE.fromModel(
+        return logbookMapper.fromModel(
                 lb.orElseThrow(
                         () -> LogbookNotFound.logbookNotFoundBuilder()
                                 .errorCode(-1)
@@ -367,24 +389,39 @@ public class LogbookService {
     }
 
     /**
-     * Check if a logbook with a specific name exists
+     * Check if a logbooks with a specific name exists
      *
-     * @param logbook the name of the logbook to check
-     * @return true if the logbook exists
+     * @param logbookName the name of the logbooks to check
+     * @return true if the logbooks exists
      */
-    public Boolean exist(String logbook) {
+    public Boolean existByName(String logbookName) {
         return wrapCatch(
                 () -> logbookRepository.existsByName(
-                        logbook
+                        logbookName
                 ),
                 -1,
-                "LogbookService::exist");
+                "LogbookService::existByName");
     }
 
     /**
-     * Create new tag for the logbook
+     * Check if a logbooks with a specific id exists
      *
-     * @param logbookId the logbook id
+     * @param logbookId the id of the logbooks to check
+     * @return true if the logbooks exists
+     */
+    public Boolean existById(String logbookId) {
+        return wrapCatch(
+                () -> logbookRepository.existsById(
+                        logbookId
+                ),
+                -1,
+                "LogbookService::existById");
+    }
+
+    /**
+     * Create new tag for the logbooks
+     *
+     * @param logbookId the logbooks id
      * @param newTagDTO the new tag description
      * @return the id of the newly crated tag
      */
@@ -415,7 +452,7 @@ public class LogbookService {
         return wrapCatch(
                 () -> logbookRepository.createNewTag(
                         logbookId,
-                        TagMapper.INSTANCE.fromDTO(finalNewTagDTO)
+                        tagMapper.fromDTO(finalNewTagDTO)
                 ),
                 -3,
                 "LogbookService:createNewTag"
@@ -426,7 +463,7 @@ public class LogbookService {
     /**
      * Create new tag just in case it doesn't exist
      *
-     * @param logbookId the logbook id
+     * @param logbookId the logbooks id
      * @param tagName   the tag name
      */
     public String ensureTag(String logbookId, String tagName) {
@@ -435,7 +472,7 @@ public class LogbookService {
                 () ->
                         logbookRepository.ensureTag(
                                 logbookId,
-                                TagMapper.INSTANCE.fromDTO(
+                                tagMapper.fromDTO(
                                         NewTagDTO
                                                 .builder()
                                                 .name(StringUtilities.tagNameNormalization(tagName))
@@ -453,7 +490,7 @@ public class LogbookService {
      * <p>
      * the name is normalized before checking
      *
-     * @param logbookId the id of the logbook
+     * @param logbookId the id of the logbooks
      * @param tagName   the name of the tag
      * @return true if the tag exists
      */
@@ -471,10 +508,10 @@ public class LogbookService {
     }
 
     /**
-     * Return all tags ofr a logbook
+     * Return all tags ofr a logbooks
      *
-     * @param logbookId the id of the logbook
-     * @return all the logbook tags
+     * @param logbookId the id of the logbooks
+     * @return all the logbooks tags
      */
     public List<TagDTO> getAllTags(String logbookId) {
         assertOnLogbook(logbookId, -1, "LogbookService:getAllTags");
@@ -485,7 +522,7 @@ public class LogbookService {
         );
         return allTag.stream()
                 .map(
-                        TagMapper.INSTANCE::fromModel
+                        tagMapper::fromModel
                 ).
                 collect(Collectors.toList());
     }
@@ -518,7 +555,7 @@ public class LogbookService {
 
         for (String logbookName :
                 logbooks) {
-            if (!exist(logbookName)) {
+            if (!existByName(logbookName)) {
                 continue;
             }
             LogbookDTO lbDTO = getLogbookByName(logbookName);
@@ -534,7 +571,7 @@ public class LogbookService {
      * if a shift as no id it will be created as new, if it has an ID,
      * it will be used for find it within all the shift, in case is not found an exception will be thrown
      *
-     * @param logbookId   the logbook id
+     * @param logbookId   the logbooks id
      * @param allNewShift all the new shift
      */
     @Transactional()
@@ -559,7 +596,7 @@ public class LogbookService {
 
         // verify and update the shifts
         verifyShiftAndUpdate(
-                ShiftMapper.INSTANCE.fromDTO(allNewShift),
+                shiftMapper.fromDTO(allNewShift),
                 lbToSave.getShifts(),
                 -3,
                 "LogbookService:replaceShift"
@@ -577,13 +614,13 @@ public class LogbookService {
     /**
      * Add new shift checking for the correctness
      *
-     * @param logbookId   the id of the logbook from which we want to add the shift
+     * @param logbookId   the id of the logbooks from which we want to add the shift
      * @param newShiftDTO the shift description
      */
     @Transactional(propagation = Propagation.NESTED)
     public String addShift(String logbookId, NewShiftDTO newShiftDTO) {
         // validate the shift
-        Shift shiftToAdd = validateShift(ShiftMapper.INSTANCE.fromDTO(newShiftDTO), -1, "LogbookService:addShift");
+        Shift shiftToAdd = validateShift(shiftMapper.fromDTO(newShiftDTO), -1, "LogbookService:addShift");
 
         // normalize shift name
         shiftToAdd.setName(
@@ -641,7 +678,7 @@ public class LogbookService {
     public void updateShift(String logbookId, ShiftDTO shiftDTO) {
         // validate the shift
         Shift shiftToUpdate = validateShift(
-                ShiftMapper.INSTANCE.fromDTO(shiftDTO),
+                shiftMapper.fromDTO(shiftDTO),
                 -1,
                 "LogbookService:updateShift"
         );
@@ -839,7 +876,7 @@ public class LogbookService {
     /**
      * Return the shift which the date fall in its range
      *
-     * @param logbookId the logbook unique identifier
+     * @param logbookId the logbooks unique identifier
      * @param localTime the time of the event in the day
      * @return the found shift, if eny matches
      */
@@ -850,7 +887,7 @@ public class LogbookService {
                         logbookId,
                         localTime
                 ).map(
-                        ShiftMapper.INSTANCE::fromModel
+                        shiftMapper::fromModel
                 ),
                 -2,
                 "LogbookService:getShiftByLocalTime"
@@ -860,7 +897,7 @@ public class LogbookService {
     /**
      * Return the shift which the date fall in its range
      *
-     * @param logbookName the logbook unique name identifier
+     * @param logbookName the logbooks unique name identifier
      * @param localTime   the time of the event in the day
      * @return the found shift, if eny matches
      */
@@ -870,10 +907,62 @@ public class LogbookService {
                         logbookName,
                         localTime
                 ).map(
-                        ShiftMapper.INSTANCE::fromModel
+                        shiftMapper::fromModel
                 ),
                 -2,
                 "LogbookService:getShiftByLocalTime"
         );
     }
+
+    /**
+     * Return the shift which the date fall in its range
+     *
+     * @param logbookId the logbooks unique id identifier
+     * @param localTime the time of the event in the day
+     * @return the found shift, if eny matches
+     */
+    public Optional<ShiftDTO> findShiftByLocalTimeWithLogbookId(String logbookId, LocalTime localTime) {
+        return wrapCatch(
+                () -> logbookRepository.findShiftFromLocalTimeWithLogbookId(
+                        logbookId,
+                        localTime
+                ).map(
+                        shiftMapper::fromModel
+                ),
+                -2,
+                "LogbookService:getShiftByLocalTime"
+        );
+    }
+
+    /**
+     * Check if the tad id exists in any of logbooks names
+     *
+     * @param tagId      the id of the tag to find
+     * @param logbookIds the logbooks where search the id
+     * @return true if the tag exists
+     */
+    public boolean tagIdExistInAnyLogbookIds(String tagId, List<String> logbookIds) {
+        return wrapCatch(
+                () -> logbookRepository.existsByIdInAndTagsIdIs(
+                        logbookIds,
+                        tagId
+                ),
+                -1,
+                "LogbookService:tagIdExistInAnyLogbooksNames"
+        );
+    }
+
+    public Optional<TagDTO> getTagById(String tagId) {
+        Optional<Tag> tag = wrapCatch(
+                () -> logbookRepository.getTagsByID(
+                        tagId
+                ),
+                -1,
+                "LogbookService:getTagById"
+        );
+        return tag.map(
+                tagMapper::fromModel
+        );
+    }
+
 }

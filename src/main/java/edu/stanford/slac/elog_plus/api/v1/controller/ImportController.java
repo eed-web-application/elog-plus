@@ -8,7 +8,9 @@ import edu.stanford.slac.elog_plus.service.ImportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +24,8 @@ import java.util.stream.Collectors;
 
 @RestController()
 @RequestMapping("/v1/import")
+
+@Log4j2
 @AllArgsConstructor
 @Schema(description = "Main set of api for inject data into ELog system")
 public class ImportController {
@@ -34,12 +38,13 @@ public class ImportController {
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     public ApiResultResponse<String> uploadEntryAndAttachment(
-            @Parameter(schema =@Schema(type = "string", implementation = EntryImportDTO.class))
-            @RequestPart("entry")  EntryImportDTO entryToImport,
+            @Parameter(schema = @Schema(type = "string", implementation = EntryImportDTO.class))
+            @RequestPart("entry") @Valid EntryImportDTO entryToImport,
             @RequestPart(value = "files", required = false)
             MultipartFile[] files) throws IOException {
+        log.info("[import %s] manage attachment".formatted(entryToImport.text()));
         List<FileObjectDescription> attachmentList = new ArrayList<>();
-        if(files != null) {
+        if (files != null) {
             attachmentList = Arrays.stream(files).map(
                     file -> {
                         try {
@@ -65,6 +70,24 @@ public class ImportController {
                     }
             ).collect(Collectors.toList());
         }
-        return ApiResultResponse.of(importService.importSingleEntry(entryToImport, attachmentList));
+
+        // convert the tags
+        log.info("[import %s] tags and logbook conversion".formatted(entryToImport.text()));
+        entryToImport = entryToImport.toBuilder()
+                .logbooks(
+                        importService.getLogbooksIdsByNames(entryToImport.logbooks())
+                )
+                .tags(
+                        importService.ensureTagsNamesOnAllLogbooks(entryToImport.tags(), entryToImport.logbooks())
+                )
+                .build();
+        return ApiResultResponse.of
+                (
+                        importService.importSingleEntry
+                                (
+                                        entryToImport,
+                                        attachmentList
+                                )
+                );
     }
 }

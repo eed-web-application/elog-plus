@@ -9,6 +9,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class LogbookNotFound extends ControllerLogicException {
     @Builder(builderMethodName = "logbookNotFoundBuilder")
     public LogbookNotFound(Integer errorCode, String errorDomain) {
-        super(errorCode, "The logbook has not been found", errorDomain);
+        super(errorCode, "The logbooks has not been found", errorDomain);
     }
 }

@@ -4,10 +4,7 @@ import com.github.javafaker.Faker;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.api.v1.mapper.EntryMapper;
 import edu.stanford.slac.elog_plus.api.v1.mapper.QueryParameterMapper;
-import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
-import edu.stanford.slac.elog_plus.exception.EntryNotFound;
-import edu.stanford.slac.elog_plus.exception.ShiftNotFound;
-import edu.stanford.slac.elog_plus.exception.SupersedeAlreadyCreated;
+import edu.stanford.slac.elog_plus.exception.*;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Summarizes;
 import edu.stanford.slac.elog_plus.repository.EntryRepository;
@@ -19,6 +16,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -31,14 +29,22 @@ import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
 @Log4j2
 @AllArgsConstructor
 public class EntryService {
+    final private QueryParameterMapper queryParameterMapper;
     final private EntryRepository entryRepository;
     final private LogbookService logbookService;
     final private AttachmentService attachmentService;
+    final private EntryMapper entryMapper;
 
+    /**
+     * Perform the search operation on all the entries
+     *
+     * @param queryWithAnchorDTO the parameter for the search operation
+     * @return the list of found entries that matches the input parameter
+     */
     public List<EntrySummaryDTO> searchAll(QueryWithAnchorDTO queryWithAnchorDTO) {
         List<Entry> found = wrapCatch(
                 () -> entryRepository.searchAll(
-                        QueryParameterMapper.INSTANCE.fromDTO(
+                        queryParameterMapper.fromDTO(
                                 queryWithAnchorDTO
                         )
                 ),
@@ -46,22 +52,48 @@ public class EntryService {
                 "LogService::searchAll"
         );
         return found.stream().map(
-                log -> {
-                    var shift = logbookService.findShiftByLocalTimeWithLogbookName(
-                            log.getLogbook(),
-                            log.getEventAt().toLocalTime()
-                    );
-                    EntrySummaryDTO es = EntryMapper.INSTANCE.toSearchResultFromDTO(
-                            log,
-                            attachmentService
+                entry -> {
+                    EntrySummaryDTO es = entryMapper.toSearchResultFromDTO(
+                            entry
                     );
                     return es.toBuilder()
                             .shift(
-                                    shift.orElse(null)
+                                    getShiftsForEntry(
+                                            es.logbooks().stream().map(LogbookSummaryDTO::id).toList(),
+                                            es.eventAt()
+                                    )
                             ).build();
                 }
 
         ).collect(Collectors.toList());
+    }
+
+    /**
+     * Return the shift that are in common with all the logbooks in input
+     * in the same time
+     *
+     * @param logbookIds the list of the logbook ids
+     * @param eventAt  the time which we need the shift
+     * @return the shift list
+     */
+    private List<ShiftDTO> getShiftsForEntry(List<String> logbookIds, LocalDateTime eventAt) {
+        List<ShiftDTO> shifts = new ArrayList<>();
+        if (logbookIds == null || logbookIds.isEmpty()) return shifts;
+        if (eventAt == null) return shifts;
+        for (String logbookId :
+                logbookIds) {
+            var shiftDTO = wrapCatch(
+                    () -> logbookService.findShiftByLocalTimeWithLogbookId(
+                            logbookId,
+                            eventAt.toLocalTime()
+                    ),
+                    -1,
+                    "LogService::getShiftsForEntry"
+            );
+            //add in case the shift is present
+            shiftDTO.ifPresent(shifts::add);
+        }
+        return shifts;
     }
 
     /**
@@ -97,7 +129,7 @@ public class EntryService {
     @Transactional()
     public String createNew(EntryImportDTO entryToImport, List<String> attachments) {
         return createNew(
-                EntryMapper.INSTANCE.fromDTO(
+                entryMapper.fromDTO(
                         entryToImport,
                         attachments
                 )
@@ -114,7 +146,7 @@ public class EntryService {
     public String createNew(EntryNewDTO entryNewDTO) {
         Faker faker = new Faker();
         return createNew(
-                EntryMapper.INSTANCE.fromDTO(
+                entryMapper.fromDTO(
                         entryNewDTO,
                         faker.name().firstName(),
                         faker.name().lastName(),
@@ -132,13 +164,13 @@ public class EntryService {
     @Transactional(propagation = Propagation.NESTED)
     public Entry toModelWithAuthorization(EntryNewDTO entryNewDTO) {
         Faker faker = new Faker();
-        return EntryMapper.INSTANCE.fromDTO(
-                        entryNewDTO,
-                        faker.name().firstName(),
-                        faker.name().lastName(),
-                        faker.name().username()
+        return entryMapper.fromDTO(
+                entryNewDTO,
+                faker.name().firstName(),
+                faker.name().lastName(),
+                faker.name().username()
 
-                );
+        );
     }
 
     /**
@@ -149,93 +181,129 @@ public class EntryService {
      */
     @Transactional(propagation = Propagation.NESTED)
     public String createNew(Entry newEntry) {
-        //get and check for logbook
+        //get and check for logbooks
         Entry finalNewEntry = newEntry;
-        LogbookDTO lb =
-                wrapCatch(
-                        () -> logbookService.getLogbookByName(finalNewEntry.getLogbook()),
-                        -1,
-                        "EntryService:createNew"
-                );
-        // check for summarization
-        checkForSummarization(lb, newEntry.getSummarizes());
+        assertion(
+                () -> (finalNewEntry.getLogbooks() != null && !finalNewEntry.getLogbooks().isEmpty()),
+                ControllerLogicException
+                        .builder()
+                        .errorCode(-1)
+                        .errorMessage("The logbooks are mandatory, entry need to belong to almost one logbook")
+                        .errorDomain("LogService::createNew")
+                        .build()
+        );
 
-        // normalize tag name
-        if (newEntry.getTags() != null) {
-            List<String> tagsNormalizedNames = newEntry
-                    .getTags()
-                    .stream()
-                    .map(
-                            StringUtilities::tagNameNormalization
-                    )
-                    .toList();
-            newEntry.setTags(
-                    tagsNormalizedNames
+        if (finalNewEntry.getSummarizes() != null) {
+            assertion(
+                    () -> (finalNewEntry.getLogbooks().size() == 1),
+                    ControllerLogicException
+                            .builder()
+                            .errorCode(-2)
+                            .errorMessage("An entry that is a summary's shift needs to belong only to one logbook")
+                            .errorDomain("LogService::createNew")
+                            .build()
+            );
+
+            //check for shift
+            LogbookDTO lb =
+                    wrapCatch(
+                            () -> logbookService.getLogbook(finalNewEntry.getLogbooks().get(0)),
+                            -3,
+                            "EntryService:createNew"
+                    );
+            // check for summarization
+            checkForSummarization(lb, newEntry.getSummarizes());
+        } else {
+            // check  all logbooks
+            newEntry.getLogbooks().forEach(
+                    logbookId->{
+                        assertion(
+                                () -> logbookService.existById(logbookId),
+                                LogbookNotFound
+                                        .logbookNotFoundBuilder()
+                                        .errorCode(-4)
+                                        .errorDomain("LogService::createNew")
+                                        .build()
+                        );
+                    }
             );
         }
-
-        newEntry
-                .getTags()
-                .forEach(
-                        tagName -> {
-                            if (
-                                    lb.tags().stream().noneMatch(
-                                            t -> t.name().compareTo(tagName) == 0)
-                            ) {
-                                // we need to create a tag for the entry
-                                String newTagID = wrapCatch(
-                                        () -> {
-                                            logbookService.ensureTag(
-                                                    lb.id(),
-                                                    tagName
-                                            );
-                                            return null;
-                                        },
-                                        -2,
-                                        "EntryService:createNew"
-                                );
-                                log.info("Tag automatically created for the logbook {} with name {}", lb.name(), tagName);
-                            }
-                        }
-                );
-
+        // check for attachment
         newEntry
                 .getAttachments()
                 .forEach(
                         attachmentID -> {
                             if (!attachmentService.exists(attachmentID)) {
-                                String error = String.format("The attachment id '%s' has not been found", attachmentID);
                                 throw ControllerLogicException.of(
                                         -3,
-                                        error,
+                                        "The attachment id '%s' has not been found".formatted(attachmentID),
                                         "LogService::createNew"
                                 );
                             }
                         }
                 );
+        // check for tags
+        newEntry
+                .getTags()
+                .forEach(
+                        tagId -> {
+                            assertion(
+                                    () -> logbookService.tagIdExistInAnyLogbookIds
+                                            (
+                                                    tagId,
+                                                    finalNewEntry.getLogbooks()
+                                            ),
+                                    TagNotFound.tagNotFoundBuilder()
+                                            .errorCode(-4)
+                                            .tagName(tagId)
+                                            .errorDomain("LogService::createNew")
+                                            .build()
+                            );
+                        }
+                );
 
         //sanitize title and text
         Entry finalNewEntry1 = newEntry;
+
         assertion(
-                () -> (finalNewEntry1.getTitle() != null && !finalNewEntry1.getTitle().isEmpty()),
+                () -> (finalNewEntry1.getTitle() != null && !finalNewEntry1.getTitle().
+
+                        isEmpty()),
                 ControllerLogicException
                         .builder()
-                        .errorCode(-4)
-                        .errorMessage("The title is mandatory")
-                        .errorDomain("LogService::createNew")
-                        .build()
+                                .
+
+                        errorCode(-4)
+                                .
+
+                        errorMessage("The title is mandatory")
+                                .
+
+                        errorDomain("LogService::createNew")
+                                .
+
+                        build()
         );
         newEntry.setTitle(
                 StringUtilities.sanitizeEntryTitle(newEntry.getTitle())
         );
+
         assertion(
                 () -> (finalNewEntry1.getText() != null),
                 ControllerLogicException
                         .builder()
-                        .errorCode(-4)
-                        .errorMessage("The body is mandatory also if empty")
-                        .errorDomain("LogService::createNew")
-                        .build()
+                                .
+
+                        errorCode(-4)
+                                .
+
+                        errorMessage("The body is mandatory also if empty")
+                                .
+
+                        errorDomain("LogService::createNew")
+                                .
+
+                        build()
         );
         newEntry.setText(
                 StringUtilities.sanitizeEntryText(newEntry.getText())
@@ -244,6 +312,7 @@ public class EntryService {
         // other check
         Entry finalNewEntryToSave = newEntry;
         newEntry =
+
                 wrapCatch(
                         () -> entryRepository.insert(
                                 finalNewEntryToSave
@@ -276,28 +345,26 @@ public class EntryService {
      */
     public EntryDTO getFullEntry(String id, Optional<Boolean> includeFollowUps, Optional<Boolean> includeFollowingUps, Optional<Boolean> followHistory) {
         EntryDTO result = null;
-        Optional<Entry> foundEntry =
+        Entry foundEntry =
                 wrapCatch(
                         () -> entryRepository.findById(id),
                         -1,
                         "LogService::getFullLog"
+                ).orElseThrow(
+                        () -> EntryNotFound.entryNotFoundBuilder()
+                                .errorCode(-2)
+                                .errorDomain("LogService::getFullLog")
+                                .build()
                 );
-        assertion(
-                foundEntry::isPresent,
-                EntryNotFound.entryNotFoundBuilder()
-                        .errorCode(-2)
-                        .errorDomain("LogService::getFullLog")
-                        .build()
-        );
 
-        result = EntryMapper.INSTANCE.fromModel(
-                foundEntry.get(),
-                attachmentService
+
+        result = entryMapper.fromModel(
+                foundEntry
         );
 
         if (includeFollowUps.isPresent() && includeFollowUps.get()) {
-            List<EntryDTO> list = new ArrayList<>(foundEntry.get().getFollowUps().size());
-            for (String fID : foundEntry.get().getFollowUps()) {
+            List<EntryDTO> list = new ArrayList<>(foundEntry.getFollowUps().size());
+            for (String fID : foundEntry.getFollowUps()) {
                 list.add(getFullEntry(fID));
 
             }
@@ -316,7 +383,7 @@ public class EntryService {
                 result = result.toBuilder()
                         .followingUp(
                                 followingLog.map(
-                                        l -> EntryMapper.INSTANCE.fromModel(l, attachmentService)
+                                        entryMapper::fromModel
                                 ).orElse(null)
                         )
                         .build();
@@ -336,13 +403,13 @@ public class EntryService {
         }
 
         // fill shift
-        Optional<ShiftDTO> entryShift = logbookService.findShiftByLocalTimeWithLogbookName(
-                foundEntry.get().getLogbook(),
-                foundEntry.get().getEventAt().toLocalTime()
-        );
-
         return result.toBuilder()
-                .shift(entryShift.orElse(null))
+                .shift(
+                        getShiftsForEntry(
+                                foundEntry.getLogbooks(),
+                                foundEntry.getEventAt()
+                        )
+                )
                 .build();
     }
 
@@ -359,7 +426,7 @@ public class EntryService {
                         -1,
                         "LogService::getLogHistory"
                 );
-        return foundLog.map(EntryMapper.INSTANCE::fromModelNoAttachment).orElse(null);
+        return foundLog.map(entryMapper::fromModelNoAttachment).orElse(null);
     }
 
     /**
@@ -490,7 +557,7 @@ public class EntryService {
         return followUp
                 .stream()
                 .map(
-                        l -> EntryMapper.INSTANCE.toSearchResultFromDTO(l, attachmentService)
+                        entryMapper::toSearchResultFromDTO
                 )
                 .collect(Collectors.toList());
     }
@@ -506,7 +573,7 @@ public class EntryService {
     /**
      * In case of summary information this wil check and in case will file the exception
      *
-     * @param lb        the logbook ofr the current entry
+     * @param lb        the logbooks ofr the current entry
      * @param summarize the summarization information
      */
     private void checkForSummarization(LogbookDTO lb, Summarizes summarize) {
@@ -516,7 +583,7 @@ public class EntryService {
                 ControllerLogicException
                         .builder()
                         .errorCode(-1)
-                        .errorMessage("The logbook has not any shift")
+                        .errorMessage("The logbooks has not any shift")
                         .errorDomain("EntryService:checkForSummarization")
                         .build()
         );

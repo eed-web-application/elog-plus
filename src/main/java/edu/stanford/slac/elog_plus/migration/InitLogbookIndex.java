@@ -13,7 +13,7 @@ import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 
 @AllArgsConstructor
-@ChangeUnit(id = "logbook-index", order = "3", author = "bisegni")
+@ChangeUnit(id = "logbooks-index", order = "3", author = "bisegni")
 public class InitLogbookIndex {
     private final MongoTemplate mongoTemplate;
     private final MongoMappingContext mongoMappingContext;

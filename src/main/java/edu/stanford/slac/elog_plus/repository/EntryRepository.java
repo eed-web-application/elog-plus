@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface EntryRepository extends MongoRepository<Entry, String>, EntryRepositoryCustom {
-    Page<Entry> findByLogbookIn(List<String> logbook, Pageable pageable);
-
     List<Entry> findAllByIdIn(List<String> ids);
 
     Optional<Entry> findBySupersedeBy(String id);
