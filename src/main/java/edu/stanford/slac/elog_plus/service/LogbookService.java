@@ -915,13 +915,13 @@ public class LogbookService {
     /**
      * Check if the tad id exists in any of logbooks names
      * @param tagId the id of the tag to find
-     * @param logbookNames the logbooks where search the id
+     * @param logbookIds the logbooks where search the id
      * @return true if the tag exists
      */
-    public boolean tagIdExistInAnyLogbooksNames(String tagId, List<String> logbookNames) {
+    public boolean tagIdExistInAnyLogbooksNames(String tagId, List<String> logbookIds) {
         return wrapCatch(
-                () -> logbookRepository.existsByNameInAndTagsIdIs(
-                        logbookNames,
+                () -> logbookRepository.existsByIdInAndTagsIdIs(
+                        logbookIds,
                         tagId
                 ),
                 -1,

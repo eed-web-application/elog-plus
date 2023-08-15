@@ -79,7 +79,7 @@ public class EntryServiceTest {
         String newLogID = entryService.createNew(
                 EntryNewDTO
                         .builder()
-                        .logbooks(List.of(logbook.name()))
+                        .logbooks(List.of(logbook.id()))
                         .text("This is a log for test")
                         .title("A very wonderful log")
                         .build()
@@ -94,7 +94,7 @@ public class EntryServiceTest {
         String newLogID = entryService.createNew(
                 EntryNewDTO
                         .builder()
-                        .logbooks(List.of(logbook.name()))
+                        .logbooks(List.of(logbook.id()))
                         .text("<h1>H1</h1><h2>H2</h2><p><a href='http://example.com/' onclick='stealCookies()'>Link</a></p>")
                         .title("A very wonderful log")
                         .build()
@@ -118,7 +118,7 @@ public class EntryServiceTest {
                         () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
-                                        .logbooks(List.of(logbook.name()))
+                                        .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
                                         .attachments(List.of("wrong id"))
@@ -146,7 +146,7 @@ public class EntryServiceTest {
                         () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
-                                        .logbooks(List.of(logbook.name()))
+                                        .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
                                         .build()
@@ -176,7 +176,7 @@ public class EntryServiceTest {
                         () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
-                                        .logbooks(List.of(logbook.name()))
+                                        .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
                                         .eventAt(
@@ -202,7 +202,7 @@ public class EntryServiceTest {
                         () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
-                                        .logbooks(List.of(logbook.name()))
+                                        .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
                                         .build()
@@ -226,7 +226,7 @@ public class EntryServiceTest {
                         "bad id",
                         EntryNewDTO
                                 .builder()
-                                .logbooks(List.of(logbook.name()))
+                                .logbooks(List.of(logbook.id()))
                                 .text("This is a log for test")
                                 .title("A very wonderful log")
                                 .build()
@@ -244,7 +244,7 @@ public class EntryServiceTest {
                         () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
-                                        .logbooks(List.of(logbook.name()))
+                                        .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
                                         .build()
@@ -257,7 +257,7 @@ public class EntryServiceTest {
                                 supersededLogID,
                                 EntryNewDTO
                                         .builder()
-                                        .logbooks(List.of(logbook.name()))
+                                        .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log updated for supersede")
                                         .build()
@@ -287,7 +287,7 @@ public class EntryServiceTest {
                         () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
-                                        .logbooks(List.of(logbook.name()))
+                                        .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
                                         .build()
@@ -300,7 +300,7 @@ public class EntryServiceTest {
                                 supersededLogID,
                                 EntryNewDTO
                                         .builder()
-                                        .logbooks(List.of(logbook.name()))
+                                        .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log updated for supersede")
                                         .build()
@@ -313,7 +313,7 @@ public class EntryServiceTest {
                                 supersededLogIDTwo,
                                 EntryNewDTO
                                         .builder()
-                                        .logbooks(List.of(logbook.name()))
+                                        .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log updated for supersede of supersede")
                                         .build()
@@ -335,7 +335,7 @@ public class EntryServiceTest {
                         () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
-                                        .logbooks(List.of(logbook.name()))
+                                        .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
                                         .build()
@@ -349,7 +349,7 @@ public class EntryServiceTest {
                                 supersededLogID,
                                 EntryNewDTO
                                         .builder()
-                                        .logbooks(List.of(logbook.name()))
+                                        .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log updated for supersede")
                                         .build()
@@ -364,7 +364,7 @@ public class EntryServiceTest {
                                 supersededLogID,
                                 EntryNewDTO
                                         .builder()
-                                        .logbooks(List.of(logbook.name()))
+                                        .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log updated for supersede one more time")
                                         .build()
@@ -382,7 +382,7 @@ public class EntryServiceTest {
                         "bad root id",
                         EntryNewDTO
                                 .builder()
-                                .logbooks(List.of(logbook.name()))
+                                .logbooks(List.of(logbook.id()))
                                 .text("This is a log for test")
                                 .title("A very wonderful log")
                                 .build()
@@ -400,7 +400,7 @@ public class EntryServiceTest {
                         () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
-                                        .logbooks(List.of(logbook.name()))
+                                        .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
                                         .build()
@@ -414,7 +414,7 @@ public class EntryServiceTest {
                                 rootLogID,
                                 EntryNewDTO
                                         .builder()
-                                        .logbooks(List.of(logbook.name()))
+                                        .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log updated for followUps one")
                                         .build()
@@ -428,7 +428,7 @@ public class EntryServiceTest {
                                 rootLogID,
                                 EntryNewDTO
                                         .builder()
-                                        .logbooks(List.of(logbook.name()))
+                                        .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log updated for followUps two")
                                         .build()
@@ -455,7 +455,7 @@ public class EntryServiceTest {
                         () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
-                                        .logbooks(List.of(logbook.name()))
+                                        .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
                                         .build()
@@ -469,7 +469,7 @@ public class EntryServiceTest {
                                 rootLogID,
                                 EntryNewDTO
                                         .builder()
-                                        .logbooks(List.of(logbook.name()))
+                                        .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log updated for followUps one")
                                         .build()
@@ -524,7 +524,7 @@ public class EntryServiceTest {
                         () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
-                                        .logbooks(List.of(logbook.name()))
+                                        .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
                                         .attachments(List.of(attachmentID))
@@ -575,7 +575,7 @@ public class EntryServiceTest {
                         () -> entryService.createNew(
                                 EntryNewDTO
                                         .builder()
-                                        .logbooks(List.of(logbook.name()))
+                                        .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
                                         .attachments(List.of(attachmentID))
@@ -612,7 +612,7 @@ public class EntryServiceTest {
                             () -> entryService.createNew(
                                     EntryNewDTO
                                             .builder()
-                                            .logbooks(List.of(logbook.name()))
+                                            .logbooks(List.of(logbook.id()))
                                             .text("This is a log for test")
                                             .title("A very wonderful log")
                                             .note(String.valueOf(finalIdx))
@@ -738,7 +738,7 @@ public class EntryServiceTest {
                             () -> entryService.createNew(
                                     EntryNewDTO
                                             .builder()
-                                            .logbooks(List.of(logbook.name()))
+                                            .logbooks(List.of(logbook.id()))
                                             .text("This is a log for test")
                                             .title("A very wonderful log")
                                             .note(String.valueOf(finalIdx))
@@ -1061,7 +1061,7 @@ public class EntryServiceTest {
                                 .builder()
                                 .title("title")
                                 .text("text")
-                                .logbooks(List.of(logbookTest.name()))
+                                .logbooks(List.of(logbookTest.id()))
                                 .summarizes(
                                         SummarizesDTO
                                                 .builder()
@@ -1112,7 +1112,7 @@ public class EntryServiceTest {
                                 .builder()
                                 .title("title")
                                 .text("text")
-                                .logbooks(List.of(logbookTest.name()))
+                                .logbooks(List.of(logbookTest.id()))
                                 .summarizes(
                                         SummarizesDTO
                                                 .builder()
@@ -1131,7 +1131,7 @@ public class EntryServiceTest {
                                 .builder()
                                 .title("title")
                                 .text("text")
-                                .logbooks(List.of(logbookTest.name()))
+                                .logbooks(List.of(logbookTest.id()))
                                 .summarizes(
                                         SummarizesDTO
                                                 .builder()
@@ -1151,7 +1151,7 @@ public class EntryServiceTest {
                                 .builder()
                                 .title("title")
                                 .text("text")
-                                .logbooks(List.of(logbookTest.name()))
+                                .logbooks(List.of(logbookTest.id()))
                                 .summarizes(
                                         SummarizesDTO
                                                 .builder()
@@ -1253,7 +1253,7 @@ public class EntryServiceTest {
                                 .builder()
                                 .title("title")
                                 .text("text")
-                                .logbooks(List.of(logbookTest.name()))
+                                .logbooks(List.of(logbookTest.id()))
                                 .summarizes(
                                         SummarizesDTO
                                                 .builder()
@@ -1354,7 +1354,7 @@ public class EntryServiceTest {
                                 .builder()
                                 .title("title summary")
                                 .text("text summary")
-                                .logbooks(List.of(logbookTest.name()))
+                                .logbooks(List.of(logbookTest.id()))
                                 .summarizes(
                                         SummarizesDTO
                                                 .builder()
@@ -1373,7 +1373,7 @@ public class EntryServiceTest {
                                 .builder()
                                 .title("title")
                                 .text("text")
-                                .logbooks(List.of(logbookTest.name()))
+                                .logbooks(List.of(logbookTest.id()))
                                 .build()
                 )
         );
@@ -1486,7 +1486,7 @@ public class EntryServiceTest {
                                 .builder()
                                 .title("title summary")
                                 .text("text summary")
-                                .logbooks(List.of(logbookTest.name()))
+                                .logbooks(List.of(logbookTest.id()))
                                 .summarizes(
                                         SummarizesDTO
                                                 .builder()
@@ -1504,7 +1504,7 @@ public class EntryServiceTest {
                                 .builder()
                                 .title("title summary")
                                 .text("text summary")
-                                .logbooks(List.of(logbookTest.name()))
+                                .logbooks(List.of(logbookTest.id()))
                                 .summarizes(
                                         SummarizesDTO
                                                 .builder()
@@ -1618,7 +1618,7 @@ public class EntryServiceTest {
                                 .builder()
                                 .title("title summary")
                                 .text("text summary")
-                                .logbooks(List.of(logbookTest.name()))
+                                .logbooks(List.of(logbookTest.id()))
                                 .summarizes(
                                         SummarizesDTO
                                                 .builder()
@@ -1684,7 +1684,7 @@ public class EntryServiceTest {
                                 .builder()
                                 .title("title summary")
                                 .text("text summary")
-                                .logbooks(List.of(logbookTest.name()))
+                                .logbooks(List.of(logbookTest.id()))
                                 .tags(
                                         List.of(
                                                 logbookTestUpdated.tags().get(0).id()

@@ -206,7 +206,7 @@ public class EntryService {
             //check for shift
             LogbookDTO lb =
                     wrapCatch(
-                            () -> logbookService.getLogbookByName(finalNewEntry.getLogbooks().get(0)),
+                            () -> logbookService.getLogbook(finalNewEntry.getLogbooks().get(0)),
                             -3,
                             "EntryService:createNew"
                     );
