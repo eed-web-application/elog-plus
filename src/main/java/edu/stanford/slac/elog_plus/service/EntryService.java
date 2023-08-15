@@ -83,7 +83,7 @@ public class EntryService {
         for (String logbookId :
                 logbookIds) {
             var shiftDTO = wrapCatch(
-                    () -> logbookService.findShiftByLocalTimeWithLogbookId(
+                    () -> logbookService.findShiftByLocalTime(
                             logbookId,
                             eventAt.toLocalTime()
                     ),

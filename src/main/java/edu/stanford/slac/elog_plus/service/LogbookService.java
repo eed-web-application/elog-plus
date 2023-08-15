@@ -55,6 +55,7 @@ public class LogbookService {
 
     /**
      * Get logbook summary by id
+     *
      * @param logbookId the unique id of the logbook
      * @return return the summary of the logbook
      */
@@ -351,17 +352,18 @@ public class LogbookService {
      * @return the full logbooks
      */
     public LogbookDTO getLogbook(String logbookId) {
-        assertOnLogbook(logbookId, -1, "LogbookService:getLogbook");
-        return logbookRepository.findById(
-                logbookId
-        ).map(
-                logbookMapper::fromModel
-        ).orElseThrow(
-                () -> ControllerLogicException.builder()
-                        .errorCode(-2)
-                        .errorMessage("")
-                        .errorDomain("")
-                        .build()
+        return wrapCatch(() -> logbookRepository.findById(
+                        logbookId
+                ).map(
+                        logbookMapper::fromModel
+                ).orElseThrow(
+                        () -> LogbookNotFound.logbookNotFoundBuilder()
+                                .errorCode(-2)
+                                .errorDomain("LogbookService:getLogbook")
+                                .build()
+                ),
+                -1,
+                "LogbookService:getLogbook"
         );
     }
 
@@ -547,7 +549,7 @@ public class LogbookService {
 
         if (logbooks == null || logbooks.isEmpty()) {
             logbooks = wrapCatch(
-                    () -> logbookRepository.getAllLogbook(),
+                    logbookRepository::getAllLogbook,
                     -1,
                     "LogbookService:getAllTagsByLogbooksName"
             );
@@ -881,17 +883,30 @@ public class LogbookService {
      * @return the found shift, if eny matches
      */
     public Optional<ShiftDTO> findShiftByLocalTime(String logbookId, LocalTime localTime) {
-        assertOnLogbook(logbookId, -1, "LogbookService:getShiftByLocalTime");
-        return wrapCatch(
+        LogbookSummaryDTO summaryDTO = logbookMapper.fromModelToSummaryDTO(
+                getLogbook(logbookId)
+        );
+        Optional<ShiftDTO> result = wrapCatch(
                 () -> logbookRepository.findShiftFromLocalTime(
                         logbookId,
                         localTime
                 ).map(
                         shiftMapper::fromModel
                 ),
-                -2,
+                -1,
                 "LogbookService:getShiftByLocalTime"
         );
+        if (result.isPresent()) {
+            result = Optional.of(
+                    result.get()
+                            .toBuilder()
+                            .logbook(
+                                    summaryDTO
+                            )
+                            .build()
+            );
+        }
+        return result;
     }
 
     /**
@@ -902,16 +917,30 @@ public class LogbookService {
      * @return the found shift, if eny matches
      */
     public Optional<ShiftDTO> findShiftByLocalTimeWithLogbookName(String logbookName, LocalTime localTime) {
-        return wrapCatch(
-                () -> logbookRepository.findShiftFromLocalTimeWithLogbookName(
-                        logbookName,
+        LogbookSummaryDTO summaryDTO = logbookMapper.fromModelToSummaryDTO(
+                getLogbookByName(logbookName)
+        );
+        Optional<ShiftDTO> result = wrapCatch(
+                () -> logbookRepository.findShiftFromLocalTime(
+                        summaryDTO.id(),
                         localTime
                 ).map(
                         shiftMapper::fromModel
                 ),
-                -2,
+                -1,
                 "LogbookService:getShiftByLocalTime"
         );
+        if (result.isPresent()) {
+            result = Optional.of(
+                    result.get()
+                            .toBuilder()
+                            .logbook(
+                                    summaryDTO
+                            )
+                            .build()
+            );
+        }
+        return result;
     }
 
     /**
@@ -921,18 +950,18 @@ public class LogbookService {
      * @param localTime the time of the event in the day
      * @return the found shift, if eny matches
      */
-    public Optional<ShiftDTO> findShiftByLocalTimeWithLogbookId(String logbookId, LocalTime localTime) {
-        return wrapCatch(
-                () -> logbookRepository.findShiftFromLocalTimeWithLogbookId(
-                        logbookId,
-                        localTime
-                ).map(
-                        shiftMapper::fromModel
-                ),
-                -2,
-                "LogbookService:getShiftByLocalTime"
-        );
-    }
+//    public Optional<ShiftDTO> findShiftByLocalTimeWithLogbookId(String logbookId, LocalTime localTime) {
+//        return wrapCatch(
+//                () -> logbookRepository.findShiftFromLocalTimeWithLogbookId(
+//                        logbookId,
+//                        localTime
+//                ).map(
+//                        shiftMapper::fromModel
+//                ),
+//                -2,
+//                "LogbookService:getShiftByLocalTime"
+//        );
+//    }
 
     /**
      * Check if the tad id exists in any of logbooks names

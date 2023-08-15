@@ -11,6 +11,7 @@ import org.mapstruct.factory.Mappers;
 )
 public abstract class LogbookMapper {
     public abstract LogbookSummaryDTO fromModelToSummaryDTO(Logbook log);
+    public abstract LogbookSummaryDTO fromModelToSummaryDTO(LogbookDTO log);
     public abstract LogbookDTO fromModel(Logbook log);
     public abstract Logbook fromDTO(NewLogbookDTO logbookDTO);
     public abstract Logbook fromDTO(LogbookDTO logbookDTO);
