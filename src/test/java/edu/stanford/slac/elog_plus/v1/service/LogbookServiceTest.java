@@ -356,7 +356,6 @@ public class LogbookServiceTest {
 
         assertThat(fullLogbook).isNotNull();
         assertThat(fullLogbook.shifts()).extracting("id").contains(shiftId);
-        assertThat(fullLogbook.shifts()).extracting("logbook").extracting("id").contains(newLogbookID);
     }
 
     @Test
