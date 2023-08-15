@@ -233,7 +233,7 @@ public class EntryService {
                 .forEach(
                         tagId -> {
                             assertion(
-                                    () -> logbookService.tagIdExistInAnyLogbooksNames
+                                    () -> logbookService.tagIdExistInAnyLogbookIds
                                             (
                                                     tagId,
                                                     finalNewEntry.getLogbooks()

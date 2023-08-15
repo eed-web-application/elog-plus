@@ -918,7 +918,7 @@ public class LogbookService {
      * @param logbookIds the logbooks where search the id
      * @return true if the tag exists
      */
-    public boolean tagIdExistInAnyLogbooksNames(String tagId, List<String> logbookIds) {
+    public boolean tagIdExistInAnyLogbookIds(String tagId, List<String> logbookIds) {
         return wrapCatch(
                 () -> logbookRepository.existsByIdInAndTagsIdIs(
                         logbookIds,

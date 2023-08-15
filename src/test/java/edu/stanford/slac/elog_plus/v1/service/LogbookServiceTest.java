@@ -5,7 +5,6 @@ import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.exception.ShiftNotFound;
 import edu.stanford.slac.elog_plus.exception.TagNotFound;
 import edu.stanford.slac.elog_plus.model.Logbook;
-import edu.stanford.slac.elog_plus.model.Shift;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import edu.stanford.slac.elog_plus.utility.DateUtilities;
 import org.assertj.core.api.AssertionsForClassTypes;
@@ -1634,12 +1633,12 @@ public class LogbookServiceTest {
         assertThat(exists).isNotNull().isTrue();
 
         exists = assertDoesNotThrow(
-                () -> logbookService.tagIdExistInAnyLogbooksNames(tagAID, List.of("logbook-a", "logbook-b"))
+                () -> logbookService.tagIdExistInAnyLogbookIds(tagAID, List.of(logbookIDA, logbookIDB))
         );
         assertThat(exists).isNotNull().isTrue();
 
         exists = assertDoesNotThrow(
-                () -> logbookService.tagIdExistInAnyLogbooksNames(tagAID, List.of("logbook-b", "logbook-c"))
+                () -> logbookService.tagIdExistInAnyLogbookIds(tagAID, List.of(logbookIDB, logbookIDC))
         );
         assertThat(exists).isNotNull().isFalse();
     }
