@@ -27,11 +27,13 @@ public abstract class EntryMapper {
 
     @Mapping(target = "loggedBy", expression = "java(entry.getFirstName() + \" \" + entry.getLastName())")
     @Mapping(target = "followUps", ignore = true)
+    @Mapping(source = "logbooks", target = "logbooks", qualifiedByName = "mapToLogbookSummary")
     public abstract EntryDTO fromModel(Entry entry);
 
     @Mapping(target = "loggedBy", expression = "java(entry.getFirstName() + \" \" + entry.getLastName())")
     @Mapping(target = "attachments", ignore = true)
     @Mapping(target = "followUps", ignore = true)
+    @Mapping(source = "logbooks", target = "logbooks", qualifiedByName = "mapToLogbookSummary")
     public abstract EntryDTO fromModelNoAttachment(Entry entry);
 
     @Mapping(target = "loggedBy", expression = "java(entry.getFirstName() + \" \" + entry.getLastName())")
