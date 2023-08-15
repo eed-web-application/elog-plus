@@ -212,6 +212,20 @@ public class EntryService {
                     );
             // check for summarization
             checkForSummarization(lb, newEntry.getSummarizes());
+        } else {
+            // check  all logbooks
+            newEntry.getLogbooks().forEach(
+                    logbookId->{
+                        assertion(
+                                () -> logbookService.existById(logbookId),
+                                LogbookNotFound
+                                        .logbookNotFoundBuilder()
+                                        .errorCode(-4)
+                                        .errorDomain("LogService::createNew")
+                                        .build()
+                        );
+                    }
+            );
         }
         // check for attachment
         newEntry

@@ -57,7 +57,7 @@ public class LogbookService {
                         .map(
                                 LogbookMapper.INSTANCE::fromModelToSummaryDTO
                         ).orElseThrow(
-                                ()->LogbookNotFound.logbookNotFoundBuilder()
+                                () -> LogbookNotFound.logbookNotFoundBuilder()
                                         .errorCode(-1)
                                         .errorDomain("LogbookService::getSummaryById")
                                         .build()
@@ -81,20 +81,20 @@ public class LogbookService {
 
         // check for logbooks with the same name
         NewLogbookDTO finalNewLogbookDTO = newLogbookDTO;
-        boolean exists = wrapCatch(
-                () -> logbookRepository.existsByName(
-                        finalNewLogbookDTO.name()
-                ),
-                -1,
-                "LogbookService::createNew");
+
         assertion(
-                () -> !exists,
+                () -> !wrapCatch(
+                        () -> logbookRepository.existsByName(
+                                finalNewLogbookDTO.name()
+                        ),
+                        -1,
+                        "LogbookService::createNew"),
                 LogbookAlreadyExists.logbookAlreadyExistsBuilder()
                         .errorCode(-2)
                         .errorDomain("LogbookService::createNew")
                         .build()
         );
-
+        // create new logbook
         Logbook newLogbook = wrapCatch(
                 () -> logbookRepository.save(
                         LogbookMapper.INSTANCE.fromDTO(finalNewLogbookDTO)
@@ -119,7 +119,7 @@ public class LogbookService {
                 -1,
                 "LogbookService::update"
         ).orElseThrow(
-                ()->LogbookNotFound.logbookNotFoundBuilder()
+                () -> LogbookNotFound.logbookNotFoundBuilder()
                         .errorCode(-2)
                         .errorDomain("LogbookService::update")
                         .build()
@@ -387,13 +387,28 @@ public class LogbookService {
      * @param logbookName the name of the logbooks to check
      * @return true if the logbooks exists
      */
-    public Boolean exist(String logbookName) {
+    public Boolean existByName(String logbookName) {
         return wrapCatch(
                 () -> logbookRepository.existsByName(
                         logbookName
                 ),
                 -1,
-                "LogbookService::exist");
+                "LogbookService::existByName");
+    }
+
+    /**
+     * Check if a logbooks with a specific id exists
+     *
+     * @param logbookId the id of the logbooks to check
+     * @return true if the logbooks exists
+     */
+    public Boolean existById(String logbookId) {
+        return wrapCatch(
+                () -> logbookRepository.existsById(
+                        logbookId
+                ),
+                -1,
+                "LogbookService::existById");
     }
 
     /**
@@ -533,7 +548,7 @@ public class LogbookService {
 
         for (String logbookName :
                 logbooks) {
-            if (!exist(logbookName)) {
+            if (!existByName(logbookName)) {
                 continue;
             }
             LogbookDTO lbDTO = getLogbookByName(logbookName);
@@ -896,7 +911,7 @@ public class LogbookService {
      * Return the shift which the date fall in its range
      *
      * @param logbookId the logbooks unique id identifier
-     * @param localTime   the time of the event in the day
+     * @param localTime the time of the event in the day
      * @return the found shift, if eny matches
      */
     public Optional<ShiftDTO> findShiftByLocalTimeWithLogbookId(String logbookId, LocalTime localTime) {
@@ -914,7 +929,8 @@ public class LogbookService {
 
     /**
      * Check if the tad id exists in any of logbooks names
-     * @param tagId the id of the tag to find
+     *
+     * @param tagId      the id of the tag to find
      * @param logbookIds the logbooks where search the id
      * @return true if the tag exists
      */

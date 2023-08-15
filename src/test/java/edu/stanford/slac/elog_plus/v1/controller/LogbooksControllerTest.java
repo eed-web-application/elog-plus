@@ -101,7 +101,7 @@ public class LogbooksControllerTest {
                         mockMvc,
                         status().isConflict(),
                         NewLogbookDTO.builder()
-                                .name("New Logbook")
+                                .name("New Logbooks")
                                 .build()
                 )
         );
