@@ -1,5 +1,7 @@
 package edu.stanford.slac.elog_plus.api.v1.mapper;
 
+import edu.stanford.slac.elog_plus.api.v1.dto.LogbookShiftDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.LogbookSummaryDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.NewShiftDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.ShiftDTO;
 import edu.stanford.slac.elog_plus.model.Shift;
@@ -22,6 +24,10 @@ public abstract class ShiftMapper {
 
     public abstract Shift fromDTO(ShiftDTO shiftDTO);
     public abstract Shift fromDTO(NewShiftDTO shiftDTO);
+
+    public abstract LogbookShiftDTO fromModelToLogbookShift(Shift shiftDTO);
+
     public abstract ShiftDTO fromModel(Shift shift);
+
     public abstract List<Shift> fromDTO(List<ShiftDTO> allNewShift);
 }

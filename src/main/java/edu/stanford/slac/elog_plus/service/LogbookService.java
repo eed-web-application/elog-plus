@@ -882,16 +882,16 @@ public class LogbookService {
      * @param localTime the time of the event in the day
      * @return the found shift, if eny matches
      */
-    public Optional<ShiftDTO> findShiftByLocalTime(String logbookId, LocalTime localTime) {
+    public Optional<LogbookShiftDTO> findShiftByLocalTime(String logbookId, LocalTime localTime) {
         LogbookSummaryDTO summaryDTO = logbookMapper.fromModelToSummaryDTO(
                 getLogbook(logbookId)
         );
-        Optional<ShiftDTO> result = wrapCatch(
+        Optional<LogbookShiftDTO> result = wrapCatch(
                 () -> logbookRepository.findShiftFromLocalTime(
                         logbookId,
                         localTime
                 ).map(
-                        shiftMapper::fromModel
+                        shiftMapper::fromModelToLogbookShift
                 ),
                 -1,
                 "LogbookService:getShiftByLocalTime"
@@ -916,16 +916,16 @@ public class LogbookService {
      * @param localTime   the time of the event in the day
      * @return the found shift, if eny matches
      */
-    public Optional<ShiftDTO> findShiftByLocalTimeWithLogbookName(String logbookName, LocalTime localTime) {
+    public Optional<LogbookShiftDTO> findShiftByLocalTimeWithLogbookName(String logbookName, LocalTime localTime) {
         LogbookSummaryDTO summaryDTO = logbookMapper.fromModelToSummaryDTO(
                 getLogbookByName(logbookName)
         );
-        Optional<ShiftDTO> result = wrapCatch(
+        Optional<LogbookShiftDTO> result = wrapCatch(
                 () -> logbookRepository.findShiftFromLocalTime(
                         summaryDTO.id(),
                         localTime
                 ).map(
-                        shiftMapper::fromModel
+                        shiftMapper::fromModelToLogbookShift
                 ),
                 -1,
                 "LogbookService:getShiftByLocalTime"

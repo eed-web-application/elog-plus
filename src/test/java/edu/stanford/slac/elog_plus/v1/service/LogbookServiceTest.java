@@ -356,6 +356,7 @@ public class LogbookServiceTest {
 
         assertThat(fullLogbook).isNotNull();
         assertThat(fullLogbook.shifts()).extracting("id").contains(shiftId);
+        assertThat(fullLogbook.shifts()).extracting("logbook").extracting("id").contains(newLogbookID);
     }
 
     @Test
@@ -1248,7 +1249,7 @@ public class LogbookServiceTest {
                 }
         );
 
-        Optional<ShiftDTO> foundShift = assertDoesNotThrow(
+        Optional<LogbookShiftDTO> foundShift = assertDoesNotThrow(
                 () ->
                         logbookService.findShiftByLocalTime(
                                 newLogbookID,
@@ -1262,6 +1263,7 @@ public class LogbookServiceTest {
 
         assertThat(foundShift).isNotNull();
         assertThat(foundShift.isPresent()).isTrue();
+        assertThat(foundShift.get().logbook().id()).isEqualTo(newLogbookID);
         assertThat(foundShift.get().name()).isEqualTo("Shift2");
     }
 
@@ -1346,7 +1348,7 @@ public class LogbookServiceTest {
                 }
         );
 
-        Optional<ShiftDTO> foundShift = assertDoesNotThrow(
+        Optional<LogbookShiftDTO> foundShift = assertDoesNotThrow(
                 () ->
                         logbookService.findShiftByLocalTime(
                                 newLogbookID,
@@ -1357,7 +1359,6 @@ public class LogbookServiceTest {
                         )
 
         );
-
         assertThat(foundShift).isNotNull();
         assertThat(foundShift.isPresent()).isFalse();
     }

@@ -15,9 +15,11 @@ import lombok.Builder;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "DTO for the shift creation")
 @Builder(toBuilder = true)
-public record ShiftDTO(
+public record LogbookShiftDTO(
         @Schema(description = "Unique identifier of the shift")
         String id,
+        @Schema(description = "The logbook where the shift belong")
+        LogbookSummaryDTO logbook,
         @Schema(description = "Is the name of the shift")
         String name,
         @Schema(description = "Is the time where the shift start in the day with the form HH:MM")

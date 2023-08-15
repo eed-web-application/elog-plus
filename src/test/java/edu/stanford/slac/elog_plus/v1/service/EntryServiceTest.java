@@ -1020,6 +1020,13 @@ public class EntryServiceTest {
                 )
                 ,
                 "Shift2");
+
+        for (EntrySummaryDTO entry:
+                firstPage) {
+            if(entry.shift()==null || entry.shift().isEmpty()) continue;
+            assertThat(entry.shift().get(0).logbook().id()).isEqualTo(logbook.id());
+        }
+
         //check all shift
         assertThat(firstPage)
                 .filteredOn(entry->entry.shift()==null || entry.shift().isEmpty())
@@ -1038,7 +1045,6 @@ public class EntryServiceTest {
                 .filteredOn(not(shift2))
                 .hasSize(0);
         // check summary against full entry
-
         for (EntrySummaryDTO es :
                 firstPage) {
             EntryDTO fullEntry = entryService.getFullEntry(
