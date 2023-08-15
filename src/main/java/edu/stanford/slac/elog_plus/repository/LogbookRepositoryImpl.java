@@ -191,7 +191,7 @@ public class LogbookRepositoryImpl implements LogbookRepositoryCustom {
 
     @Override
     public Optional<Shift> findShiftFromLocalTimeWithLogbookName(String logbookName, LocalTime localTime) {
-        Optional<Shift> result = null;
+        Optional<Shift> result = Optional.empty();
         Query q = new Query();
         q.addCriteria(
                 Criteria.where("name").is(logbookName)
@@ -217,8 +217,7 @@ public class LogbookRepositoryImpl implements LogbookRepositoryCustom {
 
     @Override
     public Optional<Shift> findShiftFromLocalTimeWithLogbookId(String logbookId, LocalTime localTime)  {
-        Optional<Shift> result = null;
-        int minutesFromMidnight = localTime.getHour() * 60 + localTime.getMinute();
+        Optional<Shift> result = Optional.empty();
         Query q = new Query();
         q.addCriteria(
                 Criteria.where("id").is(logbookId)
