@@ -30,8 +30,11 @@ import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
 @Service
 @AllArgsConstructor
 public class LogbookService {
-    EntryRepository entryRepository;
-    LogbookRepository logbookRepository;
+    private final TagMapper tagMapper;
+    private final ShiftMapper shiftMapper;
+    private final LogbookMapper logbookMapper;
+    private final EntryRepository entryRepository;
+    private final LogbookRepository logbookRepository;
 
     /**
      * Return all the logbooks
@@ -43,19 +46,23 @@ public class LogbookService {
                 () -> logbookRepository.findAll()
                         .stream()
                         .map(
-                                LogbookMapper.INSTANCE::fromModel
+                                logbookMapper::fromModel
                         ).collect(Collectors.toList()),
                 -1,
                 "LogbookService::getAllLogbook"
         );
     }
 
-
+    /**
+     * Get logbook summary by id
+     * @param logbookId the unique id of the logbook
+     * @return return the summary of the logbook
+     */
     public LogbookSummaryDTO getSummaryById(String logbookId) {
         return wrapCatch(
                 () -> logbookRepository.findById(logbookId)
                         .map(
-                                LogbookMapper.INSTANCE::fromModelToSummaryDTO
+                                logbookMapper::fromModelToSummaryDTO
                         ).orElseThrow(
                                 () -> LogbookNotFound.logbookNotFoundBuilder()
                                         .errorCode(-1)
@@ -97,7 +104,7 @@ public class LogbookService {
         // create new logbook
         Logbook newLogbook = wrapCatch(
                 () -> logbookRepository.save(
-                        LogbookMapper.INSTANCE.fromDTO(finalNewLogbookDTO)
+                        logbookMapper.fromDTO(finalNewLogbookDTO)
                 ),
                 -3,
                 "LogbookService::createNew");
@@ -148,7 +155,7 @@ public class LogbookService {
                         .errorDomain("LogbookService::update")
                         .build()
         );
-        Logbook updateLogbookInfo = LogbookMapper.INSTANCE.fromDTO(logbookDTO);
+        Logbook updateLogbookInfo = logbookMapper.fromDTO(logbookDTO);
         if (lbToUpdated.getShifts() == null) {
             lbToUpdated.setShifts(new ArrayList<>());
         }
@@ -181,7 +188,7 @@ public class LogbookService {
                 "LogbookService:update"
         );
         log.info("Logbook '{}' has been updated", lbToUpdated.getName());
-        return LogbookMapper.INSTANCE.fromModel(
+        return logbookMapper.fromModel(
                 updatedLB
         );
     }
@@ -348,7 +355,7 @@ public class LogbookService {
         return logbookRepository.findById(
                 logbookId
         ).map(
-                LogbookMapper.INSTANCE::fromModel
+                logbookMapper::fromModel
         ).orElseThrow(
                 () -> ControllerLogicException.builder()
                         .errorCode(-2)
@@ -359,7 +366,7 @@ public class LogbookService {
     }
 
     /**
-     * Return a full log indetified by its name
+     * Return a full log identified by its name
      *
      * @param logbookName the name of the logbooks
      * @return the full logbooks
@@ -370,7 +377,7 @@ public class LogbookService {
                 -1,
                 "LogbookService:getLogbookByName"
         );
-        return LogbookMapper.INSTANCE.fromModel(
+        return logbookMapper.fromModel(
                 lb.orElseThrow(
                         () -> LogbookNotFound.logbookNotFoundBuilder()
                                 .errorCode(-1)
@@ -445,7 +452,7 @@ public class LogbookService {
         return wrapCatch(
                 () -> logbookRepository.createNewTag(
                         logbookId,
-                        TagMapper.INSTANCE.fromDTO(finalNewTagDTO)
+                        tagMapper.fromDTO(finalNewTagDTO)
                 ),
                 -3,
                 "LogbookService:createNewTag"
@@ -465,7 +472,7 @@ public class LogbookService {
                 () ->
                         logbookRepository.ensureTag(
                                 logbookId,
-                                TagMapper.INSTANCE.fromDTO(
+                                tagMapper.fromDTO(
                                         NewTagDTO
                                                 .builder()
                                                 .name(StringUtilities.tagNameNormalization(tagName))
@@ -515,7 +522,7 @@ public class LogbookService {
         );
         return allTag.stream()
                 .map(
-                        TagMapper.INSTANCE::fromModel
+                        tagMapper::fromModel
                 ).
                 collect(Collectors.toList());
     }
@@ -589,7 +596,7 @@ public class LogbookService {
 
         // verify and update the shifts
         verifyShiftAndUpdate(
-                ShiftMapper.INSTANCE.fromDTO(allNewShift),
+                shiftMapper.fromDTO(allNewShift),
                 lbToSave.getShifts(),
                 -3,
                 "LogbookService:replaceShift"
@@ -613,7 +620,7 @@ public class LogbookService {
     @Transactional(propagation = Propagation.NESTED)
     public String addShift(String logbookId, NewShiftDTO newShiftDTO) {
         // validate the shift
-        Shift shiftToAdd = validateShift(ShiftMapper.INSTANCE.fromDTO(newShiftDTO), -1, "LogbookService:addShift");
+        Shift shiftToAdd = validateShift(shiftMapper.fromDTO(newShiftDTO), -1, "LogbookService:addShift");
 
         // normalize shift name
         shiftToAdd.setName(
@@ -671,7 +678,7 @@ public class LogbookService {
     public void updateShift(String logbookId, ShiftDTO shiftDTO) {
         // validate the shift
         Shift shiftToUpdate = validateShift(
-                ShiftMapper.INSTANCE.fromDTO(shiftDTO),
+                shiftMapper.fromDTO(shiftDTO),
                 -1,
                 "LogbookService:updateShift"
         );
@@ -880,7 +887,7 @@ public class LogbookService {
                         logbookId,
                         localTime
                 ).map(
-                        ShiftMapper.INSTANCE::fromModel
+                        shiftMapper::fromModel
                 ),
                 -2,
                 "LogbookService:getShiftByLocalTime"
@@ -900,7 +907,7 @@ public class LogbookService {
                         logbookName,
                         localTime
                 ).map(
-                        ShiftMapper.INSTANCE::fromModel
+                        shiftMapper::fromModel
                 ),
                 -2,
                 "LogbookService:getShiftByLocalTime"
@@ -920,7 +927,7 @@ public class LogbookService {
                         logbookId,
                         localTime
                 ).map(
-                        ShiftMapper.INSTANCE::fromModel
+                        shiftMapper::fromModel
                 ),
                 -2,
                 "LogbookService:getShiftByLocalTime"
@@ -954,7 +961,7 @@ public class LogbookService {
                 "LogbookService:getTagById"
         );
         return tag.map(
-                TagMapper.INSTANCE::fromModel
+                tagMapper::fromModel
         );
     }
 

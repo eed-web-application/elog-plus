@@ -6,9 +6,10 @@ import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
 import org.mapstruct.factory.Mappers;
 
-@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE)
-public interface QueryParameterMapper {
-    QueryParameterMapper INSTANCE = Mappers.getMapper(QueryParameterMapper.class);
-
-    QueryParameterWithAnchor fromDTO(QueryWithAnchorDTO parameter);
+@Mapper(
+        unmappedTargetPolicy = ReportingPolicy.IGNORE,
+        componentModel = "spring"
+)
+public abstract class QueryParameterMapper {
+    public abstract QueryParameterWithAnchor fromDTO(QueryWithAnchorDTO parameter);
 }

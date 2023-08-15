@@ -12,16 +12,16 @@ import java.time.LocalTime;
 import java.util.List;
 
 @Mapper(
-        unmappedTargetPolicy = ReportingPolicy.IGNORE
+        unmappedTargetPolicy = ReportingPolicy.IGNORE,
+        componentModel = "spring"
 )
-public interface ShiftMapper {
-    ShiftMapper INSTANCE = Mappers.getMapper( ShiftMapper.class );
+public abstract class ShiftMapper {
     @Mapping(target = "id", ignore = true)
-    Shift fromDTO(NewShiftDTO model, LocalTime fromTime, LocalTime toTime);
-    NewShiftDTO toNewDTO(ShiftDTO dto);
+    public abstract Shift fromDTO(NewShiftDTO model, LocalTime fromTime, LocalTime toTime);
+    public abstract NewShiftDTO toNewDTO(ShiftDTO dto);
 
-    Shift fromDTO(ShiftDTO shiftDTO);
-    Shift fromDTO(NewShiftDTO shiftDTO);
-    ShiftDTO fromModel(Shift shift);
-    List<Shift> fromDTO(List<ShiftDTO> allNewShift);
+    public abstract Shift fromDTO(ShiftDTO shiftDTO);
+    public abstract Shift fromDTO(NewShiftDTO shiftDTO);
+    public abstract ShiftDTO fromModel(Shift shift);
+    public abstract List<Shift> fromDTO(List<ShiftDTO> allNewShift);
 }

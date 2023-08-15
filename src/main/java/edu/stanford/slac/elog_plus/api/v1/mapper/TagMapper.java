@@ -5,13 +5,15 @@ import edu.stanford.slac.elog_plus.api.v1.dto.TagDTO;
 import edu.stanford.slac.elog_plus.model.Tag;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
 import org.mapstruct.factory.Mappers;
 
-@Mapper
-public interface TagMapper {
-    TagMapper INSTANCE = Mappers.getMapper( TagMapper.class );
-
-    TagDTO fromModel(Tag model);
+@Mapper(
+        unmappedTargetPolicy = ReportingPolicy.IGNORE,
+        componentModel = "spring"
+)
+public abstract class TagMapper {
+    public abstract TagDTO fromModel(Tag model);
     @Mapping(target = "id", ignore = true)
-    Tag fromDTO(NewTagDTO dto);
+    public abstract Tag fromDTO(NewTagDTO dto);
 }

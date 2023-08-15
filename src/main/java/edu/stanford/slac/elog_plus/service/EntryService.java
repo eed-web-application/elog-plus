@@ -29,6 +29,7 @@ import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
 @Log4j2
 @AllArgsConstructor
 public class EntryService {
+    final private QueryParameterMapper queryParameterMapper;
     final private EntryRepository entryRepository;
     final private LogbookService logbookService;
     final private AttachmentService attachmentService;
@@ -43,7 +44,7 @@ public class EntryService {
     public List<EntrySummaryDTO> searchAll(QueryWithAnchorDTO queryWithAnchorDTO) {
         List<Entry> found = wrapCatch(
                 () -> entryRepository.searchAll(
-                        QueryParameterMapper.INSTANCE.fromDTO(
+                        queryParameterMapper.fromDTO(
                                 queryWithAnchorDTO
                         )
                 ),
