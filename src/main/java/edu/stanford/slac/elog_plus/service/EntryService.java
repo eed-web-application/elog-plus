@@ -76,14 +76,14 @@ public class EntryService {
      * @param eventAt  the time which we need the shift
      * @return the shift list
      */
-    private List<ShiftDTO> getShiftsForEntry(List<String> logbookIds, LocalDateTime eventAt) {
-        List<ShiftDTO> shifts = new ArrayList<>();
+    private List<LogbookShiftDTO> getShiftsForEntry(List<String> logbookIds, LocalDateTime eventAt) {
+        List<LogbookShiftDTO> shifts = new ArrayList<>();
         if (logbookIds == null || logbookIds.isEmpty()) return shifts;
         if (eventAt == null) return shifts;
         for (String logbookId :
                 logbookIds) {
             var shiftDTO = wrapCatch(
-                    () -> logbookService.findShiftByLocalTimeWithLogbookId(
+                    () -> logbookService.findShiftByLocalTime(
                             logbookId,
                             eventAt.toLocalTime()
                     ),
