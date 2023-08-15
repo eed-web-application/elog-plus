@@ -26,7 +26,7 @@ public record EntryDTO(
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)
         LocalDateTime summaryDate,
-        List<String> tags,
+        List<TagDTO> tags,
         String title,
         String text,
         String loggedBy,
@@ -35,7 +35,7 @@ public record EntryDTO(
         EntryDTO followingUp,
         List<EntryDTO> history,
         @Schema(description = "The shift which the entry belong, if any match the event date")
-        ShiftDTO shift,
+        List<ShiftDTO> shift,
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)
         LocalDateTime loggedAt,

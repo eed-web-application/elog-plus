@@ -21,8 +21,8 @@ import java.util.List;
 @Schema(description = "Is the model for the new ELog creation")
 public record EntryNewDTO(
         @NotNull
-        @Schema(description = "Is the logbook where the new log belong")
-        String logbook,
+        @Schema(description = "Is the logbooks where the new log belong")
+        List<String> logbooks,
         @NotNull
         @NotEmpty
         @Schema(description = "The title of the log")

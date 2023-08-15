@@ -54,13 +54,16 @@ public class ImportService {
         ).toList();
 
         // ensure logbooks exists
-        assertion(
-                ()->logbookService.exist(entryToUpload.logbook()),
-                LogbookNotFound.logbookNotFoundBuilder()
-                        .errorCode(-2)
-                        .errorDomain("ImportService:importSingleEntry")
-                        .build()
-        );
+        for (String logbookName:
+            entryToUpload.logbooks()) {
+            assertion(
+                    ()->logbookService.exist(logbookName),
+                    LogbookNotFound.logbookNotFoundBuilder()
+                            .errorCode(-2)
+                            .errorDomain("ImportService:importSingleEntry")
+                            .build()
+            );
+        }
 
         //fill entry with the attachment
         return entryService.createNew(

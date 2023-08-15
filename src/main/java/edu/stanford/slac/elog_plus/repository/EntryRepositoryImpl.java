@@ -56,7 +56,7 @@ public class EntryRepositoryImpl implements EntryRepositoryCustom {
         List<Criteria> allCriteria = new ArrayList<>();
         if (!queryWithAnchor.getLogbooks().isEmpty()) {
             allCriteria.add(
-                    Criteria.where("logbook").in(
+                    Criteria.where("logbooks").in(
                             queryWithAnchor.getLogbooks()
                     )
             );

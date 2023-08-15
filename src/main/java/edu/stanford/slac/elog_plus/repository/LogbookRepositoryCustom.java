@@ -14,7 +14,7 @@ public interface LogbookRepositoryCustom {
 
     /**
      * Atomically ensure the tag creation
-     * @param logbookId the id of the logbook
+     * @param logbookId the id of the logbooks
      * @param newTag the new tag to create
      */
     String ensureTag(String logbookId, Tag newTag) throws UnsupportedEncodingException, NoSuchAlgorithmException;
@@ -30,4 +30,6 @@ public interface LogbookRepositoryCustom {
     Optional<Shift> findShiftFromLocalTime(String logbookId, LocalTime localTime);
 
     Optional<Shift> findShiftFromLocalTimeWithLogbookName(String logbookId, LocalTime localTime);
+
+    Optional<Tag> getTagsByID(String tagsId);
 }

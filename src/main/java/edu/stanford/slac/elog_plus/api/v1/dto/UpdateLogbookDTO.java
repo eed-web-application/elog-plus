@@ -10,12 +10,12 @@ import java.util.List;
 @Builder(toBuilder = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@Schema(description = "Update a logbook information")
+@Schema(description = "Update a logbooks information")
 public record UpdateLogbookDTO(
-        @Schema(description = "The name of the logbook")
+        @Schema(description = "The name of the logbooks")
         String name,
-        @Schema(description = "The tags associated to the logbook")
+        @Schema(description = "The tags associated to the logbooks")
         List<TagDTO> tags,
-        @Schema(description = "The shift associated to the logbook")
+        @Schema(description = "The shift associated to the logbooks")
         List<ShiftDTO> shifts) {
 }

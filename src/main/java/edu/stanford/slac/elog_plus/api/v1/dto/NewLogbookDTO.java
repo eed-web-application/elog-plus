@@ -10,7 +10,7 @@ import lombok.Builder;
 @Builder(toBuilder = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@Schema(description = "Identify the single logbook")
+@Schema(description = "Identify the single logbooks")
 public record NewLogbookDTO(
         @NotNull
         @NotEmpty

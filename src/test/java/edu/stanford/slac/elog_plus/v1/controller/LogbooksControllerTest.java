@@ -59,7 +59,7 @@ public class LogbooksControllerTest {
                         mockMvc,
                         status().isCreated(),
                         NewLogbookDTO.builder()
-                                .name("new-logbook")
+                                .name("new-logbooks")
                                 .build()
                 )
         );
@@ -87,7 +87,7 @@ public class LogbooksControllerTest {
                         mockMvc,
                         status().isCreated(),
                         NewLogbookDTO.builder()
-                                .name("new-logbook")
+                                .name("new-logbooks")
                                 .build()
                 )
         );
@@ -115,7 +115,7 @@ public class LogbooksControllerTest {
                         mockMvc,
                         status().isCreated(),
                         NewLogbookDTO.builder()
-                                .name("new-logbook")
+                                .name("new-logbooks")
                                 .build()
                 )
         );
@@ -161,7 +161,7 @@ public class LogbooksControllerTest {
                         mockMvc,
                         status().isCreated(),
                         NewLogbookDTO.builder()
-                                .name("new-logbook")
+                                .name("new-logbooks")
                                 .build()
                 )
         );
@@ -206,7 +206,7 @@ public class LogbooksControllerTest {
                         mockMvc,
                         status().isCreated(),
                         NewLogbookDTO.builder()
-                                .name("new-logbook")
+                                .name("new-logbooks")
                                 .build()
                 )
         );
@@ -319,7 +319,7 @@ public class LogbooksControllerTest {
                         mockMvc,
                         status().isCreated(),
                         NewLogbookDTO.builder()
-                                .name("new-logbook")
+                                .name("new-logbooks")
                                 .build()
                 )
         );
@@ -378,7 +378,7 @@ public class LogbooksControllerTest {
                         mockMvc,
                         status().isCreated(),
                         NewLogbookDTO.builder()
-                                .name("new-logbook")
+                                .name("new-logbooks")
                                 .build()
                 )
         );
@@ -473,7 +473,7 @@ public class LogbooksControllerTest {
 
     @Test
     public void testGetFromAllLogbookTags() {
-        //add first logbook
+        //add first logbooks
         ApiResultResponse<String> newLogbookResult = assertDoesNotThrow(
                 () -> testHelperService.createNewLogbook(
                         mockMvc,
@@ -504,7 +504,7 @@ public class LogbooksControllerTest {
             assertThat(newTagResult.getErrorCode()).isEqualTo(0);
         }
 
-        //add second logbook
+        //add second logbooks
         ApiResultResponse<String> newLogbookResultTwo = assertDoesNotThrow(
                 () -> testHelperService.createNewLogbook(
                         mockMvc,

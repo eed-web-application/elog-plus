@@ -81,7 +81,7 @@ public class EntriesControllerTest {
                                         status().isCreated(),
                                         EntryNewDTO
                                                 .builder()
-                                                .logbook(newLogBookResult.getPayload().name())
+                                                .logbooks(List.of(newLogBookResult.getPayload().name()))
                                                 .text("This is a log for test")
                                                 .title("A very wonderful log")
                                                 .build()
@@ -121,7 +121,7 @@ public class EntriesControllerTest {
                                         status().isCreated(),
                                         EntryNewDTO
                                                 .builder()
-                                                .logbook(newLogBookResult.getPayload().name())
+                                                .logbooks(List.of(newLogBookResult.getPayload().name()))
                                                 .text("This is a log for test")
                                                 .title("A very wonderful log")
                                                 .attachments(
@@ -188,7 +188,7 @@ public class EntriesControllerTest {
                                         status().isCreated(),
                                         EntryNewDTO
                                                 .builder()
-                                                .logbook(newLogBookResult.getPayload().name())
+                                                .logbooks(List.of(newLogBookResult.getPayload().name()))
                                                 .text("This is a log for test")
                                                 .title("A very wonderful log")
                                                 .tags(
@@ -232,7 +232,7 @@ public class EntriesControllerTest {
                                         status().isCreated(),
                                         EntryNewDTO
                                                 .builder()
-                                                .logbook(newLogBookResult.getPayload().name())
+                                                .logbooks(List.of(newLogBookResult.getPayload().name()))
                                                 .text("This is a log for test")
                                                 .title("A very wonderful log")
                                                 .build()
@@ -284,7 +284,7 @@ public class EntriesControllerTest {
                                         status().isCreated(),
                                         EntryNewDTO
                                                 .builder()
-                                                .logbook(newLogBookResult.getPayload().name())
+                                                .logbooks(List.of(newLogBookResult.getPayload().name()))
                                                 .text("This is a log for test")
                                                 .title("A very wonderful log")
                                                 .build()
@@ -315,7 +315,7 @@ public class EntriesControllerTest {
                                         status().isCreated(),
                                         EntryNewDTO
                                                 .builder()
-                                                .logbook(newLogBookResult.getPayload().name())
+                                                .logbooks(List.of(newLogBookResult.getPayload().name()))
                                                 .text("This is a log for test")
                                                 .title("A very wonderful log")
                                                 .build()
@@ -332,7 +332,7 @@ public class EntriesControllerTest {
                         newLogIDResult.getPayload(),
                         EntryNewDTO
                                 .builder()
-                                .logbook(newLogBookResult.getPayload().name())
+                                .logbooks(List.of(newLogBookResult.getPayload().name()))
                                 .text("This is a log for test")
                                 .title("A very wonderful supersede log")
                                 .build()
@@ -381,7 +381,7 @@ public class EntriesControllerTest {
                                         status().isCreated(),
                                         EntryNewDTO
                                                 .builder()
-                                                .logbook(newLogBookResult.getPayload().name())
+                                                .logbooks(List.of(newLogBookResult.getPayload().name()))
                                                 .text("This is a log for test")
                                                 .title("A very wonderful log")
                                                 .build()
@@ -398,7 +398,7 @@ public class EntriesControllerTest {
                         newLogIDResult.getPayload(),
                         EntryNewDTO
                                 .builder()
-                                .logbook(newLogBookResult.getPayload().name())
+                                .logbooks(List.of(newLogBookResult.getPayload().name()))
                                 .text("This is a log for test")
                                 .title("A very wonderful supersede log")
                                 .build()
@@ -415,7 +415,7 @@ public class EntriesControllerTest {
                         newLogIDResult.getPayload(),
                         EntryNewDTO
                                 .builder()
-                                .logbook(newLogBookResult.getPayload().name())
+                                .logbooks(List.of(newLogBookResult.getPayload().name()))
                                 .text("This is a log for test")
                                 .title("A very wonderful supersede log")
                                 .build()
@@ -436,7 +436,7 @@ public class EntriesControllerTest {
                         "not found superseded log",
                         EntryNewDTO
                                 .builder()
-                                .logbook(newLogBookResult.getPayload().name())
+                                .logbooks(List.of(newLogBookResult.getPayload().name()))
                                 .text("This is a log for test")
                                 .title("A very wonderful supersede log")
                                 .build()
@@ -456,7 +456,7 @@ public class EntriesControllerTest {
                                         status().isCreated(),
                                         EntryNewDTO
                                                 .builder()
-                                                .logbook(newLogBookResult.getPayload().name())
+                                                .logbooks(List.of(newLogBookResult.getPayload().name()))
                                                 .text("This is a log for test")
                                                 .title("A very wonderful log")
                                                 .build()
@@ -474,7 +474,7 @@ public class EntriesControllerTest {
                         newLogIDResult.getPayload(),
                         EntryNewDTO
                                 .builder()
-                                .logbook(newLogBookResult.getPayload().name())
+                                .logbooks(List.of(newLogBookResult.getPayload().name()))
                                 .text("This is a followup for entry %s".formatted(newLogIDResult.getPayload()))
                                 .title("A very wonderful follow up log %s".formatted(newLogIDResult.getPayload()))
                                 .build()
@@ -491,7 +491,7 @@ public class EntriesControllerTest {
                         newLogIDResult.getPayload(),
                         EntryNewDTO
                                 .builder()
-                                .logbook(newLogBookResult.getPayload().name())
+                                .logbooks(List.of(newLogBookResult.getPayload().name()))
                                 .text("This is a log for test")
                                 .title("A very wonderful supersede log")
                                 .build()
@@ -547,7 +547,7 @@ public class EntriesControllerTest {
                                         status().isCreated(),
                                         EntryNewDTO
                                                 .builder()
-                                                .logbook(newLogBookResult.getPayload().name())
+                                                .logbooks(List.of(newLogBookResult.getPayload().name()))
                                                 .text("This is a log for test")
                                                 .title("A very wonderful log")
                                                 .build()
@@ -564,7 +564,7 @@ public class EntriesControllerTest {
                         newLogIDResult.getPayload(),
                         EntryNewDTO
                                 .builder()
-                                .logbook(newLogBookResult.getPayload().name())
+                                .logbooks(List.of(newLogBookResult.getPayload().name()))
                                 .text("This is a log for test")
                                 .title("A very wonderful supersede log")
                                 .build()
@@ -579,7 +579,7 @@ public class EntriesControllerTest {
                         newSupersedeLogIDResult1.getPayload(),
                         EntryNewDTO
                                 .builder()
-                                .logbook(newLogBookResult.getPayload().name())
+                                .logbooks(List.of(newLogBookResult.getPayload().name()))
                                 .text("This is a log for test")
                                 .title("A very wonderful supersede log of supersede")
                                 .build()
@@ -617,7 +617,7 @@ public class EntriesControllerTest {
                                         status().isCreated(),
                                         EntryNewDTO
                                                 .builder()
-                                                .logbook(newLogBookResult.getPayload().name())
+                                                .logbooks(List.of(newLogBookResult.getPayload().name()))
                                                 .text("This is a log for test")
                                                 .title("A very wonderful log")
                                                 .build()
@@ -635,7 +635,7 @@ public class EntriesControllerTest {
                         newLogIDResult.getPayload(),
                         EntryNewDTO
                                 .builder()
-                                .logbook(newLogBookResult.getPayload().name())
+                                .logbooks(List.of(newLogBookResult.getPayload().name()))
                                 .text("This is a log for test")
                                 .title("A very wonderful followup log one")
                                 .build()
@@ -650,7 +650,7 @@ public class EntriesControllerTest {
                         newLogIDResult.getPayload(),
                         EntryNewDTO
                                 .builder()
-                                .logbook(newLogBookResult.getPayload().name())
+                                .logbooks(List.of(newLogBookResult.getPayload().name()))
                                 .text("This is a log for test")
                                 .title("A very wonderful followup log two")
                                 .build()
@@ -725,7 +725,7 @@ public class EntriesControllerTest {
                                     status().isCreated(),
                                     EntryNewDTO
                                             .builder()
-                                            .logbook(newLogBookResult.getPayload().name())
+                                            .logbooks(List.of(newLogBookResult.getPayload().name()))
                                             .text("This is a log for test")
                                             .title("A very wonderful log")
                                             .note(String.valueOf(finalIdx))
@@ -850,7 +850,7 @@ public class EntriesControllerTest {
     @Test
     public void searchWithTags() {
         ApiResultResponse<LogbookDTO> logbookCreationResult = getTestLogbook();
-        // create new logbook
+        // create new logbooks
         // create some data
         for (int idx = 0; idx < 100; idx++) {
             int finalIdx = idx;
@@ -887,7 +887,7 @@ public class EntriesControllerTest {
                                     status().isCreated(),
                                     EntryNewDTO
                                             .builder()
-                                            .logbook(logbookCreationResult.getPayload().name())
+                                            .logbooks(List.of(logbookCreationResult.getPayload().name()))
                                             .text("This is a log for test")
                                             .title("A very wonderful log")
                                             .note(String.valueOf(finalIdx))
@@ -916,9 +916,9 @@ public class EntriesControllerTest {
         );
         assertThat(findTags).isNotNull();
         assertThat(findTags.getPayload().size()).isEqualTo(3);
-        assertThat(findTags.getPayload().get(0).tags()).contains("99");
-        assertThat(findTags.getPayload().get(1).tags()).contains("49");
-        assertThat(findTags.getPayload().get(2).tags()).contains("0");
+        assertThat(findTags.getPayload().get(0).tags()).extracting("name").contains("99");
+        assertThat(findTags.getPayload().get(1).tags()).extracting("name").contains("49");
+        assertThat(findTags.getPayload().get(2).tags()).extracting("name").contains("0");
 
         findTags = assertDoesNotThrow(
                 () -> testHelperService.submitSearchByGetWithAnchor(
@@ -937,9 +937,9 @@ public class EntriesControllerTest {
         );
         AssertionsForInterfaceTypes.assertThat(findTags).isNotNull();
         assertThat(findTags.getPayload().size()).isEqualTo(3);
-        assertThat(findTags.getPayload().get(0).tags()).contains("99");
-        assertThat(findTags.getPayload().get(1).tags()).contains("49");
-        assertThat(findTags.getPayload().get(2).tags()).contains("0");
+        assertThat(findTags.getPayload().get(0).tags()).extracting("name").contains("99");
+        assertThat(findTags.getPayload().get(1).tags()).extracting("name").contains("49");
+        assertThat(findTags.getPayload().get(2).tags()).extracting("name").contains("0");
     }
 
     private ApiResultResponse<LogbookDTO> getTestLogbook() {
@@ -976,7 +976,7 @@ public class EntriesControllerTest {
                                     status().isCreated(),
                                     EntryNewDTO
                                             .builder()
-                                            .logbook(newLogBookResult.getPayload().name())
+                                            .logbooks(List.of(newLogBookResult.getPayload().name()))
                                             .text("This is a log for test")
                                             .note(String.valueOf(finalIdx))
                                             .title("A very wonderful log for index=" + finalIdx)
@@ -1017,7 +1017,7 @@ public class EntriesControllerTest {
                                         status().isCreated(),
                                         EntryNewDTO
                                                 .builder()
-                                                .logbook(newLogBookResult.getPayload().name())
+                                                .logbooks(List.of(newLogBookResult.getPayload().name()))
                                                 .text("This is a log for test")
                                                 .title("A very wonderful log")
                                                 .tags(List.of("tag-1", "tag-2"))
@@ -1064,7 +1064,7 @@ public class EntriesControllerTest {
                                         status().isCreated(),
                                         EntryNewDTO
                                                 .builder()
-                                                .logbook(logbookCreationResult.getPayload().name())
+                                                .logbooks(List.of(logbookCreationResult.getPayload().name()))
                                                 .text("This is a log for test")
                                                 .title("A very wonderful log")
                                                 .tags(List.of("tag-1", "tag-2"))
@@ -1134,7 +1134,7 @@ public class EntriesControllerTest {
                                     status().isCreated(),
                                     EntryNewDTO
                                             .builder()
-                                            .logbook(newLogBookResult.getPayload().name())
+                                            .logbooks(List.of(newLogBookResult.getPayload().name()))
                                             .text("This is a log for test")
                                             .title("A very wonderful log")
                                             .note(String.valueOf(finalIdx))
@@ -1273,7 +1273,7 @@ public class EntriesControllerTest {
                                     status().isCreated(),
                                     EntryNewDTO
                                             .builder()
-                                            .logbook(newLogBookResult.getPayload().name())
+                                            .logbooks(List.of(newLogBookResult.getPayload().name()))
                                             .text("This is a log for test")
                                             .title("A very wonderful log")
                                             .note(String.valueOf(finalIdx))
@@ -1414,7 +1414,7 @@ public class EntriesControllerTest {
                                     status().isCreated(),
                                     EntryNewDTO
                                             .builder()
-                                            .logbook(newLogBookResult.getPayload().name())
+                                            .logbooks(List.of(newLogBookResult.getPayload().name()))
                                             .text("This is a log for test")
                                             .title("A very wonderful log")
                                             .note(String.valueOf(finalIdx))
@@ -1489,7 +1489,7 @@ public class EntriesControllerTest {
                                     status().isCreated(),
                                     EntryNewDTO
                                             .builder()
-                                            .logbook(newLogBookResult.getPayload().name())
+                                            .logbooks(List.of(newLogBookResult.getPayload().name()))
                                             .text("This is a log for test")
                                             .title("A very wonderful log")
                                             .note(String.valueOf(finalIdx))
@@ -1588,7 +1588,7 @@ public class EntriesControllerTest {
                                         status().isCreated(),
                                         EntryNewDTO
                                                 .builder()
-                                                .logbook(finalNewLogBookResult1.getPayload().name())
+                                                .logbooks(List.of(finalNewLogBookResult1.getPayload().name()))
                                                 .text("This is a log for test")
                                                 .title("A very wonderful log")
                                                 .summarizes(

@@ -30,7 +30,7 @@ public class Entry {
     private String supersedeBy;
     private String entryType;
     @Indexed
-    private String logbook;
+    private List<String> logbooks;
     @Indexed
     private Summarizes summarizes;
     @TextIndexed
@@ -43,6 +43,7 @@ public class Entry {
     private String userName;
     @Indexed
     @Builder.Default
+    // the list of the tags ids
     private List<String> tags = new ArrayList<>();
     @Indexed
     @Builder.Default

@@ -84,7 +84,7 @@ public class ImportControllerTest {
                 .builder()
                 .title("Sample Title")
                 .text("sample text")
-                .logbook(testLogbook.getPayload().name())
+                .logbooks(List.of(testLogbook.getPayload().name()))
                 .build();
 
         ApiResultResponse<String> uploadResult = assertDoesNotThrow(
@@ -103,7 +103,7 @@ public class ImportControllerTest {
                 .originId("origin-id")
                 .title("Sample Title")
                 .text("sample text")
-                .logbook(testLogbook.getPayload().name())
+                .logbooks(List.of(testLogbook.getPayload().name()))
                 .tags(
                         List.of(
                                 "Tag OnE"
@@ -164,7 +164,7 @@ public class ImportControllerTest {
                             uploadResult.getPayload()
                             )
             );
-            assertThat(fullLog.getPayload().tags()).contains("tag-one");
+            assertThat(fullLog.getPayload().tags()).extracting("name").contains("tag-one");
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
@@ -180,7 +180,7 @@ public class ImportControllerTest {
                                 .originId("origin-id")
                                 .title("Sample Title")
                                 .text("sample text")
-                                .logbook(testLogbook.getPayload().name())
+                                .logbooks(List.of(testLogbook.getPayload().name()))
                                 .build()
                 )
         );

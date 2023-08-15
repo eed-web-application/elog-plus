@@ -9,6 +9,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class LogbookAlreadyExists extends ControllerLogicException {
     @Builder(builderMethodName = "logbookAlreadyExistsBuilder")
     public LogbookAlreadyExists(Integer errorCode, String errorDomain) {
-        super(errorCode, "A logbook with the same name already exists", errorDomain);
+        super(errorCode, "A logbooks with the same name already exists", errorDomain);
     }
 }

@@ -215,4 +215,24 @@ public class LogbookRepositoryImpl implements LogbookRepositoryCustom {
         }
         return result;
     }
+
+    @Override
+    public Optional<Tag> getTagsByID(String tagsId) {
+        Query q = new Query();
+        q.addCriteria(
+                Criteria.where("tags.id").is(tagsId)
+        );
+        q.fields().include("tags");
+        Logbook l = mongoTemplate.findOne(q, Logbook.class);
+        if (l != null) {
+            return l.getTags()
+                    .stream()
+                    .filter(
+                            t-> t.getId().compareTo(tagsId)==0
+                    )
+                    .findFirst();
+        } else {
+            return Optional.empty();
+        }
+    }
 }

@@ -17,6 +17,8 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
 
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+
 @AutoConfigureMockMvc
 @SpringBootTest()
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -24,14 +26,14 @@ import java.util.List;
 @ActiveProfiles(profiles = "test")
 public class MapperTest {
     @Autowired
-    AttachmentService attachmentService;
+    EntryMapper entryMapper;
     @Test
     public void logDTOAuthorName() throws Exception {
         var log = Entry.builder()
                 .firstName("firstName")
                 .lastName("lastName")
                 .build();
-        var logDto = EntryMapper.INSTANCE.fromModel(log, attachmentService);
+        var logDto = entryMapper.fromModel(log);
         AssertionsForClassTypes.assertThat(logDto.loggedBy()).isEqualTo("firstName lastName");
     }
 
@@ -41,13 +43,13 @@ public class MapperTest {
                 .firstName("firstName")
                 .lastName("lastName")
                 .build();
-        var logDto = EntryMapper.INSTANCE.toSearchResultFromDTO(log, attachmentService);
+        var logDto = entryMapper.toSearchResultFromDTO(log);
         AssertionsForClassTypes.assertThat(logDto.loggedBy()).isEqualTo("firstName lastName");
     }
 
     @Test
     public void createModelFromNewLog() {
-        Entry newEntry = EntryMapper.INSTANCE.fromDTO(
+        Entry newEntry = entryMapper.fromDTO(
                 EntryNewDTO.builder().build(),
                 "firstName",
                 "lastName",
@@ -55,27 +57,5 @@ public class MapperTest {
         AssertionsForClassTypes.assertThat(newEntry.getFirstName()).isEqualTo("firstName");
         AssertionsForClassTypes.assertThat(newEntry.getLastName()).isEqualTo("lastName");
         AssertionsForClassTypes.assertThat(newEntry.getUserName()).isEqualTo("userName");
-    }
-
-    @Test
-    public void newLogDTOToModel() throws Exception {
-        var newLog = EntryNewDTO
-                .builder()
-                .attachments(List.of("att_1", "arr_2"))
-                .title("title")
-                .text("text")
-                .tags(List.of("tags1", "tags2"))
-                .logbook("Logbook")
-                .build();
-        Faker faker = new Faker();
-        var logModel = EntryMapper.INSTANCE.fromDTO(newLog, faker.name().firstName(), faker.name().lastName(), faker.name().username());
-        AssertionsForClassTypes.assertThat(logModel.getText()).isEqualTo("text");
-        AssertionsForClassTypes.assertThat(logModel.getAttachments()).isEqualTo(List.of("att_1", "arr_2"));
-        AssertionsForClassTypes.assertThat(logModel.getTitle()).isEqualTo("title");
-        AssertionsForClassTypes.assertThat(logModel.getTags()).isEqualTo(List.of("tags1", "tags2"));
-        AssertionsForClassTypes.assertThat(logModel.getLogbook()).isEqualTo("Logbook");
-        AssertionsForClassTypes.assertThat(logModel.getUserName()).isNotNull();
-        AssertionsForClassTypes.assertThat(logModel.getFirstName()).isNotNull();
-        AssertionsForClassTypes.assertThat(logModel.getLastName()).isNotNull();
     }
 }

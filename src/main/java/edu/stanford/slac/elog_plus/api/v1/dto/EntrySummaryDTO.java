@@ -19,18 +19,18 @@ import java.util.List;
 public record EntrySummaryDTO(
         @Schema(description = "Unique identifier of the entry")
         String id,
-        @Schema(description = "The logbook which the entry is associated")
-        String logbook,
-        @Schema(description = "The title of the logbook")
+        @Schema(description = "The logbooks which the entry is associated")
+        List<String> logbook,
+        @Schema(description = "The title of the entry")
         String title,
         @Schema(description = "The user tha insert the entry")
         String loggedBy,
         @Schema(description = "The tags that describes the entry")
-        List<String> tags,
+        List<TagDTO> tags,
         @Schema(description = "The attachment list of the entry")
         List<AttachmentDTO> attachments,
         @Schema(description = "The shift which the entry belong, if any")
-        ShiftDTO shift,
+        List<ShiftDTO> shift,
         @Schema(description = "The entry notes")
         String note,
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
