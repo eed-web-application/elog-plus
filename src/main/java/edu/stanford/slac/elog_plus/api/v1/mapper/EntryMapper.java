@@ -35,6 +35,7 @@ public abstract class EntryMapper {
     public abstract EntryDTO fromModelNoAttachment(Entry entry);
 
     @Mapping(target = "loggedBy", expression = "java(entry.getFirstName() + \" \" + entry.getLastName())")
+    @Mapping(source = "logbooks", target = "logbooks", qualifiedByName = "mapToLogbookSummary")
     public abstract EntrySummaryDTO toSearchResultFromDTO(Entry entry);
 
     public List<AttachmentDTO> map(List<String> attachments) {
@@ -45,6 +46,22 @@ public abstract class EntryMapper {
         List<AttachmentDTO> list = new ArrayList<>(attachments.size());
         for (String attachmentID : attachments) {
             list.add(attachmentService.getAttachment(attachmentID));
+
+        }
+        return list;
+    }
+
+    @Named("mapToLogbookSummary")
+    public List<LogbookSummaryDTO> mapToLogbookSummary(List<String> logbookIds) {
+        if (logbookIds == null) {
+            return null;
+        }
+
+        List<LogbookSummaryDTO> list = new ArrayList<>(logbookIds.size());
+        for (String logbookId : logbookIds) {
+            list.add(
+                    logbookService.getSummaryById(logbookId)
+            );
 
         }
         return list;

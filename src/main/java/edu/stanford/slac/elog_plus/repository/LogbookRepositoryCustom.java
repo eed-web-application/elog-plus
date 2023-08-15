@@ -31,5 +31,7 @@ public interface LogbookRepositoryCustom {
 
     Optional<Shift> findShiftFromLocalTimeWithLogbookName(String logbookId, LocalTime localTime);
 
+    Optional<Shift> findShiftFromLocalTimeWithLogbookId(String logbookId, LocalTime localTime);
+
     Optional<Tag> getTagsByID(String tagsId);
 }

@@ -58,7 +58,7 @@ public class EntryService {
                     return es.toBuilder()
                             .shift(
                                     getShiftsForEntry(
-                                            es.logbook(),
+                                            es.logbooks().stream().map(LogbookSummaryDTO::id).toList(),
                                             es.eventAt()
                                     )
                             ).build();
@@ -71,19 +71,19 @@ public class EntryService {
      * Return the shift that are in common with all the logbooks in input
      * in the same time
      *
-     * @param logbooks the list of the logbooks
+     * @param logbookIds the list of the logbook ids
      * @param eventAt  the time which we need the shift
      * @return the shift list
      */
-    private List<ShiftDTO> getShiftsForEntry(List<String> logbooks, LocalDateTime eventAt) {
+    private List<ShiftDTO> getShiftsForEntry(List<String> logbookIds, LocalDateTime eventAt) {
         List<ShiftDTO> shifts = new ArrayList<>();
-        if (logbooks == null || logbooks.isEmpty()) return shifts;
+        if (logbookIds == null || logbookIds.isEmpty()) return shifts;
         if (eventAt == null) return shifts;
-        for (String logbookName :
-                logbooks) {
+        for (String logbookId :
+                logbookIds) {
             var shiftDTO = wrapCatch(
-                    () -> logbookService.findShiftByLocalTimeWithLogbookName(
-                            logbookName,
+                    () -> logbookService.findShiftByLocalTimeWithLogbookId(
+                            logbookId,
                             eventAt.toLocalTime()
                     ),
                     -1,
@@ -247,67 +247,67 @@ public class EntryService {
                         }
                 );
 
-    //sanitize title and text
-    Entry finalNewEntry1 = newEntry;
+        //sanitize title and text
+        Entry finalNewEntry1 = newEntry;
 
-    assertion(
-                () ->(finalNewEntry1.getTitle()!=null&&!finalNewEntry1.getTitle().
+        assertion(
+                () -> (finalNewEntry1.getTitle() != null && !finalNewEntry1.getTitle().
 
-    isEmpty()),
-            ControllerLogicException
-                    .builder()
-            .
+                        isEmpty()),
+                ControllerLogicException
+                        .builder()
+                                .
 
-    errorCode(-4)
-                        .
+                        errorCode(-4)
+                                .
 
-    errorMessage("The title is mandatory")
-                        .
+                        errorMessage("The title is mandatory")
+                                .
 
-    errorDomain("LogService::createNew")
-                        .
+                        errorDomain("LogService::createNew")
+                                .
 
-    build()
+                        build()
         );
         newEntry.setTitle(
                 StringUtilities.sanitizeEntryTitle(newEntry.getTitle())
-                );
+        );
 
-    assertion(
-                () ->(finalNewEntry1.getText()!=null),
-            ControllerLogicException
-                    .builder()
-            .
+        assertion(
+                () -> (finalNewEntry1.getText() != null),
+                ControllerLogicException
+                        .builder()
+                                .
 
-    errorCode(-4)
-                        .
+                        errorCode(-4)
+                                .
 
-    errorMessage("The body is mandatory also if empty")
-                        .
+                        errorMessage("The body is mandatory also if empty")
+                                .
 
-    errorDomain("LogService::createNew")
-                        .
+                        errorDomain("LogService::createNew")
+                                .
 
-    build()
+                        build()
         );
         newEntry.setText(
                 StringUtilities.sanitizeEntryText(newEntry.getText())
-                );
+        );
 
-    // other check
-    Entry finalNewEntryToSave = newEntry;
-    newEntry =
+        // other check
+        Entry finalNewEntryToSave = newEntry;
+        newEntry =
 
-    wrapCatch(
-                        () ->entryRepository.insert(
-    finalNewEntryToSave
+                wrapCatch(
+                        () -> entryRepository.insert(
+                                finalNewEntryToSave
                         ),
-                                -5,
-                                "LogService::createNew"
-                                );
-        log.info("New entry '{}' created",newEntry.getTitle());
+                        -5,
+                        "LogService::createNew"
+                );
+        log.info("New entry '{}' created", newEntry.getTitle());
         return newEntry.getId();
-}
+    }
 
     /**
      * Get the full entry

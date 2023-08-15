@@ -10,7 +10,7 @@ import org.mapstruct.factory.Mappers;
 )
 public interface LogbookMapper {
     LogbookMapper INSTANCE = Mappers.getMapper(LogbookMapper.class);
-
+    LogbookSummaryDTO fromModelToSummaryDTO(Logbook log);
     LogbookDTO fromModel(Logbook log);
     Logbook fromDTO(NewLogbookDTO logbookDTO);
     Logbook fromDTO(LogbookDTO logbookDTO);

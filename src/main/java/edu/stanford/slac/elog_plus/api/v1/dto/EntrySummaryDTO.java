@@ -20,7 +20,7 @@ public record EntrySummaryDTO(
         @Schema(description = "Unique identifier of the entry")
         String id,
         @Schema(description = "The logbooks which the entry is associated")
-        List<String> logbook,
+        List<LogbookSummaryDTO> logbooks,
         @Schema(description = "The title of the entry")
         String title,
         @Schema(description = "The user tha insert the entry")

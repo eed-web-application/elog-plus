@@ -50,6 +50,23 @@ public class LogbookService {
         );
     }
 
+
+    public LogbookSummaryDTO getSummaryById(String logbookId) {
+        return wrapCatch(
+                () -> logbookRepository.findById(logbookId)
+                        .map(
+                                LogbookMapper.INSTANCE::fromModelToSummaryDTO
+                        ).orElseThrow(
+                                ()->LogbookNotFound.logbookNotFoundBuilder()
+                                        .errorCode(-1)
+                                        .errorDomain("LogbookService::getSummaryById")
+                                        .build()
+                        ),
+                -2,
+                "LogbookService::getSummaryById"
+        );
+    }
+
     /**
      * Create a new logbooks
      *
@@ -876,6 +893,26 @@ public class LogbookService {
     }
 
     /**
+     * Return the shift which the date fall in its range
+     *
+     * @param logbookId the logbooks unique id identifier
+     * @param localTime   the time of the event in the day
+     * @return the found shift, if eny matches
+     */
+    public Optional<ShiftDTO> findShiftByLocalTimeWithLogbookId(String logbookId, LocalTime localTime) {
+        return wrapCatch(
+                () -> logbookRepository.findShiftFromLocalTimeWithLogbookId(
+                        logbookId,
+                        localTime
+                ).map(
+                        ShiftMapper.INSTANCE::fromModel
+                ),
+                -2,
+                "LogbookService:getShiftByLocalTime"
+        );
+    }
+
+    /**
      * Check if the tad id exists in any of logbooks names
      * @param tagId the id of the tag to find
      * @param logbookNames the logbooks where search the id
@@ -904,4 +941,5 @@ public class LogbookService {
                 TagMapper.INSTANCE::fromModel
         );
     }
+
 }

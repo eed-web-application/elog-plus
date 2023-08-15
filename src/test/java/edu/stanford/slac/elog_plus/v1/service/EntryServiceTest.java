@@ -32,7 +32,7 @@ import java.time.LocalTime;
 import java.util.*;
 
 import static java.util.Collections.emptyList;
-import static org.assertj.core.api.AssertionsForClassTypes.anyOf;
+import static org.assertj.core.api.AssertionsForClassTypes.*;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -919,7 +919,7 @@ public class EntryServiceTest {
                             () -> entryService.createNew(
                                     EntryNewDTO
                                             .builder()
-                                            .logbooks(List.of(logbook.name()))
+                                            .logbooks(List.of(logbook.id()))
                                             .text("This is a log for test")
                                             .title("A very wonderful log")
                                             .eventAt(
@@ -948,107 +948,95 @@ public class EntryServiceTest {
         assertThat(firstPage).isNotNull();
         assertThat(firstPage.size()).isEqualTo(30);
 
-        Condition<EntrySummaryDTO> shift1Condition = new Condition<>(
-                e -> e.shift() != null && e.shift().get(0).name().compareTo("Shift1") == 0 &&
-                        e.eventAt().toLocalTime().equals(
-                                LocalTime.of(
-                                        0,
-                                        0
-                                )
-                        ) || (
-                        e.eventAt().toLocalTime().isAfter(
-                                LocalTime.of(
-                                        0,
-                                        0
-                                )
-                        ) &&
-                                e.eventAt().toLocalTime().isBefore(
-                                        LocalTime.of(
-                                                7,
-                                                59
-                                        )
-                                )
-                ) ||
-                        e.eventAt().toLocalTime().equals(
-                                LocalTime.of(
-                                        7,
-                                        59
-                                )
-                        ),
-                "Shift1"
-        );
-        Condition<EntrySummaryDTO> shift2Condition = new Condition<>(
-                e -> e.shift() != null && e.shift().get(0).name().compareTo("Shift2") == 0 &&
-                        e.eventAt().toLocalTime().equals(
-                                LocalTime.of(
-                                        8,
-                                        0
-                                )
-                        ) ||
-                        (e.eventAt().toLocalTime().isAfter(
-                                LocalTime.of(
-                                        8,
-                                        0
-                                )
-                        ) &&
-                                e.eventAt().toLocalTime().isBefore(
-                                        LocalTime.of(
-                                                12,
-                                                59
-                                        )
-                                )) ||
-                        e.eventAt().toLocalTime().equals(
-                                LocalTime.of(
-                                        12,
-                                        59
-                                )
-                        ),
-                "Shift2"
-        );
-
-        Condition<EntrySummaryDTO> shiftNullCondition = new Condition<>(
-                e -> {
-                    boolean ret = e.shift() == null &&
-                            e.eventAt().toLocalTime().equals(
-                                    LocalTime.of(
-                                            13,
-                                            0
-                                    )
-                            ) ||
-                            (e.eventAt().toLocalTime().isAfter(
-                                    LocalTime.of(
-                                            13,
-                                            0
-                                    )
-                            ) &&
-                                    e.eventAt().toLocalTime().isBefore(
-                                            LocalTime.of(
-                                                    23,
-                                                    59
-                                            )
-                                    )) ||
-                            e.eventAt().toLocalTime().equals(
-                                    LocalTime.of(
-                                            23,
-                                            59
-                                    )
-                            );
-                    return ret;
-                },
-                "null condition"
-        );
-
+        Condition<EntrySummaryDTO> outOfShift = new Condition<>(
+                e -> e.eventAt().toLocalTime().equals(
+                        LocalTime.of(
+                                13,
+                                0
+                        )
+                ) || e.eventAt().toLocalTime().equals(
+                        LocalTime.of(
+                                23,
+                                59
+                        )
+                ) || e.eventAt().toLocalTime().isAfter(
+                        LocalTime.of(
+                                13,
+                                0
+                        )
+                )|| e.eventAt().toLocalTime().isBefore(
+                        LocalTime.of(
+                                23,
+                                59
+                        )
+                )
+                ,
+                "no shift");
+        Condition<EntrySummaryDTO> shift1 = new Condition<>(
+                e -> e.eventAt().toLocalTime().equals(
+                        LocalTime.of(
+                                0,
+                                0
+                        )
+                ) || e.eventAt().toLocalTime().equals(
+                        LocalTime.of(
+                                7,
+                                59
+                        )
+                ) || e.eventAt().toLocalTime().isAfter(
+                        LocalTime.of(
+                                0,
+                                0
+                        )
+                )|| e.eventAt().toLocalTime().isBefore(
+                        LocalTime.of(
+                                7,
+                                59
+                        )
+                )
+                ,
+                "Shift1");
+        Condition<EntrySummaryDTO> shift2 = new Condition<>(
+                e -> e.eventAt().toLocalTime().equals(
+                        LocalTime.of(
+                                8,
+                                0
+                        )
+                ) || e.eventAt().toLocalTime().equals(
+                        LocalTime.of(
+                                12,
+                                59
+                        )
+                ) || e.eventAt().toLocalTime().isAfter(
+                        LocalTime.of(
+                                8,
+                                0
+                        )
+                )|| e.eventAt().toLocalTime().isBefore(
+                        LocalTime.of(
+                                12,
+                                59
+                        )
+                )
+                ,
+                "Shift2");
         //check all shift
         assertThat(firstPage)
-                .filteredOn
-                        (
-                                anyOf(
-                                        shift1Condition,
-                                        shift2Condition,
-                                        shiftNullCondition
-                                )
-                        ).hasSize(30);
-
+                .filteredOn(entry->entry.shift()==null || entry.shift().isEmpty())
+                .filteredOn(not(outOfShift))
+                .hasSize(0);
+        assertThat(firstPage)
+                // select only shift 1
+                .filteredOn(entry->entry.shift()!=null || entry.shift().get(0).name().compareTo("Shift1")==0)
+                // remove shift 1
+                .filteredOn(not(shift1))
+                .hasSize(0);
+        assertThat(firstPage)
+                // select only shift 1
+                .filteredOn(entry->entry.shift()!=null || entry.shift().get(0).name().compareTo("Shift2")==0)
+                // remove shift 1
+                .filteredOn(not(shift2))
+                .hasSize(0);
         // check summary against full entry
 
         for (EntrySummaryDTO es :
