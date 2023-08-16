@@ -7,6 +7,7 @@ import org.mapstruct.factory.Mappers;
 
 @Mapper(
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
+        uses = TagMapper.class,
         componentModel = "spring"
 )
 public abstract class LogbookMapper {
