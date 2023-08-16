@@ -31,6 +31,10 @@ public record EntrySummaryDTO(
         List<AttachmentDTO> attachments,
         @Schema(description = "The shift which the entry belong, if any")
         List<LogbookShiftDTO> shift,
+        @Schema(description = "The entries referenced from this one")
+        List<String> referencesTo,
+        @Schema(description = "The entries that reference this one")
+        List<String> referencedFrom,
         @Schema(description = "The entry notes")
         String note,
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)

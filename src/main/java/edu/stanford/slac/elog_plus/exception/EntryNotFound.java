@@ -9,6 +9,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class EntryNotFound extends ControllerLogicException {
     @Builder(builderMethodName = "entryNotFoundBuilder")
     public EntryNotFound(Integer errorCode, String errorDomain) {
-        super(errorCode, "The Entry has not been found", errorDomain);
+        super(errorCode, "The entry has not been found", errorDomain);
+    }
+
+    @Builder(builderMethodName = "entryNotFoundBuilderWithName")
+    public EntryNotFound(Integer errorCode, String entryName, String errorDomain) {
+        super(errorCode, "The entry '%s' has not been found", entryName);
     }
 }

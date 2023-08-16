@@ -309,8 +309,12 @@ public class EntryService {
                 StringUtilities.sanitizeEntryText(newEntry.getText())
         );
 
+        // manage the references
+        manageNewEntryReferences(newEntry);
+
         // other check
         Entry finalNewEntryToSave = newEntry;
+
         newEntry =
 
                 wrapCatch(
@@ -322,6 +326,30 @@ public class EntryService {
                 );
         log.info("New entry '{}' created", newEntry.getTitle());
         return newEntry.getId();
+    }
+
+    /**
+     * Create and manage references for the entry to create
+     *
+     * the reference will be checked for the existence
+     * @param newEntry the new entry that need to be created
+     */
+    @Transactional(propagation = Propagation.NESTED)
+    public void manageNewEntryReferences(Entry newEntry) {
+        if (newEntry.getReferencesTo() == null || newEntry.getReferencesTo().isEmpty()) return;
+
+        for (String referencedEntryId:
+                newEntry.getReferencesTo()) {
+            // check for the reference entry if exists
+            assertion(
+                    ()->entryRepository.existsById(referencedEntryId),
+                    EntryNotFound.entryNotFoundBuilderWithName()
+                            .errorCode(-1)
+                            .entryName(referencedEntryId)
+                            .errorDomain("EntryService::manageNewEntryReferences")
+                            .build()
+            );
+        }
     }
 
     /**
@@ -349,15 +377,15 @@ public class EntryService {
                 wrapCatch(
                         () -> entryRepository.findById(id),
                         -1,
-                        "LogService::getFullLog"
+                        "LogService::getFullEntry"
                 ).orElseThrow(
                         () -> EntryNotFound.entryNotFoundBuilder()
                                 .errorCode(-2)
-                                .errorDomain("LogService::getFullLog")
+                                .errorDomain("LogService::getFullEntry")
                                 .build()
                 );
 
-
+        // convert to model
         result = entryMapper.fromModel(
                 foundEntry
         );
@@ -377,7 +405,7 @@ public class EntryService {
             Optional<Entry> followingLog = wrapCatch(
                     () -> entryRepository.findByFollowUpsContains(id),
                     -3,
-                    "LogService::getFullLog"
+                    "LogService::getFullEntry"
             );
             if (followingLog.isPresent()) {
                 result = result.toBuilder()
