@@ -60,6 +60,7 @@ public abstract class EntryMapper {
     @Named("createReferences")
     public List<String> createReferences(String text) {
         List<String> result = new ArrayList<>();
+        if(text == null || text.isEmpty()) return result;
         Matcher matcher = pattern.matcher(text);
         while (matcher.find()) {
             result.add(matcher.group(1));
