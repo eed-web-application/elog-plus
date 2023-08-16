@@ -13,7 +13,6 @@ import lombok.EqualsAndHashCode;
 public record TagDTO(
         String id,
         String name,
-
         LogbookSummaryDTO logbook
 ) {
 }

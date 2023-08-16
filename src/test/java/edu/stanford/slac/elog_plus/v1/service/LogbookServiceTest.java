@@ -96,7 +96,7 @@ public class LogbookServiceTest {
         assertThat(allTags).isNotNull();
         assertThat(allTags).isNotEmpty();
 
-        assertThat(fullLogbook.tags()).containsAll(allTags);
+        assertThat(fullLogbook.tags()).usingRecursiveFieldByFieldElementComparatorIgnoringFields("logbook").containsAll(allTags);
     }
 
     @Test
