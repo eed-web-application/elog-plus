@@ -41,7 +41,7 @@ public class ImportController {
             @Parameter(schema = @Schema(type = "string", implementation = EntryImportDTO.class))
             @RequestPart("entry") @Valid EntryImportDTO entryToImport,
             @RequestPart(value = "files", required = false)
-            MultipartFile[] files) throws IOException {
+            MultipartFile[] files) {
         log.info("[import %s] manage attachment".formatted(entryToImport.text()));
         List<FileObjectDescription> attachmentList = new ArrayList<>();
         if (files != null) {

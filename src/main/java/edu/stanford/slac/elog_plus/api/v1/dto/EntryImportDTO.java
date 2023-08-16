@@ -23,6 +23,10 @@ public record EntryImportDTO(
         @NotNull
         @Schema(description = "Identifier for unique find the record into the original system")
         String originId,
+        @Schema(description = "Is the original id for which this entry is supersede")
+        String supersedeOf,
+        @Schema(description = "Is the original id for which this entry is a followUp")
+        String followUpOf,
         @NotNull
         @Schema(description = "Is the logbooks where the new log belong")
         List<String> logbooks,
