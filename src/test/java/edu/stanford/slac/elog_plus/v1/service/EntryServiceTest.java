@@ -964,7 +964,7 @@ public class EntryServiceTest {
                                 13,
                                 0
                         )
-                )|| e.eventAt().toLocalTime().isBefore(
+                ) || e.eventAt().toLocalTime().isBefore(
                         LocalTime.of(
                                 23,
                                 59
@@ -988,7 +988,7 @@ public class EntryServiceTest {
                                 0,
                                 0
                         )
-                )|| e.eventAt().toLocalTime().isBefore(
+                ) || e.eventAt().toLocalTime().isBefore(
                         LocalTime.of(
                                 7,
                                 59
@@ -1012,7 +1012,7 @@ public class EntryServiceTest {
                                 8,
                                 0
                         )
-                )|| e.eventAt().toLocalTime().isBefore(
+                ) || e.eventAt().toLocalTime().isBefore(
                         LocalTime.of(
                                 12,
                                 59
@@ -1021,26 +1021,26 @@ public class EntryServiceTest {
                 ,
                 "Shift2");
 
-        for (EntrySummaryDTO entry:
+        for (EntrySummaryDTO entry :
                 firstPage) {
-            if(entry.shift()==null || entry.shift().isEmpty()) continue;
+            if (entry.shift() == null || entry.shift().isEmpty()) continue;
             assertThat(entry.shift().get(0).logbook().id()).isEqualTo(logbook.id());
         }
 
         //check all shift
         assertThat(firstPage)
-                .filteredOn(entry->entry.shift()==null || entry.shift().isEmpty())
+                .filteredOn(entry -> entry.shift() == null || entry.shift().isEmpty())
                 .filteredOn(not(outOfShift))
                 .hasSize(0);
         assertThat(firstPage)
                 // select only shift 1
-                .filteredOn(entry->entry.shift()!=null || entry.shift().get(0).name().compareTo("Shift1")==0)
+                .filteredOn(entry -> entry.shift() != null || entry.shift().get(0).name().compareTo("Shift1") == 0)
                 // remove shift 1
                 .filteredOn(not(shift1))
                 .hasSize(0);
         assertThat(firstPage)
                 // select only shift 1
-                .filteredOn(entry->entry.shift()!=null || entry.shift().get(0).name().compareTo("Shift2")==0)
+                .filteredOn(entry -> entry.shift() != null || entry.shift().get(0).name().compareTo("Shift2") == 0)
                 // remove shift 1
                 .filteredOn(not(shift2))
                 .hasSize(0);
@@ -1727,5 +1727,166 @@ public class EntryServiceTest {
         );
 
         assertThat(failForDeleteAssignedTag.getErrorCode()).isEqualTo(-2);
+    }
+
+    @Test
+    public void testReferencesOk() {
+        var logbook = getTestLogbook();
+        String referencedEntryId = assertDoesNotThrow(
+                () -> entryService.createNew(
+                        EntryNewDTO
+                                .builder()
+                                .logbooks(List.of(logbook.id()))
+                                .title("Referenced entry")
+                                .text("This is a log for a referenced entry")
+                                .build()
+                )
+        );
+        assertThat(referencedEntryId).isNotNull();
+
+        String referencerEntryId = assertDoesNotThrow(
+                () -> entryService.createNew(
+                        EntryNewDTO
+                                .builder()
+                                .logbooks(List.of(logbook.id()))
+                                .title("New entry")
+                                .text("This is a text with reference in a link <a href=\"http://test.com/%s\" data-references-entry=\"%s\">Reference link</a>".formatted(referencedEntryId, referencedEntryId))
+                                .build()
+                )
+        );
+        assertThat(referencerEntryId).isNotNull();
+
+        //fetch referencer
+        EntryDTO referencerEntry = assertDoesNotThrow(
+                () -> entryService.getFullEntry(
+                        referencerEntryId
+                )
+        );
+
+        assertThat(referencerEntry.referencesTo()).hasSize(1).contains(referencedEntryId);
+
+        //fetch referenced
+        EntryDTO referencedEntry = assertDoesNotThrow(
+                () -> entryService.getFullEntry(
+                        referencedEntryId
+                )
+        );
+
+        assertThat(referencedEntry.referencedFrom()).hasSize(1).contains(referencerEntryId);
+    }
+
+    @Test
+    public void testReferencesFailsOnBadReferenceId() {
+        var logbook = getTestLogbook();
+
+        EntryNotFound entryNotFound = assertThrows(
+                EntryNotFound.class,
+                () -> entryService.createNew(
+                        EntryNewDTO
+                                .builder()
+                                .logbooks(List.of(logbook.id()))
+                                .title("New entry")
+                                .text("This is a text with reference in a link <a href=\"http://test.com/%s\" data-references-entry=\"%s\">Reference link</a>".formatted("bad-id", "bad-id"))
+                                .build()
+                )
+        );
+        assertThat(entryNotFound.getErrorCode()).isEqualTo(-1);
+    }
+
+    @Test
+    public void testReferencesOnFindOk() {
+        var logbook = getTestLogbook();
+        String referencedEntryId = assertDoesNotThrow(
+                () -> entryService.createNew(
+                        EntryNewDTO
+                                .builder()
+                                .logbooks(List.of(logbook.id()))
+                                .title("Referenced entry")
+                                .text("This is a log for a referenced entry")
+                                .build()
+                )
+        );
+        assertThat(referencedEntryId).isNotNull();
+
+        String referencerEntryId = assertDoesNotThrow(
+                () -> entryService.createNew(
+                        EntryNewDTO
+                                .builder()
+                                .logbooks(List.of(logbook.id()))
+                                .title("New entry")
+                                .text("This is a text with reference in a link <a href=\"http://test.com/%s\" data-references-entry=\"%s\">Reference link</a>".formatted(referencedEntryId, referencedEntryId))
+                                .build()
+                )
+        );
+        assertThat(referencerEntryId).isNotNull();
+
+        //find entry
+        List<EntrySummaryDTO> foundEntry = assertDoesNotThrow(
+                () -> entryService.searchAll(
+                        QueryWithAnchorDTO
+                                .builder()
+                                .limit(10)
+                                .build()
+                )
+        );
+        assertThat(foundEntry).hasSize(2);
+        assertThat(foundEntry.get(0).referencesTo()).contains(referencedEntryId);
+        assertThat(foundEntry.get(1).referencedFrom()).contains(referencerEntryId);
+    }
+
+    @Test
+    public void testReferencesOnFindHidingSupersededOneOk() {
+        var logbook = getTestLogbook();
+        String referencedEntryId = assertDoesNotThrow(
+                () -> entryService.createNew(
+                        EntryNewDTO
+                                .builder()
+                                .logbooks(List.of(logbook.id()))
+                                .title("Referenced entry")
+                                .text("This is a log for a referenced entry")
+                                .build()
+                )
+        );
+        assertThat(referencedEntryId).isNotNull();
+
+        String referencerEntryId = assertDoesNotThrow(
+                () -> entryService.createNew(
+                        EntryNewDTO
+                                .builder()
+                                .logbooks(List.of(logbook.id()))
+                                .title("New entry")
+                                .text("This is a text with reference in a link <a href=\"http://test.com/%s\" data-references-entry=\"%s\">Reference link</a>".formatted(referencedEntryId, referencedEntryId))
+                                .build()
+                )
+        );
+        assertThat(referencerEntryId).isNotNull();
+
+
+        // now supersede the entry that reference the first one
+        String referencerSupersedeEntryId = assertDoesNotThrow(
+                () -> entryService.createNewSupersede(
+                        referencerEntryId,
+                        EntryNewDTO
+                                .builder()
+                                .logbooks(List.of(logbook.id()))
+                                .title("New entry that supersede the referencer one")
+                                .text("This is a text with reference in a link <a href=\"http://test.com/%s\" data-references-entry=\"%s\">Reference link</a>".formatted(referencedEntryId, referencedEntryId))
+                                .build()
+                )
+        );
+        assertThat(referencerSupersedeEntryId).isNotNull();
+
+        //find entry
+        List<EntrySummaryDTO> foundEntry = assertDoesNotThrow(
+                () -> entryService.searchAll(
+                        QueryWithAnchorDTO
+                                .builder()
+                                .limit(10)
+                                .build()
+                )
+        );
+        assertThat(foundEntry).hasSize(2);
+        assertThat(foundEntry.get(0).referencesTo()).hasSize(1).contains(referencedEntryId);
+        assertThat(foundEntry.get(1).referencedFrom()).hasSize(1).contains(referencerSupersedeEntryId);
     }
 }

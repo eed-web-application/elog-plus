@@ -4,9 +4,11 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.index.TextIndexed;
@@ -51,8 +53,12 @@ public class Entry {
     @Indexed
     @Builder.Default
     private List<String> followUps = new ArrayList<>();
-    private String filePs;
-    private String filePreview;
+    @Indexed
+    @Builder.Default
+    private List<String> referencesTo = new ArrayList<>();
+    @Builder.Default
+    @Transient
+    private List<String> referencedFrom = new ArrayList<>();
     @Indexed
     @Builder.Default
     private LocalDateTime loggedAt = LocalDateTime.now();

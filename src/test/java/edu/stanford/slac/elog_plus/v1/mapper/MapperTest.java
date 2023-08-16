@@ -34,7 +34,7 @@ public class MapperTest {
                 .lastName("lastName")
                 .build();
         var logDto = entryMapper.fromModel(log);
-        AssertionsForClassTypes.assertThat(logDto.loggedBy()).isEqualTo("firstName lastName");
+        assertThat(logDto.loggedBy()).isEqualTo("firstName lastName");
     }
 
     @Test
@@ -44,7 +44,7 @@ public class MapperTest {
                 .lastName("lastName")
                 .build();
         var logDto = entryMapper.toSearchResultFromDTO(log);
-        AssertionsForClassTypes.assertThat(logDto.loggedBy()).isEqualTo("firstName lastName");
+        assertThat(logDto.loggedBy()).isEqualTo("firstName lastName");
     }
 
     @Test
@@ -54,8 +54,26 @@ public class MapperTest {
                 "firstName",
                 "lastName",
                 "userName");
-        AssertionsForClassTypes.assertThat(newEntry.getFirstName()).isEqualTo("firstName");
-        AssertionsForClassTypes.assertThat(newEntry.getLastName()).isEqualTo("lastName");
-        AssertionsForClassTypes.assertThat(newEntry.getUserName()).isEqualTo("userName");
+        assertThat(newEntry.getFirstName()).isEqualTo("firstName");
+        assertThat(newEntry.getLastName()).isEqualTo("lastName");
+        assertThat(newEntry.getUserName()).isEqualTo("userName");
+    }
+
+    @Test
+    public void findReferenceInText() {
+        Entry newEntry = entryMapper.fromDTO(
+                EntryNewDTO
+                        .builder()
+                        .text(
+                                """
+                                <a href="http://test.com/uuid-reference1 data-references-entry="uuid-reference1">
+                                <a href="http://test.com/uuid-reference2 data-references-entry="uuid-reference2">
+                                """
+                        )
+                        .build(),
+                "firstName",
+                "lastName",
+                "userName");
+        assertThat(newEntry.getReferencesTo()).contains("uuid-reference1","uuid-reference2");
     }
 }

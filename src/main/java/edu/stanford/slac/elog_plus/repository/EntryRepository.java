@@ -28,8 +28,11 @@ public interface EntryRepository extends MongoRepository<Entry, String>, EntryRe
      * @param summarizesDate the date
      * @return the found summary, if any
      */
-    @Query(fields = "{ 'summarizes' : 1}")
+    @Query(fields = "{'summarizes':1}")
     Optional<Entry> findBySummarizes_ShiftIdAndSummarizes_Date(String summarizesShiftId, LocalDate summarizesDate);
+
+    @Query(fields = "{'title':1}")
+    List<Entry> findAllByReferencesToContainsAndSupersedeByExists(String referencedEntryId, Boolean exists);
 
     /**
      * Return the number of the summary associated to a shift
