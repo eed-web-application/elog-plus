@@ -1833,4 +1833,60 @@ public class EntryServiceTest {
         assertThat(foundEntry.get(0).referencesTo()).contains(referencedEntryId);
         assertThat(foundEntry.get(1).referencedFrom()).contains(referencerEntryId);
     }
+
+    @Test
+    public void testReferencesOnFindHidingSupersededOneOk() {
+        var logbook = getTestLogbook();
+        String referencedEntryId = assertDoesNotThrow(
+                () -> entryService.createNew(
+                        EntryNewDTO
+                                .builder()
+                                .logbooks(List.of(logbook.id()))
+                                .title("Referenced entry")
+                                .text("This is a log for a referenced entry")
+                                .build()
+                )
+        );
+        assertThat(referencedEntryId).isNotNull();
+
+        String referencerEntryId = assertDoesNotThrow(
+                () -> entryService.createNew(
+                        EntryNewDTO
+                                .builder()
+                                .logbooks(List.of(logbook.id()))
+                                .title("New entry")
+                                .text("This is a text with reference in a link <a href=\"http://test.com/%s\" data-references-entry=\"%s\">Reference link</a>".formatted(referencedEntryId, referencedEntryId))
+                                .build()
+                )
+        );
+        assertThat(referencerEntryId).isNotNull();
+
+
+        // now supersede the entry that reference the first one
+        String referencerSupersedeEntryId = assertDoesNotThrow(
+                () -> entryService.createNewSupersede(
+                        referencerEntryId,
+                        EntryNewDTO
+                                .builder()
+                                .logbooks(List.of(logbook.id()))
+                                .title("New entry that supersede the referencer one")
+                                .text("This is a text with reference in a link <a href=\"http://test.com/%s\" data-references-entry=\"%s\">Reference link</a>".formatted(referencedEntryId, referencedEntryId))
+                                .build()
+                )
+        );
+        assertThat(referencerSupersedeEntryId).isNotNull();
+
+        //find entry
+        List<EntrySummaryDTO> foundEntry = assertDoesNotThrow(
+                () -> entryService.searchAll(
+                        QueryWithAnchorDTO
+                                .builder()
+                                .limit(10)
+                                .build()
+                )
+        );
+        assertThat(foundEntry).hasSize(2);
+        assertThat(foundEntry.get(0).referencesTo()).hasSize(1).contains(referencedEntryId);
+        assertThat(foundEntry.get(1).referencedFrom()).hasSize(1).contains(referencerSupersedeEntryId);
+    }
 }
