@@ -12,6 +12,8 @@ import lombok.EqualsAndHashCode;
 @Builder(toBuilder = true)
 public record TagDTO(
         String id,
-        String name
+        String name,
+
+        LogbookSummaryDTO logbook
 ) {
 }

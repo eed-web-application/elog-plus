@@ -19,4 +19,6 @@ public interface LogbookRepository extends MongoRepository<Logbook, String>, Log
     Optional<Logbook> findByName(String logbookName);
 
     boolean existsByIdInAndTagsIdIs(List<String> logbookIds, String tagId);
+
+    Optional<Logbook> findByTagsIdIs(String tagId);
 }

@@ -529,6 +529,27 @@ public class LogbookService {
                 collect(Collectors.toList());
     }
 
+    /**
+     * Return the logbook summary where the tag belong
+     * @param tagId the unique tag id
+     * @return the logbook summary which the tag belong
+     */
+    public LogbookSummaryDTO getLogbookSummaryForTagId(String tagId) {
+        Optional<Logbook> logbook = wrapCatch(
+                () -> logbookRepository.findByTagsIdIs(tagId),
+                -1,
+                "LogbookService:getLogbookSummaryForTagId"
+        );
+        return logbook.map(
+                logbookMapper::fromModelToSummaryDTO
+        ).orElseThrow(
+                ()->LogbookNotFound.logbookNotFoundBuilder()
+                        .errorCode(-2)
+                        .errorDomain("")
+                        .build()
+        );
+    }
+
     private void assertOnLogbook(String logbookId, Integer error, String domain) {
         boolean logbook = wrapCatch(
                 () -> logbookRepository.existsById(logbookId),
