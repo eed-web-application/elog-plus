@@ -25,8 +25,8 @@ public record EntryImportDTO(
         String originId,
         @Schema(description = "Is the original id for which this entry is supersede")
         String supersedeOf,
-        @Schema(description = "Is the original id for which this entry is a followUp")
-        String followUpOf,
+        @Schema(description = "Is the list of the original ids where this entry towards reference to")
+        List<String> referencesTo,
         @NotNull
         @Schema(description = "Is the logbooks where the new log belong")
         List<String> logbooks,
