@@ -27,6 +27,8 @@ public interface LogbookRepositoryCustom {
 
     List<String> getAllLogbook();
 
+    List<String> getAllLogbookIds();
+
     Optional<Shift> findShiftFromLocalTime(String logbookId, LocalTime localTime);
 
     Optional<Shift> findShiftFromLocalTimeWithLogbookName(String logbookId, LocalTime localTime);

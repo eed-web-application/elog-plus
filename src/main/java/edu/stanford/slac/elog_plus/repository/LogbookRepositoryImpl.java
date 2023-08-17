@@ -145,6 +145,19 @@ public class LogbookRepositoryImpl implements LogbookRepositoryCustom {
     }
 
     @Override
+    public List<String> getAllLogbookIds() {
+        List<String> result = new ArrayList<>();
+        Query query = new Query();
+        query.fields().include("id");
+        List<Logbook> l = mongoTemplate.find(query, Logbook.class);
+        for (Logbook lb :
+                l) {
+            result.add(lb.getId());
+        }
+        return result;
+    }
+
+    @Override
     public List<Shift> getAllShift(String logbookID) {
         Query q = new Query();
         q.addCriteria(
