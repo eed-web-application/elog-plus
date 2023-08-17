@@ -71,7 +71,7 @@ public class ImportService {
 
         // check if have completed
         if (entryToUpload.originId() == null) return newEntryId;
-        if(entryToUpload.supersedeOf() == null && entryToUpload.followUpOf()==null) return newEntryId;
+        if(entryToUpload.supersedeOf() == null && entryToUpload.referencesTo()==null) return newEntryId;
 
         // fetch the entry for update
         Entry entryDTO = entryRepository
@@ -102,7 +102,7 @@ public class ImportService {
         }
 
         //the entry can be upgraded so go on with superseded check
-        if(entryToUpload.referencesTo() != null) {
+//        if(entryToUpload.referencesTo() != null) {
 //            log.info("[import {}] update it to follow up {}", entryToUpload.title(), entryToUpload.followUpOf());
 //            // check for supersede
 //
@@ -116,7 +116,7 @@ public class ImportService {
 //            } else {
 //                entryDTO.setSupersedeBy(entryToUpload.supersedeOf());
 //            }
-        }
+//        }
         return newEntryId;
     }
 
