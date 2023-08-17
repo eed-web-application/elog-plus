@@ -588,6 +588,29 @@ public class LogbookService {
         return result;
     }
 
+    public List<TagDTO> getAllTagsByLogbooksIds(List<String> logbookIds) {
+        List<TagDTO> result = new ArrayList<>();
+
+        if (logbookIds == null || logbookIds.isEmpty()) {
+            logbookIds = wrapCatch(
+                    logbookRepository::getAllLogbook,
+                    -1,
+                    "LogbookService:getAllTagsByLogbooksName"
+            );
+        }
+
+        for (String id:
+                logbookIds) {
+            if (!existById(id)) {
+                continue;
+            }
+            LogbookDTO lbDTO = getLogbook(id);
+            result.removeAll(lbDTO.tags());
+            result.addAll(lbDTO.tags());
+        }
+        return result;
+    }
+
     /**
      * Replace the shift in this way
      * <p>

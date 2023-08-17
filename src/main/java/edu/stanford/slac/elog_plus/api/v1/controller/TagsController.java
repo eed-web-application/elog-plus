@@ -3,6 +3,7 @@ package edu.stanford.slac.elog_plus.api.v1.controller;
 import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
 import edu.stanford.slac.elog_plus.api.v1.dto.TagDTO;
 import edu.stanford.slac.elog_plus.service.LogbookService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -27,12 +28,13 @@ public class TagsController {
     @GetMapping(
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
+    @Operation(description = "Return all tags that belong to logbook identified by a list of ids")
     public ApiResultResponse<List<TagDTO>> getAllTags(
             @Parameter(name = "logbooks", description = "The logbooks for filter the tags")
             @RequestParam("logbooks") Optional<List<String>> logbooks
     ) {
         return ApiResultResponse.of(
-                logbookService.getAllTagsByLogbooksName(logbooks.orElse(Collections.emptyList()))
+                logbookService.getAllTagsByLogbooksIds(logbooks.orElse(Collections.emptyList()))
         );
     }
 }
