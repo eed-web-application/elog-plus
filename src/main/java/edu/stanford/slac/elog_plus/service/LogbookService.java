@@ -593,7 +593,7 @@ public class LogbookService {
 
         if (logbookIds == null || logbookIds.isEmpty()) {
             logbookIds = wrapCatch(
-                    logbookRepository::getAllLogbook,
+                    logbookRepository::getAllLogbookIds,
                     -1,
                     "LogbookService:getAllTagsByLogbooksName"
             );
