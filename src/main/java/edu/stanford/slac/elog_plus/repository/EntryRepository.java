@@ -54,4 +54,11 @@ public interface EntryRepository extends MongoRepository<Entry, String>, EntryRe
      * @return true if the entry exists
      */
     boolean existsByOriginId(String originId);
+
+    /**
+     * Find an entry using origin id
+     * @param originId the id from the original system
+     * @return the entry associated with the origin id
+     */
+    Optional<Entry> findByOriginId(String originId);
 }

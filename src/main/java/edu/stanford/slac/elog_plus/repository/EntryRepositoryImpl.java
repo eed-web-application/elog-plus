@@ -150,6 +150,17 @@ public class EntryRepositoryImpl implements EntryRepositoryCustom {
         return mongoTemplate.findDistinct(new Query(), "tags", Entry.class, String.class);
     }
 
+    @Override
+    public void setSupersededBy(String id, String supersededById) {
+        Query q = new Query();
+        q.addCriteria(
+                Criteria.where("id").is(id)
+        );
+        Update u = new Update();
+        u.set("supersedeBy", supersededById);
+        mongoTemplate.updateFirst(q, u, Entry.class);
+    }
+
     private Query getDefaultQuery(String textSearch) {
         if (textSearch != null && !textSearch.isEmpty()) {
             //{$text: {$search:'log' }}

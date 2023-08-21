@@ -41,8 +41,8 @@ public class ImportController {
             @Parameter(schema = @Schema(type = "string", implementation = EntryImportDTO.class))
             @RequestPart("entry") @Valid EntryImportDTO entryToImport,
             @RequestPart(value = "files", required = false)
-            MultipartFile[] files) throws IOException {
-        log.info("[import %s] manage attachment".formatted(entryToImport.text()));
+            MultipartFile[] files) {
+        log.info("[import {}] manage attachment", entryToImport.title());
         List<FileObjectDescription> attachmentList = new ArrayList<>();
         if (files != null) {
             attachmentList = Arrays.stream(files).map(
@@ -72,7 +72,7 @@ public class ImportController {
         }
 
         // convert the tags
-        log.info("[import %s] tags and logbook conversion".formatted(entryToImport.text()));
+        log.info("[import {}] tags and logbook conversion", entryToImport.title());
         entryToImport = entryToImport.toBuilder()
                 .logbooks(
                         importService.getLogbooksIdsByNames(entryToImport.logbooks())

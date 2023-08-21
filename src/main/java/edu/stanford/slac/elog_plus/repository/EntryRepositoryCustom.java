@@ -8,4 +8,6 @@ import java.util.List;
 public interface EntryRepositoryCustom {
     List<Entry> searchAll(QueryParameterWithAnchor queryWithAnchorDTO);
     List<String> getAllTags();
+
+    void setSupersededBy(String entryId, String supersededById);
 }
