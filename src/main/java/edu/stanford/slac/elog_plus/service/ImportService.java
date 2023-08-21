@@ -46,6 +46,18 @@ public class ImportService {
         String newEntryId = null;
         boolean entryExists = false;
 
+        log.info("[import {}] check if already exists", entryToUpload.title());
+        if (entryToUpload.originId() != null) {
+            log.info("[import {}] check for already present origin id", entryToUpload.title());
+            assertion(
+                    () -> !entryService.existsByOriginId(entryToUpload.originId()),
+                    -2,
+                    "Entry with origin id '%s' already exists".formatted(entryToUpload.originId()),
+                    "ImportService::importSingleEntry"
+            );
+        }
+
+        log.info("[import {}] load superseded entry", entryToUpload.title());
         if (entryToUpload.supersedeOfByOriginId() != null) {
             // fetch the entry for update
             supersededEntry = entryRepository
@@ -59,59 +71,48 @@ public class ImportService {
                     );
         }
 
-        if (entryToUpload.originId() != null) {
-            log.info("[import {}] check for already present origin id", entryToUpload.title());
-            entryExists = wrapCatch(
-                    () -> entryService.existsByOriginId(entryToUpload.originId()),
-                    -2,
-                    "ImportService::importSingleEntry"
-            );
-        }
+        log.info("[import {}] create attachment", entryToUpload.title());
+        // save the attachment
+        List<String> attachmentIDList = attachment.stream().map(
+                att -> attachmentService.createAttachment(
+                        att,
+                        true
+                )
+        ).toList();
+        log.info("[import {}] create entry", entryToUpload.title());
+        Entry newEntryModel = entryMapper.fromDTO(
+                entryToUpload,
+                attachmentIDList
+        );
 
-        if (!entryExists) {
-            log.info("[import {}] create attachment", entryToUpload.title());
-            // save the attachment
-            List<String> attachmentIDList = attachment.stream().map(
-                    att -> attachmentService.createAttachment(
-                            att,
-                            true
-                    )
-            ).toList();
-            log.info("[import {}] create entry", entryToUpload.title());
-            Entry newEntryModel = entryMapper.fromDTO(
-                    entryToUpload,
-                    attachmentIDList
-            );
-
-            if (entryToUpload.referencesByOriginId() != null) {
-                List<String> localIdReferenced = new ArrayList<>();
-                for (String originalIdReference:
+        if (entryToUpload.referencesByOriginId() != null) {
+            List<String> localIdReferenced = new ArrayList<>();
+            for (String originalIdReference :
                     entryToUpload.referencesByOriginId()) {
-                    String localId = wrapCatch(
-                            ()->entryService.getIdFromOriginId(originalIdReference),
-                            -3,
-                            "ImportService::importSingleEntry"
-                    );
-                    assertion(
-                            ()->localId!=null,
-                            -3,
-                            "No local ide found ofr the original id:%s".formatted(originalIdReference),
-                            "ImportService::importSingleEntry"
-                    );
-                    localIdReferenced.add(localId);
-                }
-                newEntryModel.setReferences(localIdReferenced);
+                String localId = wrapCatch(
+                        () -> entryService.getIdFromOriginId(originalIdReference),
+                        -3,
+                        "ImportService::importSingleEntry"
+                );
+                assertion(
+                        () -> localId != null,
+                        -3,
+                        "No local ide found ofr the original id:%s".formatted(originalIdReference),
+                        "ImportService::importSingleEntry"
+                );
+                localIdReferenced.add(localId);
             }
-
-            //fill entry with the attachment
-            newEntryId = wrapCatch(
-                    () -> entryService.createNew(
-                            newEntryModel
-                    ),
-                    -2,
-                    "ImportService::importSingleEntry"
-            );
+            newEntryModel.setReferences(localIdReferenced);
         }
+
+        //fill entry with the attachment
+        newEntryId = wrapCatch(
+                () -> entryService.createNew(
+                        newEntryModel
+                ),
+                -2,
+                "ImportService::importSingleEntry"
+        );
 
         // check if we have completed
         if (supersededEntry != null) {
@@ -131,7 +132,10 @@ public class ImportService {
                 Entry finalSupersededEntry = supersededEntry;
                 String finalNewEntryId = newEntryId;
                 wrapCatch(
-                        () -> {entryRepository.setSupersededBy(finalSupersededEntry.getId() , finalNewEntryId); return null;},
+                        () -> {
+                            entryRepository.setSupersededBy(finalSupersededEntry.getId(), finalNewEntryId);
+                            return null;
+                        },
                         -4,
                         ""
                 );
@@ -179,7 +183,7 @@ public class ImportService {
         List<String> logBooksId = new ArrayList<>();
         for (String logbookName :
                 logbooks) {
-              var lb = wrapCatch(
+            var lb = wrapCatch(
                     () -> logbookService.getLogbookByName(logbookName),
                     -1,
                     "ImportService::ensureTagByNameAndLogbooks"

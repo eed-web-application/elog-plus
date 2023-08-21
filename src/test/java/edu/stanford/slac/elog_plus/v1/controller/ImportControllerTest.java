@@ -185,7 +185,7 @@ public class ImportControllerTest {
                 )
         );
 
-        assertThat(alreadyFound.getErrorCode()).isEqualTo(-1);
+        assertThat(alreadyFound.getErrorCode()).isEqualTo(-2);
     }
 
     private ApiResultResponse<LogbookDTO> getTestLogbook() {
