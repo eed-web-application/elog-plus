@@ -4,6 +4,7 @@ import edu.stanford.slac.elog_plus.api.v1.dto.EntryDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.EntryImportDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.LogbookDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.NewTagDTO;
+import edu.stanford.slac.elog_plus.api.v1.mapper.EntryMapper;
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.exception.EntryNotFound;
 import edu.stanford.slac.elog_plus.exception.LogbookNotFound;
@@ -25,10 +26,11 @@ import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
 @Service
 @AllArgsConstructor
 public class ImportService {
-    private EntryService entryService;
-    private LogbookService logbookService;
-    private AttachmentService attachmentService;
-    private EntryRepository entryRepository;
+    private final EntryMapper entryMapper;
+    private final EntryService entryService;
+    private final LogbookService logbookService;
+    private final AttachmentService attachmentService;
+    private final EntryRepository entryRepository;
 
 
     /**
@@ -40,14 +42,28 @@ public class ImportService {
      */
     public String importSingleEntry(EntryImportDTO entryToUpload, List<FileObjectDescription> attachment) {
         // in case we have the origin id check for record existence
+        Entry supersededEntry = null;
         String newEntryId = null;
         boolean entryExists = false;
+
+        if (entryToUpload.supersedeOfByOriginId() != null) {
+            // fetch the entry for update
+            supersededEntry = entryRepository
+                    .findByOriginId(entryToUpload.supersedeOfByOriginId())
+                    .orElseThrow(
+                            () -> EntryNotFound.entryNotFoundBuilderWithName()
+                                    .errorCode(-1)
+                                    .entryName(entryToUpload.originId())
+                                    .errorDomain("ImportService::importSingleEntry")
+                                    .build()
+                    );
+        }
 
         if (entryToUpload.originId() != null) {
             log.info("[import {}] check for already present origin id", entryToUpload.title());
             entryExists = wrapCatch(
                     () -> entryService.existsByOriginId(entryToUpload.originId()),
-                    -1,
+                    -2,
                     "ImportService::importSingleEntry"
             );
         }
@@ -62,61 +78,65 @@ public class ImportService {
                     )
             ).toList();
             log.info("[import {}] create entry", entryToUpload.title());
-            //fill entry with the attachment
-            newEntryId = entryService.createNew(
+            Entry newEntryModel = entryMapper.fromDTO(
                     entryToUpload,
                     attachmentIDList
             );
+
+            if (entryToUpload.referencesByOriginId() != null) {
+                List<String> localIdReferenced = new ArrayList<>();
+                for (String originalIdReference:
+                    entryToUpload.referencesByOriginId()) {
+                    String localId = wrapCatch(
+                            ()->entryService.getIdFromOriginId(originalIdReference),
+                            -3,
+                            "ImportService::importSingleEntry"
+                    );
+                    assertion(
+                            ()->localId!=null,
+                            -3,
+                            "No local ide found ofr the original id:%s".formatted(originalIdReference),
+                            "ImportService::importSingleEntry"
+                    );
+                    localIdReferenced.add(localId);
+                }
+                newEntryModel.setReferences(localIdReferenced);
+            }
+
+            //fill entry with the attachment
+            newEntryId = wrapCatch(
+                    () -> entryService.createNew(
+                            newEntryModel
+                    ),
+                    -2,
+                    "ImportService::importSingleEntry"
+            );
         }
 
-        // check if have completed
-        if (entryToUpload.originId() == null) return newEntryId;
-        if(entryToUpload.supersedeOf() == null && entryToUpload.referencesTo()==null) return newEntryId;
-
-        // fetch the entry for update
-        Entry entryDTO = entryRepository
-                .findByOriginId(entryToUpload.supersedeOf())
-                .orElseThrow(
-                        () -> EntryNotFound.entryNotFoundBuilderWithName()
-                                .errorCode(-2)
-                                .entryName(entryToUpload.originId())
-                                .errorDomain("ImportService::importSingleEntry")
-                                .build()
-                );
-
-        //the entry can be upgraded so go on with superseded check
-        if(entryToUpload.supersedeOf() != null) {
-            log.info("[import {}] update to be supersede by {}", entryToUpload.title(), entryToUpload.supersedeOf());
+        // check if we have completed
+        if (supersededEntry != null) {
+            //the entry can be upgraded so go on with superseded check
+            log.info("[import {}] update to be supersede by {}", entryToUpload.title(), entryToUpload.supersedeOfByOriginId());
             // check for supersede
 
-            if(entryDTO.getSupersedeBy() != null) {
+            if (supersededEntry.getSupersedeBy() != null) {
+                Entry finalSupersededEntry = supersededEntry;
                 assertion(
-                        ()->entryDTO.getSupersedeBy().compareTo(entryToUpload.supersedeOf()) == 0,
-                        -2,
-                        "The entry is already superseded by %s".formatted(entryDTO.getSupersedeBy()),
+                        () -> finalSupersededEntry.getSupersedeBy().compareTo(entryToUpload.supersedeOfByOriginId()) == 0,
+                        -3,
+                        "The entry is already superseded by %s".formatted(finalSupersededEntry.getSupersedeBy()),
                         "ImportService::importSingleEntry"
                 );
             } else {
-                entryDTO.setSupersedeBy(entryToUpload.supersedeOf());
+                Entry finalSupersededEntry = supersededEntry;
+                String finalNewEntryId = newEntryId;
+                wrapCatch(
+                        () -> {entryRepository.setSupersededBy(finalSupersededEntry.getId() , finalNewEntryId); return null;},
+                        -4,
+                        ""
+                );
             }
         }
-
-        //the entry can be upgraded so go on with superseded check
-//        if(entryToUpload.referencesTo() != null) {
-//            log.info("[import {}] update it to follow up {}", entryToUpload.title(), entryToUpload.followUpOf());
-//            // check for supersede
-//
-//            if(entryDTO.getSupersedeBy() != null) {
-//                assertion(
-//                        ()->entryDTO.getSupersedeBy().compareTo(entryToUpload.supersedeOf()) == 0,
-//                        -2,
-//                        "The entry is already superseded by %s".formatted(entryDTO.getSupersedeBy()),
-//                        "ImportService::importSingleEntry"
-//                );
-//            } else {
-//                entryDTO.setSupersedeBy(entryToUpload.supersedeOf());
-//            }
-//        }
         return newEntryId;
     }
 
@@ -159,7 +179,7 @@ public class ImportService {
         List<String> logBooksId = new ArrayList<>();
         for (String logbookName :
                 logbooks) {
-            var lb = wrapCatch(
+              var lb = wrapCatch(
                     () -> logbookService.getLogbookByName(logbookName),
                     -1,
                     "ImportService::ensureTagByNameAndLogbooks"

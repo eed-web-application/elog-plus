@@ -124,22 +124,6 @@ public class EntryService {
     /**
      * Create a new log entry
      *
-     * @param entryToImport is a new log information
-     * @return the id of the newly created log
-     */
-    @Transactional()
-    public String createNew(EntryImportDTO entryToImport, List<String> attachments) {
-        return createNew(
-                entryMapper.fromDTO(
-                        entryToImport,
-                        attachments
-                )
-        );
-    }
-
-    /**
-     * Create a new log entry
-     *
      * @param entryNewDTO is a new log information
      * @return the id of the newly created log
      */
@@ -707,5 +691,20 @@ public class EntryService {
                 -1,
                 "EntryService::existsByOriginId"
         );
+    }
+
+    public String getIdFromOriginId(String originId) {
+        Entry foundEntry = wrapCatch(
+                () -> entryRepository.findByOriginId(originId),
+                -1,
+                "EntryService::getIdFromOriginId"
+        ).orElseThrow(
+                ()->EntryNotFound.entryNotFoundBuilderWithName()
+                        .errorCode(-2)
+                        .entryName(originId)
+                        .errorDomain("EntryService::getIdFromOriginId")
+                        .build()
+        );
+        return foundEntry.getId();
     }
 }
