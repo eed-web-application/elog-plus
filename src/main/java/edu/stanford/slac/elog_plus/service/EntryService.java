@@ -432,7 +432,7 @@ public class EntryService {
 
         // fill shift
         return result.toBuilder()
-                .shift(
+                .shifts(
                         getShiftsForEntry(
                                 foundEntry.getLogbooks(),
                                 foundEntry.getEventAt()
