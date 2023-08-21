@@ -66,14 +66,14 @@ public class MapperTest {
                         .builder()
                         .text(
                                 """
-                                <a href="http://test.com/uuid-reference1 data-references-entry="uuid-reference1">
-                                <a href="http://test.com/uuid-reference2 data-references-entry="uuid-reference2">
+                                <a href="http://test.com/uuid-reference1">
+                                <a href="http://test.com/uuid-reference2">
                                 """
                         )
                         .build(),
                 "firstName",
                 "lastName",
                 "userName");
-        assertThat(newEntry.getReferencesTo()).contains("uuid-reference1","uuid-reference2");
+        assertThat(newEntry.getReferences()).contains("uuid-reference1","uuid-reference2");
     }
 }

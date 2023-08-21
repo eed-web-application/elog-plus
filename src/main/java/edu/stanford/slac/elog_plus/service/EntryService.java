@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -73,7 +74,7 @@ public class EntryService {
      * in the same time
      *
      * @param logbookIds the list of the logbook ids
-     * @param eventAt  the time which we need the shift
+     * @param eventAt    the time which we need the shift
      * @return the shift list
      */
     private List<LogbookShiftDTO> getShiftsForEntry(List<String> logbookIds, LocalDateTime eventAt) {
@@ -216,7 +217,7 @@ public class EntryService {
         } else {
             // check  all logbooks
             newEntry.getLogbooks().forEach(
-                    logbookId->{
+                    logbookId -> {
                         assertion(
                                 () -> logbookService.existById(logbookId),
                                 LogbookNotFound
@@ -309,8 +310,8 @@ public class EntryService {
                 StringUtilities.sanitizeEntryText(newEntry.getText())
         );
 
-        // manage the references
-        manageNewEntryReferences(newEntry);
+        // remove the invalid references
+        filterOutInvalidReference(newEntry);
 
         // other check
         Entry finalNewEntryToSave = newEntry;
@@ -330,26 +331,29 @@ public class EntryService {
 
     /**
      * Create and manage references for the entry to create
-     *
+     * <p>
      * the reference will be checked for the existence
+     *
      * @param newEntry the new entry that need to be created
      */
-    @Transactional(propagation = Propagation.NESTED)
-    public void manageNewEntryReferences(Entry newEntry) {
-        if (newEntry.getReferencesTo() == null || newEntry.getReferencesTo().isEmpty()) return;
-
-        for (String referencedEntryId:
-                newEntry.getReferencesTo()) {
+    public void filterOutInvalidReference(Entry newEntry) {
+        if (newEntry.getReferences() == null || newEntry.getReferences().isEmpty()) return;
+        List<String> validReference = new ArrayList<>();
+        for (String referencedEntryId :
+                newEntry.getReferences()) {
             // check for the reference entry if exists
-            assertion(
-                    ()->entryRepository.existsById(referencedEntryId),
-                    EntryNotFound.entryNotFoundBuilderWithName()
-                            .errorCode(-1)
-                            .entryName(referencedEntryId)
-                            .errorDomain("EntryService::manageNewEntryReferences")
-                            .build()
-            );
+            if(
+                    wrapCatch(
+                            ()->entryRepository.existsById(referencedEntryId),
+                            -1,
+                            "EntryService::manageNewEntryReferences"
+                    )
+            ) {
+                // referenced entry exists
+                validReference.add(referencedEntryId);
+            }
         }
+        newEntry.setReferences(validReference);
     }
 
     /**
@@ -359,7 +363,14 @@ public class EntryService {
      * @return the full entry
      */
     public EntryDTO getFullEntry(String id) {
-        return getFullEntry(id, Optional.of(false), Optional.of(false), Optional.of(false));
+        return getFullEntry(
+                id,
+                Optional.of(false),
+                Optional.of(false),
+                Optional.of(false),
+                Optional.of(false),
+                Optional.of(false)
+        );
     }
 
     /**
@@ -371,7 +382,13 @@ public class EntryService {
      * @param followHistory       if true the result will include the log history
      * @return the full entry
      */
-    public EntryDTO getFullEntry(String id, Optional<Boolean> includeFollowUps, Optional<Boolean> includeFollowingUps, Optional<Boolean> followHistory) {
+    public EntryDTO getFullEntry(
+            String id,
+            Optional<Boolean> includeFollowUps,
+            Optional<Boolean> includeFollowingUps,
+            Optional<Boolean> followHistory,
+            Optional<Boolean> includeReferences,
+            Optional<Boolean> includeReferencedBy) {
         EntryDTO result = null;
         Entry foundEntry =
                 wrapCatch(
@@ -428,6 +445,39 @@ public class EntryService {
                         .history(logHistory)
                         .build();
             }
+        }
+
+        if (includeReferences.orElse(false)) {
+            // fill the references field
+            result = result.toBuilder()
+                    .references(foundEntry.getReferences())
+                    .build();
+        } else {
+            result = result.toBuilder()
+                    .references(Collections.emptyList())
+                    .build();
+        }
+
+        if (includeReferencedBy.orElse(false)) {
+            // fill the referencedBy field
+            result = result.toBuilder()
+                    .referencedBy(
+                            wrapCatch(
+                                    () -> entryRepository.findAllByReferencesContainsAndSupersedeByExists(foundEntry.getId(), false)
+                                            .stream()
+                                            .map(
+                                                    Entry::getId
+                                            )
+                                            .toList(),
+                                    -4,
+                                    "EntryMapper::getFullEntry"
+                            )
+                    )
+                    .build();
+        } else {
+            result = result.toBuilder()
+                    .referencedBy(Collections.emptyList())
+                    .build();
         }
 
         // fill shift

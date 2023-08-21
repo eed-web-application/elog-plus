@@ -37,9 +37,9 @@ public record EntryDTO(
         @Schema(description = "The shift which the entry belong, if any match the event date")
         List<LogbookShiftDTO> shifts,
         @Schema(description = "The entries referenced from this one")
-        List<String> referencesTo,
+        List<String> references,
         @Schema(description = "The entries that reference this one")
-        List<String> referencedFrom,
+        List<String> referencedBy,
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)
         LocalDateTime loggedAt,

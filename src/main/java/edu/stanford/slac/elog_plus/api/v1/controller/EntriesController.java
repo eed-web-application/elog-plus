@@ -76,15 +76,26 @@ public class EntriesController {
     @ResponseStatus(HttpStatus.OK)
     public ApiResultResponse<EntryDTO> getFull(
             @PathVariable String id,
-            @Parameter(name = "includeFollowUps", description = "If true the API return all the followUps")
+            @Parameter(name = "includeFollowUps", description = "If true the API return all the entries that are follow-up of this one")
             @RequestParam("includeFollowUps") Optional<Boolean> includeFollowUps,
-            @Parameter(name = "includeFollowingUps", description = "If true the API return all the followingUp")
+            @Parameter(name = "includeFollowingUps", description = "If true the API return all the entries that are follow-up of this one")
             @RequestParam("includeFollowingUps") Optional<Boolean> includeFollowingUps,
-            @Parameter(name = "includeHistory", description = "If true the API return all log updates history")
-            @RequestParam("includeHistory") Optional<Boolean> includeHistory
+            @Parameter(name = "includeHistory", description = "If true the API return all the entry updates history")
+            @RequestParam("includeHistory") Optional<Boolean> includeHistory,
+            @Parameter(name = "includeReferenceBy", description = "If true the API return all the entries that are reference by this one")
+            @RequestParam("includeReferenceBy") Optional<Boolean> includeReferenceBy,
+            @Parameter(name = "includeReferencedFrom", description = "If true the API return all the entries that are referenced byt this one")
+            @RequestParam("includeReferencedFrom") Optional<Boolean> includeReferencedFrom
     ) {
         return ApiResultResponse.of(
-                entryService.getFullEntry(id, includeFollowUps, includeFollowingUps, includeHistory)
+                entryService.getFullEntry(
+                        id,
+                        includeFollowUps,
+                        includeFollowingUps,
+                        includeHistory,
+                        includeReferenceBy,
+                        includeReferencedFrom
+                )
         );
     }
 

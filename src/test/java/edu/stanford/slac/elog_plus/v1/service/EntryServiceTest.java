@@ -483,7 +483,9 @@ public class EntryServiceTest {
                                 newFollowUpOneID,
                                 Optional.empty(),
                                 Optional.of(true),
-                                Optional.empty()
+                                Optional.empty(),
+                                Optional.of(true),
+                                Optional.of(true)
                         )
                 );
 
@@ -1051,7 +1053,7 @@ public class EntryServiceTest {
                     es.id()
             );
             assertThat(fullEntry).isNotNull();
-            assertThat(fullEntry.shift()).isEqualTo(es.shift());
+            assertThat(fullEntry.shifts()).isEqualTo(es.shift());
         }
     }
 
@@ -1750,7 +1752,7 @@ public class EntryServiceTest {
                                 .builder()
                                 .logbooks(List.of(logbook.id()))
                                 .title("New entry")
-                                .text("This is a text with reference in a link <a href=\"http://test.com/%s\" data-references-entry=\"%s\">Reference link</a>".formatted(referencedEntryId, referencedEntryId))
+                                .text("This is a text with reference in a link <a href=\"http://test.com/%s\">Reference link</a>".formatted(referencedEntryId))
                                 .build()
                 )
         );
@@ -1759,79 +1761,61 @@ public class EntryServiceTest {
         //fetch referencer
         EntryDTO referencerEntry = assertDoesNotThrow(
                 () -> entryService.getFullEntry(
-                        referencerEntryId
+                        referencerEntryId,
+                        Optional.of(false),
+                        Optional.of(false),
+                        Optional.of(false),
+                        Optional.of(true),
+                        Optional.of(true)
+
                 )
         );
 
-        assertThat(referencerEntry.referencesTo()).hasSize(1).contains(referencedEntryId);
+        assertThat(referencerEntry.references()).hasSize(1).contains(referencedEntryId);
 
         //fetch referenced
         EntryDTO referencedEntry = assertDoesNotThrow(
                 () -> entryService.getFullEntry(
-                        referencedEntryId
+                        referencedEntryId,
+                        Optional.of(false),
+                        Optional.of(false),
+                        Optional.of(false),
+                        Optional.of(true),
+                        Optional.of(true)
                 )
         );
 
-        assertThat(referencedEntry.referencedFrom()).hasSize(1).contains(referencerEntryId);
+        assertThat(referencedEntry.referencedBy()).hasSize(1).contains(referencerEntryId);
     }
 
     @Test
     public void testReferencesFailsOnBadReferenceId() {
         var logbook = getTestLogbook();
 
-        EntryNotFound entryNotFound = assertThrows(
-                EntryNotFound.class,
+        String newEntryId = assertDoesNotThrow(
                 () -> entryService.createNew(
                         EntryNewDTO
                                 .builder()
                                 .logbooks(List.of(logbook.id()))
                                 .title("New entry")
-                                .text("This is a text with reference in a link <a href=\"http://test.com/%s\" data-references-entry=\"%s\">Reference link</a>".formatted("bad-id", "bad-id"))
+                                .text("This is a text with reference in a link <a href=\"http://test.com/%s\">Reference link</a>".formatted("bad-id"))
                                 .build()
                 )
         );
-        assertThat(entryNotFound.getErrorCode()).isEqualTo(-1);
-    }
+        assertThat(newEntryId).isNotNull();
 
-    @Test
-    public void testReferencesOnFindOk() {
-        var logbook = getTestLogbook();
-        String referencedEntryId = assertDoesNotThrow(
-                () -> entryService.createNew(
-                        EntryNewDTO
-                                .builder()
-                                .logbooks(List.of(logbook.id()))
-                                .title("Referenced entry")
-                                .text("This is a log for a referenced entry")
-                                .build()
+        EntryDTO newEntry = assertDoesNotThrow(
+                () -> entryService.getFullEntry(
+                        newEntryId,
+                        Optional.of(false),
+                        Optional.of(false),
+                        Optional.of(false),
+                        Optional.of(true),
+                        Optional.of(true)
                 )
         );
-        assertThat(referencedEntryId).isNotNull();
 
-        String referencerEntryId = assertDoesNotThrow(
-                () -> entryService.createNew(
-                        EntryNewDTO
-                                .builder()
-                                .logbooks(List.of(logbook.id()))
-                                .title("New entry")
-                                .text("This is a text with reference in a link <a href=\"http://test.com/%s\" data-references-entry=\"%s\">Reference link</a>".formatted(referencedEntryId, referencedEntryId))
-                                .build()
-                )
-        );
-        assertThat(referencerEntryId).isNotNull();
-
-        //find entry
-        List<EntrySummaryDTO> foundEntry = assertDoesNotThrow(
-                () -> entryService.searchAll(
-                        QueryWithAnchorDTO
-                                .builder()
-                                .limit(10)
-                                .build()
-                )
-        );
-        assertThat(foundEntry).hasSize(2);
-        assertThat(foundEntry.get(0).referencesTo()).contains(referencedEntryId);
-        assertThat(foundEntry.get(1).referencedFrom()).contains(referencerEntryId);
+        assertThat(newEntry.references()).hasSize(0);
     }
 
     @Test
@@ -1855,7 +1839,7 @@ public class EntryServiceTest {
                                 .builder()
                                 .logbooks(List.of(logbook.id()))
                                 .title("New entry")
-                                .text("This is a text with reference in a link <a href=\"http://test.com/%s\" data-references-entry=\"%s\">Reference link</a>".formatted(referencedEntryId, referencedEntryId))
+                                .text("This is a text with reference in a link <a href=\"http://test.com/%s\">Reference link</a>".formatted(referencedEntryId))
                                 .build()
                 )
         );
@@ -1877,16 +1861,29 @@ public class EntryServiceTest {
         assertThat(referencerSupersedeEntryId).isNotNull();
 
         //find entry
-        List<EntrySummaryDTO> foundEntry = assertDoesNotThrow(
-                () -> entryService.searchAll(
-                        QueryWithAnchorDTO
-                                .builder()
-                                .limit(10)
-                                .build()
+        EntryDTO referencedEntry = assertDoesNotThrow(
+                () -> entryService.getFullEntry(
+                        referencedEntryId,
+                        Optional.of(false),
+                        Optional.of(false),
+                        Optional.of(false),
+                        Optional.of(true),
+                        Optional.of(true)
                 )
         );
-        assertThat(foundEntry).hasSize(2);
-        assertThat(foundEntry.get(0).referencesTo()).hasSize(1).contains(referencedEntryId);
-        assertThat(foundEntry.get(1).referencedFrom()).hasSize(1).contains(referencerSupersedeEntryId);
+
+        EntryDTO referencerEntry = assertDoesNotThrow(
+                () -> entryService.getFullEntry(
+                        referencerSupersedeEntryId,
+                        Optional.of(false),
+                        Optional.of(false),
+                        Optional.of(false),
+                        Optional.of(true),
+                        Optional.of(true)
+                )
+        );
+
+        assertThat(referencerEntry.references()).hasSize(1).contains(referencedEntryId);
+        assertThat(referencedEntry.referencedBy()).hasSize(1).contains(referencerSupersedeEntryId);
     }
 }

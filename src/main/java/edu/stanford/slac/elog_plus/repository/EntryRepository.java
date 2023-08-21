@@ -32,7 +32,7 @@ public interface EntryRepository extends MongoRepository<Entry, String>, EntryRe
     Optional<Entry> findBySummarizes_ShiftIdAndSummarizes_Date(String summarizesShiftId, LocalDate summarizesDate);
 
     @Query(fields = "{'title':1}")
-    List<Entry> findAllByReferencesToContainsAndSupersedeByExists(String referencedEntryId, Boolean exists);
+    List<Entry> findAllByReferencesContainsAndSupersedeByExists(String referencedEntryId, Boolean exists);
 
     /**
      * Return the number of the summary associated to a shift

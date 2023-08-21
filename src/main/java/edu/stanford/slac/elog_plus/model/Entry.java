@@ -55,10 +55,10 @@ public class Entry {
     private List<String> followUps = new ArrayList<>();
     @Indexed
     @Builder.Default
-    private List<String> referencesTo = new ArrayList<>();
+    private List<String> references = new ArrayList<>();
     @Builder.Default
     @Transient
-    private List<String> referencedFrom = new ArrayList<>();
+    private List<String> referencedBy = new ArrayList<>();
     @Indexed
     @Builder.Default
     private LocalDateTime loggedAt = LocalDateTime.now();
