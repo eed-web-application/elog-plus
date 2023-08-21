@@ -1025,24 +1025,24 @@ public class EntryServiceTest {
 
         for (EntrySummaryDTO entry :
                 firstPage) {
-            if (entry.shift() == null || entry.shift().isEmpty()) continue;
-            assertThat(entry.shift().get(0).logbook().id()).isEqualTo(logbook.id());
+            if (entry.shifts() == null || entry.shifts().isEmpty()) continue;
+            assertThat(entry.shifts().get(0).logbook().id()).isEqualTo(logbook.id());
         }
 
         //check all shift
         assertThat(firstPage)
-                .filteredOn(entry -> entry.shift() == null || entry.shift().isEmpty())
+                .filteredOn(entry -> entry.shifts() == null || entry.shifts().isEmpty())
                 .filteredOn(not(outOfShift))
                 .hasSize(0);
         assertThat(firstPage)
                 // select only shift 1
-                .filteredOn(entry -> entry.shift() != null || entry.shift().get(0).name().compareTo("Shift1") == 0)
+                .filteredOn(entry -> entry.shifts() != null || entry.shifts().get(0).name().compareTo("Shift1") == 0)
                 // remove shift 1
                 .filteredOn(not(shift1))
                 .hasSize(0);
         assertThat(firstPage)
                 // select only shift 1
-                .filteredOn(entry -> entry.shift() != null || entry.shift().get(0).name().compareTo("Shift2") == 0)
+                .filteredOn(entry -> entry.shifts() != null || entry.shifts().get(0).name().compareTo("Shift2") == 0)
                 // remove shift 1
                 .filteredOn(not(shift2))
                 .hasSize(0);
@@ -1053,7 +1053,7 @@ public class EntryServiceTest {
                     es.id()
             );
             assertThat(fullEntry).isNotNull();
-            assertThat(fullEntry.shifts()).isEqualTo(es.shift());
+            assertThat(fullEntry.shifts()).isEqualTo(es.shifts());
         }
     }
 

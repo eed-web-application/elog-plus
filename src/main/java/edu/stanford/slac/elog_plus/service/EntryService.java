@@ -58,7 +58,7 @@ public class EntryService {
                             entry
                     );
                     return es.toBuilder()
-                            .shift(
+                            .shifts(
                                     getShiftsForEntry(
                                             es.logbooks().stream().map(LogbookSummaryDTO::id).toList(),
                                             es.eventAt()
