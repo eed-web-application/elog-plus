@@ -26,7 +26,7 @@ import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
         componentModel = "spring"
 )
 public abstract class EntryMapper {
-    static Pattern pattern = Pattern.compile("data-references-entry=\"([^\"]+)\"");
+    static Pattern pattern = Pattern.compile("<a\\s+(?:[^>]*?\\s+)?href=([\"'])(https?://[^/]+/([^/\"']+))");
     @Autowired
     private EntryRepository entryRepository;
     @Autowired
@@ -37,25 +37,27 @@ public abstract class EntryMapper {
     @Mapping(target = "loggedBy", expression = "java(entry.getFirstName() + \" \" + entry.getLastName())")
     @Mapping(target = "followUps", ignore = true)
     @Mapping(source = "logbooks", target = "logbooks", qualifiedByName = "mapToLogbookSummary")
-    @Mapping(target = "referencedFrom", expression = "java(findReferencedFromEntries(entry.getId()))")
+    @Mapping(target = "referencedBy", ignore = true)
+    @Mapping(target = "references", ignore = true)
     public abstract EntryDTO fromModel(Entry entry);
 
     @Mapping(target = "loggedBy", expression = "java(entry.getFirstName() + \" \" + entry.getLastName())")
     @Mapping(target = "attachments", ignore = true)
     @Mapping(target = "followUps", ignore = true)
     @Mapping(source = "logbooks", target = "logbooks", qualifiedByName = "mapToLogbookSummary")
-    @Mapping(target = "referencedFrom", expression = "java(findReferencedFromEntries(entry.getId()))")
+    @Mapping(target = "referencedBy", ignore = true)
+    @Mapping(target = "references", ignore = true)
     public abstract EntryDTO fromModelNoAttachment(Entry entry);
 
     @Mapping(target = "loggedBy", expression = "java(entry.getFirstName() + \" \" + entry.getLastName())")
     @Mapping(source = "logbooks", target = "logbooks", qualifiedByName = "mapToLogbookSummary")
-    @Mapping(target = "referencedFrom", expression = "java(findReferencedFromEntries(entry.getId()))")
+    //@Mapping(target = "referencedFrom", expression = "java(findReferencedFromEntries(entry.getId()))")
     public abstract EntrySummaryDTO toSearchResultFromDTO(Entry entry);
 
-    @Mapping(target = "referencesTo", expression = "java(createReferences(entryNewDTO.text()))")
+    @Mapping(target = "references", expression = "java(createReferences(entryNewDTO.text()))")
     public abstract Entry fromDTO(EntryNewDTO entryNewDTO, String firstName, String lastName, String userName);
 
-    @Mapping(target = "referencesTo", expression = "java(createReferences(entryNewDTO.text()))")
+    @Mapping(target = "references", expression = "java(createReferences(entryNewDTO.text()))")
     public abstract Entry fromDTO(EntryImportDTO entryNewDTO, List<String> attachments);
     @Named("createReferences")
     public List<String> createReferences(String text) {
@@ -63,29 +65,11 @@ public abstract class EntryMapper {
         if(text == null || text.isEmpty()) return result;
         Matcher matcher = pattern.matcher(text);
         while (matcher.find()) {
-            result.add(matcher.group(1));
+            if(matcher.groupCount()>=3){
+                result.add(matcher.group(3));
+            }
         }
         return result;
-    }
-
-    /**
-     * Find all the entry that reference the one identified by the entryId
-     *
-     * @param entryId the id of the referenced entry
-     * @return the entries that reference the one with the @entryId
-     */
-    @Named("findReferencedFromEntries")
-    public List<String> findReferencedFromEntries(String entryId) {
-        return wrapCatch(
-                () ->entryRepository.findAllByReferencesToContainsAndSupersedeByExists(entryId, false)
-                        .stream()
-                        .map(
-                                Entry::getId
-                        )
-                        .toList(),
-                -2,
-                "EntryMapper::findReferencedFromEntries"
-        );
     }
 
     public List<AttachmentDTO> map(List<String> attachments) {
