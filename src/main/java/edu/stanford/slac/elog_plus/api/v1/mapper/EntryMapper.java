@@ -1,6 +1,7 @@
 package edu.stanford.slac.elog_plus.api.v1.mapper;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
+import edu.stanford.slac.elog_plus.exception.EntryNotFound;
 import edu.stanford.slac.elog_plus.exception.TagNotFound;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Tag;
@@ -51,7 +52,7 @@ public abstract class EntryMapper {
 
     @Mapping(target = "loggedBy", expression = "java(entry.getFirstName() + \" \" + entry.getLastName())")
     @Mapping(source = "logbooks", target = "logbooks", qualifiedByName = "mapToLogbookSummary")
-    //@Mapping(target = "referencedFrom", expression = "java(findReferencedFromEntries(entry.getId()))")
+    @Mapping(target = "followingUp", expression = "java(getFollowingUp(entry.getId()))")
     public abstract EntrySummaryDTO toSearchResultFromDTO(Entry entry);
 
     @Mapping(target = "references", expression = "java(createReferences(entryNewDTO.text()))")
@@ -59,6 +60,23 @@ public abstract class EntryMapper {
 
     @Mapping(target = "references", expression = "java(createReferences(entryNewDTO.text()))")
     public abstract Entry fromDTO(EntryImportDTO entryNewDTO, List<String> attachments);
+
+    @Named("getFollowingUp")
+    public String getFollowingUp(String id) {
+        if(id == null || id.isEmpty()) return null;
+        return wrapCatch(
+                ()->entryRepository.findByFollowUpsContains(id)
+                        .orElseThrow(
+                                ()-> EntryNotFound.entryNotFoundBuilder()
+                                        .errorCode(-1)
+                                        .errorDomain("EntryMapper::getFollowingUp")
+                                        .build()
+                        ).getId(),
+                -2,
+                "EntryMapper::getFollowingUp"
+        );
+    }
+
     @Named("createReferences")
     public List<String> createReferences(String text) {
         List<String> result = new ArrayList<>();
