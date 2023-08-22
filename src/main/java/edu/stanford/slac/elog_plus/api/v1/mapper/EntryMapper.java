@@ -1,6 +1,7 @@
 package edu.stanford.slac.elog_plus.api.v1.mapper;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
+import edu.stanford.slac.elog_plus.exception.EntryNotFound;
 import edu.stanford.slac.elog_plus.exception.TagNotFound;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Tag;
@@ -51,7 +52,7 @@ public abstract class EntryMapper {
 
     @Mapping(target = "loggedBy", expression = "java(entry.getFirstName() + \" \" + entry.getLastName())")
     @Mapping(source = "logbooks", target = "logbooks", qualifiedByName = "mapToLogbookSummary")
-    //@Mapping(target = "referencedFrom", expression = "java(findReferencedFromEntries(entry.getId()))")
+    @Mapping(target = "followingUp", expression = "java(getFollowingUp(entry.getId()))")
     public abstract EntrySummaryDTO toSearchResultFromDTO(Entry entry);
 
     @Mapping(target = "references", expression = "java(createReferences(entryNewDTO.text()))")
@@ -59,13 +60,27 @@ public abstract class EntryMapper {
 
     @Mapping(target = "references", expression = "java(createReferences(entryNewDTO.text()))")
     public abstract Entry fromDTO(EntryImportDTO entryNewDTO, List<String> attachments);
+
+    @Named("getFollowingUp")
+    public String getFollowingUp(String id) {
+        if (id == null || id.isEmpty()) return null;
+        return wrapCatch(
+                () -> entryRepository.findByFollowUpsContains(id)
+                        .map(
+                                Entry::getId
+                        ).orElse(null),
+                -1,
+                "EntryMapper::getFollowingUp"
+        );
+    }
+
     @Named("createReferences")
     public List<String> createReferences(String text) {
         List<String> result = new ArrayList<>();
-        if(text == null || text.isEmpty()) return result;
+        if (text == null || text.isEmpty()) return result;
         Matcher matcher = pattern.matcher(text);
         while (matcher.find()) {
-            if(matcher.groupCount()>=3){
+            if (matcher.groupCount() >= 3) {
                 result.add(matcher.group(3));
             }
         }
@@ -111,7 +126,7 @@ public abstract class EntryMapper {
             list.add(
                     logbookService.getTagById(tagsId)
                             .orElseThrow(
-                                    ()-> TagNotFound.tagNotFoundBuilder()
+                                    () -> TagNotFound.tagNotFoundBuilder()
                                             .errorCode(-1)
                                             .tagName("tagsId")
                                             .errorDomain("EntryMapper::fromTagId")

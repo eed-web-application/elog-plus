@@ -31,6 +31,8 @@ public record EntrySummaryDTO(
         List<AttachmentDTO> attachments,
         @Schema(description = "The shift which the entry belong, if any")
         List<LogbookShiftDTO> shifts,
+        @Schema(description = "The id of the entry that is followUp for this the current entry is a follow ups")
+        String followingUp,
         @Schema(description = "The entry notes")
         String note,
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)

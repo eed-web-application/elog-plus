@@ -445,6 +445,8 @@ public class EntryServiceTest {
 
         assertThat(followUpLogsFound).isNotNull();
         assertThat(followUpLogsFound.size()).isEqualTo(2);
+        assertThat(followUpLogsFound.get(0).followingUp()).isEqualTo(rootLogID);
+        assertThat(followUpLogsFound.get(1).followingUp()).isEqualTo(rootLogID);
     }
 
     @Test

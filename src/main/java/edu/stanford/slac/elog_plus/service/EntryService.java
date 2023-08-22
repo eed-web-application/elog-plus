@@ -63,7 +63,8 @@ public class EntryService {
                                             es.logbooks().stream().map(LogbookSummaryDTO::id).toList(),
                                             es.eventAt()
                                     )
-                            ).build();
+                            )
+                            .build();
                 }
 
         ).collect(Collectors.toList());
