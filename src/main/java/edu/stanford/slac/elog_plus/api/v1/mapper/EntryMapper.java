@@ -63,16 +63,13 @@ public abstract class EntryMapper {
 
     @Named("getFollowingUp")
     public String getFollowingUp(String id) {
-        if(id == null || id.isEmpty()) return null;
+        if (id == null || id.isEmpty()) return null;
         return wrapCatch(
-                ()->entryRepository.findByFollowUpsContains(id)
-                        .orElseThrow(
-                                ()-> EntryNotFound.entryNotFoundBuilder()
-                                        .errorCode(-1)
-                                        .errorDomain("EntryMapper::getFollowingUp")
-                                        .build()
-                        ).getId(),
-                -2,
+                () -> entryRepository.findByFollowUpsContains(id)
+                        .map(
+                                Entry::getId
+                        ).orElse(null),
+                -1,
                 "EntryMapper::getFollowingUp"
         );
     }
@@ -80,10 +77,10 @@ public abstract class EntryMapper {
     @Named("createReferences")
     public List<String> createReferences(String text) {
         List<String> result = new ArrayList<>();
-        if(text == null || text.isEmpty()) return result;
+        if (text == null || text.isEmpty()) return result;
         Matcher matcher = pattern.matcher(text);
         while (matcher.find()) {
-            if(matcher.groupCount()>=3){
+            if (matcher.groupCount() >= 3) {
                 result.add(matcher.group(3));
             }
         }
@@ -129,7 +126,7 @@ public abstract class EntryMapper {
             list.add(
                     logbookService.getTagById(tagsId)
                             .orElseThrow(
-                                    ()-> TagNotFound.tagNotFoundBuilder()
+                                    () -> TagNotFound.tagNotFoundBuilder()
                                             .errorCode(-1)
                                             .tagName("tagsId")
                                             .errorDomain("EntryMapper::fromTagId")
