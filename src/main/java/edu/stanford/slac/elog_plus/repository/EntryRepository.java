@@ -31,7 +31,6 @@ public interface EntryRepository extends MongoRepository<Entry, String>, EntryRe
     @Query(fields = "{'summarizes':1}")
     Optional<Entry> findBySummarizes_ShiftIdAndSummarizes_Date(String summarizesShiftId, LocalDate summarizesDate);
 
-    @Query(fields = "{'title':1}")
     List<Entry> findAllByReferencesContainsAndSupersedeByExists(String referencedEntryId, Boolean exists);
 
     /**
