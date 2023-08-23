@@ -1649,5 +1649,18 @@ public class EntriesControllerTest {
         assertThat(references.getErrorCode()).isEqualTo(0);
         assertThat(references.getPayload()).hasSize(2);
         assertThat(references.getPayload()).extracting("id").contains(newLogID1.getPayload(), newLogID2.getPayload());
+
+
+        ApiResultResponse<EntryDTO> referencerEntry = assertDoesNotThrow(
+                () ->
+                        testHelperService.getFullLog(
+                                mockMvc,
+                                status().isOk(),
+                                newLogIDReferencer.getPayload()
+                        )
+        );
+        assertThat(referencerEntry).isNotNull();
+        assertThat(referencerEntry.getErrorCode()).isEqualTo(0);
+        assertThat(referencerEntry.getPayload().referencesInBody()).isTrue();
     }
 }
