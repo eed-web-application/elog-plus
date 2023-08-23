@@ -32,8 +32,7 @@ public abstract class EntryMapper {
     @Mapping(target = "loggedBy", expression = "java(entry.getFirstName() + \" \" + entry.getLastName())")
     @Mapping(target = "followUps", ignore = true)
     @Mapping(source = "logbooks", target = "logbooks", qualifiedByName = "mapToLogbookSummary")
-    @Mapping(target = "referencedBy", ignore = true)
-    @Mapping(target = "references", ignore = true)
+    @Mapping(target = "referencedBy", expression = "java(getReferenceBy(entry.getId()))")
     @Mapping(target = "referencesInBody", expression = "java(entry.getOriginId()==null)")
     public abstract EntryDTO fromModel(Entry entry);
 
@@ -41,14 +40,14 @@ public abstract class EntryMapper {
     @Mapping(target = "attachments", ignore = true)
     @Mapping(target = "followUps", ignore = true)
     @Mapping(source = "logbooks", target = "logbooks", qualifiedByName = "mapToLogbookSummary")
-    @Mapping(target = "referencedBy", ignore = true)
-    @Mapping(target = "references", ignore = true)
+    @Mapping(target = "referencedBy", expression = "java(getReferenceBy(entry.getId()))")
     @Mapping(target = "referencesInBody", expression = "java(entry.getOriginId()==null)")
     public abstract EntryDTO fromModelNoAttachment(Entry entry);
 
     @Mapping(target = "loggedBy", expression = "java(entry.getFirstName() + \" \" + entry.getLastName())")
     @Mapping(source = "logbooks", target = "logbooks", qualifiedByName = "mapToLogbookSummary")
     @Mapping(target = "followingUp", expression = "java(getFollowingUp(entry.getId()))")
+    @Mapping(target = "referencedBy", expression = "java(getReferenceBy(entry.getId()))")
     public abstract EntrySummaryDTO toSearchResult(Entry entry);
 
     @Mapping(target = "references", expression = "java(createReferences(entryNewDTO.text()))")
@@ -67,6 +66,25 @@ public abstract class EntryMapper {
                         ).orElse(null),
                 -1,
                 "EntryMapper::getFollowingUp"
+        );
+    }
+
+    /**
+     * Fill the referenced by of an entry
+     *
+     * @param id the unique id of an entry
+     * @return all the id of the entries that refere the entry
+     */
+    public List<String> getReferenceBy(String id) {
+        if (id == null || id.isEmpty()) return null;
+        return wrapCatch(
+                () -> entryRepository.findAllByReferencesContainsAndSupersedeByExists(id, false)
+                        .stream()
+                        .map(
+                                Entry::getId
+                        ).toList(),
+                -1,
+                "EntryMapper::getFollowgetReferenceByingUp"
         );
     }
 

@@ -1771,7 +1771,8 @@ public class EntriesControllerTest {
         assertThat(references.getErrorCode()).isEqualTo(0);
         assertThat(references.getPayload()).hasSize(2);
         assertThat(references.getPayload()).extracting("id").contains(newLogID1.getPayload(), newLogID2.getPayload());
-
+        assertThat(references.getPayload().get(0).referencedBy()).contains(newLogIDReferencer.getPayload());
+        assertThat(references.getPayload().get(1).referencedBy()).contains(newLogIDReferencer.getPayload());
 
         ApiResultResponse<EntryDTO> referencerEntry = assertDoesNotThrow(
                 () ->
@@ -1784,5 +1785,7 @@ public class EntriesControllerTest {
         assertThat(referencerEntry).isNotNull();
         assertThat(referencerEntry.getErrorCode()).isEqualTo(0);
         assertThat(referencerEntry.getPayload().referencesInBody()).isTrue();
+        assertThat(referencerEntry.getPayload().references()).contains(newLogID1.getPayload(), newLogID2.getPayload());
+        assertThat(referencerEntry.getPayload().referencedBy()).isNull();
     }
 }

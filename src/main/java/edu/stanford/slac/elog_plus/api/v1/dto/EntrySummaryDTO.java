@@ -31,6 +31,10 @@ public record EntrySummaryDTO(
         List<AttachmentDTO> attachments,
         @Schema(description = "The shift which the entry belong, if any")
         List<LogbookShiftDTO> shifts,
+        @Schema(description = "The entries referenced by this one")
+        List<String> references,
+        @Schema(description = "The entries that refer to this one")
+        List<String> referencedBy,
         @Schema(description = "The id of the entry that is followUp for this the current entry is a follow ups")
         String followingUp,
         @Schema(description = "The entry notes")

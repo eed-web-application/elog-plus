@@ -432,38 +432,38 @@ public class EntryService {
             }
         }
 
-        if (includeReferences.orElse(false)) {
-            // fill the references field
-            result = result.toBuilder()
-                    .references(foundEntry.getReferences())
-                    .build();
-        } else {
-            result = result.toBuilder()
-                    .references(emptyList())
-                    .build();
-        }
-
-        if (includeReferencedBy.orElse(false)) {
-            // fill the referencedBy field
-            result = result.toBuilder()
-                    .referencedBy(
-                            wrapCatch(
-                                    () -> entryRepository.findAllByReferencesContainsAndSupersedeByExists(foundEntry.getId(), false)
-                                            .stream()
-                                            .map(
-                                                    Entry::getId
-                                            )
-                                            .toList(),
-                                    -4,
-                                    "EntryMapper::getFullEntry"
-                            )
-                    )
-                    .build();
-        } else {
-            result = result.toBuilder()
-                    .referencedBy(emptyList())
-                    .build();
-        }
+//        if (includeReferences.orElse(false)) {
+//            // fill the references field
+//            result = result.toBuilder()
+//                    .references(foundEntry.getReferences())
+//                    .build();
+//        } else {
+//            result = result.toBuilder()
+//                    .references(emptyList())
+//                    .build();
+//        }
+//
+//        if (includeReferencedBy.orElse(false)) {
+//            // fill the referencedBy field
+//            result = result.toBuilder()
+//                    .referencedBy(
+//                            wrapCatch(
+//                                    () -> entryRepository.findAllByReferencesContainsAndSupersedeByExists(foundEntry.getId(), false)
+//                                            .stream()
+//                                            .map(
+//                                                    Entry::getId
+//                                            )
+//                                            .toList(),
+//                                    -4,
+//                                    "EntryMapper::getFullEntry"
+//                            )
+//                    )
+//                    .build();
+//        } else {
+//            result = result.toBuilder()
+//                    .referencedBy(emptyList())
+//                    .build();
+//        }
 
         // fill shift
         return result.toBuilder()
