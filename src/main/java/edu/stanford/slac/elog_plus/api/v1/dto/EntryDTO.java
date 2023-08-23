@@ -36,6 +36,7 @@ public record EntryDTO(
         List<EntryDTO> history,
         @Schema(description = "The shift which the entry belong, if any match the event date")
         List<LogbookShiftDTO> shifts,
+        Boolean referencesInBody,
         @Schema(description = "The entries referenced from this one")
         List<String> references,
         @Schema(description = "The entries that reference this one")

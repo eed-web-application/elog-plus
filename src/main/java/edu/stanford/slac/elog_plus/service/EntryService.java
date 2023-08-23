@@ -18,13 +18,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
 import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
+import static java.util.Collections.emptyList;
 
 @Service
 @Log4j2
@@ -54,7 +54,7 @@ public class EntryService {
         );
         return found.stream().map(
                 entry -> {
-                    EntrySummaryDTO es = entryMapper.toSearchResultFromDTO(
+                    EntrySummaryDTO es = entryMapper.toSearchResult(
                             entry
                     );
                     return es.toBuilder()
@@ -327,9 +327,9 @@ public class EntryService {
         for (String referencedEntryId :
                 newEntry.getReferences()) {
             // check for the reference entry if exists
-            if(
+            if (
                     wrapCatch(
-                            ()->entryRepository.existsById(referencedEntryId),
+                            () -> entryRepository.existsById(referencedEntryId),
                             -1,
                             "EntryService::manageNewEntryReferences"
                     )
@@ -439,7 +439,7 @@ public class EntryService {
                     .build();
         } else {
             result = result.toBuilder()
-                    .references(Collections.emptyList())
+                    .references(emptyList())
                     .build();
         }
 
@@ -461,7 +461,7 @@ public class EntryService {
                     .build();
         } else {
             result = result.toBuilder()
-                    .referencedBy(Collections.emptyList())
+                    .referencedBy(emptyList())
                     .build();
         }
 
@@ -620,7 +620,7 @@ public class EntryService {
         return followUp
                 .stream()
                 .map(
-                        entryMapper::toSearchResultFromDTO
+                        entryMapper::toSearchResult
                 )
                 .collect(Collectors.toList());
     }
@@ -700,12 +700,42 @@ public class EntryService {
                 -1,
                 "EntryService::getIdFromOriginId"
         ).orElseThrow(
-                ()->EntryNotFound.entryNotFoundBuilderWithName()
+                () -> EntryNotFound.entryNotFoundBuilderWithName()
                         .errorCode(-2)
                         .entryName(originId)
                         .errorDomain("EntryService::getIdFromOriginId")
                         .build()
         );
         return foundEntry.getId();
+    }
+
+    /**
+     * Return all the referenced entries by this one identified by the id
+     *
+     * @param id the unique id of the source entry
+     * @return the list of the referenced entries
+     */
+    public List<EntrySummaryDTO> getReferencesByEntryID(String id) {
+        List<String> foundReferencesIds = wrapCatch(
+                () -> entryRepository.findReferencesBySourceId(id),
+                -1,
+                "EntryService::getReferencesByEntryID"
+        );
+        if(foundReferencesIds==null) return emptyList();
+        return foundReferencesIds.stream().map(
+                refId -> wrapCatch(
+                        () -> entryRepository.findById(refId),
+                        -2,
+                        "EntryService::getReferencesByEntryID"
+                ).map(
+                        entryMapper::toSearchResult
+                ).orElseThrow(
+                        ()->EntryNotFound.entryNotFoundBuilderWithName()
+                                .errorCode(-3)
+                                .entryName(refId)
+                                .errorDomain("EntryService::getReferencesByEntryID")
+                                .build()
+                )
+        ).toList();
     }
 }
