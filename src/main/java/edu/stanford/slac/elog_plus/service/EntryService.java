@@ -435,7 +435,26 @@ public class EntryService {
         if (includeReferences.orElse(false)) {
             // fill the references field
             result = result.toBuilder()
-                    .references(foundEntry.getReferences())
+                    .references(
+                            foundEntry.getReferences()
+                                    .stream()
+                                    .map(
+                                            refId->wrapCatch(
+                                                    () ->entryRepository.findById(refId)
+                                                    .map(
+                                                            entryMapper::toSearchResult
+                                                    )
+                                                    .orElseThrow(
+                                                            ()->EntryNotFound.entryNotFoundBuilder()
+                                                                    .errorCode(-4)
+                                                                    .errorDomain("LogService::getFullEntry")
+                                                                    .build()
+                                                    ),
+                                                    -5,
+                                                    "LogService::getFullEntry"
+                                            )
+                                    ).toList()
+                    )
                     .build();
         } else {
             result = result.toBuilder()
@@ -451,10 +470,10 @@ public class EntryService {
                                     () -> entryRepository.findAllByReferencesContainsAndSupersedeByExists(foundEntry.getId(), false)
                                             .stream()
                                             .map(
-                                                    Entry::getId
+                                                    entryMapper::toSearchResult
                                             )
                                             .toList(),
-                                    -4,
+                                    -6,
                                     "EntryMapper::getFullEntry"
                             )
                     )

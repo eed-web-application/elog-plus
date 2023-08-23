@@ -1773,7 +1773,7 @@ public class EntryServiceTest {
                 )
         );
 
-        assertThat(referencerEntry.references()).hasSize(1).contains(referencedEntryId);
+        assertThat(referencerEntry.references()).hasSize(1).extracting("id").contains(referencedEntryId);
 
         //fetch referenced
         EntryDTO referencedEntry = assertDoesNotThrow(
@@ -1787,7 +1787,7 @@ public class EntryServiceTest {
                 )
         );
 
-        assertThat(referencedEntry.referencedBy()).hasSize(1).contains(referencerEntryId);
+        assertThat(referencedEntry.referencedBy()).hasSize(1).extracting("id").contains(referencerEntryId);
     }
 
     @Test
@@ -1885,7 +1885,7 @@ public class EntryServiceTest {
                 )
         );
 
-        assertThat(referencerEntry.references()).hasSize(1).contains(referencedEntryId);
-        assertThat(referencedEntry.referencedBy()).hasSize(1).contains(referencerSupersedeEntryId);
+        assertThat(referencerEntry.references()).hasSize(1).extracting("id").contains(referencedEntryId);
+        assertThat(referencedEntry.referencedBy()).hasSize(1).extracting("id").contains(referencerSupersedeEntryId);
     }
 }

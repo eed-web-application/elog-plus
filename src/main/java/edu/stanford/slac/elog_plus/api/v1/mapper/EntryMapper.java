@@ -49,6 +49,7 @@ public abstract class EntryMapper {
     @Mapping(target = "loggedBy", expression = "java(entry.getFirstName() + \" \" + entry.getLastName())")
     @Mapping(source = "logbooks", target = "logbooks", qualifiedByName = "mapToLogbookSummary")
     @Mapping(target = "followingUp", expression = "java(getFollowingUp(entry.getId()))")
+    @Mapping(target = "referencedBy", expression = "java(getReferenceBy(entry.getId()))")
     public abstract EntrySummaryDTO toSearchResult(Entry entry);
 
     @Mapping(target = "references", expression = "java(createReferences(entryNewDTO.text()))")
@@ -67,6 +68,25 @@ public abstract class EntryMapper {
                         ).orElse(null),
                 -1,
                 "EntryMapper::getFollowingUp"
+        );
+    }
+
+    /**
+     * Fill the referenced by of an entry
+     *
+     * @param id the unique id of an entry
+     * @return all the id of the entries that refere the entry
+     */
+    public List<String> getReferenceBy(String id) {
+        if (id == null || id.isEmpty()) return null;
+        return wrapCatch(
+                () -> entryRepository.findAllByReferencesContainsAndSupersedeByExists(id, false)
+                        .stream()
+                        .map(
+                                Entry::getId
+                        ).toList(),
+                -1,
+                "EntryMapper::getFollowgetReferenceByingUp"
         );
     }
 
