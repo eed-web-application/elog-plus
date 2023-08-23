@@ -32,4 +32,6 @@ public class QueryParameterWithAnchor {
     private Boolean sortByLogDate = false;
     @Builder.Default
     private Boolean hideSummaries = false;
+    @Builder.Default
+    private Boolean requireAllTags = false;
 }

@@ -140,7 +140,9 @@ public class EntriesController {
             @Parameter(name = "sortByLogDate", description = "Sort entries by log date instead event date")
             @RequestParam(value = "sortByLogDate", defaultValue = "false") Optional<Boolean> sortByLogDate,
             @Parameter(name = "hideSummaries", description = "Hide the summaries from the search(default is false)")
-            @RequestParam(value = "hideSummaries", defaultValue = "false") Optional<Boolean> hideSummaries) {
+            @RequestParam(value = "hideSummaries", defaultValue = "false") Optional<Boolean> hideSummaries,
+            @Parameter(name = "requireAllTags", description = "Require that all entries found includes all the tags")
+            @RequestParam(value = "requireAllTags", defaultValue = "false") Optional<Boolean> requireAllTags) {
         return ApiResultResponse.of(
                 entryService.searchAll(
                         QueryWithAnchorDTO
@@ -155,6 +157,7 @@ public class EntriesController {
                                 .logbooks(logBook.orElse(Collections.emptyList()))
                                 .sortByLogDate(sortByLogDate.orElse(false))
                                 .hideSummaries(hideSummaries.orElse(false))
+                                .requireAllTags(requireAllTags.orElse(false))
                                 .build()
                 )
         );

@@ -292,6 +292,7 @@ public class TestHelperService {
             Optional<Integer> limit,
             Optional<String> search,
             Optional<List<String>> tags,
+            Optional<Boolean> requireAllTags,
             Optional<List<String>> logBook,
             Optional<Boolean> sortByLogDate) throws Exception {
 
@@ -310,6 +311,7 @@ public class TestHelperService {
             tl.toArray(tlArray);
             getBuilder.param("tags", tlArray);
         });
+        requireAllTags.ifPresent(b -> getBuilder.param("requireAllTags", String.valueOf(b)));
         logBook.ifPresent(logbook -> {
             String[] lbArray = new String[logbook.size()];
             logbook.toArray(lbArray);
