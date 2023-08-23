@@ -65,7 +65,10 @@ public class EntryRepositoryImpl implements EntryRepositoryCustom {
 
         if (!queryWithAnchor.getTags().isEmpty()) {
             allCriteria.add(
-                    Criteria.where("tags").in(
+                    queryWithAnchor.getRequireAllTags()?
+                    Criteria.where("tags").all(
+                            queryWithAnchor.getTags()
+                    ):Criteria.where("tags").in(
                             queryWithAnchor.getTags()
                     )
             );

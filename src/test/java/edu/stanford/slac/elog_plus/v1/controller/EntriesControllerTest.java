@@ -223,6 +223,7 @@ public class EntriesControllerTest {
                 Optional.empty(),
                 Optional.empty(),
                 Optional.empty(),
+                Optional.empty(),
                 Optional.empty()
         );
         AssertionsForClassTypes.assertThat(queryResult.getPayload().size()).isEqualTo(1);
@@ -331,6 +332,7 @@ public class EntriesControllerTest {
                 Optional.empty(),
                 Optional.empty(),
                 Optional.of(10),
+                Optional.empty(),
                 Optional.empty(),
                 Optional.empty(),
                 Optional.empty(),
@@ -718,6 +720,7 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
+                        Optional.empty(),
                         Optional.empty()
                 )
         );
@@ -748,6 +751,7 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.of(10),
+                        Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
@@ -784,6 +788,7 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
+                        Optional.empty(),
                         Optional.empty()
                 )
         );
@@ -803,6 +808,7 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.of(10),
                         Optional.of(10),
+                        Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
@@ -882,6 +888,7 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.of(List.of(tagIds[99], tagIds[49], tagIds[0])),
                         Optional.empty(),
+                        Optional.empty(),
                         Optional.empty()
                 )
         );
@@ -890,6 +897,109 @@ public class EntriesControllerTest {
         assertThat(findTags.getPayload().get(0).tags()).extracting("name").contains("tags-99");
         assertThat(findTags.getPayload().get(1).tags()).extracting("name").contains("tags-49");
         assertThat(findTags.getPayload().get(2).tags()).extracting("name").contains("tags-0");
+    }
+
+    @Test
+    public void searchWithTagsAllInclueded() {
+        ApiResultResponse<LogbookDTO> logbookCreationResult = getTestLogbook();
+        ApiResultResponse<String> newTagIDA = assertDoesNotThrow(
+                () -> testHelperService.createNewLogbookTags(
+                        mockMvc,
+                        status().isCreated(),
+                        logbookCreationResult.getPayload().id(),
+                        NewTagDTO
+                                .builder()
+                                .name("tag-a")
+                                .build()
+                ));
+        assertThat(newTagIDA).isNotNull();
+        assertThat(newTagIDA.getErrorCode()).isEqualTo(0);
+        ApiResultResponse<String> newTagIDB = assertDoesNotThrow(
+                () -> testHelperService.createNewLogbookTags(
+                        mockMvc,
+                        status().isCreated(),
+                        logbookCreationResult.getPayload().id(),
+                        NewTagDTO
+                                .builder()
+                                .name("tag-b")
+                                .build()
+                ));
+        assertThat(newTagIDB).isNotNull();
+        assertThat(newTagIDB.getErrorCode()).isEqualTo(0);
+
+        ApiResultResponse<String> newLogIDWithMoreTag =
+                assertDoesNotThrow(
+                        () -> testHelperService.createNewLog(
+                                mockMvc,
+                                status().isCreated(),
+                                EntryNewDTO
+                                        .builder()
+                                        .logbooks(List.of(logbookCreationResult.getPayload().id()))
+                                        .text("This is a log for test")
+                                        .title("A very wonderful log with two tag")
+                                        .tags(List.of(newTagIDA.getPayload(), newTagIDB.getPayload()))
+                                        .build()
+                        )
+                );
+        assertThat(newLogIDWithMoreTag).isNotNull();
+        assertThat(newLogIDWithMoreTag.getErrorCode()).isEqualTo(0);
+
+        ApiResultResponse<String> newLogIDWithTagA =
+                assertDoesNotThrow(
+                        () -> testHelperService.createNewLog(
+                                mockMvc,
+                                status().isCreated(),
+                                EntryNewDTO
+                                        .builder()
+                                        .logbooks(List.of(logbookCreationResult.getPayload().id()))
+                                        .text("This is a log for test")
+                                        .title("A very wonderful log with one tag")
+                                        .tags(List.of(newTagIDA.getPayload()))
+                                        .build()
+                        )
+                );
+        assertThat(newLogIDWithMoreTag).isNotNull();
+        assertThat(newLogIDWithMoreTag.getErrorCode()).isEqualTo(0);
+        // fined entry with all the tags
+        ApiResultResponse<List<EntrySummaryDTO>> findTags = assertDoesNotThrow(
+                () -> testHelperService.submitSearchByGetWithAnchor(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(10),
+                        Optional.empty(),
+                        Optional.of(List.of(newTagIDA.getPayload(), newTagIDB.getPayload())),
+                        Optional.of(true),
+                        Optional.empty(),
+                        Optional.empty()
+                )
+        );
+        assertThat(findTags).isNotNull();
+        assertThat(findTags.getPayload().size()).isEqualTo(1);
+        assertThat(findTags.getPayload().get(0).tags()).hasSize(2);
+
+        //find entry any tags
+        findTags = assertDoesNotThrow(
+                () -> testHelperService.submitSearchByGetWithAnchor(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(10),
+                        Optional.empty(),
+                        Optional.of(List.of(newTagIDA.getPayload(), newTagIDB.getPayload())),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty()
+                )
+        );
+        assertThat(findTags).isNotNull();
+        assertThat(findTags.getPayload().size()).isEqualTo(2);
     }
 
     private ApiResultResponse<LogbookDTO> getTestLogbook() {
@@ -947,6 +1057,7 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.of(10),
                         Optional.of("index=0"),
+                        Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty()
@@ -1112,6 +1223,7 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
+                        Optional.empty(),
                         Optional.of(true)
                 )
         );
@@ -1142,6 +1254,7 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.of(10),
+                        Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
@@ -1178,6 +1291,7 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
+                        Optional.empty(),
                         Optional.of(true)
                 )
         );
@@ -1197,6 +1311,7 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.of(10),
                         Optional.of(10),
+                        Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
@@ -1251,6 +1366,7 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
+                        Optional.empty(),
                         Optional.empty()
                 )
         );
@@ -1281,6 +1397,7 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.of(10),
+                        Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
@@ -1317,6 +1434,7 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
+                        Optional.empty(),
                         Optional.empty()
                 )
         );
@@ -1336,6 +1454,7 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.of(10),
                         Optional.of(10),
+                        Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
@@ -1391,6 +1510,7 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
+                        Optional.empty(),
                         Optional.empty()
                 )
         );
@@ -1412,6 +1532,7 @@ public class EntriesControllerTest {
                         Optional.of(now.minusDays(5)),
                         Optional.empty(),
                         Optional.of(20),
+                        Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
@@ -1469,6 +1590,7 @@ public class EntriesControllerTest {
                             Optional.of(now.minusDays(1)),
                             Optional.empty(),
                             Optional.of(10),
+                            Optional.empty(),
                             Optional.empty(),
                             Optional.empty(),
                             Optional.empty(),

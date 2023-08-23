@@ -40,5 +40,7 @@ public record QueryWithAnchorDTO(
         @Schema(description = "Sort by log date (the default is for event date)")
         Boolean sortByLogDate,
         @Schema(description = "Hide summaries from the query results")
-        Boolean hideSummaries
+        Boolean hideSummaries,
+        @Schema(description = "Requires that all the found entry contains all the tags")
+        Boolean requireAllTags
         ) {}
