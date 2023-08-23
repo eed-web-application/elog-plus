@@ -38,9 +38,9 @@ public record EntryDTO(
         List<LogbookShiftDTO> shifts,
         Boolean referencesInBody,
         @Schema(description = "The entries referenced from this one")
-        List<String> references,
+        List<EntrySummaryDTO> references,
         @Schema(description = "The entries that reference this one")
-        List<String> referencedBy,
+        List<EntrySummaryDTO> referencedBy,
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)
         LocalDateTime loggedAt,

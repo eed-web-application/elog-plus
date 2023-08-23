@@ -82,10 +82,10 @@ public class EntriesController {
             @RequestParam("includeFollowingUps") Optional<Boolean> includeFollowingUps,
             @Parameter(name = "includeHistory", description = "If true the API return all the entry updates history")
             @RequestParam("includeHistory") Optional<Boolean> includeHistory,
-            @Parameter(name = "includeReferenceBy", description = "If true the API return all the entries that are reference by this one")
-            @RequestParam("includeReferenceBy") Optional<Boolean> includeReferenceBy,
-            @Parameter(name = "includeReferencedFrom", description = "If true the API return all the entries that are referenced byt this one")
-            @RequestParam("includeReferencedFrom") Optional<Boolean> includeReferencedFrom
+            @Parameter(name = "includeReferenceBy", description = "If true the API return all the entries that are referenced by this one")
+            @RequestParam("includeReferences") Optional<Boolean> includeReferences,
+            @Parameter(name = "includeReferencedBy", description = "If true the API return all the entries that are referenced byt this one")
+            @RequestParam("includeReferencedBy") Optional<Boolean> includeReferencedBy
     ) {
         return ApiResultResponse.of(
                 entryService.getFullEntry(
@@ -93,8 +93,8 @@ public class EntriesController {
                         includeFollowUps,
                         includeFollowingUps,
                         includeHistory,
-                        includeReferenceBy,
-                        includeReferencedFrom
+                        includeReferences,
+                        includeReferencedBy
                 )
         );
     }

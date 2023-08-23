@@ -236,6 +236,10 @@ public class TestHelperService {
     }
 
     public ApiResultResponse<EntryDTO> getFullLog(MockMvc mockMvc, ResultMatcher resultMatcher, String id, boolean includeFollowUps, boolean includeFollowingUps, boolean includeHistory) throws Exception {
+        return getFullLog(mockMvc, resultMatcher, id, includeFollowUps, includeFollowingUps, includeHistory, false ,false);
+    }
+
+    public ApiResultResponse<EntryDTO> getFullLog(MockMvc mockMvc, ResultMatcher resultMatcher, String id, boolean includeFollowUps, boolean includeFollowingUps, boolean includeHistory, boolean includeReferences, boolean includeReferencedBy) throws Exception {
         MockHttpServletRequestBuilder request = get("/v1/entries/{id}", id)
                 .accept(MediaType.APPLICATION_JSON);
         if (includeFollowUps) {
@@ -247,7 +251,12 @@ public class TestHelperService {
         if (includeHistory) {
             request.param("includeHistory", String.valueOf(true));
         }
-
+        if (includeReferences) {
+            request.param("includeReferences", String.valueOf(true));
+        }
+        if (includeReferencedBy) {
+            request.param("includeReferencedBy", String.valueOf(true));
+        }
         MvcResult result = mockMvc.perform(
                         request
                 )

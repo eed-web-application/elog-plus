@@ -32,7 +32,8 @@ public abstract class EntryMapper {
     @Mapping(target = "loggedBy", expression = "java(entry.getFirstName() + \" \" + entry.getLastName())")
     @Mapping(target = "followUps", ignore = true)
     @Mapping(source = "logbooks", target = "logbooks", qualifiedByName = "mapToLogbookSummary")
-    @Mapping(target = "referencedBy", expression = "java(getReferenceBy(entry.getId()))")
+    @Mapping(target = "referencedBy", ignore = true)
+    @Mapping(target = "references", ignore = true)
     @Mapping(target = "referencesInBody", expression = "java(entry.getOriginId()==null)")
     public abstract EntryDTO fromModel(Entry entry);
 
@@ -40,7 +41,8 @@ public abstract class EntryMapper {
     @Mapping(target = "attachments", ignore = true)
     @Mapping(target = "followUps", ignore = true)
     @Mapping(source = "logbooks", target = "logbooks", qualifiedByName = "mapToLogbookSummary")
-    @Mapping(target = "referencedBy", expression = "java(getReferenceBy(entry.getId()))")
+    @Mapping(target = "referencedBy", ignore = true)
+    @Mapping(target = "references", ignore = true)
     @Mapping(target = "referencesInBody", expression = "java(entry.getOriginId()==null)")
     public abstract EntryDTO fromModelNoAttachment(Entry entry);
 

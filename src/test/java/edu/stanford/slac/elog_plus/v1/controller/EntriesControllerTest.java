@@ -1779,13 +1779,18 @@ public class EntriesControllerTest {
                         testHelperService.getFullLog(
                                 mockMvc,
                                 status().isOk(),
-                                newLogIDReferencer.getPayload()
+                                newLogIDReferencer.getPayload(),
+                                true,
+                                true,
+                                true,
+                                true,
+                                true
                         )
         );
         assertThat(referencerEntry).isNotNull();
         assertThat(referencerEntry.getErrorCode()).isEqualTo(0);
         assertThat(referencerEntry.getPayload().referencesInBody()).isTrue();
-        assertThat(referencerEntry.getPayload().references()).contains(newLogID1.getPayload(), newLogID2.getPayload());
-        assertThat(referencerEntry.getPayload().referencedBy()).isNull();
+        assertThat(referencerEntry.getPayload().references()).extracting("id").contains(newLogID1.getPayload(), newLogID2.getPayload());
+        assertThat(referencerEntry.getPayload().referencedBy()).isEmpty();
     }
 }
