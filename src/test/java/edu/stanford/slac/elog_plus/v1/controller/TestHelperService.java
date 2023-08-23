@@ -263,6 +263,25 @@ public class TestHelperService {
                 });
     }
 
+    public ApiResultResponse<List<EntrySummaryDTO>> getReferencesByEntryId(MockMvc mockMvc, ResultMatcher resultMatcher, String id) throws Exception {
+        MockHttpServletRequestBuilder request = get("/v1/entries/{id}/references", id)
+                .accept(MediaType.APPLICATION_JSON);
+
+        MvcResult result = mockMvc.perform(
+                        request
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
+
     public ApiResultResponse<List<EntrySummaryDTO>> submitSearchByGetWithAnchor(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,

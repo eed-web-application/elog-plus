@@ -100,6 +100,20 @@ public class EntriesController {
     }
 
     @GetMapping(
+            path = "/{id}/references",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @Operation(description = "Return the full log information")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResultResponse<List<EntrySummaryDTO>> getFull(
+            @Parameter(description = "Is the id of the entry for wich we want to load all the reference to")
+            @PathVariable String id){
+        return ApiResultResponse.of(
+                entryService.getReferencesByEntryID(id)
+        );
+    }
+
+    @GetMapping(
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(

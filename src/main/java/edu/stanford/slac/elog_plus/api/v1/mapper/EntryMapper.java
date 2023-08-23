@@ -1,18 +1,12 @@
 package edu.stanford.slac.elog_plus.api.v1.mapper;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
-import edu.stanford.slac.elog_plus.exception.EntryNotFound;
 import edu.stanford.slac.elog_plus.exception.TagNotFound;
 import edu.stanford.slac.elog_plus.model.Entry;
-import edu.stanford.slac.elog_plus.model.Tag;
 import edu.stanford.slac.elog_plus.repository.EntryRepository;
-import edu.stanford.slac.elog_plus.repository.LogbookRepository;
 import edu.stanford.slac.elog_plus.service.AttachmentService;
 import edu.stanford.slac.elog_plus.service.LogbookService;
-import edu.stanford.slac.elog_plus.utility.StringUtilities;
-import lombok.AllArgsConstructor;
 import org.mapstruct.*;
-import org.mapstruct.factory.Mappers;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
@@ -27,7 +21,7 @@ import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
         componentModel = "spring"
 )
 public abstract class EntryMapper {
-    static Pattern pattern = Pattern.compile("<a\\s+(?:[^>]*?\\s+)?href=([\"'])(https?://[^/]+/([^/\"']+))");
+    static Pattern pattern = Pattern.compile("<a\\s+(?:[^>]*?\\\\s+)?href=([\"'])(https?://[^/]+/([^/\"']+))");
     @Autowired
     private EntryRepository entryRepository;
     @Autowired
@@ -40,6 +34,7 @@ public abstract class EntryMapper {
     @Mapping(source = "logbooks", target = "logbooks", qualifiedByName = "mapToLogbookSummary")
     @Mapping(target = "referencedBy", ignore = true)
     @Mapping(target = "references", ignore = true)
+    @Mapping(target = "referencesInBody", expression = "java(entry.getOriginId()==null)")
     public abstract EntryDTO fromModel(Entry entry);
 
     @Mapping(target = "loggedBy", expression = "java(entry.getFirstName() + \" \" + entry.getLastName())")
@@ -48,12 +43,13 @@ public abstract class EntryMapper {
     @Mapping(source = "logbooks", target = "logbooks", qualifiedByName = "mapToLogbookSummary")
     @Mapping(target = "referencedBy", ignore = true)
     @Mapping(target = "references", ignore = true)
+    @Mapping(target = "referencesInBody", expression = "java(entry.getOriginId()==null)")
     public abstract EntryDTO fromModelNoAttachment(Entry entry);
 
     @Mapping(target = "loggedBy", expression = "java(entry.getFirstName() + \" \" + entry.getLastName())")
     @Mapping(source = "logbooks", target = "logbooks", qualifiedByName = "mapToLogbookSummary")
     @Mapping(target = "followingUp", expression = "java(getFollowingUp(entry.getId()))")
-    public abstract EntrySummaryDTO toSearchResultFromDTO(Entry entry);
+    public abstract EntrySummaryDTO toSearchResult(Entry entry);
 
     @Mapping(target = "references", expression = "java(createReferences(entryNewDTO.text()))")
     public abstract Entry fromDTO(EntryNewDTO entryNewDTO, String firstName, String lastName, String userName);

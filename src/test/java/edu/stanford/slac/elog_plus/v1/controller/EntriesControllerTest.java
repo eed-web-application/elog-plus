@@ -25,7 +25,6 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.io.InputStream;
 import java.time.LocalDate;
@@ -94,7 +93,7 @@ public class EntriesControllerTest {
     }
 
     @Test
-    public void createNewLogWithAttachement() throws Exception {
+    public void createNewLogWithAttachment() throws Exception {
         ApiResultResponse<String> newAttachmentID = null;
         try (InputStream is = documentGenerationService.getTestPng()) {
             newAttachmentID = assertDoesNotThrow(
@@ -146,8 +145,8 @@ public class EntriesControllerTest {
                                     )
                     );
                     assertThat(logDto.getErrorCode()).isEqualTo(0);
-                    return logDto.getPayload().attachments().size()==1 &&
-                            logDto.getPayload().attachments().get(0).previewState().compareTo(Attachment.PreviewProcessingState.Completed.name()) ==0;
+                    return logDto.getPayload().attachments().size() == 1 &&
+                            logDto.getPayload().attachments().get(0).previewState().compareTo(Attachment.PreviewProcessingState.Completed.name()) == 0;
                 }
         );
 
@@ -1569,5 +1568,99 @@ public class EntriesControllerTest {
         AssertionsForClassTypes.assertThat(foundSummaryID).isNotNull();
         AssertionsForClassTypes.assertThat(foundSummaryID.getErrorCode()).isEqualTo(0);
         AssertionsForClassTypes.assertThat(foundSummaryID.getPayload()).isEqualTo(newLogID.getPayload());
+    }
+
+    @Test
+    public void createNewLogWitReferenceAndFindAllReferenced() throws Exception {
+        var newLogBookResult = getTestLogbook();
+        // create entry for use as references
+        ApiResultResponse<String> newLogID1 =
+                assertDoesNotThrow(
+                        () ->
+                                testHelperService.createNewLog(
+                                        mockMvc,
+                                        status().isCreated(),
+                                        EntryNewDTO
+                                                .builder()
+                                                .logbooks(List.of(newLogBookResult.getPayload().id()))
+                                                .text("reference one")
+                                                .title("Reference one")
+                                                .build()
+                                )
+                );
+
+        AssertionsForClassTypes.assertThat(newLogID1).isNotNull();
+        AssertionsForClassTypes.assertThat(newLogID1.getErrorCode()).isEqualTo(0);
+        // create entry for use as references
+        ApiResultResponse<String> newLogID2 =
+                assertDoesNotThrow(
+                        () ->
+                                testHelperService.createNewLog(
+                                        mockMvc,
+                                        status().isCreated(),
+                                        EntryNewDTO
+                                                .builder()
+                                                .logbooks(List.of(newLogBookResult.getPayload().id()))
+                                                .text("reference two")
+                                                .title("Reference two")
+                                                .build()
+                                )
+                );
+
+        AssertionsForClassTypes.assertThat(newLogID2).isNotNull();
+        AssertionsForClassTypes.assertThat(newLogID2.getErrorCode()).isEqualTo(0);
+
+        // create entry that reference the two above
+        String ref_one = "<href=\"http://localhost/%s\">".formatted(newLogID1);
+        String ref_two = "<href=\"http://localhost/%s\">".formatted(newLogID1);
+        String text = """
+                This is the text of the referencer
+                <a href="http://localhost/%s">
+                <a href="http://localhost/%s">
+                """.formatted(newLogID1.getPayload(), newLogID2.getPayload());
+        ApiResultResponse<String> newLogIDReferencer =
+                assertDoesNotThrow(
+                        () ->
+                                testHelperService.createNewLog(
+                                        mockMvc,
+                                        status().isCreated(),
+                                        EntryNewDTO
+                                                .builder()
+                                                .logbooks(List.of(newLogBookResult.getPayload().id()))
+                                                .title("Referencer log")
+                                                .text(text)
+                                                .build()
+                                )
+                );
+
+        AssertionsForClassTypes.assertThat(newLogIDReferencer).isNotNull();
+        AssertionsForClassTypes.assertThat(newLogIDReferencer.getErrorCode()).isEqualTo(0);
+
+        ApiResultResponse<List<EntrySummaryDTO>> references =
+                assertDoesNotThrow(
+                        () ->
+                                testHelperService.getReferencesByEntryId(
+                                        mockMvc,
+                                        status().isOk(),
+                                        newLogIDReferencer.getPayload()
+                                )
+                );
+        assertThat(references).isNotNull();
+        assertThat(references.getErrorCode()).isEqualTo(0);
+        assertThat(references.getPayload()).hasSize(2);
+        assertThat(references.getPayload()).extracting("id").contains(newLogID1.getPayload(), newLogID2.getPayload());
+
+
+        ApiResultResponse<EntryDTO> referencerEntry = assertDoesNotThrow(
+                () ->
+                        testHelperService.getFullLog(
+                                mockMvc,
+                                status().isOk(),
+                                newLogIDReferencer.getPayload()
+                        )
+        );
+        assertThat(referencerEntry).isNotNull();
+        assertThat(referencerEntry.getErrorCode()).isEqualTo(0);
+        assertThat(referencerEntry.getPayload().referencesInBody()).isTrue();
     }
 }

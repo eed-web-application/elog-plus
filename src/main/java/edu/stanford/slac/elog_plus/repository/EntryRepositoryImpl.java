@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
+import static java.util.Collections.emptyList;
 
 @Repository
 @AllArgsConstructor
@@ -159,6 +160,17 @@ public class EntryRepositoryImpl implements EntryRepositoryCustom {
         Update u = new Update();
         u.set("supersedeBy", supersededById);
         mongoTemplate.updateFirst(q, u, Entry.class);
+    }
+
+    @Override
+    public List<String> findReferencesBySourceId(String id) {
+        Query q = new Query();
+        q.addCriteria(
+                Criteria.where("id").is(id)
+        );
+        q.fields().include("references");
+        Entry e = mongoTemplate.findOne(q, Entry.class);
+        return e!=null?e.getReferences():emptyList();
     }
 
     private Query getDefaultQuery(String textSearch) {
