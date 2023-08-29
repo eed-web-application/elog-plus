@@ -13,7 +13,7 @@ spring:
     name: 'elog-plus'
   data:
     mongodb:
-      uri: ${ELOG_PLUS_MONGODB_URI:mongodb://elogs:elogs@localhost:27017/elogs?authSource=elogs}
+      uri: ${ELOG_PLUS_MONGODB_URI:mongodb://admin:admin@localhost:27017/?authSource=admin}
   kafka:
     bootstrap-servers: ${ELOG_PLUS_KAFKA_BOOTSTRAP:localhost:9094}
     producer:
@@ -35,6 +35,7 @@ edu:
   stanford:
     slac:
       elogs-plus:
+        db_application_uri: ${ELOG_PLUS_APPLICATION_MONGODB_URI:mongodb://elogs:elogs@localhost:27017/elogs?authSource=elogs}
         image-preview-topic: ${ELOG_PLUS_IMAGE_PREVIEW_TOPIC:elog-plus-preview-creation}
         storage:
           url: ${ELOG_PLUS_MINIO_URL:http://localhost:9000}
