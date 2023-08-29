@@ -14,13 +14,13 @@ public class SLACAuthenticationToken extends AbstractAuthenticationToken {
         super.setAuthenticated(false);
     }
 
-    public SLACAuthenticationToken(String userUniqueID) {
+    public SLACAuthenticationToken(String userUniqueId) {
         super(Collections.emptyList());
         super.setAuthenticated(true);
         this.userUniqueId = userUniqueId;
     }
 
-    public SLACAuthenticationToken(String userUniqueID, Object details, Collection<? extends GrantedAuthority> authorities) {
+    public SLACAuthenticationToken(String userUniqueId, Object details, Collection<? extends GrantedAuthority> authorities) {
         super(authorities);
         super.setDetails(details);
         super.setAuthenticated(true);
