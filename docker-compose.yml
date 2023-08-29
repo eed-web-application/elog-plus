@@ -5,9 +5,6 @@ services:
     environment:
       - MONGODB_ROOT_USER=admin
       - MONGODB_ROOT_PASSWORD=admin
-      - MONGODB_DATABASE=elogs
-      - MONGODB_USERNAME=elogs
-      - MONGODB_PASSWORD=elogs
       - BITNAMI_DEBUG=true
       - MONGODB_REPLICA_SET_MODE=primary
       - MONGODB_ADVERTISED_HOSTNAME=mongodb-primary

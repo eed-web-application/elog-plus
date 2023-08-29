@@ -8,6 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @Setter
 @ConfigurationProperties(prefix = "edu.stanford.slac.elogs-plus")
 public class AppProperties {
+    private String dbAdminUri;
     private String imagePreviewTopic;
     private StorageProperties storage;
 }
