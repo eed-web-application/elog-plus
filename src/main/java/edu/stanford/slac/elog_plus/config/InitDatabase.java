@@ -50,7 +50,7 @@ public class InitDatabase {
 
     @Bean
     public MongoClient mongoAdmin() {
-        ConnectionString adminConnectionString = new ConnectionString(mongoAdminUri);
+        ConnectionString adminConnectionString = new ConnectionString(appProperties.getDbAdminUri());
         MongoClientSettings mongoClientSettings = MongoClientSettings.builder()
                 .applyConnectionString(adminConnectionString)
                 .build();
@@ -59,7 +59,9 @@ public class InitDatabase {
 
     @Bean
     public MongoDatabaseFactory mongoDbFactory() {
-        ConnectionString connectionString = new ConnectionString(appProperties.getDbApplicationUri());
+        ConnectionString connectionString = new ConnectionString(mongoAdminUri);
+
+        // ensure database and user
         createApplicationUser(mongoAdmin(), connectionString);
 
         MongoClientSettings mongoClientSettings = MongoClientSettings.builder()
