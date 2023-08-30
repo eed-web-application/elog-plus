@@ -1,0 +1,9 @@
+spring:
+  kafka:
+    properties:
+      security:
+        protocol: ${ELOG_PLUS_KAFKA_SECURITY_PROTOCOL}
+      sasl:
+        mechanism: ${ELOG_PLUS_KAFKA_SASL_MECHANISM}
+        jaas:
+          config: ${ELOG_PLUS_KAFKA_SASL_JAAS_CONFIG:}
