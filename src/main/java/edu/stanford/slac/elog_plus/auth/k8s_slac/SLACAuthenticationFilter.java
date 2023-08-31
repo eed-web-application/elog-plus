@@ -51,6 +51,15 @@ public class SLACAuthenticationFilter extends AbstractAuthenticationProcessingFi
                     )
             );
         }
+        var parameterName = request.getParameterNames();
+        while (parameterName.hasMoreElements()){
+            String name = parameterName.nextElement();
+            headersLog.append(
+                    "%s - %s\n".formatted(
+                            name, request.getParameter(name)
+                    )
+            );
+        }
         log.info("Authentication phase request received with header: {}", headersLog);
 
         String authenticatedUserId = request.getHeader(appProperties.getUserHeaderName());
