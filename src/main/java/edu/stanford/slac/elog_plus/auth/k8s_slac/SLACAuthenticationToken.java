@@ -1,39 +1,45 @@
 package edu.stanford.slac.elog_plus.auth.k8s_slac;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.Jwt;
+import lombok.Getter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 
 import java.util.Collection;
 import java.util.Collections;
 
-
+@Getter
 public class SLACAuthenticationToken extends AbstractAuthenticationToken {
-    private String userUniqueId = null;
+    private String userToken = null;
+    private Jws<Claims> jwt = null;
     public SLACAuthenticationToken() {
         super(Collections.emptyList());
         super.setAuthenticated(false);
     }
 
-    public SLACAuthenticationToken(String userUniqueId) {
+    public SLACAuthenticationToken(String userToken, Jws<Claims> jwt) {
         super(Collections.emptyList());
         super.setAuthenticated(true);
-        this.userUniqueId = userUniqueId;
+        this.userToken = userToken;
+        this.jwt = jwt;
     }
 
     public SLACAuthenticationToken(String userUniqueId, Object details, Collection<? extends GrantedAuthority> authorities) {
         super(authorities);
         super.setDetails(details);
         super.setAuthenticated(true);
-        this.userUniqueId = userUniqueId;
+        this.userToken = userUniqueId;
     }
 
     @Override
     public Object getCredentials() {
-        return userUniqueId;
+        return userToken;
     }
 
     @Override
     public Object getPrincipal() {
-        return userUniqueId;
+        return userToken;
     }
 }
