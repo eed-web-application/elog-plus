@@ -6,6 +6,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -15,8 +16,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
 
 
+@Log4j2
 public class SLACAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
     private final AppProperties appProperties;
     private final AuthorizationService authorizationService;
@@ -33,13 +37,26 @@ public class SLACAuthenticationFilter extends AbstractAuthenticationProcessingFi
 
 
     @Override
-    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException, IOException, ServletException {
+    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         Authentication auth = null;
+
+        // print all header received
+        StringBuffer headersLog = new StringBuffer();
+        while (request.getHeaderNames().hasMoreElements()){
+            String name = request.getHeaderNames().nextElement();
+            headersLog.append(
+                    "%s - %s".formatted(
+                            name, request.getHeader(name)
+                    )
+            );
+        }
+        log.info("Authentication phase request received with header: {}", headersLog);
+
         String authenticatedUserId = request.getHeader(appProperties.getUserHeaderName());
-        if(authenticatedUserId == null) {
+        if (authenticatedUserId == null) {
             auth = new SLACAuthenticationToken();
         } else {
-            auth =  authorizationService.getUserAuthentication(authenticatedUserId);
+            auth = authorizationService.getUserAuthentication(authenticatedUserId);
         }
         return getAuthenticationManager().authenticate(auth);
     }
