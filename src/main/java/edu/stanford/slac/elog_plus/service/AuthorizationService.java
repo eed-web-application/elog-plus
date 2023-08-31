@@ -19,8 +19,7 @@ public class AuthorizationService {
 
     public Authentication getUserAuthentication(String authenticationToken) {
         return new SLACAuthenticationToken(
-                authenticationToken,
-                Jwts.parserBuilder().build().parseClaimsJws(authenticationToken)
+                authenticationToken
         );
     }
 }
