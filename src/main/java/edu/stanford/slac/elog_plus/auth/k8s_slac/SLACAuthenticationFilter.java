@@ -42,8 +42,9 @@ public class SLACAuthenticationFilter extends AbstractAuthenticationProcessingFi
 
         // print all header received
         StringBuffer headersLog = new StringBuffer();
-        while (request.getHeaderNames().hasMoreElements()){
-            String name = request.getHeaderNames().nextElement();
+        var headerEnum = request.getHeaderNames();
+        while (headerEnum.hasMoreElements()){
+            String name = headerEnum.nextElement();
             headersLog.append(
                     "%s - %s".formatted(
                             name, request.getHeader(name)
