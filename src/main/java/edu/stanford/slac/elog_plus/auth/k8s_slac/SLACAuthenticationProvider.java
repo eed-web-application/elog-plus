@@ -26,20 +26,20 @@ public class SLACAuthenticationProvider implements AuthenticationProvider {
         }
         try {
             SLACAuthenticationToken slacToken = (SLACAuthenticationToken) authentication;
-            Claims jwtBody = slacToken.getJwt().getBody();
-            StringBuilder sb = new StringBuilder();
-            if(jwtBody.containsKey("email")) {
-                sb.append("email: %s ".formatted(jwtBody.get("email").toString()));
-            }
-            if(jwtBody.containsKey("name")) {
-                sb.append("name: %s ".formatted(jwtBody.get("name").toString()));
-            }
-            if(jwtBody.containsKey("email_verified")) {
-                sb.append("email_verified: %s ".formatted(jwtBody.get("email_verified").toString()));
-            }
-            log.debug("Logged user -> {}", sb.toString());
+//            Claims jwtBody = slacToken.getJwt().getBody();
+//            StringBuilder sb = new StringBuilder();
+//            if(jwtBody.containsKey("email")) {
+//                sb.append("email: %s ".formatted(jwtBody.get("email").toString()));
+//            }
+//            if(jwtBody.containsKey("name")) {
+//                sb.append("name: %s ".formatted(jwtBody.get("name").toString()));
+//            }
+//            if(jwtBody.containsKey("email_verified")) {
+//                sb.append("email_verified: %s ".formatted(jwtBody.get("email_verified").toString()));
+//            }
+//            log.debug("Logged user -> {}", sb.toString());
             //TODO load the user information and all the grant
-            return new SLACAuthenticationToken(slacToken.getUserToken(), slacToken.getJwt());
+            return slacToken;
         } catch (Throwable e) {
             log.error("{}", e.toString());
             throw new BadCredentialsException("Invalid token signature");

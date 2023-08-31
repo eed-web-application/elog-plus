@@ -19,11 +19,11 @@ public class SLACAuthenticationToken extends AbstractAuthenticationToken {
         super.setAuthenticated(false);
     }
 
-    public SLACAuthenticationToken(String userToken, Jws<Claims> jwt) {
+    public SLACAuthenticationToken(String userToken) {
         super(Collections.emptyList());
         super.setAuthenticated(true);
         this.userToken = userToken;
-        this.jwt = jwt;
+        this.jwt = null;
     }
 
     public SLACAuthenticationToken(String userUniqueId, Object details, Collection<? extends GrantedAuthority> authorities) {
