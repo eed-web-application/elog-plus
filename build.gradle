@@ -39,8 +39,10 @@ dependencies {
             'com.fasterxml.jackson.core:jackson-databind',
             'org.springframework.kafka:spring-kafka:3.0.8',
             'net.coobird:thumbnailator:[0.4, 0.5)',
-            'software.amazon.awssdk:s3:2.20.102'
-
+            'software.amazon.awssdk:s3:2.20.102',
+            'io.jsonwebtoken:jjwt-api:0.11.5',
+            'io.jsonwebtoken:jjwt-impl:0.11.5',
+            'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
     // MongoDB
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
@@ -49,9 +51,9 @@ dependencies {
     implementation 'org.jsoup:jsoup:1.16.1'
 
     // mongock
-    implementation  'io.mongock:mongock-bom:5.3.1',
-                    'io.mongock:mongock-springboot-v3:5.3.1',
-                    'io.mongock:mongodb-springdata-v4-driver:5.3.1'
+    implementation 'io.mongock:mongock-bom:5.3.1',
+            'io.mongock:mongock-springboot-v3:5.3.1',
+            'io.mongock:mongodb-springdata-v4-driver:5.3.1'
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
