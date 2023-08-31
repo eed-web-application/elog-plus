@@ -1,7 +1,6 @@
 logging:
   level:
-    edu.stanford.slac.elog_plus: DEBUG
-    software.amazon.awssdk: DEBUG
+    edu.stanford.slac.elog_plus: ${ELOG_PLUS_LOG_LEVEL:DEBUG}
 
 server:
   tomcat:

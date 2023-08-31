@@ -46,7 +46,7 @@ public class SLACAuthenticationFilter extends AbstractAuthenticationProcessingFi
         while (headerEnum.hasMoreElements()){
             String name = headerEnum.nextElement();
             headersLog.append(
-                    "%s - %s".formatted(
+                    "%s - %s\n".formatted(
                             name, request.getHeader(name)
                     )
             );
