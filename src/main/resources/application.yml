@@ -36,6 +36,7 @@ edu:
     slac:
       elogs-plus:
         db_admin_uri: ${ELOG_PLUS_ADMIN_MONGODB_URI:mongodb://admin:admin@localhost:27017/?authSource=admin}
+        user-header-name: ${ELOG_PLUS_AUTH_HEADER:X-Vouch-User}
         image-preview-topic: ${ELOG_PLUS_IMAGE_PREVIEW_TOPIC:elog-plus-preview-creation}
         storage:
           url: ${ELOG_PLUS_MINIO_URL:http://localhost:9000}
