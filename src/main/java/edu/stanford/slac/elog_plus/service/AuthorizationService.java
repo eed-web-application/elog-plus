@@ -2,7 +2,6 @@ package edu.stanford.slac.elog_plus.service;
 
 import edu.stanford.slac.elog_plus.auth.SLACUserInfo;
 import edu.stanford.slac.elog_plus.auth.k8s_slac.SLACAuthenticationToken;
-import io.jsonwebtoken.Jwts;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;

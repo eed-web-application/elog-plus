@@ -40,9 +40,11 @@ dependencies {
             'org.springframework.kafka:spring-kafka:3.0.8',
             'net.coobird:thumbnailator:[0.4, 0.5)',
             'software.amazon.awssdk:s3:2.20.102',
+            'io.jsonwebtoken:jjwt-root:0.11.5',
             'io.jsonwebtoken:jjwt-api:0.11.5',
             'io.jsonwebtoken:jjwt-impl:0.11.5',
-            'io.jsonwebtoken:jjwt-jackson:0.11.5'
+            'io.jsonwebtoken:jjwt-jackson:0.11.5',
+            'io.jsonwebtoken:jjwt-extensions:0.11.5'
 
     // MongoDB
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'

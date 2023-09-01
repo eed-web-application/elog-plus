@@ -1,6 +1,9 @@
 package edu.stanford.slac.elog_plus.auth.k8s_slac;
 
-import io.jsonwebtoken.Claims;
+import edu.stanford.slac.elog_plus.config.AppProperties;
+import io.jsonwebtoken.Jwt;
+import io.jsonwebtoken.Jwts;
+import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.context.annotation.Scope;
@@ -8,12 +11,15 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 @Log4j2
 @Component
 @Scope("prototype")
-@NoArgsConstructor
+@AllArgsConstructor
 public class SLACAuthenticationProvider implements AuthenticationProvider {
+    private final AppProperties appProperties;
+
     @Override
     public boolean supports(Class<?> authentication) {
         return SLACAuthenticationToken.class.isAssignableFrom(authentication);
@@ -26,6 +32,15 @@ public class SLACAuthenticationProvider implements AuthenticationProvider {
         }
         try {
             SLACAuthenticationToken slacToken = (SLACAuthenticationToken) authentication;
+
+            Jwt j = Jwts.parserBuilder().setSigningKeyResolver(
+                    SLACTidSignKeyResolver
+                            .builder()
+                            .discoverUrl(appProperties.getOauthServerDiscover())
+                            .restTemplate(new RestTemplate())
+                            .build()
+            ).build().parse(((SLACAuthenticationToken) authentication).getUserToken());
+
 //            Claims jwtBody = slacToken.getJwt().getBody();
 //            StringBuilder sb = new StringBuilder();
 //            if(jwtBody.containsKey("email")) {
