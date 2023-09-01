@@ -1,84 +1,113 @@
 package edu.stanford.slac.elog_plus.auth.k8s_slac;
 
-import edu.stanford.slac.elog_plus.auth.OIDCKeysDescription;
 import edu.stanford.slac.elog_plus.auth.OIDCConfiguration;
+import edu.stanford.slac.elog_plus.auth.OIDCKeysDescription;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwsHeader;
-import io.jsonwebtoken.SigningKeyResolver;
+import io.jsonwebtoken.SigningKeyResolverAdapter;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpMethod;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.client.RestTemplate;
 
-import java.net.MalformedURLException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
+
+@Log4j2
 @Builder
 @AllArgsConstructor
-public class SLACTidSignKeyResolver implements SigningKeyResolver {
+public class SLACTidSignKeyResolver extends SigningKeyResolverAdapter {
     private String discoverUrl;
     private RestTemplate restTemplate;
+    @Builder.Default
+    private OIDCConfiguration oidcConfiguration = null;
+    @Builder.Default
+    Map<String, OIDCKeysDescription.Key> stringKeyMap = null;
 
-    @Value("${security.oauth2.resourceserver.jwt.jwk-set-uri}")
     @Override
     public Key resolveSigningKey(JwsHeader header, Claims claims) {
-        OIDCKeysDescription.Key key = getKeyByID(header.getKeyId());
         try {
+            if(claims.containsKey("email")) {
+                log.debug("Validate jwt token for: %s".formatted(claims.get("email")));
+            }
+
+            OIDCKeysDescription.Key key = getKeyByID(header.getKeyId());
+            if (key == null) {
+                clearCache();
+                key = getKeyByID(header.getKeyId());
+            }
+            if (key == null) {
+                throw new BadCredentialsException("No key found jwt verification using the id: %s".formatted(header.getKeyId()));
+            }
             return key.getKey();
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             throw new RuntimeException(e);
         }
     }
 
-    @Override
-    public Key resolveSigningKey(JwsHeader header, String plaintext) {
-        return null;
-    }
-
-    private OIDCConfiguration getOIDCConfiguration(String discoverUrl) {
-        // Send a GET request to the OIDC configuration URL and map the response to OIDCConfiguration class
-        ResponseEntity<OIDCConfiguration> responseEntity = restTemplate.getForEntity(discoverUrl, OIDCConfiguration.class);
-        // Check if the request was successful (HTTP status code 200)
-        if (responseEntity.getStatusCode().is2xxSuccessful()) {
-            return responseEntity.getBody();
-        } else {
-            // Handle the error, e.g., log an error message or throw an exception
-            throw new RuntimeException("Failed to fetch OIDC configuration");
+    /**
+     * @return the OIDC configuration of the remote server
+     */
+    synchronized private OIDCConfiguration getOIDCConfiguration() {
+        if (oidcConfiguration == null) {
+            // Send a GET request to the OIDC configuration URL and map the response to OIDCConfiguration class
+            ResponseEntity<OIDCConfiguration> responseEntity = restTemplate.getForEntity(discoverUrl, OIDCConfiguration.class);
+            // Check if the request was successful (HTTP status code 200)
+            if (responseEntity.getStatusCode().is2xxSuccessful()) {
+                oidcConfiguration = responseEntity.getBody();
+            } else {
+                // Handle the error, e.g., log an error message or throw an exception
+                throw new RuntimeException("Failed to fetch OIDC configuration");
+            }
         }
+        return oidcConfiguration;
     }
 
-    private Map<String, OIDCKeysDescription.Key> getOIDCKeys(String keysUrl) {
-        Map<String, OIDCKeysDescription.Key> keysMap = new HashMap<>();
-        ResponseEntity<OIDCKeysDescription> responseEntity = restTemplate.getForEntity(keysUrl, OIDCKeysDescription.class);;
-        if (responseEntity.getStatusCode().is2xxSuccessful()) {
-            Objects.requireNonNull(responseEntity.getBody()).getKeys().forEach(
-                    k-> {
-                        keysMap.put(k.getKeyId(), k);
-                    }
-            );
-            return keysMap;
-        } else {
-            // Handle the error, e.g., log an error message or throw an exception
-            throw new RuntimeException("Failed to fetch OIDC configuration");
+    /**
+     *
+     */
+    synchronized private Map<String, OIDCKeysDescription.Key> getOIDCKeys(String keysUrl) {
+        if (stringKeyMap == null) {
+            stringKeyMap = new HashMap<>();
+            ResponseEntity<OIDCKeysDescription> responseEntity = restTemplate.getForEntity(keysUrl, OIDCKeysDescription.class);
+            ;
+            if (responseEntity.getStatusCode().is2xxSuccessful()) {
+                Objects.requireNonNull(responseEntity.getBody()).getKeys().forEach(
+                        k -> {
+                            stringKeyMap.put(k.getKeyId(), k);
+                        }
+                );
+                return stringKeyMap;
+            } else {
+                // Handle the error, e.g., log an error message or throw an exception
+                throw new RuntimeException("Failed to fetch OIDC configuration");
+            }
         }
+        return stringKeyMap;
     }
 
-    private OIDCKeysDescription.Key getKeyByID(String keyId) {
+    synchronized private OIDCKeysDescription.Key getKeyByID(String keyId) {
         OIDCKeysDescription.Key key = null;
-        OIDCConfiguration conf = getOIDCConfiguration(discoverUrl);
-        if(conf.getJwksUri()!=null) {
+        OIDCConfiguration conf = getOIDCConfiguration();
+        if (conf.getJwksUri() != null) {
             Map<String, OIDCKeysDescription.Key> keys = getOIDCKeys(conf.getJwksUri());
-            key = keys.getOrDefault(keyId, null);
+            if (keys.containsKey(keyId)) {
+                key = keys.getOrDefault(keyId, null);
+            }
         }
         return key;
+    }
+
+    synchronized private void clearCache() {
+        oidcConfiguration = null;
+        stringKeyMap = null;
     }
 }

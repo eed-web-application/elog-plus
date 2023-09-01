@@ -1,5 +1,6 @@
 package edu.stanford.slac.elog_plus.auth.k8s_slac;
 
+import lombok.Builder;
 import lombok.Getter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -8,6 +9,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 @Getter
+@Builder
 public class SLACAuthenticationToken extends AbstractAuthenticationToken {
     private String userToken = null;
     public SLACAuthenticationToken() {

@@ -1,6 +1,8 @@
 package edu.stanford.slac.elog_plus.auth.k8s_slac;
 
 import edu.stanford.slac.elog_plus.config.AppProperties;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
 import lombok.AllArgsConstructor;
@@ -28,33 +30,31 @@ public class SLACAuthenticationProvider implements AuthenticationProvider {
     @Override
     public Authentication authenticate(Authentication authentication) {
         if (authentication.getPrincipal() == null) {
-            return new SLACAuthenticationToken();
+            return new SLACAuthenticationJWTToken();
         }
         try {
             SLACAuthenticationToken slacToken = (SLACAuthenticationToken) authentication;
 
-            Jwt j = Jwts.parserBuilder().setSigningKeyResolver(
-                    SLACTidSignKeyResolver
-                            .builder()
-                            .discoverUrl(appProperties.getOauthServerDiscover())
-                            .restTemplate(new RestTemplate())
-                            .build()
-            ).build().parse(((SLACAuthenticationToken) authentication).getUserToken());
+            Jws<Claims> j = Jwts.parserBuilder()
+                    .setSigningKeyResolver
+                            (
+                                    SLACTidSignKeyResolver
+                                            .builder()
+                                            .discoverUrl(appProperties.getOauthServerDiscover())
+                                            .restTemplate(new RestTemplate())
+                                            .build()
+                            )
+                    .build()
+                    .parseClaimsJws(((SLACAuthenticationToken) authentication).getUserToken());
 
-//            Claims jwtBody = slacToken.getJwt().getBody();
-//            StringBuilder sb = new StringBuilder();
-//            if(jwtBody.containsKey("email")) {
-//                sb.append("email: %s ".formatted(jwtBody.get("email").toString()));
-//            }
-//            if(jwtBody.containsKey("name")) {
-//                sb.append("name: %s ".formatted(jwtBody.get("name").toString()));
-//            }
-//            if(jwtBody.containsKey("email_verified")) {
-//                sb.append("email_verified: %s ".formatted(jwtBody.get("email_verified").toString()));
-//            }
-//            log.debug("Logged user -> {}", sb.toString());
-            //TODO load the user information and all the grant
-            return slacToken;
+            Claims jwtBody = j.getBody();
+            if (!jwtBody.containsKey("email")) {
+                throw new BadCredentialsException("The 'email' is not present in the claims of the jwt");
+            }
+            if (!jwtBody.containsKey("name")) {
+                throw new BadCredentialsException("The 'name' is not present in the claims of the jwt");
+            }
+            return new SLACAuthenticationJWTToken(j);
         } catch (Throwable e) {
             log.error("{}", e.toString());
             throw new BadCredentialsException("Invalid token signature");
