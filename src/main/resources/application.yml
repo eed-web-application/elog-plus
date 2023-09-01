@@ -37,6 +37,7 @@ edu:
         db_admin_uri: ${ELOG_PLUS_ADMIN_MONGODB_URI:mongodb://admin:admin@localhost:27017/?authSource=admin}
         user-header-name: ${ELOG_PLUS_AUTH_HEADER:x-vouch-idp-accesstoken}
         image-preview-topic: ${ELOG_PLUS_IMAGE_PREVIEW_TOPIC:elog-plus-preview-creation}
+        oauth-server-discover: ${ELOG_PLUS_OIDC_CONFIGURATION_ENDPOINT:https://dex.slac.stanford.edu/.well-known/openid-configuration}
         storage:
           url: ${ELOG_PLUS_MINIO_URL:http://localhost:9000}
           key: ${ELOG_PLUS_MINIO_KEY:minio}

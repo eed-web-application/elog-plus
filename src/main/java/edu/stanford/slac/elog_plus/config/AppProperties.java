@@ -12,4 +12,5 @@ public class AppProperties {
     private String userHeaderName;
     private String imagePreviewTopic;
     private StorageProperties storage;
+    private String oauthServerDiscover;
 }
