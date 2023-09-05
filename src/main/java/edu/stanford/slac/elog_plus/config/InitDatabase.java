@@ -16,6 +16,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.MongoTransactionManager;
 import org.springframework.data.mongodb.config.EnableMongoAuditing;
@@ -39,6 +41,7 @@ public class InitDatabase {
     private final AppProperties appProperties;
 
     public InitDatabase(AppProperties appProperties) {
+        log.debug("InitDatabase activated");
         this.appProperties = appProperties;
     }
 
@@ -53,6 +56,7 @@ public class InitDatabase {
         ConnectionString adminConnectionString = new ConnectionString(appProperties.getDbAdminUri());
         MongoClientSettings mongoClientSettings = MongoClientSettings.builder()
                 .applyConnectionString(adminConnectionString)
+                .applicationName("elog-plus-admin")
                 .build();
         return MongoClients.create(mongoClientSettings);
     }
@@ -75,7 +79,8 @@ public class InitDatabase {
     }
 
     private void createApplicationUser(MongoClient mongoClient, ConnectionString connectionString) {
-        // Connect to the admin database
+        log.info("Start user creation");
+        // Connect to the admin databasew
         MongoDatabase applicationDb = mongoClient.getDatabase(Objects.requireNonNull(connectionString.getDatabase()));
 
         // Retrieve the list of users

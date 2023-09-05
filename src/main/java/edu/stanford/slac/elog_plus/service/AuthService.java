@@ -1,6 +1,8 @@
 package edu.stanford.slac.elog_plus.service;
 
 import edu.stanford.slac.elog_plus.auth.SLACUserInfo;
+import edu.stanford.slac.elog_plus.repository.PersonRepository;
+import lombok.AllArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -8,8 +10,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
-public class UserService implements UserDetailsService {
-
+@AllArgsConstructor
+public class AuthService implements UserDetailsService {
+    private final PersonRepository personRepository;
     public UserDetails getUserInfo(String userIdentifier) {
         return SLACUserInfo.builder()
                 .email("test@com")

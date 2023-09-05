@@ -1,6 +1,6 @@
 logging:
   level:
-    edu.stanford.slac.elog_plus: ${ELOG_PLUS_LOG_LEVEL:DEBUG}
+    edu.stanford.slac.elog_plus: ${ELOG_PLUS_LOG_LEVEL:TRACE}
 
 server:
   tomcat:
@@ -10,6 +10,9 @@ server:
 spring:
   application:
     name: 'elog-plus'
+#  ldap:
+#    urls: ${ELOG_PLUS_LDAP_URI:ldap://localhost:8389}
+#    base: ${ELOG_PLUS_LDAP_BASE:dc=example,dc=edu}
   data:
     mongodb:
       uri: ${ELOG_PLUS_MONGODB_URI:mongodb://elogs:elogs@localhost:27017/elogs?authSource=elogs}
@@ -66,5 +69,5 @@ mongock:
   throw-exception-if-cannot-obtain-lock: true #Default true
   track-ignored: false #Default true
   transaction-enabled: false
-  runner-type: applicationrunner
+  runner-type: initializingbean
   enabled: true #Default true

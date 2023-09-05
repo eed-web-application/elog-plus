@@ -7,7 +7,6 @@ COPY . ./
 
 # Build the application
 RUN gradle assemble --no-daemon
-
 # Phase 2: Create the final image with the built artifact
 FROM eclipse-temurin:19-jdk-jammy
 
