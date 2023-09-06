@@ -8,15 +8,13 @@ import org.springframework.ldap.odm.annotations.Id;
 import javax.naming.Name;
 
 @Entry(
-        base = "ou=People",
-        objectClasses = { "person" }
+        base = "ou=Group",
+        objectClasses = { "posixGroup" }
 )
 @Data
-public final class Person {
+public final class Group {
     @Id
     private Name id;
-    private String uid;
-    private String mail;
     private @Attribute(name = "cn") String commonName;
-    private @Attribute(name = "sn") String surname;
+
 }

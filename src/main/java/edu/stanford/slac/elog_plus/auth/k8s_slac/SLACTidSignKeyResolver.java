@@ -2,14 +2,17 @@ package edu.stanford.slac.elog_plus.auth.k8s_slac;
 
 import edu.stanford.slac.elog_plus.auth.OIDCConfiguration;
 import edu.stanford.slac.elog_plus.auth.OIDCKeysDescription;
+import edu.stanford.slac.elog_plus.config.AppProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwsHeader;
 import io.jsonwebtoken.SigningKeyResolverAdapter;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.security.Key;
@@ -22,15 +25,20 @@ import java.util.Objects;
 import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
 
 @Log4j2
-@Builder
-@AllArgsConstructor
+@Component
+@Profile("!test")
 public class SLACTidSignKeyResolver extends SigningKeyResolverAdapter {
-    private String discoverUrl;
-    private RestTemplate restTemplate;
+    private final AppProperties appProperties;
     @Builder.Default
-    private OIDCConfiguration oidcConfiguration = null;
+    private final RestTemplate restTemplate = new RestTemplate();
     @Builder.Default
-    Map<String, OIDCKeysDescription.Key> stringKeyMap = null;
+    private Map<String, OIDCKeysDescription.Key> stringKeyMap = null;
+    @Builder.Default
+    private OIDCConfiguration oidcConfiguration;
+
+    public SLACTidSignKeyResolver(AppProperties appProperties){
+        this.appProperties = appProperties;
+    }
 
     @Override
     public Key resolveSigningKey(JwsHeader header, Claims claims) {
@@ -59,7 +67,7 @@ public class SLACTidSignKeyResolver extends SigningKeyResolverAdapter {
     synchronized private OIDCConfiguration getOIDCConfiguration() {
         if (oidcConfiguration == null) {
             // Send a GET request to the OIDC configuration URL and map the response to OIDCConfiguration class
-            ResponseEntity<OIDCConfiguration> responseEntity = restTemplate.getForEntity(discoverUrl, OIDCConfiguration.class);
+            ResponseEntity<OIDCConfiguration> responseEntity = restTemplate.getForEntity(appProperties.getOauthServerDiscover(), OIDCConfiguration.class);
             // Check if the request was successful (HTTP status code 200)
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
                 oidcConfiguration = responseEntity.getBody();

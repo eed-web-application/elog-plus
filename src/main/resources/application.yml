@@ -10,9 +10,9 @@ server:
 spring:
   application:
     name: 'elog-plus'
-#  ldap:
-#    urls: ${ELOG_PLUS_LDAP_URI:ldap://localhost:8389}
-#    base: ${ELOG_PLUS_LDAP_BASE:dc=example,dc=edu}
+  ldap:
+    urls: ${ELOG_PLUS_LDAP_URI:ldap://localhost:8389}
+    base: ${ELOG_PLUS_LDAP_BASE:dc=sdf,dc=slac,dc=stanford,dc=edu}
   data:
     mongodb:
       uri: ${ELOG_PLUS_MONGODB_URI:mongodb://elogs:elogs@localhost:27017/elogs?authSource=elogs}
