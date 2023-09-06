@@ -6,3 +6,9 @@ spring:
       port: 8389
       validation:
         enabled: false
+edu:
+  stanford:
+    slac:
+      elogs-plus:
+        root-user-list:
+          - user1@slac.stanford.edu
