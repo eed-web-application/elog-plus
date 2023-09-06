@@ -29,6 +29,6 @@ public class SLACAuthenticationJWTToken extends AbstractAuthenticationToken {
 
     @Override
     public Object getPrincipal() {
-        return token!=null?token.getBody().get("name"):null;
+        return token!=null?token.getBody().get("email"):null;
     }
 }

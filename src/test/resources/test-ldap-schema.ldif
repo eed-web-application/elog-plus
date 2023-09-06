@@ -1,0 +1,59 @@
+dn: dc=sdf,dc=slac,dc=stanford,dc=edu
+objectclass: top
+objectclass: domain
+objectclass: extensibleObject
+dc: kpn
+
+# Create the Groups organizational unit
+dn: ou=Group,dc=sdf,dc=slac,dc=stanford,dc=edu
+objectClass: top
+objectClass: organizationalUnit
+ou: Group
+
+# Create the People organizational unit
+dn: ou=People,dc=sdf,dc=slac,dc=stanford,dc=edu
+objectClass: top
+objectClass: organizationalUnit
+ou: People
+
+
+# Create People
+dn: uid=user1,ou=People, dc=sdf,dc=slac,dc=stanford,dc=edu
+uid: user1
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+gecos: Name1 Surname1
+cn: Name1 Surname1
+sn: Surname1
+mail: user1@slac.stanford.edu
+
+dn: uid=user2,ou=People, dc=sdf,dc=slac,dc=stanford,dc=edu
+uid: user2
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+gecos: Name1 Surname1
+cn: Name2 Surname2
+sn: Surname2
+mail: user2@slac.stanford.edu
+
+# Create Group
+dn: cn=group-1,ou=Group, dc=sdf,dc=slac,dc=stanford,dc=edu
+cn: group-1
+objectClass: posixGroup
+objectClass: top
+objectClass: importedObject
+gidNumber: 3591
+memberUid: user1
+
+dn: cn=group-2,ou=Group, dc=sdf,dc=slac,dc=stanford,dc=edu
+cn: group-2
+objectClass: posixGroup
+objectClass: top
+objectClass: importedObject
+gidNumber: 3591
+memberUid: user1
+memberUid: user2

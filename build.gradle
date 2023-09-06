@@ -7,7 +7,7 @@ plugins {
 }
 
 group = 'edu.stanford.slac'
-version = '1.0.0'
+version = '0.2.1'
 sourceCompatibility = '19'
 
 springBoot {
@@ -29,6 +29,8 @@ dependencies {
             'org.springframework.boot:spring-boot-starter-web',
             'org.springframework.boot:spring-boot-starter-security',
             'org.springframework.boot:spring-boot-starter-actuator',
+            'org.springframework.boot:spring-boot-starter-data-ldap',
+//            'org.springframework.data:spring-data-ldap:3.1.2',
             'io.micrometer:micrometer-registry-prometheus',
             'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.2',
             'org.springdoc:springdoc-openapi-starter-webflux-ui:2.0.2',
@@ -44,7 +46,8 @@ dependencies {
             'io.jsonwebtoken:jjwt-api:0.11.5',
             'io.jsonwebtoken:jjwt-impl:0.11.5',
             'io.jsonwebtoken:jjwt-jackson:0.11.5',
-            'io.jsonwebtoken:jjwt-extensions:0.11.5'
+            'io.jsonwebtoken:jjwt-extensions:0.11.5',
+            'com.unboundid:unboundid-ldapsdk:6.0.8'
 
     // MongoDB
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
@@ -56,12 +59,15 @@ dependencies {
     implementation 'io.mongock:mongock-bom:5.3.1',
             'io.mongock:mongock-springboot-v3:5.3.1',
             'io.mongock:mongodb-springdata-v4-driver:5.3.1'
+    testImplementation 'org.projectlombok:lombok:1.18.28'
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.3.Final'
-
+    testCompileOnly('org.springframework.security:spring-security-test')
     testImplementation 'org.springframework.boot:spring-boot-starter-test',
+            'org.springframework.security:spring-security-test',
+            'org.springframework.ldap:spring-ldap-test',
             'org.awaitility:awaitility:4.0.3',
             'org.apache.pdfbox:pdfbox:2.0.28'
 
