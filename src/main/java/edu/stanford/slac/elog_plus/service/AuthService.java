@@ -3,17 +3,18 @@ package edu.stanford.slac.elog_plus.service;
 import edu.stanford.slac.elog_plus.api.v1.dto.GroupDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.PersonDTO;
 import edu.stanford.slac.elog_plus.api.v1.mapper.AuthMapper;
-import edu.stanford.slac.elog_plus.auth.SLACUserInfo;
+import edu.stanford.slac.elog_plus.config.AppProperties;
 import edu.stanford.slac.elog_plus.exception.NotAuthenticated;
 import edu.stanford.slac.elog_plus.exception.UserNotFound;
 import edu.stanford.slac.elog_plus.ldap_repository.GroupRepository;
+import edu.stanford.slac.elog_plus.model.Authorization;
 import edu.stanford.slac.elog_plus.model.Group;
 import edu.stanford.slac.elog_plus.model.Person;
 import edu.stanford.slac.elog_plus.ldap_repository.PersonRepository;
+import edu.stanford.slac.elog_plus.repository.AuthorizationRepository;
 import lombok.AllArgsConstructor;
-import org.springframework.data.domain.PageRequest;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -21,13 +22,17 @@ import java.util.List;
 import java.util.Optional;
 
 import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
+import static edu.stanford.slac.elog_plus.model.Authorization.Type.Root;
 
 @Service
+@Log4j2
 @AllArgsConstructor
 public class AuthService {
     private final AuthMapper authMapper;
+    private final AppProperties appProperties;
     private final PersonRepository personRepository;
     private final GroupRepository groupRepository;
+    private final AuthorizationRepository authorizationRepository;
 
     public PersonDTO findPerson(Authentication authentication) {
         checkAuthentication(authentication, -1);
@@ -70,5 +75,56 @@ public class AuthService {
                         .errorDomain(callerMethodName)
                         .build()
         );
+    }
+
+    public void updateRootUser() {
+        log.info("Find current authorizations");
+        //load actual root
+        List<Authorization> currentRootUser = authorizationRepository.findByResourceIsAndAuthorizationTypeIs(
+                "*",
+                Root
+        );
+
+        // find root users to remove
+        List<String> rootUserToRemove = currentRootUser.stream().map(
+                Authorization::getOwner
+        ).toList().stream().filter(
+                userEmail-> !appProperties.getRootUserList().contains(userEmail)
+        ).toList();
+        for (String userEmailToRemove :
+                rootUserToRemove) {
+            log.info("Remove root authorizations: {}", userEmailToRemove);
+            authorizationRepository.deleteByOwnerIsAndResourceIsAndAuthorizationTypeIs(
+                    userEmailToRemove,
+                    "*",
+                    Root
+            );
+        }
+
+        // ensure current root users
+        log.info("Ensure root authorizations for: {}", appProperties.getRootUserList());
+        for (String userEmail :
+                appProperties.getRootUserList()) {
+            // find root authorization for user email
+            Optional<Authorization> rootAuth = authorizationRepository.findByOwnerIsAndResourceIsAndAuthorizationTypeIs(
+                    userEmail,
+                    "*",
+                    Root
+            );
+            if (rootAuth.isEmpty()) {
+                log.info("Create root authorization for user '{}'", userEmail);
+                authorizationRepository.save(
+                        Authorization
+                                .builder()
+                                .authorizationType(Root)
+                                .owner(userEmail)
+                                .resource("*")
+                                .creationBy("elog-plus")
+                                .build()
+                );
+            } else {
+                log.info("Root authorization for '{}' already exists", userEmail);
+            }
+        }
     }
 }

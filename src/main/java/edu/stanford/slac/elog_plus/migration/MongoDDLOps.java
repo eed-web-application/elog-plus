@@ -3,11 +3,10 @@ package edu.stanford.slac.elog_plus.migration;
 
 import com.mongodb.MongoCommandException;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.index.IndexDefinition;
-import org.springframework.data.mongodb.core.index.IndexOperations;
-import org.springframework.data.mongodb.core.index.IndexResolver;
-import org.springframework.data.mongodb.core.index.MongoPersistentEntityIndexResolver;
+import org.springframework.data.mongodb.core.index.*;
 import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
+
+import java.util.Optional;
 
 public class MongoDDLOps {
     public static <T> void createIndex(Class<T> clazz, MongoTemplate mongoTemplate, MongoMappingContext mongoMappingContext) {
@@ -21,6 +20,12 @@ public class MongoDDLOps {
         applyIndex(indexFacility, definition);
     }
 
+    public static <T> Optional<IndexInfo> checkForIndex(Class<T> clazz, MongoTemplate mongoTemplate, String indexName) {
+        final IndexOperations indexOps = mongoTemplate.indexOps(clazz);
+        return indexOps.getIndexInfo().stream().filter(
+                index->index.getName().compareTo(indexName) == 0
+        ).findFirst();
+    }
 
     protected static void applyIndex(IndexOperations io, IndexDefinition id) {
         try{

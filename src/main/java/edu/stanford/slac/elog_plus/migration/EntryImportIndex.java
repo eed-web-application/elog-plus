@@ -1,6 +1,7 @@
 package edu.stanford.slac.elog_plus.migration;
 
 
+import edu.stanford.slac.elog_plus.model.Authorization;
 import edu.stanford.slac.elog_plus.model.Entry;
 import io.mongock.api.annotations.ChangeUnit;
 import io.mongock.api.annotations.Execution;
@@ -20,19 +21,38 @@ public class EntryImportIndex {
 
     @Execution
     public void changeSet() {
-        //entry index
-        MongoDDLOps.createIndex(
-                Entry.class,
-                mongoTemplate,
-                new Index().on(
-                        "origin-id",
-                        Sort.Direction.ASC
-                ).sparse()
-        );
+        ensureIndex();
+
     }
+
+
 
     @RollbackExecution
     public void rollback() {
 
+    }
+
+    /**
+     * Ensure base index
+     */
+    private void ensureIndex() {
+        var ownerIndex =  MongoDDLOps.checkForIndex(
+                Authorization.class,
+                mongoTemplate,
+                "owner"
+        );
+        if(ownerIndex.isEmpty()) {
+            //entry index
+            MongoDDLOps.createIndex(
+                    Authorization.class,
+                    mongoTemplate,
+                    new Index().on(
+                                    "owner",
+                                    Sort.Direction.ASC
+                            )
+                            .named("owner")
+                            .sparse()
+            );
+        }
     }
 }
