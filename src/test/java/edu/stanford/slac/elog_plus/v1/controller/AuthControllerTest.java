@@ -82,6 +82,40 @@ public class AuthControllerTest {
     }
 
     @Test
+    public void findUsersByNameOK() {
+        ApiResultResponse<List<PersonDTO>> meResult = assertDoesNotThrow(
+                () -> testHelperService.findUsers(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        Optional.of("Name1")
+                )
+        );
+
+        assertThat(meResult).isNotNull();
+        assertThat(meResult.getErrorCode()).isEqualTo(0);
+        assertThat(meResult.getPayload()).hasSize(1);
+        assertThat(meResult.getPayload().get(0).gecos()).isEqualTo("Name1 Surname1");
+    }
+
+    @Test
+    public void findUsersBySurnameOK() {
+        ApiResultResponse<List<PersonDTO>> meResult = assertDoesNotThrow(
+                () -> testHelperService.findUsers(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        Optional.of("Surname1")
+                )
+        );
+
+        assertThat(meResult).isNotNull();
+        assertThat(meResult.getErrorCode()).isEqualTo(0);
+        assertThat(meResult.getPayload()).hasSize(1);
+        assertThat(meResult.getPayload().get(0).gecos()).isEqualTo("Name1 Surname1");
+    }
+
+    @Test
     public void findUsersFailUnauthorized() {
         NotAuthenticated userNotFoundException = assertThrows(
                 NotAuthenticated.class,

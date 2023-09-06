@@ -45,7 +45,7 @@ public class AuthService {
 
     public List<PersonDTO> findPersons(String searchString, Authentication authentication) throws UsernameNotFoundException {
         checkAuthentication(authentication, -1);
-        List<Person> foundPerson = personRepository.findByCommonNameContainsIgnoreCaseOrderByCommonNameAsc(
+        List<Person> foundPerson = personRepository.findByGecosContainsIgnoreCaseOrderByCommonNameAsc(
                 searchString
         );
         return foundPerson.stream().map(
