@@ -17,6 +17,7 @@ public final class Person {
     private Name id;
     private String uid;
     private String mail;
+    private String gecos;
     private @Attribute(name = "cn") String commonName;
     private @Attribute(name = "sn") String surname;
 }

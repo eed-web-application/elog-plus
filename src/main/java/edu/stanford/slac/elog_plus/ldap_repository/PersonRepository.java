@@ -8,5 +8,5 @@ import java.util.Optional;
 
 public interface PersonRepository extends LdapRepository<Person> {
     Optional<Person> findByMail(String mail);
-    List<Person> findByCommonNameContainsIgnoreCaseOrderByCommonNameAsc(String commonNamePrefix);
+    List<Person> findByGecosContainsIgnoreCaseOrderByCommonNameAsc(String commonNamePrefix);
 }

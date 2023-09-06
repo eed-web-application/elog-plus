@@ -12,6 +12,7 @@ public record PersonDTO(
         String uid,
         String commonName,
         String surname,
+        String gecos,
         String mail
 ) {
 }
