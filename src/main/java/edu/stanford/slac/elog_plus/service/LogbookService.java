@@ -452,7 +452,7 @@ public class LogbookService {
                         .build()
         );
         return wrapCatch(
-                () -> logbookRepository.createNewTag(
+                () -> logbookRepository.ensureTag(
                         logbookId,
                         tagMapper.fromDTO(finalNewTagDTO)
                 ),

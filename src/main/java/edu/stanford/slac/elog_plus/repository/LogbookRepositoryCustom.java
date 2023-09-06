@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface LogbookRepositoryCustom {
-    String createNewTag(String logbookId, Tag newTag);
+    //String createNewTag(String logbookId, Tag newTag);
 
     /**
      * Atomically ensure the tag creation
