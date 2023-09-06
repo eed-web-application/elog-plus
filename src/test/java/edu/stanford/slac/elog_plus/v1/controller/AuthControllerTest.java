@@ -1,6 +1,7 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
+import edu.stanford.slac.elog_plus.api.v1.dto.GroupDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.PersonDTO;
 import edu.stanford.slac.elog_plus.exception.NotAuthenticated;
 import org.junit.jupiter.api.Test;
@@ -57,6 +58,70 @@ public class AuthControllerTest {
                         mockMvc,
                         status().isUnauthorized(),
                         Optional.empty()
+                )
+        );
+
+        assertThat(userNotFoundException).isNotNull();
+        assertThat(userNotFoundException.getErrorCode()).isEqualTo(-1);
+    }
+
+    @Test
+    public void findUsersOK() {
+        ApiResultResponse<List<PersonDTO>> meResult = assertDoesNotThrow(
+                () -> testHelperService.findUsers(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        Optional.of("name")
+                )
+        );
+
+        assertThat(meResult).isNotNull();
+        assertThat(meResult.getErrorCode()).isEqualTo(0);
+        assertThat(meResult.getPayload()).hasSize(2);
+    }
+
+    @Test
+    public void findUsersFailUnauthorized() {
+        NotAuthenticated userNotFoundException = assertThrows(
+                NotAuthenticated.class,
+                () -> testHelperService.findUsers(
+                        mockMvc,
+                        status().isUnauthorized(),
+                        Optional.empty(),
+                        Optional.of("name")
+                )
+        );
+
+        assertThat(userNotFoundException).isNotNull();
+        assertThat(userNotFoundException.getErrorCode()).isEqualTo(-1);
+    }
+
+    @Test
+    public void findGroupsOK() {
+        ApiResultResponse<List<GroupDTO>> meResult = assertDoesNotThrow(
+                () -> testHelperService.findGroups(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        Optional.of("group")
+                )
+        );
+
+        assertThat(meResult).isNotNull();
+        assertThat(meResult.getErrorCode()).isEqualTo(0);
+        assertThat(meResult.getPayload()).hasSize(2);
+    }
+
+    @Test
+    public void findGroupsFailUnauthorized() {
+        NotAuthenticated userNotFoundException = assertThrows(
+                NotAuthenticated.class,
+                () -> testHelperService.findGroups(
+                        mockMvc,
+                        status().isUnauthorized(),
+                        Optional.empty(),
+                        Optional.of("group")
                 )
         );
 
