@@ -29,11 +29,8 @@ import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
 @Profile("!test")
 public class SLACTidSignKeyResolver extends SigningKeyResolverAdapter {
     private final AppProperties appProperties;
-    @Builder.Default
     private final RestTemplate restTemplate = new RestTemplate();
-    @Builder.Default
     private Map<String, OIDCKeysDescription.Key> stringKeyMap = null;
-    @Builder.Default
     private OIDCConfiguration oidcConfiguration;
 
     public SLACTidSignKeyResolver(AppProperties appProperties){

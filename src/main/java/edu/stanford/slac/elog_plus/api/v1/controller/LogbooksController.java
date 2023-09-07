@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -56,8 +57,9 @@ public class LogbooksController {
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResultResponse<Boolean> updateLogbook(
             @PathVariable String logbookId,
-            @RequestBody UpdateLogbookDTO updateLogbookDTO) {
-        logbookService.update(logbookId, updateLogbookDTO);
+            @RequestBody UpdateLogbookDTO updateLogbookDTO,
+            Authentication authentication) {
+        logbookService.update(logbookId, updateLogbookDTO, authentication);
         return ApiResultResponse.of(
                 true
         );

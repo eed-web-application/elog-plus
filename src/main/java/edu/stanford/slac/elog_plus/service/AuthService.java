@@ -1,5 +1,6 @@
 package edu.stanford.slac.elog_plus.service;
 
+import edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.GroupDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.PersonDTO;
 import edu.stanford.slac.elog_plus.api.v1.mapper.AuthMapper;
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
+import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
 import static edu.stanford.slac.elog_plus.model.Authorization.Type.Root;
 
 @Service
@@ -66,7 +68,7 @@ public class AuthService {
         ).toList();
     }
 
-    private void checkAuthentication(Authentication authentication, int errorCode) {
+    public void checkAuthentication(Authentication authentication, int errorCode) {
         String callerMethodName = Thread.currentThread().getStackTrace()[2].getMethodName();
         assertion(
                 ()->authentication != null && authentication.isAuthenticated(),
@@ -74,6 +76,40 @@ public class AuthService {
                         .errorCode(errorCode)
                         .errorDomain(callerMethodName)
                         .build()
+        );
+    }
+
+    /**
+     * Create new authorization
+     * @param authorization the new authorization
+     * @return updated authorization
+     */
+    public AuthorizationDTO saveNewAuthorization(Authorization authorization) {
+        var savedAuth = wrapCatch(
+                ()->authorizationRepository.save(
+                        authorization
+                ),
+                -1,
+                "AuthService::insertNewAuthorization"
+        );
+        return authMapper.fromModel(savedAuth);
+    }
+
+    /**
+     * Delete an authorization by id
+     *
+     * @param authorizationId the id of authorization to delete
+     */
+    public void deleteAuthorizationByID(String authorizationId) {
+        wrapCatch(
+                ()->{
+                    authorizationRepository.deleteById(
+                            authorizationId
+                    );
+                    return null;
+                },
+                -1,
+                "AuthService::deleteNewAuthorization"
         );
     }
 

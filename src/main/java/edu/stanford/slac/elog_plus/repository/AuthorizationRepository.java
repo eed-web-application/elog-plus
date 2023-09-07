@@ -14,6 +14,8 @@ public interface AuthorizationRepository extends MongoRepository<Authorization, 
 
     Optional<Authorization> findByOwnerIsAndResourceIsAndAuthorizationTypeIs(String owner, String resource, Authorization.Type authorizationType);
 
+    List<Authorization> findByResourceIs(String resource);
+
     List<Authorization> findByResourceIsAndAuthorizationTypeIs(String resource, Authorization.Type authorizationType);
 
     void deleteByOwnerIsAndResourceIsAndAuthorizationTypeIs(String owner, String resource, Authorization.Type authorizationType);

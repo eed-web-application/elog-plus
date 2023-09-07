@@ -1,9 +1,7 @@
-package edu.stanford.slac.elog_plus.auth.test;
+package edu.stanford.slac.elog_plus.auth.test_mock_auth;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
-import lombok.extern.log4j.Log4j2;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -28,15 +26,5 @@ public class JWTHelper {
                 .setExpiration(expiration)
                 .signWith(SECRET_KEY)
                 .compact();
-    }
-
-    @Log4j2
-    @Component
-    @Profile("test")
-    public static class SLACTidTestSignKeyResolver extends SigningKeyResolverAdapter {
-        @Override
-        public Key resolveSigningKey(JwsHeader header, Claims claims) {
-            return SECRET_KEY;
-        }
     }
 }

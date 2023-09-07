@@ -1,18 +1,23 @@
 package edu.stanford.slac.elog_plus.service;
 
+import com.github.javafaker.Bool;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
+import edu.stanford.slac.elog_plus.api.v1.mapper.AuthMapper;
 import edu.stanford.slac.elog_plus.api.v1.mapper.LogbookMapper;
 import edu.stanford.slac.elog_plus.api.v1.mapper.ShiftMapper;
 import edu.stanford.slac.elog_plus.api.v1.mapper.TagMapper;
 import edu.stanford.slac.elog_plus.exception.*;
+import edu.stanford.slac.elog_plus.model.Authorization;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import edu.stanford.slac.elog_plus.model.Shift;
 import edu.stanford.slac.elog_plus.model.Tag;
+import edu.stanford.slac.elog_plus.repository.AuthorizationRepository;
 import edu.stanford.slac.elog_plus.repository.EntryRepository;
 import edu.stanford.slac.elog_plus.repository.LogbookRepository;
 import edu.stanford.slac.elog_plus.utility.StringUtilities;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +40,9 @@ public class LogbookService {
     private final LogbookMapper logbookMapper;
     private final EntryRepository entryRepository;
     private final LogbookRepository logbookRepository;
+    private final AuthService authService;
+    private final AuthorizationRepository authorizationRepository;
+    private final AuthMapper authMapper;
 
     /**
      * Return all the logbooks
@@ -120,7 +128,9 @@ public class LogbookService {
      * @param logbookDTO the updated logbooks
      */
     @Transactional
-    public LogbookDTO update(String logbookId, UpdateLogbookDTO logbookDTO) {
+    public LogbookDTO update(String logbookId, UpdateLogbookDTO logbookDTO, Authentication authentication) {
+        // enforce authentication
+        authService.checkAuthentication(authentication, -1);
         // check if id exists
         Logbook lbToUpdated = wrapCatch(
                 () -> logbookRepository.findById(logbookId),
@@ -133,7 +143,7 @@ public class LogbookService {
                         .build()
         );
         assertion(
-                () -> lbToUpdated.getName() != null && !lbToUpdated.getName().isEmpty(),
+                () -> logbookDTO.name() != null && !logbookDTO.name().isEmpty(),
                 ControllerLogicException.builder()
                         .errorCode(-3)
                         .errorMessage("The name field is mandatory")
@@ -141,7 +151,7 @@ public class LogbookService {
                         .build()
         );
         assertion(
-                () -> lbToUpdated.getTags() != null,
+                () -> logbookDTO.tags() != null,
                 ControllerLogicException.builder()
                         .errorCode(-3)
                         .errorMessage("The tags field is mandatory")
@@ -149,7 +159,7 @@ public class LogbookService {
                         .build()
         );
         assertion(
-                () -> lbToUpdated.getTags() != null,
+                () -> logbookDTO.shifts() != null,
                 ControllerLogicException.builder()
                         .errorCode(-3)
                         .errorMessage("The shift field is mandatory")
@@ -181,6 +191,18 @@ public class LogbookService {
                 -5,
                 "LogbookService:update"
         );
+        if (logbookDTO.authorization() != null) {
+            log.info("Update authorization for logbook {}", lbToUpdated.getName());
+            // update authorization
+            verifyAuthorizationAndUpdate(
+                    lbToUpdated,
+                    authMapper.toModel(logbookDTO.authorization()),
+                    authorizationRepository.findByResourceIs(String.format("/logbook/%s", logbookId)),
+                    -6,
+                    "LogbookService:update"
+            );
+        }
+
 
         //we can save the logbooks
         var updatedLB = wrapCatch(
@@ -192,6 +214,71 @@ public class LogbookService {
         return logbookMapper.fromModel(
                 updatedLB
         );
+    }
+
+    private void verifyAuthorizationAndUpdate(Logbook logbookToUpdate, List<Authorization> updatedAuthorizaionList, List<Authorization> actualAuthorizationList, int errorCode, String errorDomain) {
+        //normalize tag
+        for (Authorization authorization :
+                updatedAuthorizaionList) {
+            if (authorization.getId() == null) {
+                // create new
+                Authorization newAuthenticationID =
+                        wrapCatch(
+                                () -> authorizationRepository.save(
+                                        authorization.toBuilder()
+                                                .resource(String.format("/logbook/%s", logbookToUpdate.getId()))
+                                                .build()
+                                ),
+                                -1,
+                                "LogbookService:verifyAuthorizationAndUpdate"
+                        );
+                log.info("Created new authorization '{}' for logbook '{}'", newAuthenticationID, logbookToUpdate.getName());
+                continue;
+            }
+            // check if the auth with the same id exists, in case fire exception
+            boolean exists = actualAuthorizationList.stream().anyMatch(
+                    s -> s.getId().compareTo(authorization.getId()) == 0
+            );
+            assertion(
+                    () -> exists,
+                    TagNotFound.tagNotFoundBuilder()
+                            .errorCode(errorCode)
+                            .tagName(authorization.getId())
+                            .errorDomain(errorDomain)
+                            .build()
+            );
+        }
+        //check which authorization should be removed
+        for (Authorization actualAuthorization :
+                actualAuthorizationList) {
+            boolean willBeUpdated = updatedAuthorizaionList.stream().anyMatch(
+                    ut -> ut.getId() != null && ut.getId().compareTo(actualAuthorization.getId()) == 0
+            );
+            if (willBeUpdated) {
+                // update
+                Authorization updatedAuthorization = wrapCatch(
+                        () -> authorizationRepository.save(
+                                actualAuthorization
+                        ),
+                        -2,
+                        "LogbookService:verifyAuthorizationAndUpdate"
+                );
+                log.info("Updated authorization '{}' for logbook '{}'", updatedAuthorization, logbookToUpdate.getName());
+            } else {
+                // need to be removed
+                wrapCatch(
+                        () -> {
+                            authorizationRepository.deleteById(
+                                    actualAuthorization.getId()
+                            );
+                            return null;
+                        },
+                        -3,
+                        "LogbookService:verifyAuthorizationAndUpdate"
+                );
+                log.info("Deleted authorization '{}' for logbook '{}'", actualAuthorization, logbookToUpdate.getName());
+            }
+        }
     }
 
     /**
@@ -368,6 +455,32 @@ public class LogbookService {
     }
 
     /**
+     * Return the full logbooks description
+     *
+     * @param logbookId the logbooks id
+     * @return the full logbooks
+     */
+    public LogbookDTO getLogbook(String logbookId, Optional<Boolean> includeAuthorizations) {
+        return wrapCatch(
+                () -> logbookRepository.findById(
+                        logbookId
+                ).map(
+                        lb-> logbookMapper.fromModel(
+                                lb,
+                                includeAuthorizations.orElse(false)
+                        )
+                ).orElseThrow(
+                        () -> LogbookNotFound.logbookNotFoundBuilder()
+                                .errorCode(-2)
+                                .errorDomain("LogbookService:getLogbook")
+                                .build()
+                ),
+                -1,
+                "LogbookService:getLogbook"
+        );
+    }
+
+    /**
      * Return a full log identified by its name
      *
      * @param logbookName the name of the logbooks
@@ -531,6 +644,7 @@ public class LogbookService {
 
     /**
      * Return the logbook summary where the tag belong
+     *
      * @param tagId the unique tag id
      * @return the logbook summary which the tag belong
      */
@@ -543,7 +657,7 @@ public class LogbookService {
         return logbook.map(
                 logbookMapper::fromModelToSummaryDTO
         ).orElseThrow(
-                ()->LogbookNotFound.logbookNotFoundBuilder()
+                () -> LogbookNotFound.logbookNotFoundBuilder()
                         .errorCode(-2)
                         .errorDomain("")
                         .build()
@@ -599,7 +713,7 @@ public class LogbookService {
             );
         }
 
-        for (String id:
+        for (String id :
                 logbookIds) {
             if (!existById(id)) {
                 continue;

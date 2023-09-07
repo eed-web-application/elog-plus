@@ -1,7 +1,7 @@
 package edu.stanford.slac.elog_plus.api.v1.controller;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
-import edu.stanford.slac.elog_plus.auth.test.JWTHelper;
+import edu.stanford.slac.elog_plus.auth.test_mock_auth.JWTHelper;
 import edu.stanford.slac.elog_plus.ldap_repository.PersonRepository;
 import edu.stanford.slac.elog_plus.model.Person;
 import lombok.AllArgsConstructor;

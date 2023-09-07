@@ -50,6 +50,8 @@ public class EntryServiceTest {
     @Autowired
     private AttachmentService attachmentService;
     @Autowired
+    private SharedUtilityService sharedUtilityService;
+    @Autowired
     MongoTemplate mongoTemplate;
 
     @BeforeEach
@@ -1683,7 +1685,8 @@ public class EntryServiceTest {
                                                         .build()
                                         )
                                 )
-                                .build()
+                                .build(),
+                        sharedUtilityService.getAuthenticationMockForFirstRootUser()
                 )
         );
         assertThat(logbookTestUpdated).isNotNull();
@@ -1725,7 +1728,8 @@ public class EntryServiceTest {
                                                             .build()
                                             )
                                     )
-                                    .build()
+                                    .build(),
+                            sharedUtilityService.getAuthenticationMockForFirstRootUser()
                     );
                 }
         );

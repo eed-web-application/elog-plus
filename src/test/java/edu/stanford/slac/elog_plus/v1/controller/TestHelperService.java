@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.config.AppProperties;
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
-import edu.stanford.slac.elog_plus.auth.test.JWTHelper;
+import edu.stanford.slac.elog_plus.auth.test_mock_auth.JWTHelper;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
