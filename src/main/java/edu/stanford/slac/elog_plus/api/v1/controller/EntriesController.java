@@ -200,8 +200,48 @@ public class EntriesController {
     public ApiResultResponse<List<EntrySummaryDTO>> getAllFollowUp(
             @PathVariable String id,
             Authentication authentication) {
+        // check for authorization
+        assertion(
+                () -> authService.checkAuthentication(authentication),
+                NotAuthorized
+                        .notAuthorizedBuilder()
+                        .errorCode(-1)
+                        .errorDomain("LogbooksController::getAllFollowUp")
+                        .build()
+        );
+//TODO need to be tested this
+        // fetch all follow up
+        List<EntrySummaryDTO> allFollowUp = entryService.getAllFollowUpForALog(id);
         return ApiResultResponse.of(
-                entryService.getAllFollowUpForALog(id)
+                allFollowUp
+                        .stream()
+                        .map(
+                                entry -> {
+                                    // filter all authorized logbook for en entry
+                                    var authorizedLogbook = entry
+                                            .logbooks()
+                                            .stream()
+                                            .filter(
+                                                    lb -> authService.checkAuthorizationOnResource(
+                                                            authentication,
+                                                            "/logbook/%s".formatted(lb.id()),
+                                                            List.of(Read, Write, Admin)
+                                                    )
+                                            )
+                                            .toList();
+                                    // recreate the summary with the authorized logbook
+                                    return entry.toBuilder()
+                                            .logbooks(
+                                                    authorizedLogbook
+                                            )
+                                            .build();
+                                }
+                        )
+                        .filter(
+                                // remove all summary for which the user is unauthorized on all logbook
+                                lb -> !lb.logbooks().isEmpty()
+                        )
+                        .toList()
         );
     }
 
@@ -225,6 +265,7 @@ public class EntriesController {
             @RequestParam("includeReferencedBy") Optional<Boolean> includeReferencedBy,
             Authentication authentication
     ) {
+
         return ApiResultResponse.of(
                 entryService.getFullEntry(
                         id,
