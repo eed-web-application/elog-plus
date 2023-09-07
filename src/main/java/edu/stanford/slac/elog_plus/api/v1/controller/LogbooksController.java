@@ -35,8 +35,11 @@ public class LogbooksController {
     public ApiResultResponse<List<LogbookDTO>> getAllLogbook(
             @Parameter(name = "includeFollowUps", description = "If true the authorization will be loaded for every logbook found")
             @RequestParam("includeAuthorizations") Optional<Boolean> includeAuthorizations,
+            @Parameter(name = "includeFollowUps", description = "Filter the logbook for authorization types")
+            @RequestParam("authorizationTypes") Optional<String> authorizationTypes,
             Authentication authentication
     ) {
+        //todo return logbook also for a specific authorization level
         // check the user is authenticated
         assertion(
                 () -> authService.checkAuthentication(authentication),
