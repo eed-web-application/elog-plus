@@ -84,17 +84,23 @@ public class TestControllerHelperService {
         AssertionsForClassTypes.assertThat(result.getResponse().getContentType()).isEqualTo(mediaType);
     }
 
-    public ApiResultResponse<String> createNewLog(MockMvc mockMvc, ResultMatcher resultMatcher, EntryNewDTO newLog) throws Exception {
-        MvcResult result = mockMvc.perform(
-                        post("/v1/entries")
-                                .content(
-                                        new ObjectMapper().writeValueAsString(
-                                                newLog
-                                        )
-                                )
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .accept(MediaType.APPLICATION_JSON)
+    public ApiResultResponse<String> createNewLog(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            EntryNewDTO newLog) throws Exception {
+        var postBuilder = post("/v1/entries")
+                .content(
+                        new ObjectMapper().writeValueAsString(
+                                newLog
+                        )
                 )
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON);
+
+        userInfo.ifPresent(login -> postBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
+
+        MvcResult result = mockMvc.perform(postBuilder)
                 .andExpect(resultMatcher)
                 .andReturn();
         Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
@@ -145,16 +151,26 @@ public class TestControllerHelperService {
                 });
     }
 
-    public ApiResultResponse<String> createNewSupersedeLog(MockMvc mockMvc, ResultMatcher resultMatcher, String supersededLogId, EntryNewDTO newLog) throws Exception {
+    public ApiResultResponse<String> createNewSupersedeLog(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String supersededLogId,
+            EntryNewDTO newLog
+    ) throws Exception {
+        var postBuilder = post("/v1/entries/{id}/supersede", supersededLogId)
+                .content(
+                        new ObjectMapper().writeValueAsString(
+                                newLog
+                        )
+                )
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON);
+
+        userInfo.ifPresent(login -> postBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
+
         MvcResult result = mockMvc.perform(
-                        post("/v1/entries/{id}/supersede", supersededLogId)
-                                .content(
-                                        new ObjectMapper().writeValueAsString(
-                                                newLog
-                                        )
-                                )
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .accept(MediaType.APPLICATION_JSON)
+                        postBuilder
                 )
                 .andExpect(resultMatcher)
                 .andReturn();
@@ -168,16 +184,23 @@ public class TestControllerHelperService {
                 });
     }
 
-    public ApiResultResponse<String> createNewFollowUpLog(MockMvc mockMvc, ResultMatcher resultMatcher, String followedLogID, EntryNewDTO newLog) throws Exception {
+    public ApiResultResponse<String> createNewFollowUpLog(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String followedLogID,
+            EntryNewDTO newLog) throws Exception {
+        var postBuilder = post("/v1/entries/{id}/follow-ups", followedLogID)
+                .content(
+                        new ObjectMapper().writeValueAsString(
+                                newLog
+                        )
+                )
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON);
+        userInfo.ifPresent(login -> postBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
         MvcResult result = mockMvc.perform(
-                        post("/v1/entries/{id}/follow-ups", followedLogID)
-                                .content(
-                                        new ObjectMapper().writeValueAsString(
-                                                newLog
-                                        )
-                                )
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .accept(MediaType.APPLICATION_JSON)
+                        postBuilder
                 )
                 .andExpect(resultMatcher)
                 .andReturn();
@@ -401,12 +424,12 @@ public class TestControllerHelperService {
     public ApiResultResponse<LogbookDTO> getLogbookByID(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
+            Optional<String> userInfo,
             String logbookID) throws Exception {
-
         MockHttpServletRequestBuilder getBuilder =
                 get("/v1/logbooks/{logbookId}", logbookID)
                         .accept(MediaType.APPLICATION_JSON);
-
+        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
         MvcResult result = mockMvc.perform(
                         getBuilder
                 )
@@ -453,11 +476,12 @@ public class TestControllerHelperService {
     public ApiResultResponse<List<TagDTO>> getLogbookTags(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
+            Optional<String> userInfo,
             String logbookId) throws Exception {
-        MvcResult result = mockMvc.perform(
-                        get("/v1/logbooks/{logbookId}/tags", logbookId)
-                                .accept(MediaType.APPLICATION_JSON)
-                )
+        var getBuilder = get("/v1/logbooks/{logbookId}/tags", logbookId)
+                .accept(MediaType.APPLICATION_JSON);
+        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
+        MvcResult result = mockMvc.perform(getBuilder)
                 .andExpect(resultMatcher)
                 .andReturn();
         Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());

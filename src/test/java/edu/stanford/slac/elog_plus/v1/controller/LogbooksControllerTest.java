@@ -83,6 +83,9 @@ public class LogbooksControllerTest {
                 () -> testControllerHelperService.getLogbookByID(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         creationResult.getPayload()
                 )
         );
@@ -184,6 +187,9 @@ public class LogbooksControllerTest {
                 () -> testControllerHelperService.getLogbookTags(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         creationResult.getPayload()
                 )
         );
@@ -292,6 +298,9 @@ public class LogbooksControllerTest {
                 () -> testControllerHelperService.getLogbookByID(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         creationResult.getPayload()
                 )
         );
@@ -327,6 +336,9 @@ public class LogbooksControllerTest {
                 () -> testControllerHelperService.getLogbookByID(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         creationResult.getPayload()
                 )
         );
@@ -365,6 +377,9 @@ public class LogbooksControllerTest {
                 () -> testControllerHelperService.getLogbookByID(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         creationResult.getPayload()
                 )
         );
@@ -430,6 +445,9 @@ public class LogbooksControllerTest {
                 () -> testControllerHelperService.getLogbookByID(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         creationResult.getPayload()
                 )
         );
@@ -492,6 +510,9 @@ public class LogbooksControllerTest {
                 () -> testControllerHelperService.getLogbookByID(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         creationResult.getPayload()
                 )
         );

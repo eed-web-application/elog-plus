@@ -16,6 +16,8 @@ public record AuthorizationDTO(
         @Schema(description = "Is the type of the authorization")
         String authorizationType,
         @Schema(description = "Is the subject owner of the authorization")
-        String owner
+        String owner,
+        @Schema(description = "The resource eof the authorization")
+        String resource
 ) {
 }

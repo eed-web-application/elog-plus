@@ -94,6 +94,9 @@ public class EntriesControllerTest {
                                 testControllerHelperService.createNewLog(
                                         mockMvc,
                                         status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -134,6 +137,9 @@ public class EntriesControllerTest {
                                 testControllerHelperService.createNewLog(
                                         mockMvc,
                                         status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -189,6 +195,9 @@ public class EntriesControllerTest {
                                 testControllerHelperService.createNewLog(
                                         mockMvc,
                                         status().is4xxClientError(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -215,6 +224,9 @@ public class EntriesControllerTest {
                                 testControllerHelperService.createNewLog(
                                         mockMvc,
                                         status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -268,6 +280,9 @@ public class EntriesControllerTest {
                                 testControllerHelperService.createNewLog(
                                         mockMvc,
                                         status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -299,6 +314,9 @@ public class EntriesControllerTest {
                                 testControllerHelperService.createNewLog(
                                         mockMvc,
                                         status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -315,6 +333,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.createNewSupersedeLog(
                         mockMvc,
                         status().isCreated(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         newLogIDResult.getPayload(),
                         EntryNewDTO
                                 .builder()
@@ -366,6 +387,9 @@ public class EntriesControllerTest {
                                 testControllerHelperService.createNewLog(
                                         mockMvc,
                                         status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -382,6 +406,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.createNewSupersedeLog(
                         mockMvc,
                         status().isCreated(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         newLogIDResult.getPayload(),
                         EntryNewDTO
                                 .builder()
@@ -399,6 +426,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.createNewSupersedeLog(
                         mockMvc,
                         status().is4xxClientError(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         newLogIDResult.getPayload(),
                         EntryNewDTO
                                 .builder()
@@ -420,6 +450,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.createNewSupersedeLog(
                         mockMvc,
                         status().is4xxClientError(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         "not found superseded log",
                         EntryNewDTO
                                 .builder()
@@ -441,6 +474,9 @@ public class EntriesControllerTest {
                                 testControllerHelperService.createNewLog(
                                         mockMvc,
                                         status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -458,6 +494,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.createNewFollowUpLog(
                         mockMvc,
                         status().isCreated(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         newLogIDResult.getPayload(),
                         EntryNewDTO
                                 .builder()
@@ -475,6 +514,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.createNewSupersedeLog(
                         mockMvc,
                         status().isCreated(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         newLogIDResult.getPayload(),
                         EntryNewDTO
                                 .builder()
@@ -532,6 +574,9 @@ public class EntriesControllerTest {
                                 testControllerHelperService.createNewLog(
                                         mockMvc,
                                         status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -548,6 +593,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.createNewSupersedeLog(
                         mockMvc,
                         status().isCreated(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         newLogIDResult.getPayload(),
                         EntryNewDTO
                                 .builder()
@@ -563,6 +611,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.createNewSupersedeLog(
                         mockMvc,
                         status().isCreated(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         newSupersedeLogIDResult1.getPayload(),
                         EntryNewDTO
                                 .builder()
@@ -602,6 +653,9 @@ public class EntriesControllerTest {
                                 testControllerHelperService.createNewLog(
                                         mockMvc,
                                         status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -619,6 +673,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.createNewFollowUpLog(
                         mockMvc,
                         status().isCreated(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         newLogIDResult.getPayload(),
                         EntryNewDTO
                                 .builder()
@@ -634,6 +691,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.createNewFollowUpLog(
                         mockMvc,
                         status().isCreated(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         newLogIDResult.getPayload(),
                         EntryNewDTO
                                 .builder()
@@ -710,6 +770,9 @@ public class EntriesControllerTest {
                             () -> testControllerHelperService.createNewLog(
                                     mockMvc,
                                     status().isCreated(),
+                                    Optional.of(
+                                            "user1@slac.stanford.edu"
+                                    ),
                                     EntryNewDTO
                                             .builder()
                                             .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -883,6 +946,9 @@ public class EntriesControllerTest {
                             () -> testControllerHelperService.createNewLog(
                                     mockMvc,
                                     status().isCreated(),
+                                    Optional.of(
+                                            "user1@slac.stanford.edu"
+                                    ),
                                     EntryNewDTO
                                             .builder()
                                             .logbooks(List.of(logbookCreationResult.getPayload().id()))
@@ -959,6 +1025,9 @@ public class EntriesControllerTest {
                         () -> testControllerHelperService.createNewLog(
                                 mockMvc,
                                 status().isCreated(),
+                                Optional.of(
+                                        "user1@slac.stanford.edu"
+                                ),
                                 EntryNewDTO
                                         .builder()
                                         .logbooks(List.of(logbookCreationResult.getPayload().id()))
@@ -976,6 +1045,9 @@ public class EntriesControllerTest {
                         () -> testControllerHelperService.createNewLog(
                                 mockMvc,
                                 status().isCreated(),
+                                Optional.of(
+                                        "user1@slac.stanford.edu"
+                                ),
                                 EntryNewDTO
                                         .builder()
                                         .logbooks(List.of(logbookCreationResult.getPayload().id()))
@@ -1050,6 +1122,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.getLogbookByID(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         logbookCreationResult.getPayload()
                 )
         );
@@ -1066,6 +1141,9 @@ public class EntriesControllerTest {
                             () -> testControllerHelperService.createNewLog(
                                     mockMvc,
                                     status().isCreated(),
+                                    Optional.of(
+                                            "user1@slac.stanford.edu"
+                                    ),
                                     EntryNewDTO
                                             .builder()
                                             .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -1109,6 +1187,9 @@ public class EntriesControllerTest {
                                 testControllerHelperService.createNewLog(
                                         mockMvc,
                                         status().is4xxClientError(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -1162,6 +1243,9 @@ public class EntriesControllerTest {
                                 testControllerHelperService.createNewLog(
                                         mockMvc,
                                         status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbooks(List.of(logbookCreationResult.getPayload().id()))
@@ -1215,6 +1299,9 @@ public class EntriesControllerTest {
                                 testControllerHelperService.getLogbookTags(
                                         mockMvc,
                                         status().isOk(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         logbookCreationResult.getPayload().id()
                                 )
                 );
@@ -1238,6 +1325,9 @@ public class EntriesControllerTest {
                             () -> testControllerHelperService.createNewLog(
                                     mockMvc,
                                     status().isCreated(),
+                                    Optional.of(
+                                            "user1@slac.stanford.edu"
+                                    ),
                                     EntryNewDTO
                                             .builder()
                                             .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -1381,6 +1471,9 @@ public class EntriesControllerTest {
                             () -> testControllerHelperService.createNewLog(
                                     mockMvc,
                                     status().isCreated(),
+                                    Optional.of(
+                                            "user1@slac.stanford.edu"
+                                    ),
                                     EntryNewDTO
                                             .builder()
                                             .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -1526,6 +1619,9 @@ public class EntriesControllerTest {
                             () -> testControllerHelperService.createNewLog(
                                     mockMvc,
                                     status().isCreated(),
+                                    Optional.of(
+                                            "user1@slac.stanford.edu"
+                                    ),
                                     EntryNewDTO
                                             .builder()
                                             .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -1603,6 +1699,9 @@ public class EntriesControllerTest {
                             () -> testControllerHelperService.createNewLog(
                                     mockMvc,
                                     status().isCreated(),
+                                    Optional.of(
+                                            "user1@slac.stanford.edu"
+                                    ),
                                     EntryNewDTO
                                             .builder()
                                             .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -1695,6 +1794,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.getLogbookByID(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         finalNewLogBookResult.getPayload().id()
                 )
         );
@@ -1706,6 +1808,9 @@ public class EntriesControllerTest {
                                 testControllerHelperService.createNewLog(
                                         mockMvc,
                                         status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbooks(List.of(finalNewLogBookResult1.getPayload().id()))
@@ -1749,6 +1854,9 @@ public class EntriesControllerTest {
                                 testControllerHelperService.createNewLog(
                                         mockMvc,
                                         status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -1767,6 +1875,9 @@ public class EntriesControllerTest {
                                 testControllerHelperService.createNewLog(
                                         mockMvc,
                                         status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -1793,6 +1904,9 @@ public class EntriesControllerTest {
                                 testControllerHelperService.createNewLog(
                                         mockMvc,
                                         status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbooks(List.of(newLogBookResult.getPayload().id()))

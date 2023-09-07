@@ -481,11 +481,14 @@ public class LogbookService {
      * @param logbookIds the logbooks id
      * @return the full logbooks list
      */
-    public List<LogbookDTO> getLogbook(List<String> logbookIds) {
+    public List<LogbookDTO> getLogbook(List<String> logbookIds, Optional<Boolean> includeAuthorizations) {
         return wrapCatch(() -> logbookRepository.findAllById(
                         logbookIds
                 ).stream().map(
-                        logbookMapper::fromModel
+                       lb-> logbookMapper.fromModel(
+                               lb,
+                               includeAuthorizations.orElse(false)
+                       )
                 ).toList(),
                 -1,
                 "LogbookService:getLogbook"

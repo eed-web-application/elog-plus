@@ -211,6 +211,9 @@ public class ImportControllerTest {
                 () -> testControllerHelperService.getLogbookByID(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         logbookCreationResult.getPayload()
                 )
         );
