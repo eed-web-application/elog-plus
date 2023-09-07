@@ -20,9 +20,7 @@ public class Authorization {
     public enum Type{
         Read,
         Write,
-        Create,
-        Admin,
-        Root
+        Admin
     }
     @Id
     private String id;

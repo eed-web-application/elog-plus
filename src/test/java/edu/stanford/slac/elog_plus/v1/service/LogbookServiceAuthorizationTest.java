@@ -39,13 +39,9 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 public class LogbookServiceAuthorizationTest {
     @Autowired
-    AppProperties appProperties;
-    @Autowired
     private SharedUtilityService sharedUtilityService;
     @Autowired
     private LogbookService logbookService;
-    @Autowired
-    private AuthService authService;
     @Autowired
     private MongoTemplate mongoTemplate;
 
@@ -53,7 +49,6 @@ public class LogbookServiceAuthorizationTest {
     public void preTest() {
         mongoTemplate.remove(new Query(), Logbook.class);
         mongoTemplate.remove(new Query(), Authorization.class);
-        authService.updateRootUser();
     }
 
     @Test
@@ -87,8 +82,7 @@ public class LogbookServiceAuthorizationTest {
                                                         .build()
                                         )
                                 )
-                                .build(),
-                        authentication
+                                .build()
                 )
         );
 
@@ -100,5 +94,204 @@ public class LogbookServiceAuthorizationTest {
         );
         assertThat(logbook).isNotNull();
         assertThat(logbook.authorizations()).isNotNull().hasSize(1);
+    }
+
+    @Test
+    public void updateAuthorizationWithDeleteOk() {
+        Authentication authentication = sharedUtilityService.getAuthenticationMockForFirstRootUser();
+        var newLogbookId =
+                assertDoesNotThrow(
+                        () -> sharedUtilityService.getTestLogbook("logbook-test-auth")
+                );
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        assertDoesNotThrow(
+                () -> logbookService.update(
+                        newLogbookId,
+                        UpdateLogbookDTO
+                                .builder()
+                                .name(
+                                        "logbook-test-auth"
+                                )
+                                .tags(
+                                        emptyList()
+                                )
+                                .shifts(
+                                        emptyList()
+                                )
+                                .authorization(
+                                        List.of(
+                                                AuthorizationDTO
+                                                        .builder()
+                                                        .authorizationType("Read")
+                                                        .owner("user2@slac.stanford.edu")
+                                                        .build(),
+                                                AuthorizationDTO
+                                                        .builder()
+                                                        .authorizationType("Read")
+                                                        .owner("userTODelete@slac.stanford.edu")
+                                                        .build(),
+                                                AuthorizationDTO
+                                                        .builder()
+                                                        .authorizationType("Read")
+                                                        .owner("user3@slac.stanford.edu")
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+
+        var logbook = assertDoesNotThrow(
+                () -> logbookService.getLogbook(
+                        newLogbookId,
+                        Optional.of(true)
+                )
+        );
+        assertThat(logbook).isNotNull();
+        assertThat(logbook.authorizations()).isNotNull().hasSize(3);
+
+        // updating deleting one authorization
+        assertDoesNotThrow(
+                () -> logbookService.update(
+                        newLogbookId,
+                        UpdateLogbookDTO
+                                .builder()
+                                .name(
+                                        "logbook-test-auth"
+                                )
+                                .tags(
+                                        emptyList()
+                                )
+                                .shifts(
+                                        emptyList()
+                                )
+                                .authorization(
+                                        List.of(
+                                                logbook.authorizations().get(0),
+                                                logbook.authorizations().get(2)
+                                        )
+                                )
+                                .build()
+                )
+        );
+
+        var logbook2 = assertDoesNotThrow(
+                () -> logbookService.getLogbook(
+                        newLogbookId,
+                        Optional.of(true)
+                )
+        );
+        assertThat(logbook2).isNotNull();
+        assertThat(logbook2.authorizations()).isNotNull()
+                .hasSize(2)
+                .extracting(AuthorizationDTO::owner)
+                .contains("user2@slac.stanford.edu","user3@slac.stanford.edu");
+    }
+
+    @Test
+    public void updateAuthorizationChangingAuthTypeOk() {
+        Authentication authentication = sharedUtilityService.getAuthenticationMockForFirstRootUser();
+        var newLogbookId =
+                assertDoesNotThrow(
+                        () -> sharedUtilityService.getTestLogbook("logbook-test-auth")
+                );
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        assertDoesNotThrow(
+                () -> logbookService.update(
+                        newLogbookId,
+                        UpdateLogbookDTO
+                                .builder()
+                                .name(
+                                        "logbook-test-auth"
+                                )
+                                .tags(
+                                        emptyList()
+                                )
+                                .shifts(
+                                        emptyList()
+                                )
+                                .authorization(
+                                        List.of(
+                                                AuthorizationDTO
+                                                        .builder()
+                                                        .authorizationType(Authorization.Type.Read.name())
+                                                        .owner("user2@slac.stanford.edu")
+                                                        .build(),
+                                                AuthorizationDTO
+                                                        .builder()
+                                                        .authorizationType(Authorization.Type.Read.name())
+                                                        .owner("userTOUpdate@slac.stanford.edu")
+                                                        .build(),
+                                                AuthorizationDTO
+                                                        .builder()
+                                                        .authorizationType(Authorization.Type.Read.name())
+                                                        .owner("user3@slac.stanford.edu")
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+
+        var logbook = assertDoesNotThrow(
+                () -> logbookService.getLogbook(
+                        newLogbookId,
+                        Optional.of(true)
+                )
+        );
+        assertThat(logbook).isNotNull();
+        assertThat(logbook.authorizations()).isNotNull()
+                .hasSize(3)
+                .extracting(AuthorizationDTO::authorizationType)
+                .contains(
+                        Authorization.Type.Read.name(),
+                        Authorization.Type.Read.name(),
+                        Authorization.Type.Read.name()
+                );
+
+        // updating deleting one authorization
+        assertDoesNotThrow(
+                () -> logbookService.update(
+                        newLogbookId,
+                        UpdateLogbookDTO
+                                .builder()
+                                .name(
+                                        "logbook-test-auth"
+                                )
+                                .tags(
+                                        emptyList()
+                                )
+                                .shifts(
+                                        emptyList()
+                                )
+                                .authorization(
+                                        List.of(
+                                                logbook.authorizations().get(0),
+                                                logbook.authorizations().get(1)
+                                                        .toBuilder()
+                                                        .authorizationType(Authorization.Type.Write.name())
+                                                        .build(),
+                                                logbook.authorizations().get(2)
+                                        )
+                                )
+                                .build()
+                )
+        );
+
+        var logbook2 = assertDoesNotThrow(
+                () -> logbookService.getLogbook(
+                        newLogbookId,
+                        Optional.of(true)
+                )
+        );
+        assertThat(logbook2).isNotNull();
+        assertThat(logbook2.authorizations()).isNotNull()
+                .hasSize(3)
+                .extracting(AuthorizationDTO::authorizationType)
+                .contains(
+                        Authorization.Type.Read.name(),
+                        Authorization.Type.Write.name(),
+                        Authorization.Type.Read.name()
+                );
     }
 }

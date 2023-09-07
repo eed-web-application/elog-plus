@@ -43,7 +43,7 @@ public class AttachmentControllerTest {
     private MongoTemplate mongoTemplate;
 
     @Autowired
-    private TestHelperService testHelperService;
+    private TestControllerHelperService testControllerHelperService;
 
     @Autowired
     AttachmentService attachmentService;
@@ -58,7 +58,7 @@ public class AttachmentControllerTest {
 
     @Test
     public void createAttachment() throws Exception {
-        ApiResultResponse<String> newAttachmentID = testHelperService.newAttachment(
+        ApiResultResponse<String> newAttachmentID = testControllerHelperService.newAttachment(
                 mockMvc,
                 status().isCreated(),
                 new MockMultipartFile(
@@ -83,7 +83,7 @@ public class AttachmentControllerTest {
     public void downloadAttachment() throws Exception {
         Faker f = new Faker();
         String fileName = f.file().fileName();
-        ApiResultResponse<String> newAttachmentID = testHelperService.newAttachment(
+        ApiResultResponse<String> newAttachmentID = testControllerHelperService.newAttachment(
                 mockMvc,
                 status().isCreated(),
                 new MockMultipartFile(
@@ -94,7 +94,7 @@ public class AttachmentControllerTest {
                 )
         );
 
-        testHelperService.checkDownloadedFile(
+        testControllerHelperService.checkDownloadedFile(
                 mockMvc,
                 status().isOk(),
                 newAttachmentID.getPayload(),
@@ -105,7 +105,7 @@ public class AttachmentControllerTest {
     @Test
     public void downloadAttachmentAndPreview() throws Exception {
         try (InputStream is = documentGenerationService.getTestPng()) {
-            ApiResultResponse<String> newAttachmentID = testHelperService.newAttachment(
+            ApiResultResponse<String> newAttachmentID = testControllerHelperService.newAttachment(
                     mockMvc,
                     status().isCreated(),
                     new MockMultipartFile(
@@ -116,7 +116,7 @@ public class AttachmentControllerTest {
                     )
             );
 
-            testHelperService.checkDownloadedFile(
+            testControllerHelperService.checkDownloadedFile(
                     mockMvc,
                     status().isOk(),
                     newAttachmentID.getPayload(),
@@ -132,7 +132,7 @@ public class AttachmentControllerTest {
                     }
             );
 
-            testHelperService.checkDownloadedPreview(
+            testControllerHelperService.checkDownloadedPreview(
                     mockMvc,
                     status().isOk(),
                     newAttachmentID.getPayload(),

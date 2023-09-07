@@ -6,6 +6,8 @@ import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.config.AppProperties;
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.auth.test_mock_auth.JWTHelper;
+import edu.stanford.slac.elog_plus.v1.service.SharedUtilityService;
+import lombok.AllArgsConstructor;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -28,13 +30,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Service()
-
-public class TestHelperService {
+public class TestControllerHelperService {
     private final AppProperties appProperties;
 
-    public TestHelperService(AppProperties appProperties){
+    public TestControllerHelperService(AppProperties appProperties) {
         this.appProperties = appProperties;
     }
+
+
     public ApiResultResponse<String> newAttachment(MockMvc mockMvc, ResultMatcher resultMatcher, MockMultipartFile file) throws Exception {
         MvcResult result_upload = mockMvc.perform(
                         multipart("/v1/attachment").file(file)
@@ -120,7 +123,7 @@ public class TestHelperService {
                     MediaType.APPLICATION_JSON_VALUE
             );
             multiPartBuilder.part(
-                   p
+                    p
             );
         }
 
@@ -244,7 +247,7 @@ public class TestHelperService {
     }
 
     public ApiResultResponse<EntryDTO> getFullLog(MockMvc mockMvc, ResultMatcher resultMatcher, String id, boolean includeFollowUps, boolean includeFollowingUps, boolean includeHistory) throws Exception {
-        return getFullLog(mockMvc, resultMatcher, id, includeFollowUps, includeFollowingUps, includeHistory, false ,false);
+        return getFullLog(mockMvc, resultMatcher, id, includeFollowUps, includeFollowingUps, includeHistory, false, false);
     }
 
     public ApiResultResponse<EntryDTO> getFullLog(MockMvc mockMvc, ResultMatcher resultMatcher, String id, boolean includeFollowUps, boolean includeFollowingUps, boolean includeHistory, boolean includeReferences, boolean includeReferencedBy) throws Exception {
@@ -348,16 +351,21 @@ public class TestHelperService {
     public ApiResultResponse<String> createNewLogbook(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
+            Optional<String> userInfo,
             NewLogbookDTO newLogbookDTO) throws Exception {
+
+        var getBuilder = post("/v1/logbooks")
+                .content(
+                        new ObjectMapper().writeValueAsString(
+                                newLogbookDTO
+                        )
+                )
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON);
+        //apply auth
+        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
         MvcResult result = mockMvc.perform(
-                        post("/v1/logbooks")
-                                .content(
-                                        new ObjectMapper().writeValueAsString(
-                                                newLogbookDTO
-                                        )
-                                )
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .accept(MediaType.APPLICATION_JSON)
+                        getBuilder
                 )
                 .andExpect(resultMatcher)
                 .andReturn();
@@ -413,17 +421,22 @@ public class TestHelperService {
     public ApiResultResponse<String> createNewLogbookTags(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
+            Optional<String> userInfo,
             String logbookId,
             NewTagDTO newTagDTO) throws Exception {
+        var postBuilder = post("/v1/logbooks/{logbookId}/tags", logbookId)
+                .content(
+                        new ObjectMapper().writeValueAsString(
+                                newTagDTO
+                        )
+                )
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON);
+
+        userInfo.ifPresent(login -> postBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
+
         MvcResult result = mockMvc.perform(
-                        post("/v1/logbooks/{logbookId}/tags", logbookId)
-                                .content(
-                                        new ObjectMapper().writeValueAsString(
-                                                newTagDTO
-                                        )
-                                )
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .accept(MediaType.APPLICATION_JSON)
+                        postBuilder
                 )
                 .andExpect(resultMatcher)
                 .andReturn();
@@ -487,9 +500,10 @@ public class TestHelperService {
     public ApiResultResponse<Boolean> replaceShiftForLogbook(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
+            Optional<String> userInfo,
             String logbookId,
             List<ShiftDTO> replacementShiftDTO) throws Exception {
-        MockHttpServletRequestBuilder putRequest =
+        MockHttpServletRequestBuilder putBuilder =
                 put("/v1/logbooks/{logbookId}/shifts", logbookId)
                         .content(
                                 new ObjectMapper().writeValueAsString(
@@ -499,8 +513,10 @@ public class TestHelperService {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON);
 
+        userInfo.ifPresent(login -> putBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
+
         MvcResult result = mockMvc.perform(
-                        putRequest
+                        putBuilder
                 )
                 .andExpect(resultMatcher)
                 .andReturn();
@@ -517,9 +533,10 @@ public class TestHelperService {
     public ApiResultResponse<Boolean> updateLogbook(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
+            Optional<String> userInfo,
             String logbookId,
             UpdateLogbookDTO updateLogbookDTO) throws Exception {
-        MockHttpServletRequestBuilder putRequest =
+        MockHttpServletRequestBuilder putBuilder =
                 put("/v1/logbooks/{logbookId}", logbookId)
                         .content(
                                 new ObjectMapper().writeValueAsString(
@@ -528,9 +545,9 @@ public class TestHelperService {
                         )
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON);
-
+        userInfo.ifPresent(login -> putBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
         MvcResult result = mockMvc.perform(
-                        putRequest
+                        putBuilder
                 )
                 .andExpect(resultMatcher)
                 .andReturn();
@@ -580,7 +597,7 @@ public class TestHelperService {
         MockHttpServletRequestBuilder getBuilder =
                 get("/v1/auth/me")
                         .accept(MediaType.APPLICATION_JSON);
-        userInfo.ifPresent(login-> getBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
+        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
         MvcResult result = mockMvc.perform(
                         getBuilder
                 )
@@ -604,7 +621,7 @@ public class TestHelperService {
         MockHttpServletRequestBuilder getBuilder =
                 get("/v1/auth/users")
                         .accept(MediaType.APPLICATION_JSON);
-        userInfo.ifPresent(login-> getBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
+        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
         search.ifPresent(string -> getBuilder.param("search", string));
         MvcResult result = mockMvc.perform(
                         getBuilder
@@ -629,7 +646,7 @@ public class TestHelperService {
         MockHttpServletRequestBuilder getBuilder =
                 get("/v1/auth/groups")
                         .accept(MediaType.APPLICATION_JSON);
-        userInfo.ifPresent(login-> getBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
+        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
         search.ifPresent(string -> getBuilder.param("search", string));
         MvcResult result = mockMvc.perform(
                         getBuilder

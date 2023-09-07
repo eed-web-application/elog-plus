@@ -5,7 +5,6 @@ import edu.stanford.slac.elog_plus.api.v1.dto.GroupDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.PersonDTO;
 import edu.stanford.slac.elog_plus.api.v1.mapper.AuthMapper;
 import edu.stanford.slac.elog_plus.config.AppProperties;
-import edu.stanford.slac.elog_plus.exception.NotAuthenticated;
 import edu.stanford.slac.elog_plus.exception.UserNotFound;
 import edu.stanford.slac.elog_plus.ldap_repository.GroupRepository;
 import edu.stanford.slac.elog_plus.model.Authorization;
@@ -24,7 +23,7 @@ import java.util.Optional;
 
 import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
 import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
-import static edu.stanford.slac.elog_plus.model.Authorization.Type.Root;
+import static edu.stanford.slac.elog_plus.model.Authorization.Type.Admin;
 
 @Service
 @Log4j2
@@ -37,21 +36,19 @@ public class AuthService {
     private final AuthorizationRepository authorizationRepository;
 
     public PersonDTO findPerson(Authentication authentication) {
-        checkAuthentication(authentication, -1);
         return personRepository.findByMail(
                 authentication.getCredentials().toString()
         ).map(
                 authMapper::fromModel
         ).orElseThrow(
-                ()-> UserNotFound.userNotFound()
+                () -> UserNotFound.userNotFound()
                         .errorCode(-2)
                         .errorDomain("AuthService::findPerson")
                         .build()
         );
     }
 
-    public List<PersonDTO> findPersons(String searchString, Authentication authentication) throws UsernameNotFoundException {
-        checkAuthentication(authentication, -1);
+    public List<PersonDTO> findPersons(String searchString) throws UsernameNotFoundException {
         List<Person> foundPerson = personRepository.findByGecosContainsIgnoreCaseOrderByCommonNameAsc(
                 searchString
         );
@@ -60,33 +57,63 @@ public class AuthService {
         ).toList();
     }
 
-    public List<GroupDTO> findGroup(String searchString, Authentication authentication) throws UsernameNotFoundException {
-        checkAuthentication(authentication, -1);
+    public List<GroupDTO> findGroup(String searchString) throws UsernameNotFoundException {
         List<Group> foundPerson = groupRepository.findByCommonNameContainsIgnoreCaseOrderByCommonNameAsc(searchString);
         return foundPerson.stream().map(
                 authMapper::fromModel
         ).toList();
     }
 
-    public void checkAuthentication(Authentication authentication, int errorCode) {
-        String callerMethodName = Thread.currentThread().getStackTrace()[2].getMethodName();
-        assertion(
-                ()->authentication != null && authentication.isAuthenticated(),
-                NotAuthenticated.notAuthenticatedBuilder()
-                        .errorCode(errorCode)
-                        .errorDomain(callerMethodName)
-                        .build()
-        );
+    /**
+     * Check if the current authentication is authenticated
+     *
+     * @param authentication the current authentication
+     */
+    public boolean checkAuthentication(Authentication authentication) {
+        return authentication != null && authentication.isAuthenticated();
     }
 
     /**
+     * Check if the current authentication is a root user
+     *
+     * @param authentication is the current authentication
+     */
+    public boolean checkForRoot(Authentication authentication) {
+        // only root user can create logbook
+        List<AuthorizationDTO> foundAuth = getAllAuthorization(
+                authentication.getCredentials().toString(),
+                List.of(Admin),
+                "*"
+        );
+        return foundAuth != null && !foundAuth.isEmpty();
+    }
+
+    /**
+     * Check the authorization level on a resource
+     *
+     * @param resource       the target resource
+     * @param authentication the current authentication
+     * @param authorizations the list of any authorization to check
+     */
+    public boolean checkAuthorizationOnResource(Authentication authentication, String resource, List<Authorization.Type> authorizations) {
+        List<AuthorizationDTO> foundLogbookAuth = getAllAuthorization(
+                authentication.getCredentials().toString(),
+                authorizations,
+                resource
+        );
+        return !foundLogbookAuth.isEmpty();
+    }
+
+
+    /**
      * Create new authorization
+     *
      * @param authorization the new authorization
      * @return updated authorization
      */
     public AuthorizationDTO saveNewAuthorization(Authorization authorization) {
         var savedAuth = wrapCatch(
-                ()->authorizationRepository.save(
+                () -> authorizationRepository.save(
                         authorization
                 ),
                 -1,
@@ -96,21 +123,66 @@ public class AuthService {
     }
 
     /**
-     * Delete an authorization by id
+     * Delete an authorization for a resource with a specific prefix
      *
-     * @param authorizationId the id of authorization to delete
+     * @param resourcePrefix the prefix of the resource
      */
-    public void deleteAuthorizationByID(String authorizationId) {
+    public void deleteAuthorizationForResourcePrefix(String resourcePrefix) {
         wrapCatch(
-                ()->{
-                    authorizationRepository.deleteById(
-                            authorizationId
+                () -> {
+                    authorizationRepository.deleteAllByResourceStartingWith(
+                            resourcePrefix
                     );
                     return null;
                 },
                 -1,
-                "AuthService::deleteNewAuthorization"
+                "AuthService::deleteAuthorizationResourcePrefix"
         );
+    }
+
+    /**
+     * Delete an authorization for a resource with a specific path
+     *
+     * @param resource the path of the resource
+     */
+    public void deleteAuthorizationForResource(String resource) {
+        wrapCatch(
+                () -> {
+                    authorizationRepository.deleteAllByResourceIs(
+                            resource
+                    );
+                    return null;
+                },
+                -1,
+                "AuthService::deleteAuthorizationResourcePrefix"
+        );
+    }
+
+    /**
+     * Return all the authorization for an owner that match with the prefix
+     * and the authorization type
+     *
+     * @param owner             si the owner target of the result authorization
+     * @param authorizationType filter on the @Authorization.Type
+     * @param resourcePrefix    is the prefix of the authorized resource
+     * @return the list of found resource
+     */
+    public List<AuthorizationDTO> getAllAuthorization(
+            String owner,
+            List<Authorization.Type> authorizationType,
+            String resourcePrefix
+    ) {
+        return wrapCatch(
+                () -> authorizationRepository.findByOwnerAndAuthorizationTypeInAndResourceStartingWith(
+                        owner,
+                        authorizationType,
+                        resourcePrefix
+                ),
+                -1,
+                "AuthService::getAllAuthorization"
+        ).stream().map(
+                authMapper::fromModel
+        ).toList();
     }
 
     public void updateRootUser() {
@@ -118,14 +190,14 @@ public class AuthService {
         //load actual root
         List<Authorization> currentRootUser = authorizationRepository.findByResourceIsAndAuthorizationTypeIs(
                 "*",
-                Root
+                Admin
         );
 
         // find root users to remove
         List<String> rootUserToRemove = currentRootUser.stream().map(
                 Authorization::getOwner
         ).toList().stream().filter(
-                userEmail-> !appProperties.getRootUserList().contains(userEmail)
+                userEmail -> !appProperties.getRootUserList().contains(userEmail)
         ).toList();
         for (String userEmailToRemove :
                 rootUserToRemove) {
@@ -133,7 +205,7 @@ public class AuthService {
             authorizationRepository.deleteByOwnerIsAndResourceIsAndAuthorizationTypeIs(
                     userEmailToRemove,
                     "*",
-                    Root
+                    Admin
             );
         }
 
@@ -145,14 +217,14 @@ public class AuthService {
             Optional<Authorization> rootAuth = authorizationRepository.findByOwnerIsAndResourceIsAndAuthorizationTypeIs(
                     userEmail,
                     "*",
-                    Root
+                    Admin
             );
             if (rootAuth.isEmpty()) {
                 log.info("Create root authorization for user '{}'", userEmail);
                 authorizationRepository.save(
                         Authorization
                                 .builder()
-                                .authorizationType(Root)
+                                .authorizationType(Admin)
                                 .owner(userEmail)
                                 .resource("*")
                                 .creationBy("elog-plus")

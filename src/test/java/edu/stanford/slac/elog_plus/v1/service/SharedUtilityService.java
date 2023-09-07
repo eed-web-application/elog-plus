@@ -1,7 +1,9 @@
 package edu.stanford.slac.elog_plus.v1.service;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.NewLogbookDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.PersonDTO;
 import edu.stanford.slac.elog_plus.config.AppProperties;
+import edu.stanford.slac.elog_plus.service.AuthService;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import lombok.AllArgsConstructor;
 import org.assertj.core.api.AssertionsForClassTypes;
@@ -20,6 +22,9 @@ public class SharedUtilityService {
     private AppProperties appProperties;
     @Autowired
     private LogbookService logbookService;
+    @Autowired
+    private AuthService authService;
+
     public String getTestLogbook() {
         return getTestLogbook("new-logbooks");
     }
@@ -46,6 +51,11 @@ public class SharedUtilityService {
                     appProperties.getRootUserList().get(0)
             );
         }
+    }
+
+
+    public PersonDTO getPersonForEmail(String mail) {
+        return authService.findPerson(getAuthenticationMockForEmail(mail));
     }
 
     public Authentication getAuthenticationMockForEmail(String email) {

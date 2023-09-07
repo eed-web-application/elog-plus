@@ -1396,8 +1396,7 @@ public class LogbookServiceTest {
         assertDoesNotThrow(
                 () -> logbookService.update(
                         logbookID,
-                        finalLogbookDTO,
-                        sharedUtilityService.getAuthenticationMockForFirstRootUser()
+                        finalLogbookDTO
                 )
         );
 
@@ -1432,8 +1431,7 @@ public class LogbookServiceTest {
         assertDoesNotThrow(
                 () -> logbookService.update(
                         logbookID,
-                        finalLogbookDTO1,
-                        sharedUtilityService.getAuthenticationMockForFirstRootUser()
+                        finalLogbookDTO1
                 )
         );
 
@@ -1466,8 +1464,7 @@ public class LogbookServiceTest {
                 TagNotFound.class,
                 () -> logbookService.update(
                         logbookID,
-                        finalLogbookDTO2,
-                        sharedUtilityService.getAuthenticationMockForFirstRootUser()
+                        finalLogbookDTO2
                 )
         );
         assertThat(tagNotFound.getErrorCode()).isEqualTo(-5);
@@ -1532,8 +1529,7 @@ public class LogbookServiceTest {
         assertDoesNotThrow(
                 () -> logbookService.update(
                         logbookID,
-                        finalUpdatedLogbook,
-                        sharedUtilityService.getAuthenticationMockForFirstRootUser()
+                        finalUpdatedLogbook
                 )
         );
 
@@ -1568,8 +1564,7 @@ public class LogbookServiceTest {
         assertDoesNotThrow(
                 () -> logbookService.update(
                         logbookID,
-                        finalLogbookDTO1,
-                        sharedUtilityService.getAuthenticationMockForFirstRootUser()
+                        finalLogbookDTO1
                 )
         );
 
@@ -1602,8 +1597,7 @@ public class LogbookServiceTest {
                 ShiftNotFound.class,
                 () -> logbookService.update(
                         logbookID,
-                        finalLogbookDTO2,
-                        sharedUtilityService.getAuthenticationMockForFirstRootUser()
+                        finalLogbookDTO2
                 )
         );
         assertThat(tagNotFound.getErrorCode()).isEqualTo(-4);

@@ -46,7 +46,7 @@ public class AuthorizationServiceRootManagementTest {
         authService.updateRootUser();
         List<Authorization> rootAuth = authorizationRepository.findByResourceIsAndAuthorizationTypeIs(
                 "*",
-                Authorization.Type.Root
+                Authorization.Type.Admin
         );
 
         assertThat(rootAuth).hasSize(1);
@@ -60,7 +60,7 @@ public class AuthorizationServiceRootManagementTest {
         authService.updateRootUser();
         List<Authorization> rootAuth = authorizationRepository.findByResourceIsAndAuthorizationTypeIs(
                 "*",
-                Authorization.Type.Root
+                Authorization.Type.Admin
         );
 
         assertThat(rootAuth).hasSize(1);
@@ -72,7 +72,7 @@ public class AuthorizationServiceRootManagementTest {
         authService.updateRootUser();
         rootAuth = authorizationRepository.findByResourceIsAndAuthorizationTypeIs(
                 "*",
-                Authorization.Type.Root
+                Authorization.Type.Admin
         );
 
         assertThat(rootAuth).hasSize(1);
@@ -86,7 +86,7 @@ public class AuthorizationServiceRootManagementTest {
         authService.updateRootUser();
         List<Authorization> rootAuth = authorizationRepository.findByResourceIsAndAuthorizationTypeIs(
                 "*",
-                Authorization.Type.Root
+                Authorization.Type.Admin
         );
 
         assertThat(rootAuth).hasSize(2);
@@ -98,7 +98,7 @@ public class AuthorizationServiceRootManagementTest {
         authService.updateRootUser();
         rootAuth = authorizationRepository.findByResourceIsAndAuthorizationTypeIs(
                 "*",
-                Authorization.Type.Root
+                Authorization.Type.Admin
         );
 
         assertThat(rootAuth).hasSize(2);

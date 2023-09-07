@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 
 import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
 import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
+import static edu.stanford.slac.elog_plus.model.Authorization.Type.Admin;
 
 @Log4j2
 @Service
@@ -44,17 +45,24 @@ public class LogbookService {
     private final AuthorizationRepository authorizationRepository;
     private final AuthMapper authMapper;
 
+    public List<LogbookDTO> getAllLogbook() {
+        return getAllLogbook(Optional.empty());
+    }
+
     /**
      * Return all the logbooks
      *
      * @return the lis tof all logbooks
      */
-    public List<LogbookDTO> getAllLogbook() {
+    public List<LogbookDTO> getAllLogbook(Optional<Boolean> includeAuthorization) {
         return wrapCatch(
                 () -> logbookRepository.findAll()
                         .stream()
                         .map(
-                                logbookMapper::fromModel
+                                lb-> logbookMapper.fromModel(
+                                        lb,
+                                        includeAuthorization.orElse(false)
+                                )
                         ).collect(Collectors.toList()),
                 -1,
                 "LogbookService::getAllLogbook"
@@ -128,9 +136,7 @@ public class LogbookService {
      * @param logbookDTO the updated logbooks
      */
     @Transactional
-    public LogbookDTO update(String logbookId, UpdateLogbookDTO logbookDTO, Authentication authentication) {
-        // enforce authentication
-        authService.checkAuthentication(authentication, -1);
+    public LogbookDTO update(String logbookId, UpdateLogbookDTO logbookDTO) {
         // check if id exists
         Logbook lbToUpdated = wrapCatch(
                 () -> logbookRepository.findById(logbookId),
@@ -216,10 +222,18 @@ public class LogbookService {
         );
     }
 
-    private void verifyAuthorizationAndUpdate(Logbook logbookToUpdate, List<Authorization> updatedAuthorizaionList, List<Authorization> actualAuthorizationList, int errorCode, String errorDomain) {
+    /**
+     * Update the authorization on the logbook
+     * @param logbookToUpdate is the logbook to update
+     * @param updatedAuthorizationList is the updated list of the authorization
+     * @param actualAuthorizationList is the current authorization list
+     * @param errorCode is the error code of the operation
+     * @param errorDomain  is the domain code of the operation
+     */
+    private void verifyAuthorizationAndUpdate(Logbook logbookToUpdate, List<Authorization> updatedAuthorizationList, List<Authorization> actualAuthorizationList, int errorCode, String errorDomain) {
         //normalize tag
         for (Authorization authorization :
-                updatedAuthorizaionList) {
+                updatedAuthorizationList) {
             if (authorization.getId() == null) {
                 // create new
                 Authorization newAuthenticationID =
@@ -247,18 +261,25 @@ public class LogbookService {
                             .errorDomain(errorDomain)
                             .build()
             );
+
         }
         //check which authorization should be removed
         for (Authorization actualAuthorization :
                 actualAuthorizationList) {
-            boolean willBeUpdated = updatedAuthorizaionList.stream().anyMatch(
+            // cheek if we need to update
+            Authorization updatedAuth = updatedAuthorizationList.stream().filter(
                     ut -> ut.getId() != null && ut.getId().compareTo(actualAuthorization.getId()) == 0
-            );
-            if (willBeUpdated) {
+            ).findFirst().orElse(null);
+
+            if (updatedAuth != null) {
                 // update
                 Authorization updatedAuthorization = wrapCatch(
                         () -> authorizationRepository.save(
-                                actualAuthorization
+                                actualAuthorization.toBuilder()
+                                        .authorizationType(
+                                                updatedAuth.getAuthorizationType()
+                                        )
+                                        .build()
                         ),
                         -2,
                         "LogbookService:verifyAuthorizationAndUpdate"
@@ -435,7 +456,7 @@ public class LogbookService {
     /**
      * Return the full logbooks description
      *
-     * @param logbookId the logbooks id
+     * @param logbookId the logbook id
      * @return the full logbooks
      */
     public LogbookDTO getLogbook(String logbookId) {
@@ -449,6 +470,23 @@ public class LogbookService {
                                 .errorDomain("LogbookService:getLogbook")
                                 .build()
                 ),
+                -1,
+                "LogbookService:getLogbook"
+        );
+    }
+
+    /**
+     * Return the full logbooks description
+     *
+     * @param logbookIds the logbooks id
+     * @return the full logbooks list
+     */
+    public List<LogbookDTO> getLogbook(List<String> logbookIds) {
+        return wrapCatch(() -> logbookRepository.findAllById(
+                        logbookIds
+                ).stream().map(
+                        logbookMapper::fromModel
+                ).toList(),
                 -1,
                 "LogbookService:getLogbook"
         );
