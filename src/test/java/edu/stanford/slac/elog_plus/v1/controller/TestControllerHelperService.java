@@ -8,6 +8,7 @@ import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.auth.test_mock_auth.JWTHelper;
 import edu.stanford.slac.elog_plus.v1.service.SharedUtilityService;
 import lombok.AllArgsConstructor;
+import org.assertj.core.api.Assertions;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -25,6 +26,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static edu.stanford.slac.elog_plus.model.Authorization.Type.Read;
 import static edu.stanford.slac.elog_plus.model.Authorization.Type.Write;
@@ -92,9 +94,15 @@ public class TestControllerHelperService {
         return newLogbookApiResult;
     }
 
-    public ApiResultResponse<String> newAttachment(MockMvc mockMvc, ResultMatcher resultMatcher, MockMultipartFile file) throws Exception {
+    public ApiResultResponse<String> newAttachment(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            MockMultipartFile file) throws Exception {
+        var requestBuilder =   multipart("/v1/attachment").file(file);
+        userInfo.ifPresent(login -> requestBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
         MvcResult result_upload = mockMvc.perform(
-                        multipart("/v1/attachment").file(file)
+                        requestBuilder
                 )
                 .andExpect(resultMatcher)
                 .andReturn();
@@ -108,10 +116,17 @@ public class TestControllerHelperService {
         return res;
     }
 
-    public void checkDownloadedFile(MockMvc mockMvc, ResultMatcher resultMatcher, String attachmentID, String mediaType) throws Exception {
+    public void checkDownloadedFile(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String attachmentID,
+            String mediaType) throws Exception {
+        var requestBuilder =  get("/v1/attachment/{id}/download", attachmentID)
+                .contentType(mediaType);
+        userInfo.ifPresent(login -> requestBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
         MvcResult result = mockMvc.perform(
-                        get("/v1/attachment/{id}/download", attachmentID)
-                                .contentType(mediaType)
+                        requestBuilder
                 )
                 .andExpect(resultMatcher)
                 .andReturn();
@@ -123,10 +138,17 @@ public class TestControllerHelperService {
         AssertionsForClassTypes.assertThat(result.getResponse().getContentType()).isEqualTo(mediaType);
     }
 
-    public void checkDownloadedPreview(MockMvc mockMvc, ResultMatcher resultMatcher, String attachmentID, String mediaType) throws Exception {
+    public void checkDownloadedPreview(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String attachmentID,
+            String mediaType) throws Exception {
+        var requestBuilder =  get("/v1/attachment/{id}/preview.jpg", attachmentID)
+                .contentType(mediaType);
+        userInfo.ifPresent(login -> requestBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
         MvcResult result = mockMvc.perform(
-                        get("/v1/attachment/{id}/preview.jpg", attachmentID)
-                                .contentType(mediaType)
+                        requestBuilder
                 )
                 .andExpect(resultMatcher)
                 .andReturn();
@@ -792,5 +814,34 @@ public class TestControllerHelperService {
                 result.getResponse().getContentAsString(),
                 new TypeReference<>() {
                 });
+    }
+    public ApiResultResponse<LogbookDTO> getTestLogbook(MockMvc mockMvc) {
+        return getTestLogbook(mockMvc, "user1@slac.stanford.edu");
+    }
+    public ApiResultResponse<LogbookDTO> getTestLogbook(MockMvc mockMvc, String whitUserEmail) {
+        ApiResultResponse<String> logbookCreationResult = assertDoesNotThrow(
+                () -> createNewLogbook(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of(
+                                whitUserEmail
+                        ),
+                        NewLogbookDTO
+                                .builder()
+                                .name(UUID.randomUUID().toString())
+                                .build()
+                ));
+        Assertions.assertThat(logbookCreationResult).isNotNull();
+        Assertions.assertThat(logbookCreationResult.getErrorCode()).isEqualTo(0);
+        return assertDoesNotThrow(
+                () -> getLogbookByID(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
+                        logbookCreationResult.getPayload()
+                )
+        );
     }
 }

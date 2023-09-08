@@ -87,7 +87,7 @@ public class EntriesControllerTest {
 
     @Test
     public void createNewLog() throws Exception {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         ApiResultResponse<String> newLogID =
                 assertDoesNotThrow(
                         () ->
@@ -118,6 +118,9 @@ public class EntriesControllerTest {
                     () -> testControllerHelperService.newAttachment(
                             mockMvc,
                             status().isCreated(),
+                            Optional.of(
+                                    "user1@slac.stanford.edu"
+                            ),
                             new MockMultipartFile(
                                     "uploadFile",
                                     "test.png",
@@ -129,7 +132,7 @@ public class EntriesControllerTest {
         }
         assertThat(newAttachmentID.getErrorCode()).isEqualTo(0);
 
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         ApiResultResponse<String> finalNewAttachmentID = newAttachmentID;
         ApiResultResponse<String> newLogID =
                 assertDoesNotThrow(
@@ -191,7 +194,7 @@ public class EntriesControllerTest {
 
     @Test
     public void failCreatingNewLogWitWrongTag() throws Exception {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
 
         TagNotFound tagNotFound =
                 assertThrows(
@@ -222,7 +225,7 @@ public class EntriesControllerTest {
 
     @Test
     public void createNewLogAndSearchWithPaging() throws Exception {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         ApiResultResponse<String> newLogID =
                 assertDoesNotThrow(
                         () ->
@@ -281,7 +284,7 @@ public class EntriesControllerTest {
 
     @Test
     public void fetchFullLog() {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         ApiResultResponse<String> newLogID =
                 assertDoesNotThrow(
                         () ->
@@ -318,7 +321,7 @@ public class EntriesControllerTest {
 
     @Test
     public void createNewSupersedeLog() throws Exception {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         ApiResultResponse<String> newLogIDResult =
                 assertDoesNotThrow(
                         () ->
@@ -394,7 +397,7 @@ public class EntriesControllerTest {
 
     @Test
     public void createDoubleSupersedeFailed() throws Exception {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         ApiResultResponse<String> newLogIDResult =
                 assertDoesNotThrow(
                         () ->
@@ -457,7 +460,7 @@ public class EntriesControllerTest {
 
     @Test
     public void createSupersedeFailedOnNotFoundEntry() throws Exception {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         //create supersede
         EntryNotFound exception = assertThrows(
                 EntryNotFound.class,
@@ -481,7 +484,7 @@ public class EntriesControllerTest {
 
     @Test
     public void createNewSupersedeOfEntryWithFollowUp() throws Exception {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         ApiResultResponse<String> newLogIDResult =
                 assertDoesNotThrow(
                         () ->
@@ -587,7 +590,7 @@ public class EntriesControllerTest {
 
     @Test
     public void getLogHistoryAndFollowingLog() throws Exception {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         ApiResultResponse<String> newLogIDResult =
                 assertDoesNotThrow(
                         () ->
@@ -669,7 +672,7 @@ public class EntriesControllerTest {
 
     @Test
     public void createNewFollowUpLogsAndFetch() throws Exception {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         ApiResultResponse<String> newLogIDResult =
                 assertDoesNotThrow(
                         () ->
@@ -796,7 +799,7 @@ public class EntriesControllerTest {
 
     @Test
     public void searchWithAnchor() {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         // create some data
         for (int idx = 0; idx < 100; idx++) {
             int finalIdx = idx;
@@ -938,7 +941,7 @@ public class EntriesControllerTest {
 
     @Test
     public void searchWithTags() {
-        ApiResultResponse<LogbookDTO> logbookCreationResult = getTestLogbook();
+        ApiResultResponse<LogbookDTO> logbookCreationResult = testControllerHelperService.getTestLogbook(mockMvc);
         // create new logbooks
         // create some data
         String[] tagIds = new String[100];
@@ -1023,7 +1026,7 @@ public class EntriesControllerTest {
 
     @Test
     public void searchWithTagsAllInclueded() {
-        ApiResultResponse<LogbookDTO> logbookCreationResult = getTestLogbook();
+        ApiResultResponse<LogbookDTO> logbookCreationResult = testControllerHelperService.getTestLogbook(mockMvc);
         ApiResultResponse<String> newTagIDA = assertDoesNotThrow(
                 () -> testControllerHelperService.createNewLogbookTags(
                         mockMvc,
@@ -1135,39 +1138,10 @@ public class EntriesControllerTest {
         assertThat(findTags).isNotNull();
         assertThat(findTags.getPayload().size()).isEqualTo(2);
     }
-    private ApiResultResponse<LogbookDTO> getTestLogbook() {
-        return getTestLogbook("user1@slac.stanford.edu");
-    }
-    private ApiResultResponse<LogbookDTO> getTestLogbook(String whitUserEmail) {
-        ApiResultResponse<String> logbookCreationResult = assertDoesNotThrow(
-                () -> testControllerHelperService.createNewLogbook(
-                        mockMvc,
-                        status().isCreated(),
-                        Optional.of(
-                                whitUserEmail
-                        ),
-                        NewLogbookDTO
-                                .builder()
-                                .name(UUID.randomUUID().toString())
-                                .build()
-                ));
-        assertThat(logbookCreationResult).isNotNull();
-        assertThat(logbookCreationResult.getErrorCode()).isEqualTo(0);
-        return assertDoesNotThrow(
-                () -> testControllerHelperService.getLogbookByID(
-                        mockMvc,
-                        status().isOk(),
-                        Optional.of(
-                                "user1@slac.stanford.edu"
-                        ),
-                        logbookCreationResult.getPayload()
-                )
-        );
-    }
 
     @Test
     public void searchWithText() {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         // create some data
         for (int idx = 0; idx < 100; idx++) {
             int finalIdx = idx;
@@ -1214,7 +1188,7 @@ public class EntriesControllerTest {
 
     @Test
     public void createLogWithTagFailWithNoSave() {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         TagNotFound tagNotFound =
                 assertThrows(
                         TagNotFound.class,
@@ -1239,7 +1213,7 @@ public class EntriesControllerTest {
 
     @Test
     public void createLogWithTagOK() {
-        ApiResultResponse<LogbookDTO> logbookCreationResult = getTestLogbook();
+        ApiResultResponse<LogbookDTO> logbookCreationResult = testControllerHelperService.getTestLogbook(mockMvc);
         ApiResultResponse<String> tag01Id =
                 assertDoesNotThrow(
                         () ->
@@ -1295,7 +1269,7 @@ public class EntriesControllerTest {
 
     @Test
     public void getAllTags() {
-        ApiResultResponse<LogbookDTO> logbookCreationResult = getTestLogbook();
+        ApiResultResponse<LogbookDTO> logbookCreationResult = testControllerHelperService.getTestLogbook(mockMvc);
         ApiResultResponse<String> tag01Id =
                 assertDoesNotThrow(
                         () ->
@@ -1351,7 +1325,7 @@ public class EntriesControllerTest {
 
     @Test
     public void searchWithAnchorUsingLoggedAtInsteadEventAt() {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         // create some data
         for (int idx = 0; idx < 100; idx++) {
             int finalIdx = idx;
@@ -1497,7 +1471,7 @@ public class EntriesControllerTest {
 
     @Test
     public void searchWithAnchorUsingReversedEventAtAndDefaultOrder() {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         // create some data
         for (int idx = 0; idx < 100; idx++) {
             int finalIdx = idx;
@@ -1645,7 +1619,7 @@ public class EntriesControllerTest {
     @Test
     public void searchWithAnchorUsingReversedEventAtAndDefaultOrderWithDateLimit() {
         LocalDateTime now = LocalDateTime.now();
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         // create some data
         for (int idx = 0; idx < 100; idx++) {
             int finalIdx = idx;
@@ -1725,7 +1699,7 @@ public class EntriesControllerTest {
     @Test
     public void searchWithAnchorUsingReversedEventAtAndDefaultOrderWithDateLimitAndPaging() {
         LocalDateTime now = LocalDateTime.now();
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         // create some data
         for (int idx = 0; idx < 100; idx++) {
             int finalIdx = idx;
@@ -1794,7 +1768,7 @@ public class EntriesControllerTest {
 
     @Test
     public void findSummaryId() {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         ApiResultResponse<LogbookDTO> finalNewLogBookResult2 = newLogBookResult;
         ApiResultResponse<Boolean> replacementResult = assertDoesNotThrow(
                 () -> testControllerHelperService.updateLogbook(
@@ -1881,7 +1855,7 @@ public class EntriesControllerTest {
 
     @Test
     public void createNewLogWitReferenceAndFindAllReferenced() throws Exception {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         // create entry for use as references
         ApiResultResponse<String> newLogID1 =
                 assertDoesNotThrow(

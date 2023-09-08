@@ -135,17 +135,17 @@ public class AttachmentsController {
                 .stream()
                 .map(
                         summary -> {
-                            List<LogbookSummaryDTO> filteredLogbok = summary.logbooks().stream()
+                            List<LogbookSummaryDTO> filteredLogbook = summary.logbooks().stream()
                                     .filter(
-                                            lId -> authService.checkAuthorizationOForOwnerAuthTypeAndResourcePrefix(
+                                            lbSummary -> authService.checkAuthorizationOForOwnerAuthTypeAndResourcePrefix(
                                                     authentication,
                                                     Read,
-                                                    "/logbook/%s".formatted(lId)
+                                                    "/logbook/%s".formatted(lbSummary.id())
                                             )
                                     ).toList();
                             return summary.toBuilder()
                                     .logbooks(
-                                            filteredLogbok
+                                            filteredLogbook
                                     ).build();
                         }
                 )
