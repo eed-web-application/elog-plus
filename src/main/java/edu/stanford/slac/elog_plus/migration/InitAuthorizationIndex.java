@@ -61,9 +61,13 @@ public class InitAuthorizationIndex extends MongoDDLOps {
                                 "authorizationType",
                                 Sort.Direction.ASC
                         )
+                        .on(
+                                "resource",
+                                Sort.Direction.ASC
+                        )
                         .unique()
                         .sparse()
-                        .named("ownerAuthTarget")
+                        .named("ownerAuthResourceUnique")
         );
     }
 

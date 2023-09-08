@@ -23,7 +23,7 @@ import java.util.Optional;
 
 import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
 import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
-import static edu.stanford.slac.elog_plus.model.Authorization.Type.Admin;
+import static edu.stanford.slac.elog_plus.model.Authorization.Type.*;
 
 @Service
 @Log4j2
@@ -111,10 +111,10 @@ public class AuthService {
      * @param authorization the new authorization
      * @return updated authorization
      */
-    public AuthorizationDTO saveNewAuthorization(Authorization authorization) {
+    public AuthorizationDTO saveNewAuthorization(AuthorizationDTO authorization) {
         var savedAuth = wrapCatch(
                 () -> authorizationRepository.save(
-                        authorization
+                        authMapper.toModel(authorization)
                 ),
                 -1,
                 "AuthService::insertNewAuthorization"
@@ -172,10 +172,19 @@ public class AuthService {
             List<Authorization.Type> authorizationType,
             String resourcePrefix
     ) {
+        if(authorizationType==null || authorizationType.isEmpty()){
+            // with no types find on all
+            authorizationType = List.of(
+                    Read,
+                    Write,
+                    Admin
+            );
+        }
+        List<Authorization.Type> finalAuthorizationType = authorizationType;
         return wrapCatch(
                 () -> authorizationRepository.findByOwnerAndAuthorizationTypeInAndResourceStartingWith(
                         owner,
-                        authorizationType,
+                        finalAuthorizationType,
                         resourcePrefix
                 ),
                 -1,

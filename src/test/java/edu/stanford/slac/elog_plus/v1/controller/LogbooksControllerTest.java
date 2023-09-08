@@ -36,7 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest()
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(MockitoExtension.class)
-@ActiveProfiles(profiles = "test")
+@ActiveProfiles({"test"})
 public class LogbooksControllerTest {
     @Autowired
     private MockMvc mockMvc;

@@ -22,10 +22,14 @@ import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequ
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import static edu.stanford.slac.elog_plus.model.Authorization.Type.Read;
+import static edu.stanford.slac.elog_plus.model.Authorization.Type.Write;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -37,6 +41,56 @@ public class TestControllerHelperService {
         this.appProperties = appProperties;
     }
 
+    public  ApiResultResponse<String> getNewLogbookWithNameWithAuthorization(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String logbookName,
+            List<AuthorizationDTO> authorizations) {
+        var newLogbookApiResult = assertDoesNotThrow(
+                () -> createNewLogbook(
+                        mockMvc,
+                        status().isCreated(),
+                        userInfo,
+                        NewLogbookDTO
+                                .builder()
+                                .name(logbookName)
+                                .build()
+                )
+        );
+
+         AssertionsForClassTypes.assertThat(newLogbookApiResult)
+                 .isNotNull()
+                 .extracting(
+                         ApiResultResponse::getErrorCode
+                 )
+                 .isEqualTo(0);
+
+        var updateApiResult = assertDoesNotThrow(
+                () -> updateLogbook(
+                        mockMvc,
+                        status().isCreated(),
+                        userInfo,
+                        newLogbookApiResult.getPayload(),
+                        UpdateLogbookDTO
+                                .builder()
+                                .name(logbookName)
+                                .shifts(Collections.emptyList())
+                                .tags(Collections.emptyList())
+                                .authorization(
+                                        authorizations
+                                )
+                                .build()
+                )
+        );
+        AssertionsForClassTypes.assertThat(updateApiResult)
+                .isNotNull()
+                .extracting(
+                        ApiResultResponse::getErrorCode
+                )
+                .isEqualTo(0);
+        return newLogbookApiResult;
+    }
 
     public ApiResultResponse<String> newAttachment(MockMvc mockMvc, ResultMatcher resultMatcher, MockMultipartFile file) throws Exception {
         MvcResult result_upload = mockMvc.perform(
@@ -404,12 +458,22 @@ public class TestControllerHelperService {
 
     public ApiResultResponse<List<LogbookDTO>> getAllLogbook(
             MockMvc mockMvc,
-            ResultMatcher resultMatcher) throws Exception {
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            Optional<Boolean> includeAuthorizations,
+            Optional<List<String>> filterForAuthorizationTypes
+    ) throws Exception {
 
         MockHttpServletRequestBuilder getBuilder =
                 get("/v1/logbooks")
                         .accept(MediaType.APPLICATION_JSON);
-
+        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
+        includeAuthorizations.ifPresent( b->getBuilder.param("includeAuthorizations", String.valueOf(b)));
+        filterForAuthorizationTypes.ifPresent(authStr -> {
+            String[] tlArray = new String[authStr.size()];
+            authStr.toArray(tlArray);
+            getBuilder.param("filterForAuthorizationTypes", tlArray);
+        });
         MvcResult result = mockMvc.perform(
                         getBuilder
                 )

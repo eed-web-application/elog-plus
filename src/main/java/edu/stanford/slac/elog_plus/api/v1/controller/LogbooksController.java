@@ -14,12 +14,15 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
 import static edu.stanford.slac.elog_plus.exception.Utility.*;
 import static edu.stanford.slac.elog_plus.model.Authorization.Type.*;
+import static java.util.Collections.emptyList;
 
 @RestController()
 @RequestMapping("/v1/logbooks")
@@ -33,10 +36,10 @@ public class LogbooksController {
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     public ApiResultResponse<List<LogbookDTO>> getAllLogbook(
-            @Parameter(name = "includeFollowUps", description = "If true the authorization will be loaded for every logbook found")
+            @Parameter(name = "includeAuthorizations", description = "If true the authorization will be loaded for every logbook found")
             @RequestParam("includeAuthorizations") Optional<Boolean> includeAuthorizations,
-            @Parameter(name = "includeFollowUps", description = "Filter the logbook for authorization types")
-            @RequestParam("authorizationTypes") Optional<String> authorizationTypes,
+            @Parameter(name = "filterForAuthorizationTypes", description = "Filter the logbook for authorization types")
+            @RequestParam("filterForAuthorizationTypes") Optional<List<String>> authorizationTypes,
             Authentication authentication
     ) {
         //todo return logbook also for a specific authorization level
@@ -49,7 +52,7 @@ public class LogbooksController {
                         .errorDomain("LogbooksController::getAllLogbook")
                         .build()
         );
-        if (authService.checkForRoot(authentication)) {
+        if (authService.checkForRoot(authentication) && authorizationTypes.isEmpty()) {
             // for the admin return all logbook
             return ApiResultResponse.of(
                     logbookService.getAllLogbook(includeAuthorizations)
@@ -58,7 +61,14 @@ public class LogbooksController {
             // get all the logbook where the user is authorized (all type of authorization)
             List<AuthorizationDTO> authOnLogbook = authService.getAllAuthorization(
                     authentication.getCredentials().toString(),
-                    List.of(Read, Write, Admin),
+                    authorizationTypes.orElse(
+                                    emptyList()
+                            )
+                            .stream()
+                            .map(
+                                    Authorization.Type::valueOf
+                            )
+                            .toList(),
                     "/logbook/"
             );
             return ApiResultResponse.of(
@@ -66,7 +76,7 @@ public class LogbooksController {
                             authOnLogbook.stream()
                                     .map(
                                             auth -> auth.resource().substring(
-                                                    auth.resource().lastIndexOf("/")
+                                                    auth.resource().lastIndexOf("/")+1
                                             )
                                     )
                                     .toList(),
@@ -109,7 +119,7 @@ public class LogbooksController {
     )
     public ApiResultResponse<LogbookDTO> getLogbook(
             @PathVariable String logbookId,
-            @Parameter(name = "includeFollowUps", description = "If true the authorization will be loaded for every logbook found")
+            @Parameter(name = "includeAuthorizations", description = "If true the authorization will be loaded for every logbook found")
             @RequestParam("includeAuthorizations") Optional<Boolean> includeAuthorizations,
             Authentication authentication
     ) {
