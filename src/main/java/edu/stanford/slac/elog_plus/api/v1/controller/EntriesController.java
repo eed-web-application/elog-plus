@@ -49,18 +49,14 @@ public class EntriesController {
                                         List.of(
                                                 // or is an admin
                                                 () -> authService.checkForRoot(authentication),
-                                                // or can write or administer all the logbook which the entry belong
+                                                // or can at least write the logbook which the entry belong
                                                 () -> all(
-                                                        // write and read
                                                         newEntry.logbooks().stream()
                                                                 .map(
                                                                         logbookId -> (Supplier<Boolean>) () -> authService.checkAuthorizationOnResource(
                                                                                 authentication,
                                                                                 "/logbook/%s".formatted(logbookId),
-                                                                                List.of(
-                                                                                        Write,
-                                                                                        Admin
-                                                                                )
+                                                                                Write
                                                                         )
                                                                 )
                                                                 .toList()
@@ -104,18 +100,15 @@ public class EntriesController {
                                         List.of(
                                                 // or is an admin
                                                 () -> authService.checkForRoot(authentication),
-                                                // or can write or administer all the logbook which the entry belong
+                                                // or can at least write
                                                 () -> all(
-                                                        // write and read
+                                                        // write
                                                         newSupersedeEntry.logbooks().stream()
                                                                 .map(
                                                                         logbookId -> (Supplier<Boolean>) () -> authService.checkAuthorizationOnResource(
                                                                                 authentication,
                                                                                 "/logbook/%s".formatted(logbookId),
-                                                                                List.of(
-                                                                                        Write,
-                                                                                        Admin
-                                                                                )
+                                                                                Write
                                                                         )
                                                                 )
                                                                 .toList()
@@ -156,18 +149,15 @@ public class EntriesController {
                                         List.of(
                                                 // or is an admin
                                                 () -> authService.checkForRoot(authentication),
-                                                // or can write or administer all the logbook which the entry belong
+                                                // or can at least write the logbook which the entry belong
                                                 () -> all(
-                                                        // write and read
+                                                        // write
                                                         newFollowUpEntry.logbooks().stream()
                                                                 .map(
                                                                         logbookId -> (Supplier<Boolean>) () -> authService.checkAuthorizationOnResource(
                                                                                 authentication,
                                                                                 "/logbook/%s".formatted(logbookId),
-                                                                                List.of(
-                                                                                        Write,
-                                                                                        Admin
-                                                                                )
+                                                                                Write
                                                                         )
                                                                 )
                                                                 .toList()
@@ -225,7 +215,7 @@ public class EntriesController {
                                                     lb -> authService.checkAuthorizationOnResource(
                                                             authentication,
                                                             "/logbook/%s".formatted(lb.id()),
-                                                            List.of(Read, Write, Admin)
+                                                            Read
                                                     )
                                             )
                                             .toList();

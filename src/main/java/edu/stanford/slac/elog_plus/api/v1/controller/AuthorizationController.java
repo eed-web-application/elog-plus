@@ -76,9 +76,7 @@ public class AuthorizationController {
                         () -> authService.checkAuthorizationOnResource(
                                 authentication,
                                 "/",
-                                List.of(
-                                        Admin
-                                )
+                                Admin
                         )
                 ),
                 NotAuthorized
@@ -119,9 +117,7 @@ public class AuthorizationController {
                         () -> authService.checkAuthorizationOnResource(
                                 authentication,
                                 "/",
-                                List.of(
-                                        Admin
-                                )
+                                Admin
                         )
                 ),
                 NotAuthorized

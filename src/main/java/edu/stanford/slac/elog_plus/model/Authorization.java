@@ -17,11 +17,32 @@ import java.time.LocalDateTime;
 @ToString
 @Document()
 public class Authorization {
-    public enum Type{
-        Read,
-        Write,
-        Admin
+    /**
+     * all authorization types
+     */
+    @Getter
+    public enum Type {
+        // can only read on the resource data
+        Read(0),
+        // can only read and write on the resource data
+        Write(1),
+        // can read, write and administer the resource data
+        Admin(2);
+        private final int value;
+
+        Type(int value) {
+            this.value = value;
+        }
+        public static Type fromValue(int value) {
+            for (Type myEnum : Type.values()) {
+                if (myEnum.value == value) {
+                    return myEnum;
+                }
+            }
+            throw new IllegalArgumentException("Invalid value: " + value);
+        }
     }
+
     @Id
     private String id;
     /**
@@ -29,7 +50,7 @@ public class Authorization {
      * that express the entitlement to take an action
      * on the specific resource
      */
-    private Type authorizationType;
+    private Integer authorizationType;
     /**
      * Is the type of the resource to which the
      * authorization belong
@@ -41,7 +62,6 @@ public class Authorization {
      * the value identify the owner of the authorization
      */
     private String owner;
-
     @CreatedDate
     private LocalDateTime creationDate;
     @CreatedBy

@@ -10,11 +10,11 @@ import java.util.Optional;
  * Repository for the attachment managements
  */
 public interface AuthorizationRepository extends MongoRepository<Authorization, String> {
-    Optional<Authorization> findByOwnerIsAndResourceIsAndAuthorizationTypeIs(String owner, String resource, Authorization.Type authorizationType);
+    Optional<Authorization> findByOwnerIsAndResourceIsAndAuthorizationTypeIsGreaterThanEqual(String owner, String resource, Integer authorizationType);
     List<Authorization> findByResourceIs(String resource);
-    List<Authorization> findByResourceIsAndAuthorizationTypeIs(String resource, Authorization.Type authorizationType);
-    List<Authorization> findByOwnerAndAuthorizationTypeInAndResourceStartingWith(String owner, List<Authorization.Type> type, String resource);
-    void deleteByOwnerIsAndResourceIsAndAuthorizationTypeIs(String owner, String resource, Authorization.Type authorizationType);
+    List<Authorization> findByResourceIsAndAuthorizationTypeIsGreaterThanEqual(String resource, Integer authorizationType);
+    List<Authorization> findByOwnerAndAuthorizationTypeIsGreaterThanEqualAndResourceStartingWith(String owner, Integer type, String resource);
+    void deleteByOwnerIsAndResourceIsAndAuthorizationTypeIs(String owner, String resource, Integer authorizationType);
     void deleteAllByResourceStartingWith(String resourcePrefix);
     void deleteAllByResourceIs(String resource);
 }

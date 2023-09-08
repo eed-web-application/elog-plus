@@ -110,6 +110,7 @@ public class LogbookControllerAuthTest {
                                 .build()
                 )
         );
+
         var newLogbookApiResultThree = testControllerHelperService.getNewLogbookWithNameWithAuthorization(
                 mockMvc,
                 status().isCreated(),

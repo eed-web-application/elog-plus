@@ -39,7 +39,7 @@ public class LogbooksController {
             @Parameter(name = "includeAuthorizations", description = "If true the authorization will be loaded for every logbook found")
             @RequestParam("includeAuthorizations") Optional<Boolean> includeAuthorizations,
             @Parameter(name = "filterForAuthorizationTypes", description = "Filter the logbook for authorization types")
-            @RequestParam("filterForAuthorizationTypes") Optional<List<String>> authorizationTypes,
+            @RequestParam("filterForAuthorizationTypes") Optional<String> authorizationType,
             Authentication authentication
     ) {
         //todo return logbook also for a specific authorization level
@@ -52,7 +52,7 @@ public class LogbooksController {
                         .errorDomain("LogbooksController::getAllLogbook")
                         .build()
         );
-        if (authService.checkForRoot(authentication) && authorizationTypes.isEmpty()) {
+        if (authService.checkForRoot(authentication)) {
             // for the admin return all logbook
             return ApiResultResponse.of(
                     logbookService.getAllLogbook(includeAuthorizations)
@@ -61,14 +61,11 @@ public class LogbooksController {
             // get all the logbook where the user is authorized (all type of authorization)
             List<AuthorizationDTO> authOnLogbook = authService.getAllAuthorization(
                     authentication.getCredentials().toString(),
-                    authorizationTypes.orElse(
-                                    emptyList()
-                            )
-                            .stream()
-                            .map(
-                                    Authorization.Type::valueOf
-                            )
-                            .toList(),
+                    authorizationType.map(
+                            Authorization.Type::valueOf
+                    ).orElse(
+                            Read
+                    ),
                     "/logbook/"
             );
             return ApiResultResponse.of(
@@ -76,7 +73,7 @@ public class LogbooksController {
                             authOnLogbook.stream()
                                     .map(
                                             auth -> auth.resource().substring(
-                                                    auth.resource().lastIndexOf("/")+1
+                                                    auth.resource().lastIndexOf("/") + 1
                                             )
                                     )
                                     .toList(),
@@ -138,9 +135,7 @@ public class LogbooksController {
                                                 () -> authService.checkAuthorizationOnResource(
                                                         authentication,
                                                         "/logbook/%s".formatted(logbookId),
-                                                        List.of(
-                                                                Admin
-                                                        )
+                                                        Admin
                                                 )
                                         )
                                 )
@@ -182,9 +177,7 @@ public class LogbooksController {
                                                 () -> authService.checkAuthorizationOnResource(
                                                         authentication,
                                                         "/logbook/%s".formatted(logbookId),
-                                                        List.of(
-                                                                Admin
-                                                        )
+                                                        Admin
                                                 )
                                         )
                                 )
@@ -227,9 +220,7 @@ public class LogbooksController {
                                                 () -> authService.checkAuthorizationOnResource(
                                                         authentication,
                                                         "/logbook/%s".formatted(logbookId),
-                                                        List.of(
-                                                                Admin
-                                                        )
+                                                         Admin
                                                 )
                                         )
                                 )
@@ -269,11 +260,7 @@ public class LogbooksController {
                                                 () -> authService.checkAuthorizationOnResource(
                                                         authentication,
                                                         "/logbook/%s".formatted(logbookId),
-                                                        List.of(
-                                                                Read,
-                                                                Write,
-                                                                Admin
-                                                        )
+                                                        Read
                                                 )
                                         )
                                 )
@@ -316,9 +303,7 @@ public class LogbooksController {
                                                 () -> authService.checkAuthorizationOnResource(
                                                         authentication,
                                                         "/logbook/%s".formatted(logbookId),
-                                                        List.of(
-                                                                Admin
-                                                        )
+                                                        Admin
                                                 )
                                         )
                                 )
