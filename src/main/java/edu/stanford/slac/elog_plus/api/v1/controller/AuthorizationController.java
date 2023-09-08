@@ -19,8 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Optional;
 
-import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
-import static edu.stanford.slac.elog_plus.exception.Utility.assertionAllTrue;
+import static edu.stanford.slac.elog_plus.exception.Utility.*;
 import static edu.stanford.slac.elog_plus.model.Authorization.Type.Admin;
 
 @Log4j2
@@ -71,7 +70,7 @@ public class AuthorizationController {
                         .build()
         );
         // assert that all the user that are root or admin of whatever resource
-        assertionAllTrue(
+        assertionAnyTrue(
                 List.of(
                         () -> authService.checkForRoot(authentication),
                         () -> authService.checkAuthorizationOnResource(
@@ -114,7 +113,7 @@ public class AuthorizationController {
                         .build()
         );
         // assert that all the user that are root or admin of whatever resource
-        assertionAllTrue(
+        assertionAnyTrue(
                 List.of(
                         () -> authService.checkForRoot(authentication),
                         () -> authService.checkAuthorizationOnResource(

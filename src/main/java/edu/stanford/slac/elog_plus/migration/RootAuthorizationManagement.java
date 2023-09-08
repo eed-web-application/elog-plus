@@ -12,7 +12,7 @@ import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 
 @Log4j2
 @AllArgsConstructor
-@Profile("!test")
+@Profile("manage-root-user")
 @ChangeUnit(id = "root-authorization-management", order = "0", author = "bisegni", runAlways = true)
 public class RootAuthorizationManagement extends MongoDDLOps {
     private final AuthService authService;

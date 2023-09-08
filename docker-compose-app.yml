@@ -12,7 +12,7 @@ services:
       - WAIT_LOGGER_LEVEL=debug
       - WAIT_TIMEOUT=90
       - WAIT_HOSTS=mongodb-primary:27017, minio:9000
-      - SPRING_PROFILES_ACTIVE=test
+      - SPRING_PROFILES_ACTIVE=test,manage-root-user
     ports:
       - "8080:8080"
     volumes:
