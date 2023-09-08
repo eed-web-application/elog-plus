@@ -78,7 +78,7 @@ public class EntriesControllerTest {
         mongoTemplate.remove(new Query(), Attachment.class);
         mongoTemplate.remove(new Query(), Logbook.class);
 
-        //reset authorization
+        //reset authorizations
         mongoTemplate.remove(new Query(), Authorization.class);
         appProperties.getRootUserList().clear();
         appProperties.getRootUserList().add("user1@slac.stanford.edu");
@@ -162,6 +162,9 @@ public class EntriesControllerTest {
                             () ->
                                     testControllerHelperService.getFullLog(
                                             mockMvc,
+                                            Optional.of(
+                                                    "user1@slac.stanford.edu"
+                                            ),
                                             newLogID.getPayload()
                                     )
                     );
@@ -175,13 +178,15 @@ public class EntriesControllerTest {
                 () ->
                         testControllerHelperService.getFullLog(
                                 mockMvc,
+                                Optional.of(
+                                        "user1@slac.stanford.edu"
+                                ),
                                 newLogID.getPayload()
                         )
         );
         assertThat(logDto.getErrorCode()).isEqualTo(0);
         assertThat(logDto.getPayload().attachments().size()).isEqualTo(1);
         assertThat(logDto.getPayload().attachments().get(0).miniPreview()).isNotNull();
-
     }
 
     @Test
@@ -265,6 +270,9 @@ public class EntriesControllerTest {
                                 testControllerHelperService.getFullLog(
                                         mockMvc,
                                         status().is4xxClientError(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         "bad-id"
                                 )
                 );
@@ -298,6 +306,9 @@ public class EntriesControllerTest {
                         testControllerHelperService.getFullLog(
                                 mockMvc,
                                 status().isOk(),
+                                Optional.of(
+                                        "user1@slac.stanford.edu"
+                                ),
                                 newLogID.getPayload()
                         )
         );
@@ -352,6 +363,9 @@ public class EntriesControllerTest {
                         testControllerHelperService.getFullLog(
                                 mockMvc,
                                 status().isOk(),
+                                Optional.of(
+                                        "user1@slac.stanford.edu"
+                                ),
                                 newLogIDResult.getPayload()
                         )
         );
@@ -535,6 +549,9 @@ public class EntriesControllerTest {
                         testControllerHelperService.getFullLog(
                                 mockMvc,
                                 status().isOk(),
+                                Optional.of(
+                                        "user1@slac.stanford.edu"
+                                ),
                                 newLogIDResult.getPayload(),
                                 true
                         )
@@ -550,6 +567,9 @@ public class EntriesControllerTest {
                         testControllerHelperService.getFullLog(
                                 mockMvc,
                                 status().isOk(),
+                                Optional.of(
+                                        "user1@slac.stanford.edu"
+                                ),
                                 newSupersedeLogIDResult.getPayload(),
                                 true
                         )
@@ -629,6 +649,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.getFullLog(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         newSupersedeLogIDResult2.getPayload(),
                         false,
                         false,
@@ -722,6 +745,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.getFullLog(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         newLogIDResult.getPayload(),
                         false
                 )
@@ -735,6 +761,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.getFullLog(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         newLogIDResult.getPayload(),
                         true
                 )
@@ -749,6 +778,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.getFullLog(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         newFULogIDOneResult.getPayload(),
                         false,
                         true,
@@ -1928,6 +1960,9 @@ public class EntriesControllerTest {
                                 testControllerHelperService.getReferencesByEntryId(
                                         mockMvc,
                                         status().isOk(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         newLogIDReferencer.getPayload()
                                 )
                 );
@@ -1943,6 +1978,9 @@ public class EntriesControllerTest {
                         testControllerHelperService.getFullLog(
                                 mockMvc,
                                 status().isOk(),
+                                Optional.of(
+                                        "user1@slac.stanford.edu"
+                                ),
                                 newLogIDReferencer.getPayload(),
                                 true,
                                 true,
@@ -1963,6 +2001,9 @@ public class EntriesControllerTest {
                         testControllerHelperService.getFullLog(
                                 mockMvc,
                                 status().isOk(),
+                                Optional.of(
+                                        "user1@slac.stanford.edu"
+                                ),
                                 newLogID1.getPayload(),
                                 true,
                                 true,
@@ -1981,6 +2022,9 @@ public class EntriesControllerTest {
                         testControllerHelperService.getFullLog(
                                 mockMvc,
                                 status().isOk(),
+                                Optional.of(
+                                        "user1@slac.stanford.edu"
+                                ),
                                 newLogID2.getPayload(),
                                 true,
                                 true,

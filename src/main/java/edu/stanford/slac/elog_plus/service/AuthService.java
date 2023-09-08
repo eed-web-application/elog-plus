@@ -79,26 +79,29 @@ public class AuthService {
      * @param authentication is the current authentication
      */
     public boolean checkForRoot(Authentication authentication) {
+        if(!checkAuthentication(authentication)) return false;
         // only root user can create logbook
-        List<AuthorizationDTO> foundAuth = getAllAuthorization(
+        List<AuthorizationDTO> foundAuth = getAllAuthorizationForOwnerAuthTypeAndResourcePrefix(
                 authentication.getCredentials().toString(),
                 Admin,
-                "*"
+                "^\\*"
         );
         return foundAuth != null && !foundAuth.isEmpty();
     }
 
     /**
-     * Check the authorization level on a resource, the authorization found
-     * will be all those authorization that will have the value of authorization type greater
-     * or equal to the one give as argument
+     * Check the authorizations level on a resource, the authorizations found
+     * will be all those authorizations that will have the value of authorizations type greater
+     * or equal to the one give as argument. This return true also if the current authentication
+     * is an admin
      *
-     * @param resource       the target resource
+     * @param authorization  the minimum value of authorizations to check
      * @param authentication the current authentication
-     * @param authorization  the minimum value of authorization to check
+     * @param resource       the target resource
      */
-    public boolean checkAuthorizationOnResource(Authentication authentication, String resource, Authorization.Type authorization) {
-        List<AuthorizationDTO> foundLogbookAuth = getAllAuthorization(
+    public boolean checkAuthorizationOForOwnerAuthTypeAndResourcePrefix(Authentication authentication, Authorization.Type authorization, String resource) {
+        if(!checkAuthentication(authentication)) return false;
+        List<AuthorizationDTO> foundLogbookAuth = getAllAuthorizationForOwnerAuthTypeAndResourcePrefix(
                 authentication.getCredentials().toString(),
                 authorization,
                 resource
@@ -108,10 +111,10 @@ public class AuthService {
 
 
     /**
-     * Create new authorization
+     * Create new authorizations
      *
-     * @param authorization the new authorization
-     * @return updated authorization
+     * @param authorization the new authorizations
+     * @return updated authorizations
      */
     public AuthorizationDTO saveAuthorization(AuthorizationDTO authorization) {
         var savedAuth = wrapCatch(
@@ -125,7 +128,7 @@ public class AuthService {
     }
 
     /**
-     * Delete an authorization for a resource with a specific prefix
+     * Delete an authorizations for a resource with a specific prefix
      *
      * @param resourcePrefix the prefix of the resource
      */
@@ -143,7 +146,7 @@ public class AuthService {
     }
 
     /**
-     * Delete an authorization for a resource with a specific path
+     * Delete an authorizations for a resource with a specific path
      *
      * @param resource the path of the resource
      */
@@ -161,15 +164,15 @@ public class AuthService {
     }
 
     /**
-     * Return all the authorization for an owner that match with the prefix
-     * and the authorization type
+     * Return all the authorizations for an owner that match with the prefix
+     * and the authorizations type
      *
-     * @param owner             si the owner target of the result authorization
+     * @param owner             si the owner target of the result authorizations
      * @param authorizationType filter on the @Authorization.Type
      * @param resourcePrefix    is the prefix of the authorized resource
      * @return the list of found resource
      */
-    public List<AuthorizationDTO> getAllAuthorization(
+    public List<AuthorizationDTO> getAllAuthorizationForOwnerAuthTypeAndResourcePrefix(
             String owner,
             Authorization.Type authorizationType,
             String resourcePrefix
@@ -178,7 +181,7 @@ public class AuthService {
                 () -> authorizationRepository.findByOwnerAndAuthorizationTypeIsGreaterThanEqualAndResourceStartingWith(
                         owner,
                         authorizationType.getValue(),
-                        resourcePrefix
+                        "^%s".formatted(resourcePrefix)
                 ),
                 -1,
                 "AuthService::getAllAuthorization"
@@ -215,14 +218,14 @@ public class AuthService {
         log.info("Ensure root authorizations for: {}", appProperties.getRootUserList());
         for (String userEmail :
                 appProperties.getRootUserList()) {
-            // find root authorization for user email
+            // find root authorizations for user email
             Optional<Authorization> rootAuth = authorizationRepository.findByOwnerIsAndResourceIsAndAuthorizationTypeIsGreaterThanEqual(
                     userEmail,
                     "*",
                     Admin.getValue()
             );
             if (rootAuth.isEmpty()) {
-                log.info("Create root authorization for user '{}'", userEmail);
+                log.info("Create root authorizations for user '{}'", userEmail);
                 authorizationRepository.save(
                         Authorization
                                 .builder()
@@ -233,7 +236,7 @@ public class AuthService {
                                 .build()
                 );
             } else {
-                log.info("Root authorization for '{}' already exists", userEmail);
+                log.info("Root authorizations for '{}' already exists", userEmail);
             }
         }
     }

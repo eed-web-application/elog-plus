@@ -7,7 +7,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
 
 /**
- * Define the authorization level on a specific resource
+ * Define the authorizations level on a specific resource
  *
  */
 @Data
@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 @Document()
 public class Authorization {
     /**
-     * all authorization types
+     * all authorizations types
      */
     @Getter
     public enum Type {
@@ -53,13 +53,13 @@ public class Authorization {
     private Integer authorizationType;
     /**
      * Is the type of the resource to which the
-     * authorization belong
+     * authorizations belong
      * ex: /logbook/id
      * ex: /logbook/id/entry/id
      */
     private String resource;
     /**
-     * the value identify the owner of the authorization
+     * the value identify the owner of the authorizations
      */
     private String owner;
     @CreatedDate

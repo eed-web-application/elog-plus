@@ -34,10 +34,10 @@ public abstract class LogbookMapper {
     public abstract Entry fromDTO(EntryNewDTO entryNewDTO, String firstName, String lastName, String userName);
 
     /**
-     * Return all the authorization for a logbook
+     * Return all the authorizations for a logbook
      * @param id the id of the logbook
-     * @param includeAuthorizations if false a null is returned as list of authorization
-     * @return the list of authorization of the logbook
+     * @param includeAuthorizations if false a null is returned as list of authorizations
+     * @return the list of authorizations of the logbook
      */
     public List<AuthorizationDTO> getAuthorizations(String id, boolean includeAuthorizations) {
         if (id == null || id.isEmpty()) return null;

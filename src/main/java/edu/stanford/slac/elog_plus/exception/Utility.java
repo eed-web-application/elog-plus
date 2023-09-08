@@ -1,5 +1,6 @@
 package edu.stanford.slac.elog_plus.exception;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
@@ -103,14 +104,34 @@ public class Utility {
     }
 
     /**
+     * All the check needs to be true
+     *
+     * @param exception the exception to fire
+     * @param checks    all the checks
+     */
+    @SafeVarargs
+    static public void assertion(
+            ControllerLogicException exception,
+            Supplier<Boolean>... checks
+    ) {
+        String callerClass = Thread.currentThread().getStackTrace()[2].getClassName();
+        String callerMethodName = Thread.currentThread().getStackTrace()[2].getMethodName();
+
+        if (!Arrays.stream(checks).allMatch(Supplier::get)) {
+            throw exception;
+        }
+    }
+
+    /**
      * Return exception in case all the check return false
-     * @param checks the list of the check to do
+     *
+     * @param checks    the list of the check to do
      * @param exception the exception to throw
      */
     static public void assertionAllFalse(
             List<Supplier<Boolean>> checks,
             ControllerLogicException exception
-    ){
+    ) {
         String callerClass = Thread.currentThread().getStackTrace()[2].getClassName();
         String callerMethodName = Thread.currentThread().getStackTrace()[2].getMethodName();
         if (checks.stream().noneMatch(Supplier::get)) {
@@ -120,13 +141,14 @@ public class Utility {
 
     /**
      * Return exception in case all the check return true
-     * @param checks the list of the check to do
+     *
+     * @param checks    the list of the check to do
      * @param exception the exception to throw
      */
     static public void assertionAllTrue(
             List<Supplier<Boolean>> checks,
             ControllerLogicException exception
-    ){
+    ) {
         String callerClass = Thread.currentThread().getStackTrace()[2].getClassName();
         String callerMethodName = Thread.currentThread().getStackTrace()[2].getMethodName();
         if (!checks.stream().allMatch(Supplier::get)) {
@@ -136,13 +158,14 @@ public class Utility {
 
     /**
      * Check at least any check is true
-     * @param checks the list of the check to do
+     *
+     * @param checks    the list of the check to do
      * @param exception the exception to throw
      */
     static public void assertionAnyTrue(
             List<Supplier<Boolean>> checks,
             ControllerLogicException exception
-    ){
+    ) {
         String callerClass = Thread.currentThread().getStackTrace()[2].getClassName();
         String callerMethodName = Thread.currentThread().getStackTrace()[2].getMethodName();
         if (checks.stream().noneMatch(Supplier::get)) {
@@ -152,28 +175,61 @@ public class Utility {
 
     /**
      * Perform an any match operation on the supplier
+     *
      * @param checks all the checks
      * @return true if any of the check return true
      */
-    static public boolean any(List<Supplier<Boolean>> checks){
+    @SafeVarargs
+    static public boolean any(Supplier<Boolean>... checks) {
+        return Arrays.stream(checks).anyMatch(Supplier::get);
+    }
+    /**
+     * Perform an any match operation on the supplier
+     *
+     * @param checks all the checks
+     * @return true if any of the check return true
+     */
+    static public boolean any(List<Supplier<Boolean>> checks) {
         return checks.stream().anyMatch(Supplier::get);
     }
 
     /**
      * Perform an any operation on the supplier
+     *
      * @param checks all the checks
      * @return true if all the check return true
      */
-    static public boolean all(List<Supplier<Boolean>> checks){
-        return checks.stream().allMatch(Supplier::get);
+    @SafeVarargs
+    static public boolean all(Supplier<Boolean>... checks) {
+        return Arrays.stream(checks).allMatch(Supplier::get);
     }
 
     /**
      * Perform an any operation on the supplier
+     *
+     * @param checks all the checks
+     * @return true if all the check return true
+     */
+    static public boolean all(List<Supplier<Boolean>> checks) {
+        return checks.stream().allMatch(Supplier::get);
+    }
+    /**
+     * Perform an any operation on the supplier
+     *
      * @param checks all the checks
      * @return true if none of the check return true
      */
-    static public boolean none(List<Supplier<Boolean>> checks){
+    @SafeVarargs
+    static public boolean none(Supplier<Boolean>... checks) {
+        return Arrays.stream(checks).noneMatch(Supplier::get);
+    }
+    /**
+     * Perform an any operation on the supplier
+     *
+     * @param checks all the checks
+     * @return true if none of the check return true
+     */
+    static public boolean none(List<Supplier<Boolean>> checks) {
         return checks.stream().noneMatch(Supplier::get);
     }
 }

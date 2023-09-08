@@ -161,6 +161,9 @@ public class ImportControllerTest {
                     () -> testControllerHelperService.getFullLog(
                             mockMvc,
                             status().isOk(),
+                            Optional.of(
+                                    "user1@slac.stanford.edu"
+                            ),
                             uploadResult.getPayload()
                     )
             );

@@ -3,7 +3,6 @@ package edu.stanford.slac.elog_plus.api.v1.controller;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.exception.NotAuthorized;
 import edu.stanford.slac.elog_plus.model.Authorization;
-import edu.stanford.slac.elog_plus.model.Logbook;
 import edu.stanford.slac.elog_plus.service.AuthService;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -14,15 +13,11 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import static edu.stanford.slac.elog_plus.exception.Utility.*;
 import static edu.stanford.slac.elog_plus.model.Authorization.Type.*;
-import static java.util.Collections.emptyList;
 
 @RestController()
 @RequestMapping("/v1/logbooks")
@@ -36,13 +31,13 @@ public class LogbooksController {
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     public ApiResultResponse<List<LogbookDTO>> getAllLogbook(
-            @Parameter(name = "includeAuthorizations", description = "If true the authorization will be loaded for every logbook found")
+            @Parameter(name = "includeAuthorizations", description = "If true the authorizations will be loaded for every logbook found")
             @RequestParam("includeAuthorizations") Optional<Boolean> includeAuthorizations,
-            @Parameter(name = "filterForAuthorizationTypes", description = "Filter the logbook for authorization types")
+            @Parameter(name = "filterForAuthorizationTypes", description = "Filter the logbook for authorizations types")
             @RequestParam("filterForAuthorizationTypes") Optional<String> authorizationType,
             Authentication authentication
     ) {
-        //todo return logbook also for a specific authorization level
+        //todo return logbook also for a specific authorizations level
         // check the user is authenticated
         assertion(
                 () -> authService.checkAuthentication(authentication),
@@ -58,8 +53,8 @@ public class LogbooksController {
                     logbookService.getAllLogbook(includeAuthorizations)
             );
         } else {
-            // get all the logbook where the user is authorized (all type of authorization)
-            List<AuthorizationDTO> authOnLogbook = authService.getAllAuthorization(
+            // get all the logbook where the user is authorized (all type of authorizations)
+            List<AuthorizationDTO> authOnLogbook = authService.getAllAuthorizationForOwnerAuthTypeAndResourcePrefix(
                     authentication.getCredentials().toString(),
                     authorizationType.map(
                             Authorization.Type::valueOf
@@ -89,21 +84,18 @@ public class LogbooksController {
     )
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResultResponse<String> createLogbook(@RequestBody NewLogbookDTO newLogbookDTO, Authentication authentication) {
-        // check authorization
+        // check authorizations
         assertion(
-                () -> all(
-                        List.of(
-                                // needs be authenticated
-                                () -> authService.checkAuthentication(authentication),
-                                // and an administrator
-                                () -> authService.checkForRoot(authentication)
-                        )
-                ),
                 NotAuthorized
                         .notAuthorizedBuilder()
                         .errorCode(-1)
                         .errorDomain("LogbooksController::updateLogbook")
-                        .build()
+                        .build(),
+                // needs be authenticated
+                () -> authService.checkAuthentication(authentication),
+                // and an administrator
+                () -> authService.checkForRoot(authentication)
+
         );
         return ApiResultResponse.of(
                 logbookService.createNew(newLogbookDTO)
@@ -116,36 +108,25 @@ public class LogbooksController {
     )
     public ApiResultResponse<LogbookDTO> getLogbook(
             @PathVariable String logbookId,
-            @Parameter(name = "includeAuthorizations", description = "If true the authorization will be loaded for every logbook found")
+            @Parameter(name = "includeAuthorizations", description = "If true the authorizations will be loaded for every logbook found")
             @RequestParam("includeAuthorizations") Optional<Boolean> includeAuthorizations,
             Authentication authentication
     ) {
-        // check authorization
+        // check authorizations
         assertion(
-                () -> all(
-                        List.of(
-                                // needs be authenticated
-                                () -> authService.checkAuthentication(authentication),
-                                // and
-                                () -> any(
-                                        List.of(
-                                                // or is an admin
-                                                () -> authService.checkForRoot(authentication),
-                                                // or can write or administer the logbook
-                                                () -> authService.checkAuthorizationOnResource(
-                                                        authentication,
-                                                        "/logbook/%s".formatted(logbookId),
-                                                        Admin
-                                                )
-                                        )
-                                )
-                        )
-                ),
                 NotAuthorized
                         .notAuthorizedBuilder()
                         .errorCode(-1)
                         .errorDomain("LogbooksController::updateLogbook")
-                        .build()
+                        .build(),
+                // needs be authenticated
+                () -> authService.checkAuthentication(authentication),
+                // and need to be an admin or root
+                () -> authService.checkAuthorizationOForOwnerAuthTypeAndResourcePrefix(
+                        authentication,
+                        Admin,
+                        "/logbook/%s".formatted(logbookId)
+                )
         );
         return ApiResultResponse.of(
                 logbookService.getLogbook(logbookId, includeAuthorizations)
@@ -162,32 +143,21 @@ public class LogbooksController {
             @PathVariable String logbookId,
             @RequestBody UpdateLogbookDTO updateLogbookDTO,
             Authentication authentication) {
-        // check authorization
+        // check authorizations
         assertion(
-                () -> all(
-                        List.of(
-                                // needs be authenticated
-                                () -> authService.checkAuthentication(authentication),
-                                // and
-                                () -> any(
-                                        List.of(
-                                                // or is an admin
-                                                () -> authService.checkForRoot(authentication),
-                                                // or can write or administer the logbook
-                                                () -> authService.checkAuthorizationOnResource(
-                                                        authentication,
-                                                        "/logbook/%s".formatted(logbookId),
-                                                        Admin
-                                                )
-                                        )
-                                )
-                        )
-                ),
                 NotAuthorized
                         .notAuthorizedBuilder()
                         .errorCode(-1)
                         .errorDomain("LogbooksController::updateLogbook")
-                        .build()
+                        .build(),
+                // needs be authenticated
+                () -> authService.checkAuthentication(authentication),
+                // and or can write or administer the logbook
+                () -> authService.checkAuthorizationOForOwnerAuthTypeAndResourcePrefix(
+                        authentication,
+                        Write,
+                        "/logbook/%s".formatted(logbookId)
+                )
         );
         logbookService.update(logbookId, updateLogbookDTO);
         return ApiResultResponse.of(
@@ -207,30 +177,19 @@ public class LogbooksController {
             Authentication authentication
     ) {
         assertion(
-                () -> all(
-                        List.of(
-                                // needs be authenticated
-                                () -> authService.checkAuthentication(authentication),
-                                // and
-                                () -> any(
-                                        List.of(
-                                                // or is an admin
-                                                () -> authService.checkForRoot(authentication),
-                                                // or can write or administer the logbook
-                                                () -> authService.checkAuthorizationOnResource(
-                                                        authentication,
-                                                        "/logbook/%s".formatted(logbookId),
-                                                         Admin
-                                                )
-                                        )
-                                )
-                        )
-                ),
                 NotAuthorized
                         .notAuthorizedBuilder()
                         .errorCode(-1)
                         .errorDomain("LogbooksController::createTag")
-                        .build()
+                        .build(),
+                // needs be authenticated
+                () -> authService.checkAuthentication(authentication),
+                // and or can write or administer the logbook
+                () -> authService.checkAuthorizationOForOwnerAuthTypeAndResourcePrefix(
+                        authentication,
+                        Admin,
+                        "/logbook/%s".formatted(logbookId)
+                )
         );
         return ApiResultResponse.of(
                 logbookService.createNewTag(logbookId, newTagDTO)
@@ -245,32 +204,21 @@ public class LogbooksController {
             @PathVariable String logbookId,
             Authentication authentication
     ) {
-        // check authorization
+        // check authorizations
         assertion(
-                () -> all(
-                        List.of(
-                                // needs be authenticated
-                                () -> authService.checkAuthentication(authentication),
-                                // and
-                                () -> any(
-                                        List.of(
-                                                // or is an admin
-                                                () -> authService.checkForRoot(authentication),
-                                                // or can read, write or administer the logbook
-                                                () -> authService.checkAuthorizationOnResource(
-                                                        authentication,
-                                                        "/logbook/%s".formatted(logbookId),
-                                                        Read
-                                                )
-                                        )
-                                )
-                        )
-                ),
                 NotAuthorized
                         .notAuthorizedBuilder()
                         .errorCode(-1)
                         .errorDomain("LogbooksController::updateLogbook")
-                        .build()
+                        .build(),
+                // needs be authenticated
+                () -> authService.checkAuthentication(authentication),
+                // and can read, write or administer the logbook
+                () -> authService.checkAuthorizationOForOwnerAuthTypeAndResourcePrefix(
+                        authentication,
+                        Read,
+                        "/logbook/%s".formatted(logbookId)
+                )
         );
         return ApiResultResponse.of(
                 logbookService.getAllTags(logbookId)
@@ -290,30 +238,19 @@ public class LogbooksController {
     ) {
         // check authenticated
         assertion(
-                () -> all(
-                        List.of(
-                                // needs be authenticated
-                                () -> authService.checkAuthentication(authentication),
-                                // and
-                                () -> any(
-                                        List.of(
-                                                // or is an admin
-                                                () -> authService.checkForRoot(authentication),
-                                                // or can write or administer the logbook
-                                                () -> authService.checkAuthorizationOnResource(
-                                                        authentication,
-                                                        "/logbook/%s".formatted(logbookId),
-                                                        Admin
-                                                )
-                                        )
-                                )
-                        )
-                ),
                 NotAuthorized
                         .notAuthorizedBuilder()
                         .errorCode(-1)
                         .errorDomain("LogbooksController::updateShift")
-                        .build()
+                        .build(),
+                // needs be authenticated
+                () -> authService.checkAuthentication(authentication),
+                // and can write or administer the logbook
+                () -> authService.checkAuthorizationOForOwnerAuthTypeAndResourcePrefix(
+                        authentication,
+                        Admin,
+                        "/logbook/%s".formatted(logbookId)
+                )
         );
         logbookService.replaceShift(logbookId, shiftReplacement);
         return ApiResultResponse.of(

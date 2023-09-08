@@ -73,7 +73,7 @@ public class LogbookServiceAuthorizationTest {
                                 .shifts(
                                         emptyList()
                                 )
-                                .authorization(
+                                .authorizations(
                                         List.of(
                                                 AuthorizationDTO
                                                         .builder()
@@ -118,7 +118,7 @@ public class LogbookServiceAuthorizationTest {
                                 .shifts(
                                         emptyList()
                                 )
-                                .authorization(
+                                .authorizations(
                                         List.of(
                                                 AuthorizationDTO
                                                         .builder()
@@ -150,7 +150,7 @@ public class LogbookServiceAuthorizationTest {
         assertThat(logbook).isNotNull();
         assertThat(logbook.authorizations()).isNotNull().hasSize(3);
 
-        // updating deleting one authorization
+        // updating deleting one authorizations
         assertDoesNotThrow(
                 () -> logbookService.update(
                         newLogbookId,
@@ -165,7 +165,7 @@ public class LogbookServiceAuthorizationTest {
                                 .shifts(
                                         emptyList()
                                 )
-                                .authorization(
+                                .authorizations(
                                         List.of(
                                                 logbook.authorizations().get(0),
                                                 logbook.authorizations().get(2)
@@ -210,7 +210,7 @@ public class LogbookServiceAuthorizationTest {
                                 .shifts(
                                         emptyList()
                                 )
-                                .authorization(
+                                .authorizations(
                                         List.of(
                                                 AuthorizationDTO
                                                         .builder()
@@ -249,7 +249,7 @@ public class LogbookServiceAuthorizationTest {
                         Authorization.Type.Read.name()
                 );
 
-        // updating deleting one authorization
+        // updating deleting one authorizations
         assertDoesNotThrow(
                 () -> logbookService.update(
                         newLogbookId,
@@ -264,7 +264,7 @@ public class LogbookServiceAuthorizationTest {
                                 .shifts(
                                         emptyList()
                                 )
-                                .authorization(
+                                .authorizations(
                                         List.of(
                                                 logbook.authorizations().get(0),
                                                 logbook.authorizations().get(1)

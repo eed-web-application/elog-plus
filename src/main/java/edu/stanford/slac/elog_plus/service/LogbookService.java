@@ -1,6 +1,5 @@
 package edu.stanford.slac.elog_plus.service;
 
-import com.github.javafaker.Bool;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.api.v1.mapper.AuthMapper;
 import edu.stanford.slac.elog_plus.api.v1.mapper.LogbookMapper;
@@ -17,7 +16,6 @@ import edu.stanford.slac.elog_plus.repository.LogbookRepository;
 import edu.stanford.slac.elog_plus.utility.StringUtilities;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +28,6 @@ import java.util.stream.Collectors;
 
 import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
 import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
-import static edu.stanford.slac.elog_plus.model.Authorization.Type.Admin;
 
 @Log4j2
 @Service
@@ -197,12 +194,12 @@ public class LogbookService {
                 -5,
                 "LogbookService:update"
         );
-        if (logbookDTO.authorization() != null) {
-            log.info("Update authorization for logbook {}", lbToUpdated.getName());
-            // update authorization
+        if (logbookDTO.authorizations() != null) {
+            log.info("Update authorizations for logbook {}", lbToUpdated.getName());
+            // update authorizations
             verifyAuthorizationAndUpdate(
                     lbToUpdated,
-                    authMapper.toModel(logbookDTO.authorization()),
+                    authMapper.toModel(logbookDTO.authorizations()),
                     authorizationRepository.findByResourceIs(String.format("/logbook/%s", logbookId)),
                     -6,
                     "LogbookService:update"
@@ -223,10 +220,10 @@ public class LogbookService {
     }
 
     /**
-     * Update the authorization on the logbook
+     * Update the authorizations on the logbook
      * @param logbookToUpdate is the logbook to update
-     * @param updatedAuthorizationList is the updated list of the authorization
-     * @param actualAuthorizationList is the current authorization list
+     * @param updatedAuthorizationList is the updated list of the authorizations
+     * @param actualAuthorizationList is the current authorizations list
      * @param errorCode is the error code of the operation
      * @param errorDomain  is the domain code of the operation
      */
@@ -246,7 +243,7 @@ public class LogbookService {
                                 -1,
                                 "LogbookService:verifyAuthorizationAndUpdate"
                         );
-                log.info("Created new authorization '{}' for logbook '{}'", newAuthenticationID, logbookToUpdate.getName());
+                log.info("Created new authorizations '{}' for logbook '{}'", newAuthenticationID, logbookToUpdate.getName());
                 continue;
             }
             // check if the auth with the same id exists, in case fire exception
@@ -263,7 +260,7 @@ public class LogbookService {
             );
 
         }
-        //check which authorization should be removed
+        //check which authorizations should be removed
         for (Authorization actualAuthorization :
                 actualAuthorizationList) {
             // cheek if we need to update
@@ -284,7 +281,7 @@ public class LogbookService {
                         -2,
                         "LogbookService:verifyAuthorizationAndUpdate"
                 );
-                log.info("Updated authorization '{}' for logbook '{}'", updatedAuthorization, logbookToUpdate.getName());
+                log.info("Updated authorizations '{}' for logbook '{}'", updatedAuthorization, logbookToUpdate.getName());
             } else {
                 // need to be removed
                 wrapCatch(
@@ -297,7 +294,7 @@ public class LogbookService {
                         -3,
                         "LogbookService:verifyAuthorizationAndUpdate"
                 );
-                log.info("Deleted authorization '{}' for logbook '{}'", actualAuthorization, logbookToUpdate.getName());
+                log.info("Deleted authorizations '{}' for logbook '{}'", actualAuthorization, logbookToUpdate.getName());
             }
         }
     }
