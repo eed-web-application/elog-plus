@@ -41,7 +41,7 @@ public class TestControllerHelperService {
         this.appProperties = appProperties;
     }
 
-    public  ApiResultResponse<String> getNewLogbookWithNameWithAuthorization(
+    public ApiResultResponse<String> getNewLogbookWithNameWithAuthorization(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
@@ -59,12 +59,12 @@ public class TestControllerHelperService {
                 )
         );
 
-         AssertionsForClassTypes.assertThat(newLogbookApiResult)
-                 .isNotNull()
-                 .extracting(
-                         ApiResultResponse::getErrorCode
-                 )
-                 .isEqualTo(0);
+        AssertionsForClassTypes.assertThat(newLogbookApiResult)
+                .isNotNull()
+                .extracting(
+                        ApiResultResponse::getErrorCode
+                )
+                .isEqualTo(0);
 
         var updateApiResult = assertDoesNotThrow(
                 () -> updateLogbook(
@@ -268,10 +268,18 @@ public class TestControllerHelperService {
                 });
     }
 
-    public ApiResultResponse<List<EntrySummaryDTO>> getAllFollowUpLog(MockMvc mockMvc, ResultMatcher resultMatcher, String followedLogID) throws Exception {
+    public ApiResultResponse<List<EntrySummaryDTO>> getAllFollowUpLog(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String followedLogID) throws Exception {
+        var getBuilder = get(
+                "/v1/entries/{id}/follow-ups",
+                followedLogID)
+                .accept(MediaType.APPLICATION_JSON);
+        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
         MvcResult result = mockMvc.perform(
-                        get("/v1/entries/{id}/follow-ups", followedLogID)
-                                .accept(MediaType.APPLICATION_JSON)
+                        getBuilder
                 )
                 .andExpect(resultMatcher)
                 .andReturn();
@@ -468,7 +476,7 @@ public class TestControllerHelperService {
                 get("/v1/logbooks")
                         .accept(MediaType.APPLICATION_JSON);
         userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
-        includeAuthorizations.ifPresent( b->getBuilder.param("includeAuthorizations", String.valueOf(b)));
+        includeAuthorizations.ifPresent(b -> getBuilder.param("includeAuthorizations", String.valueOf(b)));
         filterForAuthorizationTypes.ifPresent(authStr -> {
             String[] tlArray = new String[authStr.size()];
             authStr.toArray(tlArray);

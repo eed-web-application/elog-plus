@@ -44,9 +44,9 @@ public class AuthorizationServiceRootManagementTest {
         appProperties.getRootUserList().clear();
         appProperties.getRootUserList().add("user1@slac.stanford.edu");
         authService.updateRootUser();
-        List<Authorization> rootAuth = authorizationRepository.findByResourceIsAndAuthorizationTypeIs(
+        List<Authorization> rootAuth = authorizationRepository.findByResourceIsAndAuthorizationTypeIsGreaterThanEqual(
                 "*",
-                Authorization.Type.Admin
+                Authorization.Type.Admin.getValue()
         );
 
         assertThat(rootAuth).hasSize(1);
@@ -58,9 +58,9 @@ public class AuthorizationServiceRootManagementTest {
         appProperties.getRootUserList().clear();
         appProperties.getRootUserList().add("user1@slac.stanford.edu");
         authService.updateRootUser();
-        List<Authorization> rootAuth = authorizationRepository.findByResourceIsAndAuthorizationTypeIs(
+        List<Authorization> rootAuth = authorizationRepository.findByResourceIsAndAuthorizationTypeIsGreaterThanEqual(
                 "*",
-                Authorization.Type.Admin
+                Authorization.Type.Admin.getValue()
         );
 
         assertThat(rootAuth).hasSize(1);
@@ -70,9 +70,9 @@ public class AuthorizationServiceRootManagementTest {
         appProperties.getRootUserList().add("user2@slac.stanford.edu");
 
         authService.updateRootUser();
-        rootAuth = authorizationRepository.findByResourceIsAndAuthorizationTypeIs(
+        rootAuth = authorizationRepository.findByResourceIsAndAuthorizationTypeIsGreaterThanEqual(
                 "*",
-                Authorization.Type.Admin
+                Authorization.Type.Admin.getValue()
         );
 
         assertThat(rootAuth).hasSize(1);
@@ -84,9 +84,9 @@ public class AuthorizationServiceRootManagementTest {
         appProperties.getRootUserList().clear();
         appProperties.getRootUserList().addAll(List.of("user1@slac.stanford.edu", "user3@slac.stanford.edu"));
         authService.updateRootUser();
-        List<Authorization> rootAuth = authorizationRepository.findByResourceIsAndAuthorizationTypeIs(
+        List<Authorization> rootAuth = authorizationRepository.findByResourceIsAndAuthorizationTypeIsGreaterThanEqual(
                 "*",
-                Authorization.Type.Admin
+                Authorization.Type.Admin.getValue()
         );
 
         assertThat(rootAuth).hasSize(2);
@@ -96,9 +96,9 @@ public class AuthorizationServiceRootManagementTest {
         appProperties.getRootUserList().addAll(List.of("user1@slac.stanford.edu", "user2@slac.stanford.edu"));
 
         authService.updateRootUser();
-        rootAuth = authorizationRepository.findByResourceIsAndAuthorizationTypeIs(
+        rootAuth = authorizationRepository.findByResourceIsAndAuthorizationTypeIsGreaterThanEqual(
                 "*",
-                Authorization.Type.Admin
+                Authorization.Type.Admin.getValue()
         );
 
         assertThat(rootAuth).hasSize(2);

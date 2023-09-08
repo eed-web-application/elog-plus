@@ -7,6 +7,7 @@ import edu.stanford.slac.elog_plus.model.Authorization;
 import edu.stanford.slac.elog_plus.model.Group;
 import edu.stanford.slac.elog_plus.model.Person;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 
 import java.util.List;
@@ -20,7 +21,10 @@ public abstract class AuthMapper {
     public abstract GroupDTO fromModel(Group g);
 
     public abstract AuthorizationDTO fromModel(Authorization a);
+
+    @Mapping(target = "authorizationType", expression = "java(Authorization.Type.valueOf(a.authorizationType()).getValue())")
     public abstract Authorization toModel(AuthorizationDTO a);
 
+    @Mapping(target = "authorizationType", expression = "java(Authorization.Type.valueOf(a.authorizationType()).getValue())")
     public abstract List<Authorization> toModel(List<AuthorizationDTO> a);
 }

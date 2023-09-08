@@ -111,7 +111,6 @@ public class LogbooksControllerTest {
         assertThat(notAuthenticatedForCreateLogbook.getErrorCode()).isEqualTo(-1);
     }
 
-
     @Test
     public void failCreatingTwoSameLogbook() {
         ApiResultResponse<String> creationResult = assertDoesNotThrow(

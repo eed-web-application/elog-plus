@@ -708,6 +708,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.getAllFollowUpLog(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         newLogIDResult.getPayload()
                 )
         );

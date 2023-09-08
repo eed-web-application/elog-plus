@@ -113,7 +113,7 @@ public class AuthService {
      * @param authorization the new authorization
      * @return updated authorization
      */
-    public AuthorizationDTO saveNewAuthorization(AuthorizationDTO authorization) {
+    public AuthorizationDTO saveAuthorization(AuthorizationDTO authorization) {
         var savedAuth = wrapCatch(
                 () -> authorizationRepository.save(
                         authMapper.toModel(authorization)

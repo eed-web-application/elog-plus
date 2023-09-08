@@ -199,6 +199,7 @@ public class EntriesController {
                         .errorDomain("LogbooksController::getAllFollowUp")
                         .build()
         );
+        final boolean userIsRoot = authService.checkForRoot(authentication);
 //TODO need to be tested this
         // fetch all follow up
         List<EntrySummaryDTO> allFollowUp = entryService.getAllFollowUpForALog(id);
@@ -212,7 +213,7 @@ public class EntriesController {
                                             .logbooks()
                                             .stream()
                                             .filter(
-                                                    lb -> authService.checkAuthorizationOnResource(
+                                                    lb -> userIsRoot || authService.checkAuthorizationOnResource(
                                                             authentication,
                                                             "/logbook/%s".formatted(lb.id()),
                                                             Read
