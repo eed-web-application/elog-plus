@@ -1,23 +1,39 @@
 package edu.stanford.slac.elog_plus.api.v1.controller;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
+import edu.stanford.slac.elog_plus.api.v1.dto.EntrySummaryDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.LogbookSummaryDTO;
+import edu.stanford.slac.elog_plus.exception.NotAuthorized;
+import edu.stanford.slac.elog_plus.model.Authorization;
 import edu.stanford.slac.elog_plus.model.FileObjectDescription;
 import edu.stanford.slac.elog_plus.service.AttachmentService;
+import edu.stanford.slac.elog_plus.service.AuthService;
+import edu.stanford.slac.elog_plus.service.EntryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.*;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+
+import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
+import static edu.stanford.slac.elog_plus.model.Authorization.Type.Read;
+import static edu.stanford.slac.elog_plus.model.Authorization.Type.Write;
 
 @RestController()
 @RequestMapping("/v1/attachment")
 @AllArgsConstructor
 @Schema(description = "Set of api for attachment manipulation")
 public class AttachmentsController {
+    AuthService authService;
+    EntryService entryService;
     AttachmentService attachmentService;
+
     @PostMapping(
             consumes = {"multipart/form-data"},
             produces = {MediaType.APPLICATION_JSON_VALUE}
@@ -25,8 +41,11 @@ public class AttachmentsController {
     @Operation(summary = "Create a new attachment")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResultResponse<String> newAttachment(
-            @RequestParam("uploadFile") MultipartFile uploadFile
+            @RequestParam("uploadFile") MultipartFile uploadFile,
+            Authentication authentication
     ) throws Exception {
+        // check if the user is authenticated
+
         FileObjectDescription desc = FileObjectDescription
                 .builder()
                 .fileName(
@@ -40,8 +59,23 @@ public class AttachmentsController {
                 )
                 .build();
 
+        // check the authorization
+        assertion(
+                NotAuthorized.notAuthorizedBuilder()
+                        .errorCode(-1)
+                        .errorDomain("AttachmentsController::newAttachment")
+                        .build(),
+                // should be authenticated
+                () -> authService.checkAuthentication(authentication),
+                // should be able to write on some logbook
+                () -> authService.checkAuthorizationOForOwnerAuthTypeAndResourcePrefix(
+                        authentication,
+                        Write,
+                        "/"
+                )
+        );
         return ApiResultResponse.of(
-                attachmentService.createAttachment(desc,true)
+                attachmentService.createAttachment(desc, true)
         );
     }
 
@@ -51,9 +85,11 @@ public class AttachmentsController {
     )
     @Operation(summary = "Load an attachment using an unique attachment id")
     public ResponseEntity<Resource> download(
-            @PathVariable String id
+            @PathVariable String id,
+            Authentication authentication
     ) throws Exception {
-        FileObjectDescription desc =  attachmentService.getAttachmentContent(id);
+        checkAuthorizedOnAttachment(id, authentication);
+        FileObjectDescription desc = attachmentService.getAttachmentContent(id);
         InputStreamResource resource = new InputStreamResource(desc.getIs());
         MediaType mediaType = MediaType.valueOf(desc.getContentType());
         HttpHeaders headers = new HttpHeaders();
@@ -74,9 +110,11 @@ public class AttachmentsController {
     )
     @Operation(summary = "Load an attachment using an unique attachment id")
     public ResponseEntity<Resource> downloadPreview(
-            @PathVariable String id
+            @PathVariable String id,
+            Authentication authentication
     ) throws Exception {
-        FileObjectDescription desc =  attachmentService.getPreviewContent(id);
+        checkAuthorizedOnAttachment(id, authentication);
+        FileObjectDescription desc = attachmentService.getPreviewContent(id);
         InputStreamResource resource = new InputStreamResource(desc.getIs());
         MediaType mediaType = MediaType.valueOf(desc.getContentType());
         HttpHeaders headers = new HttpHeaders();
@@ -89,5 +127,39 @@ public class AttachmentsController {
                 .build();
         headers.setContentDisposition(disposition);
         return new ResponseEntity<>(resource, headers, HttpStatus.OK);
+    }
+
+    private void checkAuthorizedOnAttachment(String attachmentId, Authentication authentication) {
+        // fetch all the entries that are parent of the attachment and filter all those are readable by the user
+        List<EntrySummaryDTO> entryThatOwnTheAttachment = entryService.getEntriesThatOwnTheAttachment(attachmentId)
+                .stream()
+                .map(
+                        summary -> {
+                            List<LogbookSummaryDTO> filteredLogbok = summary.logbooks().stream()
+                                    .filter(
+                                            lId -> authService.checkAuthorizationOForOwnerAuthTypeAndResourcePrefix(
+                                                    authentication,
+                                                    Read,
+                                                    "/logbook/%s".formatted(lId)
+                                            )
+                                    ).toList();
+                            return summary.toBuilder()
+                                    .logbooks(
+                                            filteredLogbok
+                                    ).build();
+                        }
+                )
+                .filter(
+                        summary -> !summary.logbooks().isEmpty()
+                )
+                .toList();
+        assertion(
+                NotAuthorized.notAuthorizedBuilder()
+                        .errorCode(-1)
+                        .errorDomain("")
+                        .build(),
+                ()->authService.checkAuthentication(authentication),
+                () -> !entryThatOwnTheAttachment.isEmpty()
+        );
     }
 }

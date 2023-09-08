@@ -149,10 +149,10 @@ public class EntryService {
         String firstname = "";
         String lastName = "";
         String[] slittedGecos = personDTO.gecos().split(" ");
-        if(slittedGecos.length >= 2) {
+        if (slittedGecos.length >= 2) {
             firstname = slittedGecos[0];
             lastName = slittedGecos[1];
-        } else if(slittedGecos.length == 1){
+        } else if (slittedGecos.length == 1) {
             firstname = slittedGecos[0];
         }
 
@@ -337,6 +337,23 @@ public class EntryService {
                 );
         log.info("New entry '{}' created", newEntry.getTitle());
         return newEntry.getId();
+    }
+
+    /**
+     * Return the ids of the logbooks which the parent entry is associated
+     *
+     * @param id the attachment id
+     * @return
+     */
+    public List<EntrySummaryDTO> getEntriesThatOwnTheAttachment(String id) {
+        return wrapCatch(
+                () -> entryRepository.findAllByAttachmentsContains(id),
+                -1,
+                "LogService::createNew"
+        ).stream()
+                .map(
+                        entryMapper::toSearchResult
+                ).toList();
     }
 
     /**
