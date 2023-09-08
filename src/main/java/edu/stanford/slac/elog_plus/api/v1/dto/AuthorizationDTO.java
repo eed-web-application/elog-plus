@@ -11,13 +11,13 @@ import lombok.ToString;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "Is the description fo an attachment")
 public record AuthorizationDTO(
-        @Schema(description = "Is unique id of the authorization")
+        @Schema(description = "Is unique id of the authorizations")
         String id,
-        @Schema(description = "Is the type of the authorization")
+        @Schema(description = "Is the type of the authorizations")
         String authorizationType,
-        @Schema(description = "Is the subject owner of the authorization")
+        @Schema(description = "Is the subject owner of the authorizations")
         String owner,
-        @Schema(description = "The resource eof the authorization")
+        @Schema(description = "The resource eof the authorizations")
         String resource
 ) {
 }

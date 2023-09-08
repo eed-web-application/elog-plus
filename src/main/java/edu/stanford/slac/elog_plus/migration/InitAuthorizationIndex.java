@@ -12,7 +12,7 @@ import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 
 @AllArgsConstructor
-@ChangeUnit(id = "init-authorization-index", order = "7", author = "bisegni")
+@ChangeUnit(id = "init-authorizations-index", order = "7", author = "bisegni")
 public class InitAuthorizationIndex extends MongoDDLOps {
     private final MongoTemplate mongoTemplate;
     private final MongoMappingContext mongoMappingContext;

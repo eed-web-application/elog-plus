@@ -53,7 +53,7 @@ public class LogbookControllerAuthTest {
     public void preTest() {
         mongoTemplate.remove(new Query(), Logbook.class);
         mongoTemplate.remove(new Query(), Entry.class);
-        //reset authorization
+        //reset authorizations
         mongoTemplate.remove(new Query(), Authorization.class);
         appProperties.getRootUserList().clear();
         appProperties.getRootUserList().add("user1@slac.stanford.edu");
@@ -110,6 +110,7 @@ public class LogbookControllerAuthTest {
                                 .build()
                 )
         );
+
         var newLogbookApiResultThree = testControllerHelperService.getNewLogbookWithNameWithAuthorization(
                 mockMvc,
                 status().isCreated(),

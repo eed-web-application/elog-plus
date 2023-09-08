@@ -79,26 +79,31 @@ public class AuthService {
      * @param authentication is the current authentication
      */
     public boolean checkForRoot(Authentication authentication) {
+        if(!checkAuthentication(authentication)) return false;
         // only root user can create logbook
-        List<AuthorizationDTO> foundAuth = getAllAuthorization(
+        List<AuthorizationDTO> foundAuth = getAllAuthorizationForOwnerAuthTypeAndResourcePrefix(
                 authentication.getCredentials().toString(),
-                List.of(Admin),
-                "*"
+                Admin,
+                "^\\*"
         );
         return foundAuth != null && !foundAuth.isEmpty();
     }
 
     /**
-     * Check the authorization level on a resource
+     * Check the authorizations level on a resource, the authorizations found
+     * will be all those authorizations that will have the value of authorizations type greater
+     * or equal to the one give as argument. This return true also if the current authentication
+     * is an admin
      *
-     * @param resource       the target resource
+     * @param authorization  the minimum value of authorizations to check
      * @param authentication the current authentication
-     * @param authorizations the list of any authorization to check
+     * @param resource       the target resource
      */
-    public boolean checkAuthorizationOnResource(Authentication authentication, String resource, List<Authorization.Type> authorizations) {
-        List<AuthorizationDTO> foundLogbookAuth = getAllAuthorization(
+    public boolean checkAuthorizationOForOwnerAuthTypeAndResourcePrefix(Authentication authentication, Authorization.Type authorization, String resource) {
+        if(!checkAuthentication(authentication)) return false;
+        List<AuthorizationDTO> foundLogbookAuth = getAllAuthorizationForOwnerAuthTypeAndResourcePrefix(
                 authentication.getCredentials().toString(),
-                authorizations,
+                authorization,
                 resource
         );
         return !foundLogbookAuth.isEmpty();
@@ -106,12 +111,12 @@ public class AuthService {
 
 
     /**
-     * Create new authorization
+     * Create new authorizations
      *
-     * @param authorization the new authorization
-     * @return updated authorization
+     * @param authorization the new authorizations
+     * @return updated authorizations
      */
-    public AuthorizationDTO saveNewAuthorization(AuthorizationDTO authorization) {
+    public AuthorizationDTO saveAuthorization(AuthorizationDTO authorization) {
         var savedAuth = wrapCatch(
                 () -> authorizationRepository.save(
                         authMapper.toModel(authorization)
@@ -123,7 +128,7 @@ public class AuthService {
     }
 
     /**
-     * Delete an authorization for a resource with a specific prefix
+     * Delete an authorizations for a resource with a specific prefix
      *
      * @param resourcePrefix the prefix of the resource
      */
@@ -141,7 +146,7 @@ public class AuthService {
     }
 
     /**
-     * Delete an authorization for a resource with a specific path
+     * Delete an authorizations for a resource with a specific path
      *
      * @param resource the path of the resource
      */
@@ -159,33 +164,24 @@ public class AuthService {
     }
 
     /**
-     * Return all the authorization for an owner that match with the prefix
-     * and the authorization type
+     * Return all the authorizations for an owner that match with the prefix
+     * and the authorizations type
      *
-     * @param owner             si the owner target of the result authorization
+     * @param owner             si the owner target of the result authorizations
      * @param authorizationType filter on the @Authorization.Type
      * @param resourcePrefix    is the prefix of the authorized resource
      * @return the list of found resource
      */
-    public List<AuthorizationDTO> getAllAuthorization(
+    public List<AuthorizationDTO> getAllAuthorizationForOwnerAuthTypeAndResourcePrefix(
             String owner,
-            List<Authorization.Type> authorizationType,
+            Authorization.Type authorizationType,
             String resourcePrefix
     ) {
-        if(authorizationType==null || authorizationType.isEmpty()){
-            // with no types find on all
-            authorizationType = List.of(
-                    Read,
-                    Write,
-                    Admin
-            );
-        }
-        List<Authorization.Type> finalAuthorizationType = authorizationType;
         return wrapCatch(
-                () -> authorizationRepository.findByOwnerAndAuthorizationTypeInAndResourceStartingWith(
+                () -> authorizationRepository.findByOwnerAndAuthorizationTypeIsGreaterThanEqualAndResourceStartingWith(
                         owner,
-                        finalAuthorizationType,
-                        resourcePrefix
+                        authorizationType.getValue(),
+                        "^%s".formatted(resourcePrefix)
                 ),
                 -1,
                 "AuthService::getAllAuthorization"
@@ -197,9 +193,9 @@ public class AuthService {
     public void updateRootUser() {
         log.info("Find current authorizations");
         //load actual root
-        List<Authorization> currentRootUser = authorizationRepository.findByResourceIsAndAuthorizationTypeIs(
+        List<Authorization> currentRootUser = authorizationRepository.findByResourceIsAndAuthorizationTypeIsGreaterThanEqual(
                 "*",
-                Admin
+                Admin.getValue()
         );
 
         // find root users to remove
@@ -214,7 +210,7 @@ public class AuthService {
             authorizationRepository.deleteByOwnerIsAndResourceIsAndAuthorizationTypeIs(
                     userEmailToRemove,
                     "*",
-                    Admin
+                    Admin.getValue()
             );
         }
 
@@ -222,25 +218,25 @@ public class AuthService {
         log.info("Ensure root authorizations for: {}", appProperties.getRootUserList());
         for (String userEmail :
                 appProperties.getRootUserList()) {
-            // find root authorization for user email
-            Optional<Authorization> rootAuth = authorizationRepository.findByOwnerIsAndResourceIsAndAuthorizationTypeIs(
+            // find root authorizations for user email
+            Optional<Authorization> rootAuth = authorizationRepository.findByOwnerIsAndResourceIsAndAuthorizationTypeIsGreaterThanEqual(
                     userEmail,
                     "*",
-                    Admin
+                    Admin.getValue()
             );
             if (rootAuth.isEmpty()) {
-                log.info("Create root authorization for user '{}'", userEmail);
+                log.info("Create root authorizations for user '{}'", userEmail);
                 authorizationRepository.save(
                         Authorization
                                 .builder()
-                                .authorizationType(Admin)
+                                .authorizationType(Admin.getValue())
                                 .owner(userEmail)
                                 .resource("*")
                                 .creationBy("elog-plus")
                                 .build()
                 );
             } else {
-                log.info("Root authorization for '{}' already exists", userEmail);
+                log.info("Root authorizations for '{}' already exists", userEmail);
             }
         }
     }

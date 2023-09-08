@@ -70,22 +70,17 @@ public class AuthorizationController {
                         .build()
         );
         // assert that all the user that are root or admin of whatever resource
-        assertionAnyTrue(
-                List.of(
-                        () -> authService.checkForRoot(authentication),
-                        () -> authService.checkAuthorizationOnResource(
-                                authentication,
-                                "/",
-                                List.of(
-                                        Admin
-                                )
-                        )
-                ),
+        assertion(
                 NotAuthorized
                         .notAuthorizedBuilder()
                         .errorCode(-1)
                         .errorDomain("AuthorizationController::findPeople")
-                        .build()
+                        .build(),
+                () -> authService.checkAuthorizationOForOwnerAuthTypeAndResourcePrefix(
+                        authentication,
+                        Admin,
+                        "/"
+                )
         );
         return ApiResultResponse.of(
                 authService.findPersons(
@@ -113,22 +108,18 @@ public class AuthorizationController {
                         .build()
         );
         // assert that all the user that are root or admin of whatever resource
-        assertionAnyTrue(
-                List.of(
-                        () -> authService.checkForRoot(authentication),
-                        () -> authService.checkAuthorizationOnResource(
-                                authentication,
-                                "/",
-                                List.of(
-                                        Admin
-                                )
-                        )
-                ),
+        assertion(
                 NotAuthorized
                         .notAuthorizedBuilder()
                         .errorCode(-1)
                         .errorDomain("AuthorizationController::findPeople")
-                        .build()
+                        .build(),
+                () -> authService.checkAuthorizationOForOwnerAuthTypeAndResourcePrefix(
+                        authentication,
+                        Admin,
+                        "/"
+                )
+
         );
         return ApiResultResponse.of(
                 authService.findGroup(

@@ -41,7 +41,7 @@ public class TestControllerHelperService {
         this.appProperties = appProperties;
     }
 
-    public  ApiResultResponse<String> getNewLogbookWithNameWithAuthorization(
+    public ApiResultResponse<String> getNewLogbookWithNameWithAuthorization(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
@@ -59,12 +59,12 @@ public class TestControllerHelperService {
                 )
         );
 
-         AssertionsForClassTypes.assertThat(newLogbookApiResult)
-                 .isNotNull()
-                 .extracting(
-                         ApiResultResponse::getErrorCode
-                 )
-                 .isEqualTo(0);
+        AssertionsForClassTypes.assertThat(newLogbookApiResult)
+                .isNotNull()
+                .extracting(
+                        ApiResultResponse::getErrorCode
+                )
+                .isEqualTo(0);
 
         var updateApiResult = assertDoesNotThrow(
                 () -> updateLogbook(
@@ -77,7 +77,7 @@ public class TestControllerHelperService {
                                 .name(logbookName)
                                 .shifts(Collections.emptyList())
                                 .tags(Collections.emptyList())
-                                .authorization(
+                                .authorizations(
                                         authorizations
                                 )
                                 .build()
@@ -268,10 +268,18 @@ public class TestControllerHelperService {
                 });
     }
 
-    public ApiResultResponse<List<EntrySummaryDTO>> getAllFollowUpLog(MockMvc mockMvc, ResultMatcher resultMatcher, String followedLogID) throws Exception {
+    public ApiResultResponse<List<EntrySummaryDTO>> getAllFollowUpLog(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String followedLogID) throws Exception {
+        var getBuilder = get(
+                "/v1/entries/{id}/follow-ups",
+                followedLogID)
+                .accept(MediaType.APPLICATION_JSON);
+        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
         MvcResult result = mockMvc.perform(
-                        get("/v1/entries/{id}/follow-ups", followedLogID)
-                                .accept(MediaType.APPLICATION_JSON)
+                        getBuilder
                 )
                 .andExpect(resultMatcher)
                 .andReturn();
@@ -285,10 +293,16 @@ public class TestControllerHelperService {
                 });
     }
 
-    public ApiResultResponse<EntryDTO> getFullLog(MockMvc mockMvc, String id) throws Exception {
+    public ApiResultResponse<EntryDTO> getFullLog(
+            MockMvc mockMvc,
+            Optional<String> userInfo,
+            String id
+    ) throws Exception {
+        var getBuilder = get("/v1/entries/{id}", id)
+                .accept(MediaType.APPLICATION_JSON);
+        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
         MvcResult result = mockMvc.perform(
-                        get("/v1/entries/{id}", id)
-                                .accept(MediaType.APPLICATION_JSON)
+                        getBuilder
                 )
                 .andExpect(status().isOk())
                 .andReturn();
@@ -302,10 +316,16 @@ public class TestControllerHelperService {
                 });
     }
 
-    public ApiResultResponse<EntryDTO> getFullLog(MockMvc mockMvc, ResultMatcher resultMatcher, String id) throws Exception {
+    public ApiResultResponse<EntryDTO> getFullLog(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String id) throws Exception {
+        var getBuilder = get("/v1/entries/{id}", id)
+                .accept(MediaType.APPLICATION_JSON);
+        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
         MvcResult result = mockMvc.perform(
-                        get("/v1/entries/{id}", id)
-                                .accept(MediaType.APPLICATION_JSON)
+                        getBuilder
                 )
                 .andExpect(resultMatcher)
                 .andReturn();
@@ -319,34 +339,53 @@ public class TestControllerHelperService {
                 });
     }
 
-    public ApiResultResponse<EntryDTO> getFullLog(MockMvc mockMvc, ResultMatcher resultMatcher, String id, boolean includeFollowUps) throws Exception {
-        return getFullLog(mockMvc, resultMatcher, id, includeFollowUps, false, false);
+    public ApiResultResponse<EntryDTO> getFullLog(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String id,
+            boolean includeFollowUps) throws Exception {
+        return getFullLog(mockMvc, resultMatcher, userInfo, id, includeFollowUps, false, false);
     }
 
-    public ApiResultResponse<EntryDTO> getFullLog(MockMvc mockMvc, ResultMatcher resultMatcher, String id, boolean includeFollowUps, boolean includeFollowingUps, boolean includeHistory) throws Exception {
-        return getFullLog(mockMvc, resultMatcher, id, includeFollowUps, includeFollowingUps, includeHistory, false, false);
+    public ApiResultResponse<EntryDTO> getFullLog(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String id, boolean includeFollowUps, boolean includeFollowingUps, boolean includeHistory) throws Exception {
+        return getFullLog(mockMvc, resultMatcher, userInfo, id, includeFollowUps, includeFollowingUps, includeHistory, false, false);
     }
 
-    public ApiResultResponse<EntryDTO> getFullLog(MockMvc mockMvc, ResultMatcher resultMatcher, String id, boolean includeFollowUps, boolean includeFollowingUps, boolean includeHistory, boolean includeReferences, boolean includeReferencedBy) throws Exception {
-        MockHttpServletRequestBuilder request = get("/v1/entries/{id}", id)
+    public ApiResultResponse<EntryDTO> getFullLog(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String id,
+            boolean includeFollowUps,
+            boolean includeFollowingUps,
+            boolean includeHistory,
+            boolean includeReferences,
+            boolean includeReferencedBy) throws Exception {
+        MockHttpServletRequestBuilder getBuilder = get("/v1/entries/{id}", id)
                 .accept(MediaType.APPLICATION_JSON);
+        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
         if (includeFollowUps) {
-            request.param("includeFollowUps", String.valueOf(true));
+            getBuilder.param("includeFollowUps", String.valueOf(true));
         }
         if (includeFollowingUps) {
-            request.param("includeFollowingUps", String.valueOf(true));
+            getBuilder.param("includeFollowingUps", String.valueOf(true));
         }
         if (includeHistory) {
-            request.param("includeHistory", String.valueOf(true));
+            getBuilder.param("includeHistory", String.valueOf(true));
         }
         if (includeReferences) {
-            request.param("includeReferences", String.valueOf(true));
+            getBuilder.param("includeReferences", String.valueOf(true));
         }
         if (includeReferencedBy) {
-            request.param("includeReferencedBy", String.valueOf(true));
+            getBuilder.param("includeReferencedBy", String.valueOf(true));
         }
         MvcResult result = mockMvc.perform(
-                        request
+                        getBuilder
                 )
                 .andExpect(resultMatcher)
                 .andReturn();
@@ -360,12 +399,16 @@ public class TestControllerHelperService {
                 });
     }
 
-    public ApiResultResponse<List<EntrySummaryDTO>> getReferencesByEntryId(MockMvc mockMvc, ResultMatcher resultMatcher, String id) throws Exception {
-        MockHttpServletRequestBuilder request = get("/v1/entries/{id}/references", id)
+    public ApiResultResponse<List<EntrySummaryDTO>> getReferencesByEntryId(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String id) throws Exception {
+        MockHttpServletRequestBuilder getBuilder = get("/v1/entries/{id}/references", id)
                 .accept(MediaType.APPLICATION_JSON);
-
+        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
         MvcResult result = mockMvc.perform(
-                        request
+                        getBuilder
                 )
                 .andExpect(resultMatcher)
                 .andReturn();
@@ -468,7 +511,7 @@ public class TestControllerHelperService {
                 get("/v1/logbooks")
                         .accept(MediaType.APPLICATION_JSON);
         userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
-        includeAuthorizations.ifPresent( b->getBuilder.param("includeAuthorizations", String.valueOf(b)));
+        includeAuthorizations.ifPresent(b -> getBuilder.param("includeAuthorizations", String.valueOf(b)));
         filterForAuthorizationTypes.ifPresent(authStr -> {
             String[] tlArray = new String[authStr.size()];
             authStr.toArray(tlArray);

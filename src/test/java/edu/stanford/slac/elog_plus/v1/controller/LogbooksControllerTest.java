@@ -53,7 +53,7 @@ public class LogbooksControllerTest {
     public void preTest() {
         mongoTemplate.remove(new Query(), Logbook.class);
         mongoTemplate.remove(new Query(), Entry.class);
-        //reset authorization
+        //reset authorizations
         mongoTemplate.remove(new Query(), Authorization.class);
         appProperties.getRootUserList().clear();
         appProperties.getRootUserList().add("user1@slac.stanford.edu");
@@ -110,7 +110,6 @@ public class LogbooksControllerTest {
         );
         assertThat(notAuthenticatedForCreateLogbook.getErrorCode()).isEqualTo(-1);
     }
-
 
     @Test
     public void failCreatingTwoSameLogbook() {
