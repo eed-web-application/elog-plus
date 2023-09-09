@@ -84,7 +84,7 @@ public class AuthService {
         List<AuthorizationDTO> foundAuth = getAllAuthorizationForOwnerAuthTypeAndResourcePrefix(
                 authentication.getCredentials().toString(),
                 Admin,
-                "^\\*"
+                "*"
         );
         return foundAuth != null && !foundAuth.isEmpty();
     }
@@ -97,14 +97,15 @@ public class AuthService {
      *
      * @param authorization  the minimum value of authorizations to check
      * @param authentication the current authentication
-     * @param resource       the target resource
+     * @param resourcePrefix       the target resource
      */
-    public boolean checkAuthorizationOForOwnerAuthTypeAndResourcePrefix(Authentication authentication, Authorization.Type authorization, String resource) {
+    public boolean checkAuthorizationOForOwnerAuthTypeAndResourcePrefix(Authentication authentication, Authorization.Type authorization, String resourcePrefix) {
         if(!checkAuthentication(authentication)) return false;
+        if(checkForRoot(authentication)) return true;
         List<AuthorizationDTO> foundLogbookAuth = getAllAuthorizationForOwnerAuthTypeAndResourcePrefix(
                 authentication.getCredentials().toString(),
                 authorization,
-                resource
+                resourcePrefix
         );
         return !foundLogbookAuth.isEmpty();
     }
@@ -181,7 +182,7 @@ public class AuthService {
                 () -> authorizationRepository.findByOwnerAndAuthorizationTypeIsGreaterThanEqualAndResourceStartingWith(
                         owner,
                         authorizationType.getValue(),
-                        "^%s".formatted(resourcePrefix)
+                        resourcePrefix
                 ),
                 -1,
                 "AuthService::getAllAuthorization"

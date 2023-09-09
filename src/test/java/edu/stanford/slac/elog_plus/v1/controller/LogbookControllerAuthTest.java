@@ -74,13 +74,6 @@ public class LogbookControllerAuthTest {
                                 .builder()
                                 .owner("user2@slac.stanford.edu")
                                 .authorizationType(
-                                        Read.name()
-                                )
-                                .build(),
-                        AuthorizationDTO
-                                .builder()
-                                .owner("user2@slac.stanford.edu")
-                                .authorizationType(
                                         Write.name()
                                 )
                                 .build(),
@@ -187,7 +180,7 @@ public class LogbookControllerAuthTest {
                 )
                 .isEqualTo(0);
         assertThat(allLogbookResultUser2Readable.getPayload())
-                .hasSize(1)
+                .hasSize(2)
                 .extracting(LogbookDTO::id)
                 .contains(
                         newLogbookApiResultOne.getPayload()

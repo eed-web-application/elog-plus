@@ -13,6 +13,6 @@ edu:
         root-user-list:
           - user1@slac.stanford.edu
 # Set the logging level for the entire MongoDB package
-#logging:
-#    level:
-#      org.springframework.data.mongodb.core: DEBUG
+logging:
+    level:
+      org.springframework.data.mongodb.core: DEBUG
