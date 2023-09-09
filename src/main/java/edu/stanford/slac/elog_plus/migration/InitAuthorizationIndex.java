@@ -57,10 +57,10 @@ public class InitAuthorizationIndex extends MongoDDLOps {
                                 "owner",
                                 Sort.Direction.ASC
                         )
-                        .on(
-                                "authorizationType",
-                                Sort.Direction.ASC
-                        )
+//                        .on(
+//                                "authorizationType",
+//                                Sort.Direction.ASC
+//                        )
                         .on(
                                 "resource",
                                 Sort.Direction.ASC
