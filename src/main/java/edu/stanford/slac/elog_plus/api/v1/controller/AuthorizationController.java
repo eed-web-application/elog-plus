@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.MediaType;
@@ -41,6 +42,7 @@ public class AuthorizationController {
             path = "/me",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
+    @Cacheable(value = "current-user-info", key = "#authentication.credentials")
     public ApiResultResponse<PersonDTO> me(Authentication authentication) {
         // check authentication
         assertion(

@@ -10,6 +10,8 @@ server:
 spring:
   application:
     name: 'elog-plus'
+  cache:
+    type: hazelcast
   ldap:
     urls: ${ELOG_PLUS_LDAP_URI:ldap://localhost:8389}
     base: ${ELOG_PLUS_LDAP_BASE:dc=sdf,dc=slac,dc=stanford,dc=edu}
