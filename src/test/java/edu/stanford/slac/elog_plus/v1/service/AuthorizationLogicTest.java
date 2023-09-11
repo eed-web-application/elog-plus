@@ -57,32 +57,37 @@ public class AuthorizationLogicTest {
     }
 
     @Test
+    public void saveAndFindAuthorization() {
+
+    }
+
+    @Test
     public void findAuthorizationByLevel() {
         appProperties.getRootUserList().clear();
-        AuthorizationDTO newAuthReadUser2 = assertDoesNotThrow(
-                () -> authService.saveAuthorization(
-                        AuthorizationDTO.builder()
-                                .authorizationType(Read.name())
+        Authorization newAuthReadUser2 = assertDoesNotThrow(
+                () -> authorizationRepository.save(
+                        Authorization.builder()
+                                .authorizationType(Read.getValue())
                                 .owner("user2@slac.stanford.edu")
                                 .resource("/r1")
                                 .build()
                 )
         );
 
-        AuthorizationDTO newAuthWriteUser3 = assertDoesNotThrow(
-                () -> authService.saveAuthorization(
-                        AuthorizationDTO.builder()
-                                .authorizationType(Write.name())
+        Authorization newAuthWriteUser3 = assertDoesNotThrow(
+                () -> authorizationRepository.save(
+                        Authorization.builder()
+                                .authorizationType(Write.getValue())
                                 .owner("user3@slac.stanford.edu")
                                 .resource("/r1")
                                 .build()
                 )
         );
 
-        AuthorizationDTO newAuthAdminUser4 = assertDoesNotThrow(
-                () -> authService.saveAuthorization(
-                        AuthorizationDTO.builder()
-                                .authorizationType(Admin.name())
+        Authorization newAuthAdminUser4 = assertDoesNotThrow(
+                () -> authorizationRepository.save(
+                        Authorization.builder()
+                                .authorizationType(Admin.getValue())
                                 .owner("user4@slac.stanford.edu")
                                 .resource("/r1")
                                 .build()

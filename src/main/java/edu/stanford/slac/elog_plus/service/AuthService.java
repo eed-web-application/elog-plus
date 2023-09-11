@@ -5,6 +5,7 @@ import edu.stanford.slac.elog_plus.api.v1.dto.GroupDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.PersonDTO;
 import edu.stanford.slac.elog_plus.api.v1.mapper.AuthMapper;
 import edu.stanford.slac.elog_plus.config.AppProperties;
+import edu.stanford.slac.elog_plus.exception.AuthorizationMalformed;
 import edu.stanford.slac.elog_plus.exception.UserNotFound;
 import edu.stanford.slac.elog_plus.ldap_repository.GroupRepository;
 import edu.stanford.slac.elog_plus.model.Authorization;
@@ -108,24 +109,6 @@ public class AuthService {
                 resourcePrefix
         );
         return !foundLogbookAuth.isEmpty();
-    }
-
-
-    /**
-     * Create new authorizations
-     *
-     * @param authorization the new authorizations
-     * @return updated authorizations
-     */
-    public AuthorizationDTO saveAuthorization(AuthorizationDTO authorization) {
-        var savedAuth = wrapCatch(
-                () -> authorizationRepository.save(
-                        authMapper.toModel(authorization)
-                ),
-                -1,
-                "AuthService::insertNewAuthorization"
-        );
-        return authMapper.fromModel(savedAuth);
     }
 
     /**

@@ -16,6 +16,7 @@ import edu.stanford.slac.elog_plus.repository.LogbookRepository;
 import edu.stanford.slac.elog_plus.utility.StringUtilities;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,7 +57,7 @@ public class LogbookService {
                 () -> logbookRepository.findAll()
                         .stream()
                         .map(
-                                lb-> logbookMapper.fromModel(
+                                lb -> logbookMapper.fromModel(
                                         lb,
                                         includeAuthorization.orElse(false)
                                 )
@@ -221,16 +222,56 @@ public class LogbookService {
 
     /**
      * Update the authorizations on the logbook
-     * @param logbookToUpdate is the logbook to update
+     *
+     * @param logbookToUpdate          is the logbook to update
      * @param updatedAuthorizationList is the updated list of the authorizations
-     * @param actualAuthorizationList is the current authorizations list
-     * @param errorCode is the error code of the operation
-     * @param errorDomain  is the domain code of the operation
+     * @param actualAuthorizationList  is the current authorizations list
+     * @param errorCode                is the error code of the operation
+     * @param errorDomain              is the domain code of the operation
      */
     private void verifyAuthorizationAndUpdate(Logbook logbookToUpdate, List<Authorization> updatedAuthorizationList, List<Authorization> actualAuthorizationList, int errorCode, String errorDomain) {
+        Set<ImmutablePair<String, Authorization.OType>> permissionsCheck = new HashSet<>();
         //normalize tag
         for (Authorization authorization :
                 updatedAuthorizationList) {
+
+            if (authorization.getOwner() == null || authorization.getOwner().isEmpty()) {
+                throw AuthorizationMalformed.ownerNotFound()
+                        .errorCode(-1)
+                        .errorDomain("LogbookService::verifyAuthorizationAndUpdate")
+                        .build();
+            }
+
+            if (authorization.getOwnerType() == null) {
+                throw AuthorizationMalformed.ownerTypeNotFound()
+                        .errorCode(-1)
+                        .owner(authorization.getOwner())
+                        .errorDomain("LogbookService::verifyAuthorizationAndUpdate")
+                        .build();
+            }
+
+            assertion(
+                    DoubleAuthorizationError.doubleAuthorizationError()
+                            .errorCode(-1)
+                            .owner(authorization.getOwner())
+                            .oType(authorization.getOwnerType())
+                            .errorDomain("LogbookService::verifyAuthorizationAndUpdate")
+                            .build(),
+                    () -> !permissionsCheck.contains(
+                            ImmutablePair.of(
+                                    authorization.getOwner(),
+                                    authorization.getOwnerType()
+                            )
+                    )
+            );
+
+            // checked permission to the global set
+            permissionsCheck.add(
+                    ImmutablePair.of(
+                            authorization.getOwner(),
+                            authorization.getOwnerType()
+                    )
+            );
             if (authorization.getId() == null) {
                 // create new
                 Authorization newAuthenticationID =
@@ -482,10 +523,10 @@ public class LogbookService {
         return wrapCatch(() -> logbookRepository.findAllById(
                         logbookIds
                 ).stream().map(
-                       lb-> logbookMapper.fromModel(
-                               lb,
-                               includeAuthorizations.orElse(false)
-                       )
+                        lb -> logbookMapper.fromModel(
+                                lb,
+                                includeAuthorizations.orElse(false)
+                        )
                 ).toList(),
                 -1,
                 "LogbookService:getLogbook"
@@ -503,7 +544,7 @@ public class LogbookService {
                 () -> logbookRepository.findById(
                         logbookId
                 ).map(
-                        lb-> logbookMapper.fromModel(
+                        lb -> logbookMapper.fromModel(
                                 lb,
                                 includeAuthorizations.orElse(false)
                         )

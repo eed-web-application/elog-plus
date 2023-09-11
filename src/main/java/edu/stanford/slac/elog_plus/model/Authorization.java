@@ -43,6 +43,16 @@ public class Authorization {
         }
     }
 
+    @Getter
+    public enum OType {
+        // Specify that the authorization if for a user
+        User,
+        // Specify that the authorization if for a group
+        Group,
+        // Specify that the authorization if for an application
+        Application
+    }
+
     @Id
     private String id;
     /**
@@ -62,6 +72,12 @@ public class Authorization {
      * the value identify the owner of the authorizations
      */
     private String owner;
+
+    /**
+     * Specify the type of the authorization form @{@link OType}
+     */
+    private OType ownerType;
+
     @CreatedDate
     private LocalDateTime creationDate;
     @CreatedBy
