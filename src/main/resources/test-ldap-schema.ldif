@@ -58,7 +58,7 @@ objectClass: posixGroup
 objectClass: top
 objectClass: importedObject
 gidNumber: 3591
-memberUid: user1
+memberUid: user1@slac.stanford.edu
 
 dn: cn=group-2,ou=Group, dc=sdf,dc=slac,dc=stanford,dc=edu
 cn: group-2
@@ -66,5 +66,5 @@ objectClass: posixGroup
 objectClass: top
 objectClass: importedObject
 gidNumber: 3591
-memberUid: user1
-memberUid: user2
+memberUid: user1@slac.stanford.edu
+memberUid: user2@slac.stanford.edu

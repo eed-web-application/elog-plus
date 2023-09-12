@@ -37,8 +37,6 @@ public class LogbooksController {
             @RequestParam("filterForAuthorizationTypes") Optional<String> authorizationType,
             Authentication authentication
     ) {
-        //todo return logbook also for a specific authorizations level
-        // check the user is authenticated
         assertion(
                 () -> authService.checkAuthentication(authentication),
                 NotAuthorized

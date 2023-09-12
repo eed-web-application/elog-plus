@@ -1,6 +1,7 @@
 package edu.stanford.slac.elog_plus.repository;
 
 import edu.stanford.slac.elog_plus.model.Authorization;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 
@@ -17,7 +18,7 @@ public interface AuthorizationRepository extends MongoRepository<Authorization, 
     List<Authorization> findByResourceIs(String resource);
     List<Authorization> findByResourceIsAndAuthorizationTypeIsGreaterThanEqual(String resource, Integer authorizationType);
     //@Query("{ 'owner' : '?0', $or: [{'authorizationType' : { '$gte' : '?1'}, 'resource' : { $regex : \"?2\"}}, {'authorizationType' : 2, resource:'*'}]}")
-    List<Authorization> findByOwnerAndOwnerTypeAndAuthorizationTypeIsGreaterThanEqualAndResourceStartingWith(String owner, String ownerType, Integer type, String resource);
+    List<Authorization> findByOwnerAndOwnerTypeAndAuthorizationTypeIsGreaterThanEqualAndResourceStartingWith(String owner, Authorization.OType ownerType, Integer authorizationType, String resource);
     void deleteByOwnerIsAndResourceIsAndAuthorizationTypeIs(String owner, String resource, Integer authorizationType);
     void deleteAllByResourceStartingWith(String resourcePrefix);
     void deleteAllByResourceIs(String resource);

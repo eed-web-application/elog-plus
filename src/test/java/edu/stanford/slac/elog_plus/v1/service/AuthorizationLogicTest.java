@@ -1,10 +1,12 @@
 package edu.stanford.slac.elog_plus.v1.service;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.EntrySummaryDTO;
 import edu.stanford.slac.elog_plus.config.AppProperties;
 import edu.stanford.slac.elog_plus.model.Authorization;
 import edu.stanford.slac.elog_plus.repository.AuthorizationRepository;
 import edu.stanford.slac.elog_plus.service.AuthService;
+import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -17,11 +19,14 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 import static edu.stanford.slac.elog_plus.model.Authorization.Type.*;
+import static org.assertj.core.api.AssertionsForClassTypes.not;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.*;
 
 @AutoConfigureMockMvc
 @SpringBootTest(properties = {})
@@ -57,9 +62,134 @@ public class AuthorizationLogicTest {
     }
 
     @Test
-    public void saveAndFindAuthorization() {
+    public void findUserAuthorizationsInheritedByGroups() {
+        //read ->r1
+        Authorization newAuthWriteUser1 = assertDoesNotThrow(
+                () -> authorizationRepository.save(
+                        Authorization.builder()
+                                .authorizationType(Read.getValue())
+                                .owner("user1@slac.stanford.edu")
+                                .ownerType(Authorization.OType.User)
+                                .resource("/r1")
+                                .build()
+                )
+        );
+        // write->r1
+        Authorization newAuthWriteGroups1_1 = assertDoesNotThrow(
+                () -> authorizationRepository.save(
+                        Authorization.builder()
+                                .authorizationType(Write.getValue())
+                                .owner("group-1")
+                                .ownerType(Authorization.OType.Group)
+                                .resource("/r1")
+                                .build()
+                )
+        );
+        // write -> r2
+        Authorization newAuthWriteGroups1_2 = assertDoesNotThrow(
+                () -> authorizationRepository.save(
+                        Authorization.builder()
+                                .authorizationType(Write.getValue())
+                                .owner("group-1")
+                                .ownerType(Authorization.OType.Group)
+                                .resource("/r2")
+                                .build()
+                )
+        );
+        // read -> r3
+        Authorization newAuthWriteGroups1_3 = assertDoesNotThrow(
+                () -> authorizationRepository.save(
+                        Authorization.builder()
+                                .authorizationType(Read.getValue())
+                                .owner("group-1")
+                                .ownerType(Authorization.OType.Group)
+                                .resource("/r3")
+                                .build()
+                )
+        );
+        // admin -> r3
+        Authorization newAuthWriteGroups2_1 = assertDoesNotThrow(
+                () -> authorizationRepository.save(
+                        Authorization.builder()
+                                .authorizationType(Admin.getValue())
+                                .owner("group-2")
+                                .ownerType(Authorization.OType.Group)
+                                .resource("/r3")
+                                .build()
+                )
+        );
 
+        List<AuthorizationDTO> allReadAuthorization = authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
+                "user1@slac.stanford.edu",
+                Read,
+                "/r"
+        );
+
+        // check auth on r1 read|write
+        assertThat(allReadAuthorization)
+                .filteredOn(auth -> auth.resource().compareToIgnoreCase("/r1") == 0)
+                .filteredOn(
+                        auth -> auth.authorizationType().compareToIgnoreCase("Write") == 0
+                )
+                .extracting(AuthorizationDTO::owner)
+                .contains("group-1");
+
+        // check auth on r2 write
+        assertThat(allReadAuthorization)
+                .filteredOn(auth -> auth.resource().compareToIgnoreCase("/r2") == 0)
+                .filteredOn(
+                        auth -> auth.authorizationType().compareToIgnoreCase("Write") == 0
+                )
+                .extracting(AuthorizationDTO::owner)
+                .contains("group-1");
+
+        // check auth on r3 read|admin
+        assertThat(allReadAuthorization)
+                .filteredOn(auth -> auth.resource().compareToIgnoreCase("/r3") == 0)
+                .filteredOn(
+                        auth ->
+                                auth.authorizationType().compareToIgnoreCase("Read") == 0 ||
+                                        auth.authorizationType().compareToIgnoreCase("Admin") == 0
+                )
+                .extracting(AuthorizationDTO::owner)
+                .contains("group-1", "group-2");
+
+        // remove all the authorization from the same resource and keep all the higher one
+        List<AuthorizationDTO> allHigherAuthorization = authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
+                "user1@slac.stanford.edu",
+                Read,
+                "/r",
+                Optional.of(true)
+        );
+
+        // check auth on r1 write
+        assertThat(allReadAuthorization)
+                .filteredOn(auth -> auth.resource().compareToIgnoreCase("/r1") == 0)
+                .filteredOn(
+                        auth -> auth.authorizationType().compareToIgnoreCase("Write") == 0
+                )
+                .extracting(AuthorizationDTO::owner)
+                .contains("group-1");
+
+        // check auth on r2 write
+        assertThat(allReadAuthorization)
+                .filteredOn(auth -> auth.resource().compareToIgnoreCase("/r2") == 0)
+                .filteredOn(
+                        auth -> auth.authorizationType().compareToIgnoreCase("Write") == 0
+                )
+                .extracting(AuthorizationDTO::owner)
+                .contains("group-1");
+
+        // check auth on r3 admin
+        assertThat(allReadAuthorization)
+                .filteredOn(auth -> auth.resource().compareToIgnoreCase("/r3") == 0)
+                .filteredOn(
+                        auth -> auth.authorizationType().compareToIgnoreCase("Admin") == 0
+                )
+                .extracting(AuthorizationDTO::owner)
+                .contains("group-2");
     }
+
 
     @Test
     public void findAuthorizationByLevel() {
@@ -143,4 +273,21 @@ public class AuthorizationLogicTest {
                 );
     }
 
+    static private class AuthorizationIs extends Condition<String> {
+
+        private final String expectedValue;
+
+        private AuthorizationIs(String expectedValue) {
+            this.expectedValue = expectedValue;
+        }
+
+        public static AuthorizationIs ofType(String type) {
+            return new AuthorizationIs(type);
+        }
+
+        @Override
+        public boolean matches(String actualValue) {
+            return actualValue != null && actualValue.compareToIgnoreCase(expectedValue) == 0;
+        }
+    }
 }

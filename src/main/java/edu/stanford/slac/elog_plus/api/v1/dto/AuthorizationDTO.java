@@ -4,7 +4,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.ToString;
+
+import java.io.Externalizable;
+import java.io.Serializable;
 
 @Builder(toBuilder = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -23,5 +27,5 @@ public record AuthorizationDTO(
 
         @Schema(description = "The resource eof the authorizations")
         String resource
-) {
+)  implements Serializable {
 }
