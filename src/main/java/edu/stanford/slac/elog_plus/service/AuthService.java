@@ -149,7 +149,8 @@ public class AuthService {
 
     /**
      * Return all the authorizations for an owner that match with the prefix
-     * and the authorizations type
+     * and the authorizations type, will be checked the user entries but also
+     * all the group which the users belong
      *
      * @param owner             si the owner target of the result authorizations
      * @param authorizationType filter on the @Authorization.Type
@@ -161,6 +162,7 @@ public class AuthService {
             Authorization.Type authorizationType,
             String resourcePrefix
     ) {
+        // TODO check also for the user's group
         return wrapCatch(
                 () -> authorizationRepository.findByOwnerAndOwnerTypeAndAuthorizationTypeIsGreaterThanEqualAndResourceStartingWith(
                         owner,
@@ -175,6 +177,9 @@ public class AuthService {
         ).toList();
     }
 
+    /**
+     * Update all configured root user
+     */
     public void updateRootUser() {
         log.info("Find current authorizations");
         //load actual root
