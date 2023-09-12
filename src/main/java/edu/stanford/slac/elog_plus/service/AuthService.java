@@ -82,7 +82,7 @@ public class AuthService {
     public boolean checkForRoot(Authentication authentication) {
         if(!checkAuthentication(authentication)) return false;
         // only root user can create logbook
-        List<AuthorizationDTO> foundAuth = getAllAuthorizationForOwnerAuthTypeAndResourcePrefix(
+        List<AuthorizationDTO> foundAuth = getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
                 authentication.getCredentials().toString(),
                 Admin,
                 "*"
@@ -94,16 +94,16 @@ public class AuthService {
      * Check the authorizations level on a resource, the authorizations found
      * will be all those authorizations that will have the value of authorizations type greater
      * or equal to the one give as argument. This return true also if the current authentication
-     * is an admin
+     * is an admin. The api try to search if the user is authorized using user, groups or application checks
      *
      * @param authorization  the minimum value of authorizations to check
      * @param authentication the current authentication
      * @param resourcePrefix       the target resource
      */
-    public boolean checkAuthorizationOForOwnerAuthTypeAndResourcePrefix(Authentication authentication, Authorization.Type authorization, String resourcePrefix) {
+    public boolean checkAuthorizationForOwnerAuthTypeAndResourcePrefix(Authentication authentication, Authorization.Type authorization, String resourcePrefix) {
         if(!checkAuthentication(authentication)) return false;
         if(checkForRoot(authentication)) return true;
-        List<AuthorizationDTO> foundLogbookAuth = getAllAuthorizationForOwnerAuthTypeAndResourcePrefix(
+        List<AuthorizationDTO> foundLogbookAuth = getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
                 authentication.getCredentials().toString(),
                 authorization,
                 resourcePrefix
@@ -156,14 +156,15 @@ public class AuthService {
      * @param resourcePrefix    is the prefix of the authorized resource
      * @return the list of found resource
      */
-    public List<AuthorizationDTO> getAllAuthorizationForOwnerAuthTypeAndResourcePrefix(
+    public List<AuthorizationDTO> getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
             String owner,
             Authorization.Type authorizationType,
             String resourcePrefix
     ) {
         return wrapCatch(
-                () -> authorizationRepository.findByOwnerAndAuthorizationTypeIsGreaterThanEqualAndResourceStartingWith(
+                () -> authorizationRepository.findByOwnerAndOwnerTypeAndAuthorizationTypeIsGreaterThanEqualAndResourceStartingWith(
                         owner,
+                        Authorization.OType.User.name(),
                         authorizationType.getValue(),
                         resourcePrefix
                 ),
@@ -215,6 +216,7 @@ public class AuthService {
                                 .builder()
                                 .authorizationType(Admin.getValue())
                                 .owner(userEmail)
+                                .ownerType(Authorization.OType.User)
                                 .resource("*")
                                 .creationBy("elog-plus")
                                 .build()

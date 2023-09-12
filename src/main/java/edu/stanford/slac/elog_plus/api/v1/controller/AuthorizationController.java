@@ -42,7 +42,7 @@ public class AuthorizationController {
             path = "/me",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @Cacheable(value = "current-user-info", key = "#authentication.credentials")
+    //@Cacheable(value = "current-user-info", key = "#authentication.credentials")
     public ApiResultResponse<PersonDTO> me(Authentication authentication) {
         // check authentication
         assertion(
@@ -85,7 +85,7 @@ public class AuthorizationController {
                         .errorCode(-1)
                         .errorDomain("AuthorizationController::findPeople")
                         .build(),
-                () -> authService.checkAuthorizationOForOwnerAuthTypeAndResourcePrefix(
+                () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                         authentication,
                         Admin,
                         "/"
@@ -123,7 +123,7 @@ public class AuthorizationController {
                         .errorCode(-1)
                         .errorDomain("AuthorizationController::findPeople")
                         .build(),
-                () -> authService.checkAuthorizationOForOwnerAuthTypeAndResourcePrefix(
+                () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                         authentication,
                         Admin,
                         "/"

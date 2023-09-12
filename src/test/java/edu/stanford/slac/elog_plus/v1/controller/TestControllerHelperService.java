@@ -626,17 +626,19 @@ public class TestControllerHelperService {
     public ApiResultResponse<List<TagDTO>> getLogbookTagsFromTagsController(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
+            Optional<String> userInfo,
             Optional<List<String>> logbooksName) throws Exception {
-        MockHttpServletRequestBuilder getRequest = get("/v1/tags")
+        MockHttpServletRequestBuilder getBuilder = get("/v1/tags")
                 .accept(MediaType.APPLICATION_JSON);
+        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
         logbooksName.ifPresent(lb -> {
             String[] lbArray = new String[lb.size()];
             lb.toArray(lbArray);
-            getRequest.param("logbooks", lbArray);
+            getBuilder.param("logbooks", lbArray);
         });
 
         MvcResult result = mockMvc.perform(
-                        getRequest
+                        getBuilder
                 )
                 .andExpect(resultMatcher)
                 .andReturn();

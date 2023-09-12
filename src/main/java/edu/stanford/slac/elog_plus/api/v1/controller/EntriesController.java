@@ -51,7 +51,7 @@ public class EntriesController {
                 () -> all(
                         newEntry.logbooks().stream()
                                 .map(
-                                        logbookId -> (Supplier<Boolean>) () -> authService.checkAuthorizationOForOwnerAuthTypeAndResourcePrefix(
+                                        logbookId -> (Supplier<Boolean>) () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                                                 authentication,
                                                 Write,
                                                 "/logbook/%s".formatted(logbookId)
@@ -93,7 +93,7 @@ public class EntriesController {
                         // write
                         newSupersedeEntry.logbooks().stream()
                                 .map(
-                                        logbookId -> (Supplier<Boolean>) () -> authService.checkAuthorizationOForOwnerAuthTypeAndResourcePrefix(
+                                        logbookId -> (Supplier<Boolean>) () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                                                 authentication,
                                                 Write,
                                                 "/logbook/%s".formatted(logbookId)
@@ -132,7 +132,7 @@ public class EntriesController {
                         // write
                         newFollowUpEntry.logbooks().stream()
                                 .map(
-                                        logbookId -> (Supplier<Boolean>) () -> authService.checkAuthorizationOForOwnerAuthTypeAndResourcePrefix(
+                                        logbookId -> (Supplier<Boolean>) () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                                                 authentication,
                                                 Write,
                                                 "/logbook/%s".formatted(logbookId)
@@ -201,7 +201,7 @@ public class EntriesController {
         List<String> lbForTheEntry = entryService.getLogbooksForAnEntryId(id);
         // filter the unauthorized logbook id
         List<String> authorizedEntryLogbook = lbForTheEntry.stream().filter(
-                lbId -> authService.checkAuthorizationOForOwnerAuthTypeAndResourcePrefix(
+                lbId -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                         authentication,
                         Read,
                         "/logbook/%s".formatted(lbId)
@@ -265,7 +265,7 @@ public class EntriesController {
         final List<String> authorizedEntryLogbook = entryService.getLogbooksForAnEntryId(id)
                 .stream()
                 .filter(
-                        lbId -> authService.checkAuthorizationOForOwnerAuthTypeAndResourcePrefix(
+                        lbId -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                                 authentication,
                                 Read,
                                 "/logbook/%s".formatted(lbId)
@@ -371,7 +371,7 @@ public class EntriesController {
                                     .logbooks()
                                     .stream()
                                     .filter(
-                                            lb -> authService.checkAuthorizationOForOwnerAuthTypeAndResourcePrefix(
+                                            lb -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                                                     authentication,
                                                     Read,
                                                     "/logbook/%s".formatted(lb.id())

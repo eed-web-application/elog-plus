@@ -54,7 +54,7 @@ public class LogbooksController {
             );
         } else {
             // get all the logbook where the user is authorized (all type of authorizations)
-            List<AuthorizationDTO> authOnLogbook = authService.getAllAuthorizationForOwnerAuthTypeAndResourcePrefix(
+            List<AuthorizationDTO> authOnLogbook = authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
                     authentication.getCredentials().toString(),
                     authorizationType.map(
                             Authorization.Type::valueOf
@@ -122,7 +122,7 @@ public class LogbooksController {
                 // needs be authenticated
                 () -> authService.checkAuthentication(authentication),
                 // and need to be an admin or root
-                () -> authService.checkAuthorizationOForOwnerAuthTypeAndResourcePrefix(
+                () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                         authentication,
                         Admin,
                         "/logbook/%s".formatted(logbookId)
@@ -153,7 +153,7 @@ public class LogbooksController {
                 // needs be authenticated
                 () -> authService.checkAuthentication(authentication),
                 // and or can write or administer the logbook
-                () -> authService.checkAuthorizationOForOwnerAuthTypeAndResourcePrefix(
+                () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                         authentication,
                         Write,
                         "/logbook/%s".formatted(logbookId)
@@ -185,7 +185,7 @@ public class LogbooksController {
                 // needs be authenticated
                 () -> authService.checkAuthentication(authentication),
                 // and or can write or administer the logbook
-                () -> authService.checkAuthorizationOForOwnerAuthTypeAndResourcePrefix(
+                () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                         authentication,
                         Admin,
                         "/logbook/%s".formatted(logbookId)
@@ -214,7 +214,7 @@ public class LogbooksController {
                 // needs be authenticated
                 () -> authService.checkAuthentication(authentication),
                 // and can read, write or administer the logbook
-                () -> authService.checkAuthorizationOForOwnerAuthTypeAndResourcePrefix(
+                () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                         authentication,
                         Read,
                         "/logbook/%s".formatted(logbookId)
@@ -246,7 +246,7 @@ public class LogbooksController {
                 // needs be authenticated
                 () -> authService.checkAuthentication(authentication),
                 // and can write or administer the logbook
-                () -> authService.checkAuthorizationOForOwnerAuthTypeAndResourcePrefix(
+                () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                         authentication,
                         Admin,
                         "/logbook/%s".formatted(logbookId)

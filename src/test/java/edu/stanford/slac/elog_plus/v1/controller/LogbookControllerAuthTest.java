@@ -73,6 +73,7 @@ public class LogbookControllerAuthTest {
                         AuthorizationDTO
                                 .builder()
                                 .owner("user2@slac.stanford.edu")
+                                .ownerType("User")
                                 .authorizationType(
                                         Write.name()
                                 )
@@ -80,6 +81,7 @@ public class LogbookControllerAuthTest {
                         AuthorizationDTO
                                 .builder()
                                 .owner("user3@slac.stanford.edu")
+                                .ownerType("User")
                                 .authorizationType(
                                         Read.name()
                                 )
@@ -96,6 +98,7 @@ public class LogbookControllerAuthTest {
                 List.of(
                         AuthorizationDTO
                                 .builder()
+                                .ownerType("User")
                                 .owner("user2@slac.stanford.edu")
                                 .authorizationType(
                                         Write.name()

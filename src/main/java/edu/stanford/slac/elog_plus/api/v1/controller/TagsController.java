@@ -55,7 +55,7 @@ public class TagsController {
         // filter all readable
         List<LogbookDTO> allReadableLogbook = logbookService.getAllLogbook().stream()
                 .filter(
-                        lb-> authService.checkAuthorizationOForOwnerAuthTypeAndResourcePrefix(
+                        lb-> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                                 authentication,
                                 Read,
                                 "/logbook/%s".formatted(lb.id())

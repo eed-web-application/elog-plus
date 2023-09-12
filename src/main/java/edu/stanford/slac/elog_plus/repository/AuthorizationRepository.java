@@ -17,7 +17,7 @@ public interface AuthorizationRepository extends MongoRepository<Authorization, 
     List<Authorization> findByResourceIs(String resource);
     List<Authorization> findByResourceIsAndAuthorizationTypeIsGreaterThanEqual(String resource, Integer authorizationType);
     //@Query("{ 'owner' : '?0', $or: [{'authorizationType' : { '$gte' : '?1'}, 'resource' : { $regex : \"?2\"}}, {'authorizationType' : 2, resource:'*'}]}")
-    List<Authorization> findByOwnerAndAuthorizationTypeIsGreaterThanEqualAndResourceStartingWith(String owner, Integer type, String resource);
+    List<Authorization> findByOwnerAndOwnerTypeAndAuthorizationTypeIsGreaterThanEqualAndResourceStartingWith(String owner, String ownerType, Integer type, String resource);
     void deleteByOwnerIsAndResourceIsAndAuthorizationTypeIs(String owner, String resource, Integer authorizationType);
     void deleteAllByResourceStartingWith(String resourcePrefix);
     void deleteAllByResourceIs(String resource);

@@ -68,7 +68,7 @@ public class AttachmentsController {
                 // should be authenticated
                 () -> authService.checkAuthentication(authentication),
                 // should be able to write on some logbook
-                () -> authService.checkAuthorizationOForOwnerAuthTypeAndResourcePrefix(
+                () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                         authentication,
                         Write,
                         "/"
@@ -137,7 +137,7 @@ public class AttachmentsController {
                         summary -> {
                             List<LogbookSummaryDTO> filteredLogbook = summary.logbooks().stream()
                                     .filter(
-                                            lbSummary -> authService.checkAuthorizationOForOwnerAuthTypeAndResourcePrefix(
+                                            lbSummary -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                                                     authentication,
                                                     Read,
                                                     "/logbook/%s".formatted(lbSummary.id())

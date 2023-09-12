@@ -562,6 +562,9 @@ public class LogbooksControllerTest {
                 () -> testControllerHelperService.getLogbookTagsFromTagsController(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         Optional.empty()
                 )
         );
@@ -650,6 +653,9 @@ public class LogbooksControllerTest {
                 () -> testControllerHelperService.getLogbookTagsFromTagsController(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         Optional.empty()
                 )
         );
