@@ -372,7 +372,7 @@ public class LogbookServiceAuthorizationTest {
                         Authorization.Type.Read.name()
                 );
 
-        // updating deleting one authorizations
+        // updating deleting one authorization
         assertDoesNotThrow(
                 () -> logbookService.update(
                         newLogbookId,
