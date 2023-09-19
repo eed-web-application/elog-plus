@@ -306,7 +306,7 @@ public class EntriesControllerAuthorizationTest {
                 () -> testControllerHelperService.getNewLogbookWithNameWithAuthorization(
                         mockMvc,
                         Optional.of(
-                                "user2@slac.stanford.edu"
+                                "user1@slac.stanford.edu"
                         ),
                         "LogbookAuthTest2",
                         List.of(
@@ -353,7 +353,7 @@ public class EntriesControllerAuthorizationTest {
                 newLogID.getPayload()
         );
         assertThat(entryForUser2.getErrorCode()).isEqualTo(0);
-        assertThat(entryForUser2.getPayload().logbooks()).extracting("id").isEqualTo(newLogBookResult1.getPayload());
+        assertThat(entryForUser2.getPayload().logbooks()).extracting("id").contains(newLogBookResult1.getPayload());
 
         var entryForUser3 = testControllerHelperService.getFullLog(
                 mockMvc,
@@ -363,7 +363,7 @@ public class EntriesControllerAuthorizationTest {
                 newLogID.getPayload()
         );
         assertThat(entryForUser3.getErrorCode()).isEqualTo(0);
-        assertThat(entryForUser3.getPayload().logbooks()).extracting("id").isEqualTo(newLogBookResult2.getPayload());
+        assertThat(entryForUser3.getPayload().logbooks()).extracting("id").contains(newLogBookResult2.getPayload());
     }
 
 }
