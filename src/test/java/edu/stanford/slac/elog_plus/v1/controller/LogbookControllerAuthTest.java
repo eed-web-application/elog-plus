@@ -64,7 +64,6 @@ public class LogbookControllerAuthTest {
     public void testGetAllLogbookForAuthType() {
         var newLogbookApiResultOne = testControllerHelperService.getNewLogbookWithNameWithAuthorization(
                 mockMvc,
-                status().isCreated(),
                 Optional.of(
                         "user1@slac.stanford.edu"
                 ),
@@ -90,7 +89,6 @@ public class LogbookControllerAuthTest {
         );
         var newLogbookApiResultTwo = testControllerHelperService.getNewLogbookWithNameWithAuthorization(
                 mockMvc,
-                status().isCreated(),
                 Optional.of(
                         "user1@slac.stanford.edu"
                 ),
@@ -109,7 +107,6 @@ public class LogbookControllerAuthTest {
 
         var newLogbookApiResultThree = testControllerHelperService.getNewLogbookWithNameWithAuthorization(
                 mockMvc,
-                status().isCreated(),
                 Optional.of(
                         "user1@slac.stanford.edu"
                 ),

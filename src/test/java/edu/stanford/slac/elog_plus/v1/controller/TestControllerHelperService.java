@@ -45,7 +45,6 @@ public class TestControllerHelperService {
 
     public ApiResultResponse<String> getNewLogbookWithNameWithAuthorization(
             MockMvc mockMvc,
-            ResultMatcher resultMatcher,
             Optional<String> userInfo,
             String logbookName,
             List<AuthorizationDTO> authorizations) {
