@@ -1,6 +1,8 @@
 package edu.stanford.slac.elog_plus.api.v1.controller;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
+import edu.stanford.slac.elog_plus.exception.NotAuthorized;
+import edu.stanford.slac.elog_plus.service.AuthService;
 import edu.stanford.slac.elog_plus.service.EntryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -8,6 +10,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -15,20 +18,53 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
+
+import static edu.stanford.slac.elog_plus.exception.Utility.*;
+import static edu.stanford.slac.elog_plus.model.Authorization.Type.Read;
+import static edu.stanford.slac.elog_plus.model.Authorization.Type.Write;
 
 @RestController()
 @RequestMapping("/v1/entries")
 @AllArgsConstructor
-@Schema(description = "Main set of api for the query on the log data")
+@Schema(description = "Main set of api for the query on the log entries")
 public class EntriesController {
+    private AuthService authService;
     private EntryService entryService;
 
     @PostMapping(produces = {MediaType.APPLICATION_JSON_VALUE})
-    @Operation(description = "Perform the query on all log data")
+    @Operation(description = "Perform the query on all log entries")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResultResponse<String> newEntry(@RequestBody EntryNewDTO newEntry) {
+    public ApiResultResponse<String> newEntry(
+            @RequestBody EntryNewDTO newEntry,
+            Authentication authentication) {
+        // check authenticated
+        assertion(
+                NotAuthorized
+                        .notAuthorizedBuilder()
+                        .errorCode(-1)
+                        .errorDomain("LogbooksController::newEntry")
+                        .build(),
+                // needs be authenticated
+                () -> authService.checkAuthentication(authentication),
+                // and can at least write the logbook which the entry belong
+                () -> all(
+                        newEntry.logbooks().stream()
+                                .map(
+                                        logbookId -> (Supplier<Boolean>) () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
+                                                authentication,
+                                                Write,
+                                                "/logbook/%s".formatted(logbookId)
+                                        )
+                                )
+                                .toList()
+                )
+        );
         return ApiResultResponse.of(
-                entryService.createNew(newEntry)
+                entryService.createNew(
+                        newEntry,
+                        authService.findPerson(authentication)
+                )
         );
     }
 
@@ -38,9 +74,36 @@ public class EntriesController {
     )
     @Operation(description = "Create a new supersede for the log identified by the id")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResultResponse<String> newSupersede(@PathVariable String id, @RequestBody EntryNewDTO newLog) {
+    public ApiResultResponse<String> newSupersede(
+            @PathVariable String id,
+            @RequestBody EntryNewDTO newSupersedeEntry,
+            Authentication authentication) {
+        // check authenticated
+        assertion(
+                NotAuthorized
+                        .notAuthorizedBuilder()
+                        .errorCode(-1)
+                        .errorDomain("LogbooksController::newSupersede")
+                        .build(),
+
+                // needs be authenticated
+                () -> authService.checkAuthentication(authentication),
+                // and can at least write
+                () -> all(
+                        // write
+                        newSupersedeEntry.logbooks().stream()
+                                .map(
+                                        logbookId -> (Supplier<Boolean>) () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
+                                                authentication,
+                                                Write,
+                                                "/logbook/%s".formatted(logbookId)
+                                        )
+                                )
+                                .toList()
+                )
+        );
         return ApiResultResponse.of(
-                entryService.createNewSupersede(id, newLog)
+                entryService.createNewSupersede(id, newSupersedeEntry)
         );
     }
 
@@ -50,9 +113,40 @@ public class EntriesController {
     )
     @Operation(description = "Create a new follow-up log for the the log identified by the id")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResultResponse<String> newFollowup(@PathVariable String id, @RequestBody EntryNewDTO newLog) {
+    public ApiResultResponse<String> newFollowUp(
+            @PathVariable String id,
+            @RequestBody EntryNewDTO newFollowUpEntry,
+            Authentication authentication) {
+        // check authenticated
+        assertion(
+                NotAuthorized
+                        .notAuthorizedBuilder()
+                        .errorCode(-1)
+                        .errorDomain("LogbooksController::newFollowUp")
+                        .build(),
+
+                // needs be authenticated
+                () -> authService.checkAuthentication(authentication),
+                // or can at least write the logbook which the entry belong
+                () -> all(
+                        // write
+                        newFollowUpEntry.logbooks().stream()
+                                .map(
+                                        logbookId -> (Supplier<Boolean>) () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
+                                                authentication,
+                                                Write,
+                                                "/logbook/%s".formatted(logbookId)
+                                        )
+                                )
+                                .toList()
+                )
+        );
         return ApiResultResponse.of(
-                entryService.createNewFollowUp(id, newLog)
+                entryService.createNewFollowUp(
+                        id,
+                        newFollowUpEntry,
+                        authService.findPerson(authentication)
+                )
         );
     }
 
@@ -60,11 +154,27 @@ public class EntriesController {
             path = "/{id}/follow-ups",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @Operation(description = "Return all the follow-up logs for a specific log identified by the id")
+    @Operation(description = "Return all the follow-up logs for a specific entry identified by the id")
     @ResponseStatus(HttpStatus.OK)
-    public ApiResultResponse<List<EntrySummaryDTO>> getAllFollowUp(@PathVariable String id) {
+    public ApiResultResponse<List<EntrySummaryDTO>> getAllFollowUp(
+            @PathVariable String id,
+            Authentication authentication) {
+        // check for authorizations
+        assertion(
+                () -> authService.checkAuthentication(authentication),
+                NotAuthorized
+                        .notAuthorizedBuilder()
+                        .errorCode(-1)
+                        .errorDomain("LogbooksController::getAllFollowUp")
+                        .build()
+        );
+        final boolean userIsRoot = authService.checkForRoot(authentication);
+        // fetch all follow up
         return ApiResultResponse.of(
-                entryService.getAllFollowUpForALog(id)
+                filterEntrySummaryByAuthentication(
+                        entryService.getAllFollowUpForALog(id),
+                        authentication
+                )
         );
     }
 
@@ -85,17 +195,59 @@ public class EntriesController {
             @Parameter(name = "includeReferenceBy", description = "If true the API return all the entries that are referenced by this one")
             @RequestParam("includeReferences") Optional<Boolean> includeReferences,
             @Parameter(name = "includeReferencedBy", description = "If true the API return all the entries that are referenced byt this one")
-            @RequestParam("includeReferencedBy") Optional<Boolean> includeReferencedBy
+            @RequestParam("includeReferencedBy") Optional<Boolean> includeReferencedBy,
+            Authentication authentication
     ) {
-        return ApiResultResponse.of(
-                entryService.getFullEntry(
-                        id,
-                        includeFollowUps,
-                        includeFollowingUps,
-                        includeHistory,
-                        includeReferences,
-                        includeReferencedBy
+        List<String> lbForTheEntry = entryService.getLogbooksForAnEntryId(id);
+        // filter the unauthorized logbook id
+        List<String> authorizedEntryLogbook = lbForTheEntry.stream().filter(
+                lbId -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
+                        authentication,
+                        Read,
+                        "/logbook/%s".formatted(lbId)
                 )
+        ).toList();
+
+        // check among all others authorizations
+        assertion(
+                NotAuthorized
+                        .notAuthorizedBuilder()
+                        .errorCode(-1)
+                        .errorDomain("LogbooksController::getFull")
+                        .build(),
+                // is authenticated
+                () -> authService.checkAuthentication(authentication),
+                //and
+                () -> any(
+                        // or is administrator
+                        () -> authService.checkForRoot(authentication),
+                        // or is authorized at least in on e logbook to read
+                        () -> !authorizedEntryLogbook.isEmpty()
+                )
+        );
+
+        EntryDTO foundEntry = entryService.getFullEntry(
+                id,
+                includeFollowUps,
+                includeFollowingUps,
+                includeHistory,
+                includeReferences,
+                includeReferencedBy
+        );
+
+        //we have to filter out the logbook not authorized
+        List<LogbookSummaryDTO> authorizedLogbookSummary = foundEntry.logbooks()
+                .stream()
+                .filter(
+                        lb -> authorizedEntryLogbook.contains(lb.id())
+                ).toList();
+        // return entry with authorized only logbook summary
+        return ApiResultResponse.of(
+                foundEntry.toBuilder()
+                        .logbooks(
+                                authorizedLogbookSummary
+                        )
+                        .build()
         );
     }
 
@@ -105,11 +257,37 @@ public class EntriesController {
     )
     @Operation(description = "Return the full log information")
     @ResponseStatus(HttpStatus.OK)
-    public ApiResultResponse<List<EntrySummaryDTO>> getFull(
+    public ApiResultResponse<List<EntrySummaryDTO>> getAllTheReferences(
             @Parameter(description = "Is the id of the entry for wich we want to load all the reference to")
-            @PathVariable String id){
+            @PathVariable String id,
+            Authentication authentication) {
+        //filter all readable logbook wich the entry belongs
+        final List<String> authorizedEntryLogbook = entryService.getLogbooksForAnEntryId(id)
+                .stream()
+                .filter(
+                        lbId -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
+                                authentication,
+                                Read,
+                                "/logbook/%s".formatted(lbId)
+                        )
+                ).toList();
+
+        // check authorization on
+        assertion(
+                NotAuthorized.notAuthorizedBuilder()
+                        .errorCode(-1)
+                        .errorDomain("EntriesController::getAllTheReferences")
+                        .build(),
+                // need to be authenticated
+                () -> authService.checkAuthentication(authentication),
+                // ca read from at least one logbook
+                () -> !authorizedEntryLogbook.isEmpty()
+        );
         return ApiResultResponse.of(
-                entryService.getReferencesByEntryID(id)
+                filterEntrySummaryByAuthentication(
+                        entryService.getReferencesByEntryID(id),
+                        authentication
+                )
         );
     }
 
@@ -183,4 +361,35 @@ public class EntriesController {
         );
     }
 
+    private List<EntrySummaryDTO> filterEntrySummaryByAuthentication(List<EntrySummaryDTO> summaries, Authentication authentication) {
+        return summaries
+                .stream()
+                .map(
+                        entry -> {
+                            // filter all authorized logbook for en entry
+                            var authorizedLogbook = entry
+                                    .logbooks()
+                                    .stream()
+                                    .filter(
+                                            lb -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
+                                                    authentication,
+                                                    Read,
+                                                    "/logbook/%s".formatted(lb.id())
+                                            )
+                                    )
+                                    .toList();
+                            // recreate the summary with the authorized logbook
+                            return entry.toBuilder()
+                                    .logbooks(
+                                            authorizedLogbook
+                                    )
+                                    .build();
+                        }
+                )
+                .filter(
+                        // remove all summary for which the user is unauthorized on all logbook
+                        lb -> !lb.logbooks().isEmpty()
+                )
+                .toList();
+    }
 }

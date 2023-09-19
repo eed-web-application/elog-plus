@@ -50,6 +50,8 @@ public class EntryServiceTest {
     @Autowired
     private AttachmentService attachmentService;
     @Autowired
+    private SharedUtilityService sharedUtilityService;
+    @Autowired
     MongoTemplate mongoTemplate;
 
     @BeforeEach
@@ -82,7 +84,8 @@ public class EntryServiceTest {
                         .logbooks(List.of(logbook.id()))
                         .text("This is a log for test")
                         .title("A very wonderful log")
-                        .build()
+                        .build(),
+                sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
         );
 
         assertThat(newLogID).isNotNull();
@@ -97,7 +100,8 @@ public class EntryServiceTest {
                         .logbooks(List.of(logbook.id()))
                         .text("<h1>H1</h1><h2>H2</h2><p><a href='http://example.com/' onclick='stealCookies()'>Link</a></p>")
                         .title("A very wonderful log")
-                        .build()
+                        .build(),
+                sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
         );
 
         EntryDTO fullLog =
@@ -122,7 +126,8 @@ public class EntryServiceTest {
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
                                         .attachments(List.of("wrong id"))
-                                        .build()
+                                        .build(),
+                                sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                         )
                 );
         assertThat(ex.getErrorCode()).isEqualTo(-3);
@@ -149,7 +154,8 @@ public class EntryServiceTest {
                                         .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
-                                        .build()
+                                        .build(),
+                                sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                         )
                 );
 
@@ -182,7 +188,8 @@ public class EntryServiceTest {
                                         .eventAt(
                                                 eventAt
                                         )
-                                        .build()
+                                        .build(),
+                                sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                         )
                 );
 
@@ -205,7 +212,8 @@ public class EntryServiceTest {
                                         .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
-                                        .build()
+                                        .build(),
+                                sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                         )
                 );
 
@@ -247,7 +255,8 @@ public class EntryServiceTest {
                                         .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
-                                        .build()
+                                        .build(),
+                                sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                         )
                 );
 
@@ -290,7 +299,8 @@ public class EntryServiceTest {
                                         .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
-                                        .build()
+                                        .build(),
+                                sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                         )
                 );
 
@@ -338,7 +348,8 @@ public class EntryServiceTest {
                                         .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
-                                        .build()
+                                        .build(),
+                                sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                         )
                 );
         assertThat(supersededLogID).isNotNull();
@@ -385,7 +396,8 @@ public class EntryServiceTest {
                                 .logbooks(List.of(logbook.id()))
                                 .text("This is a log for test")
                                 .title("A very wonderful log")
-                                .build()
+                                .build(),
+                        sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                 )
         );
 
@@ -403,7 +415,8 @@ public class EntryServiceTest {
                                         .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
-                                        .build()
+                                        .build(),
+                                sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                         )
                 );
         assertThat(rootLogID).isNotNull();
@@ -417,7 +430,8 @@ public class EntryServiceTest {
                                         .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log updated for followUps one")
-                                        .build()
+                                        .build(),
+                                sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                         )
                 );
         assertThat(newFollowUpOneID).isNotNull();
@@ -431,7 +445,8 @@ public class EntryServiceTest {
                                         .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log updated for followUps two")
-                                        .build()
+                                        .build(),
+                                sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                         )
                 );
         assertThat(newFollowUpTwoID).isNotNull();
@@ -460,7 +475,8 @@ public class EntryServiceTest {
                                         .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
-                                        .build()
+                                        .build(),
+                                sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                         )
                 );
         assertThat(rootLogID).isNotNull();
@@ -474,7 +490,8 @@ public class EntryServiceTest {
                                         .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log updated for followUps one")
-                                        .build()
+                                        .build(),
+                                sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                         )
                 );
         assertThat(newFollowUpOneID).isNotNull();
@@ -532,7 +549,8 @@ public class EntryServiceTest {
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
                                         .attachments(List.of(attachmentID))
-                                        .build()
+                                        .build(),
+                                sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                         )
                 );
 
@@ -583,7 +601,8 @@ public class EntryServiceTest {
                                         .text("This is a log for test")
                                         .title("A very wonderful log")
                                         .attachments(List.of(attachmentID))
-                                        .build()
+                                        .build(),
+                                sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                         )
                 );
         assertThat(newLogID).isNotNull();
@@ -620,7 +639,8 @@ public class EntryServiceTest {
                                             .text("This is a log for test")
                                             .title("A very wonderful log")
                                             .note(String.valueOf(finalIdx))
-                                            .build()
+                                            .build(),
+                                    sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                             )
                     );
             assertThat(newLogID).isNotNull();
@@ -749,7 +769,8 @@ public class EntryServiceTest {
                                             .eventAt(
                                                     now.minusDays(finalIdx)
                                             )
-                                            .build()
+                                            .build(),
+                                    sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                             )
                     );
             assertThat(newLogID).isNotNull();
@@ -934,7 +955,8 @@ public class EntryServiceTest {
                                                                     random.nextInt(60)
                                                             )
                                             )
-                                            .build()
+                                            .build(),
+                                    sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                             )
                     );
             assertThat(newLogID).isNotNull();
@@ -1077,7 +1099,8 @@ public class EntryServiceTest {
                                                 .builder()
                                                 .build()
                                 )
-                                .build()
+                                .build(),
+                        sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                 )
         );
 
@@ -1128,7 +1151,8 @@ public class EntryServiceTest {
                                                 .builder()
                                                 .build()
                                 )
-                                .build()
+                                .build(),
+                        sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                 )
         );
 
@@ -1148,7 +1172,8 @@ public class EntryServiceTest {
                                                 .shiftId("wrong id")
                                                 .build()
                                 )
-                                .build()
+                                .build(),
+                        sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                 )
         );
 
@@ -1169,7 +1194,8 @@ public class EntryServiceTest {
                                                 .date(LocalDate.now())
                                                 .build()
                                 )
-                                .build()
+                                .build(),
+                        sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                 )
         );
 
@@ -1271,7 +1297,8 @@ public class EntryServiceTest {
                                                 .date(LocalDate.now())
                                                 .build()
                                 )
-                                .build()
+                                .build(),
+                        sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                 )
         );
 
@@ -1372,7 +1399,8 @@ public class EntryServiceTest {
                                                 .date(LocalDate.now())
                                                 .build()
                                 )
-                                .build()
+                                .build(),
+                        sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                 )
         );
         assertThat(entryID).isNotNull().isNotEmpty();
@@ -1384,7 +1412,8 @@ public class EntryServiceTest {
                                 .title("title")
                                 .text("text")
                                 .logbooks(List.of(logbookTest.id()))
-                                .build()
+                                .build(),
+                        sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                 )
         );
         assertThat(entryID).isNotNull().isNotEmpty();
@@ -1504,7 +1533,8 @@ public class EntryServiceTest {
                                                 .date(LocalDate.now())
                                                 .build()
                                 )
-                                .build()
+                                .build(),
+                        sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                 )
         );
         assertThat(entryID1).isNotNull().isNotEmpty();
@@ -1522,7 +1552,8 @@ public class EntryServiceTest {
                                                 .date(LocalDate.now().minusDays(1))
                                                 .build()
                                 )
-                                .build()
+                                .build(),
+                        sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                 )
         );
         assertThat(entryID2).isNotNull().isNotEmpty();
@@ -1636,7 +1667,8 @@ public class EntryServiceTest {
                                                 .date(LocalDate.now())
                                                 .build()
                                 )
-                                .build()
+                                .build(),
+                        sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                 )
         );
         assertThat(entryID).isNotNull().isNotEmpty();
@@ -1700,7 +1732,8 @@ public class EntryServiceTest {
                                                 logbookTestUpdated.tags().get(0).id()
                                         )
                                 )
-                                .build()
+                                .build(),
+                        sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                 )
         );
         assertThat(entryID).isNotNull().isNotEmpty();
@@ -1743,7 +1776,8 @@ public class EntryServiceTest {
                                 .logbooks(List.of(logbook.id()))
                                 .title("Referenced entry")
                                 .text("This is a log for a referenced entry")
-                                .build()
+                                .build(),
+                        sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                 )
         );
         assertThat(referencedEntryId).isNotNull();
@@ -1755,7 +1789,8 @@ public class EntryServiceTest {
                                 .logbooks(List.of(logbook.id()))
                                 .title("New entry")
                                 .text("This is a text with reference in a link <a href=\"http://test.com/%s\">Reference link</a>".formatted(referencedEntryId))
-                                .build()
+                                .build(),
+                        sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                 )
         );
         assertThat(referencerEntryId).isNotNull();
@@ -1801,7 +1836,8 @@ public class EntryServiceTest {
                                 .logbooks(List.of(logbook.id()))
                                 .title("New entry")
                                 .text("This is a text with reference in a link <a href=\"http://test.com/%s\">Reference link</a>".formatted("bad-id"))
-                                .build()
+                                .build(),
+                        sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                 )
         );
         assertThat(newEntryId).isNotNull();
@@ -1830,7 +1866,8 @@ public class EntryServiceTest {
                                 .logbooks(List.of(logbook.id()))
                                 .title("Referenced entry")
                                 .text("This is a log for a referenced entry")
-                                .build()
+                                .build(),
+                        sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                 )
         );
         assertThat(referencedEntryId).isNotNull();
@@ -1842,7 +1879,8 @@ public class EntryServiceTest {
                                 .logbooks(List.of(logbook.id()))
                                 .title("New entry")
                                 .text("This is a text with reference in a link <a href=\"http://test.com/%s\">Reference link</a>".formatted(referencedEntryId))
-                                .build()
+                                .build(),
+                        sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                 )
         );
         assertThat(referencerEntryId).isNotNull();

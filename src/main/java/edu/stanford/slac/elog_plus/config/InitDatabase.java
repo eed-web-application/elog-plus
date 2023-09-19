@@ -80,10 +80,11 @@ public class InitDatabase {
 
     private void createApplicationUser(MongoClient mongoClient, ConnectionString connectionString) {
         log.info("Start user creation");
-        // Connect to the admin databasew
+        // Connect to the admin database
         MongoDatabase applicationDb = mongoClient.getDatabase(Objects.requireNonNull(connectionString.getDatabase()));
 
         // Retrieve the list of users
+        @SuppressWarnings("unchecked")
         List<Document> users = applicationDb.runCommand(new Document("usersInfo", 1)).get("users", List.class);
         // Check if the desired user exists
         for (Document user : users) {

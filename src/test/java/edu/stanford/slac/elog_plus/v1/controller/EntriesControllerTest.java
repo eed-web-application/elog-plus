@@ -1,12 +1,15 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
+import edu.stanford.slac.elog_plus.config.AppProperties;
 import edu.stanford.slac.elog_plus.exception.EntryNotFound;
 import edu.stanford.slac.elog_plus.exception.SupersedeAlreadyCreated;
 import edu.stanford.slac.elog_plus.exception.TagNotFound;
 import edu.stanford.slac.elog_plus.model.Attachment;
+import edu.stanford.slac.elog_plus.model.Authorization;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
+import edu.stanford.slac.elog_plus.service.AuthService;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import edu.stanford.slac.elog_plus.v1.service.DocumentGenerationService;
 import org.assertj.core.api.AssertionsForClassTypes;
@@ -52,13 +55,19 @@ public class EntriesControllerTest {
     private MockMvc mockMvc;
 
     @Autowired
-    LogbookService logbookService;
+    private LogbookService logbookService;
+
+    @Autowired
+    AppProperties appProperties;
+
+    @Autowired
+    private AuthService authService;
 
     @Autowired
     private MongoTemplate mongoTemplate;
 
     @Autowired
-    private TestHelperService testHelperService;
+    private TestControllerHelperService testControllerHelperService;
 
     @Autowired
     private DocumentGenerationService documentGenerationService;
@@ -68,17 +77,26 @@ public class EntriesControllerTest {
         mongoTemplate.remove(new Query(), Entry.class);
         mongoTemplate.remove(new Query(), Attachment.class);
         mongoTemplate.remove(new Query(), Logbook.class);
+
+        //reset authorizations
+        mongoTemplate.remove(new Query(), Authorization.class);
+        appProperties.getRootUserList().clear();
+        appProperties.getRootUserList().add("user1@slac.stanford.edu");
+        authService.updateRootUser();
     }
 
     @Test
     public void createNewLog() throws Exception {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         ApiResultResponse<String> newLogID =
                 assertDoesNotThrow(
                         () ->
-                                testHelperService.createNewLog(
+                                testControllerHelperService.createNewLog(
                                         mockMvc,
                                         status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -97,9 +115,12 @@ public class EntriesControllerTest {
         ApiResultResponse<String> newAttachmentID = null;
         try (InputStream is = documentGenerationService.getTestPng()) {
             newAttachmentID = assertDoesNotThrow(
-                    () -> testHelperService.newAttachment(
+                    () -> testControllerHelperService.newAttachment(
                             mockMvc,
                             status().isCreated(),
+                            Optional.of(
+                                    "user1@slac.stanford.edu"
+                            ),
                             new MockMultipartFile(
                                     "uploadFile",
                                     "test.png",
@@ -111,14 +132,17 @@ public class EntriesControllerTest {
         }
         assertThat(newAttachmentID.getErrorCode()).isEqualTo(0);
 
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         ApiResultResponse<String> finalNewAttachmentID = newAttachmentID;
         ApiResultResponse<String> newLogID =
                 assertDoesNotThrow(
                         () ->
-                                testHelperService.createNewLog(
+                                testControllerHelperService.createNewLog(
                                         mockMvc,
                                         status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -139,8 +163,11 @@ public class EntriesControllerTest {
                 () -> {
                     ApiResultResponse<EntryDTO> logDto = assertDoesNotThrow(
                             () ->
-                                    testHelperService.getFullLog(
+                                    testControllerHelperService.getFullLog(
                                             mockMvc,
+                                            Optional.of(
+                                                    "user1@slac.stanford.edu"
+                                            ),
                                             newLogID.getPayload()
                                     )
                     );
@@ -152,28 +179,33 @@ public class EntriesControllerTest {
 
         ApiResultResponse<EntryDTO> logDto = assertDoesNotThrow(
                 () ->
-                        testHelperService.getFullLog(
+                        testControllerHelperService.getFullLog(
                                 mockMvc,
+                                Optional.of(
+                                        "user1@slac.stanford.edu"
+                                ),
                                 newLogID.getPayload()
                         )
         );
         assertThat(logDto.getErrorCode()).isEqualTo(0);
         assertThat(logDto.getPayload().attachments().size()).isEqualTo(1);
         assertThat(logDto.getPayload().attachments().get(0).miniPreview()).isNotNull();
-
     }
 
     @Test
     public void failCreatingNewLogWitWrongTag() throws Exception {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
 
         TagNotFound tagNotFound =
                 assertThrows(
                         TagNotFound.class,
                         () ->
-                                testHelperService.createNewLog(
+                                testControllerHelperService.createNewLog(
                                         mockMvc,
                                         status().is4xxClientError(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -193,13 +225,16 @@ public class EntriesControllerTest {
 
     @Test
     public void createNewLogAndSearchWithPaging() throws Exception {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         ApiResultResponse<String> newLogID =
                 assertDoesNotThrow(
                         () ->
-                                testHelperService.createNewLog(
+                                testControllerHelperService.createNewLog(
                                         mockMvc,
                                         status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -212,7 +247,7 @@ public class EntriesControllerTest {
         AssertionsForClassTypes.assertThat(newLogID).isNotNull();
         AssertionsForClassTypes.assertThat(newLogID.getErrorCode()).isEqualTo(0);
 
-        var queryResult = testHelperService.submitSearchByGetWithAnchor(
+        var queryResult = testControllerHelperService.submitSearchByGetWithAnchor(
                 mockMvc,
                 status().isOk(),
                 Optional.empty(),
@@ -235,9 +270,12 @@ public class EntriesControllerTest {
                 assertThrows(
                         EntryNotFound.class,
                         () ->
-                                testHelperService.getFullLog(
+                                testControllerHelperService.getFullLog(
                                         mockMvc,
                                         status().is4xxClientError(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         "bad-id"
                                 )
                 );
@@ -246,13 +284,16 @@ public class EntriesControllerTest {
 
     @Test
     public void fetchFullLog() {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         ApiResultResponse<String> newLogID =
                 assertDoesNotThrow(
                         () ->
-                                testHelperService.createNewLog(
+                                testControllerHelperService.createNewLog(
                                         mockMvc,
                                         status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -265,9 +306,12 @@ public class EntriesControllerTest {
 
         ApiResultResponse<EntryDTO> fullLog = assertDoesNotThrow(
                 () ->
-                        testHelperService.getFullLog(
+                        testControllerHelperService.getFullLog(
                                 mockMvc,
                                 status().isOk(),
+                                Optional.of(
+                                        "user1@slac.stanford.edu"
+                                ),
                                 newLogID.getPayload()
                         )
         );
@@ -277,13 +321,16 @@ public class EntriesControllerTest {
 
     @Test
     public void createNewSupersedeLog() throws Exception {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         ApiResultResponse<String> newLogIDResult =
                 assertDoesNotThrow(
                         () ->
-                                testHelperService.createNewLog(
+                                testControllerHelperService.createNewLog(
                                         mockMvc,
                                         status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -297,9 +344,12 @@ public class EntriesControllerTest {
         AssertionsForClassTypes.assertThat(newLogIDResult.getErrorCode()).isEqualTo(0);
         //create supersede
         ApiResultResponse<String> newSupersedeLogIDResult = assertDoesNotThrow(
-                () -> testHelperService.createNewSupersedeLog(
+                () -> testControllerHelperService.createNewSupersedeLog(
                         mockMvc,
                         status().isCreated(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         newLogIDResult.getPayload(),
                         EntryNewDTO
                                 .builder()
@@ -313,9 +363,12 @@ public class EntriesControllerTest {
         //check old log for supersede info
         ApiResultResponse<EntryDTO> oldFull = assertDoesNotThrow(
                 () ->
-                        testHelperService.getFullLog(
+                        testControllerHelperService.getFullLog(
                                 mockMvc,
                                 status().isOk(),
+                                Optional.of(
+                                        "user1@slac.stanford.edu"
+                                ),
                                 newLogIDResult.getPayload()
                         )
         );
@@ -324,7 +377,7 @@ public class EntriesControllerTest {
         assertThat(oldFull.getPayload().supersedeBy()).isEqualTo(newSupersedeLogIDResult.getPayload());
 
         // the search api now should return only the new log and not the superseded on
-        var queryResult = testHelperService.submitSearchByGetWithAnchor(
+        var queryResult = testControllerHelperService.submitSearchByGetWithAnchor(
                 mockMvc,
                 status().isOk(),
                 Optional.empty(),
@@ -344,13 +397,16 @@ public class EntriesControllerTest {
 
     @Test
     public void createDoubleSupersedeFailed() throws Exception {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         ApiResultResponse<String> newLogIDResult =
                 assertDoesNotThrow(
                         () ->
-                                testHelperService.createNewLog(
+                                testControllerHelperService.createNewLog(
                                         mockMvc,
                                         status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -364,9 +420,12 @@ public class EntriesControllerTest {
         AssertionsForClassTypes.assertThat(newLogIDResult.getErrorCode()).isEqualTo(0);
         //create supersede
         ApiResultResponse<String> newSupersedeLogIDResult = assertDoesNotThrow(
-                () -> testHelperService.createNewSupersedeLog(
+                () -> testControllerHelperService.createNewSupersedeLog(
                         mockMvc,
                         status().isCreated(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         newLogIDResult.getPayload(),
                         EntryNewDTO
                                 .builder()
@@ -381,9 +440,12 @@ public class EntriesControllerTest {
 
         SupersedeAlreadyCreated exception = assertThrows(
                 SupersedeAlreadyCreated.class,
-                () -> testHelperService.createNewSupersedeLog(
+                () -> testControllerHelperService.createNewSupersedeLog(
                         mockMvc,
                         status().is4xxClientError(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         newLogIDResult.getPayload(),
                         EntryNewDTO
                                 .builder()
@@ -398,13 +460,16 @@ public class EntriesControllerTest {
 
     @Test
     public void createSupersedeFailedOnNotFoundEntry() throws Exception {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         //create supersede
         EntryNotFound exception = assertThrows(
                 EntryNotFound.class,
-                () -> testHelperService.createNewSupersedeLog(
+                () -> testControllerHelperService.createNewSupersedeLog(
                         mockMvc,
                         status().is4xxClientError(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         "not found superseded log",
                         EntryNewDTO
                                 .builder()
@@ -419,13 +484,16 @@ public class EntriesControllerTest {
 
     @Test
     public void createNewSupersedeOfEntryWithFollowUp() throws Exception {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         ApiResultResponse<String> newLogIDResult =
                 assertDoesNotThrow(
                         () ->
-                                testHelperService.createNewLog(
+                                testControllerHelperService.createNewLog(
                                         mockMvc,
                                         status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -440,9 +508,12 @@ public class EntriesControllerTest {
 
         // create new followups
         ApiResultResponse<String> newFollowUpsLogIDResult = assertDoesNotThrow(
-                () -> testHelperService.createNewFollowUpLog(
+                () -> testControllerHelperService.createNewFollowUpLog(
                         mockMvc,
                         status().isCreated(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         newLogIDResult.getPayload(),
                         EntryNewDTO
                                 .builder()
@@ -457,9 +528,12 @@ public class EntriesControllerTest {
 
         // create supersede of followed up logs
         ApiResultResponse<String> newSupersedeLogIDResult = assertDoesNotThrow(
-                () -> testHelperService.createNewSupersedeLog(
+                () -> testControllerHelperService.createNewSupersedeLog(
                         mockMvc,
                         status().isCreated(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         newLogIDResult.getPayload(),
                         EntryNewDTO
                                 .builder()
@@ -475,9 +549,12 @@ public class EntriesControllerTest {
         //check old log for supersede info
         ApiResultResponse<EntryDTO> supersededFull = assertDoesNotThrow(
                 () ->
-                        testHelperService.getFullLog(
+                        testControllerHelperService.getFullLog(
                                 mockMvc,
                                 status().isOk(),
+                                Optional.of(
+                                        "user1@slac.stanford.edu"
+                                ),
                                 newLogIDResult.getPayload(),
                                 true
                         )
@@ -490,9 +567,12 @@ public class EntriesControllerTest {
         //check new supersede log and check follow-ups
         ApiResultResponse<EntryDTO> supersedeFull = assertDoesNotThrow(
                 () ->
-                        testHelperService.getFullLog(
+                        testControllerHelperService.getFullLog(
                                 mockMvc,
                                 status().isOk(),
+                                Optional.of(
+                                        "user1@slac.stanford.edu"
+                                ),
                                 newSupersedeLogIDResult.getPayload(),
                                 true
                         )
@@ -510,13 +590,16 @@ public class EntriesControllerTest {
 
     @Test
     public void getLogHistoryAndFollowingLog() throws Exception {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         ApiResultResponse<String> newLogIDResult =
                 assertDoesNotThrow(
                         () ->
-                                testHelperService.createNewLog(
+                                testControllerHelperService.createNewLog(
                                         mockMvc,
                                         status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -530,9 +613,12 @@ public class EntriesControllerTest {
         AssertionsForClassTypes.assertThat(newLogIDResult.getErrorCode()).isEqualTo(0);
         //create supersede
         ApiResultResponse<String> newSupersedeLogIDResult1 = assertDoesNotThrow(
-                () -> testHelperService.createNewSupersedeLog(
+                () -> testControllerHelperService.createNewSupersedeLog(
                         mockMvc,
                         status().isCreated(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         newLogIDResult.getPayload(),
                         EntryNewDTO
                                 .builder()
@@ -545,9 +631,12 @@ public class EntriesControllerTest {
 
         //check old log for supersede info
         ApiResultResponse<String> newSupersedeLogIDResult2 = assertDoesNotThrow(
-                () -> testHelperService.createNewSupersedeLog(
+                () -> testControllerHelperService.createNewSupersedeLog(
                         mockMvc,
                         status().isCreated(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         newSupersedeLogIDResult1.getPayload(),
                         EntryNewDTO
                                 .builder()
@@ -560,9 +649,12 @@ public class EntriesControllerTest {
 
         //return full log with only history
         ApiResultResponse<EntryDTO> fullLog = assertDoesNotThrow(
-                () -> testHelperService.getFullLog(
+                () -> testControllerHelperService.getFullLog(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         newSupersedeLogIDResult2.getPayload(),
                         false,
                         false,
@@ -580,13 +672,16 @@ public class EntriesControllerTest {
 
     @Test
     public void createNewFollowUpLogsAndFetch() throws Exception {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         ApiResultResponse<String> newLogIDResult =
                 assertDoesNotThrow(
                         () ->
-                                testHelperService.createNewLog(
+                                testControllerHelperService.createNewLog(
                                         mockMvc,
                                         status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -601,9 +696,12 @@ public class EntriesControllerTest {
 
         //create follow-up
         ApiResultResponse<String> newFULogIDOneResult = assertDoesNotThrow(
-                () -> testHelperService.createNewFollowUpLog(
+                () -> testControllerHelperService.createNewFollowUpLog(
                         mockMvc,
                         status().isCreated(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         newLogIDResult.getPayload(),
                         EntryNewDTO
                                 .builder()
@@ -616,9 +714,12 @@ public class EntriesControllerTest {
 
         //create follow-up
         ApiResultResponse<String> newFULogIDTwoResult = assertDoesNotThrow(
-                () -> testHelperService.createNewFollowUpLog(
+                () -> testControllerHelperService.createNewFollowUpLog(
                         mockMvc,
                         status().isCreated(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         newLogIDResult.getPayload(),
                         EntryNewDTO
                                 .builder()
@@ -630,9 +731,12 @@ public class EntriesControllerTest {
         );
 
         ApiResultResponse<List<EntrySummaryDTO>> foundFollowUp = assertDoesNotThrow(
-                () -> testHelperService.getAllFollowUpLog(
+                () -> testControllerHelperService.getAllFollowUpLog(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         newLogIDResult.getPayload()
                 )
         );
@@ -641,9 +745,12 @@ public class EntriesControllerTest {
 
         //get full log without followUPs
         ApiResultResponse<EntryDTO> fullLog = assertDoesNotThrow(
-                () -> testHelperService.getFullLog(
+                () -> testControllerHelperService.getFullLog(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         newLogIDResult.getPayload(),
                         false
                 )
@@ -654,9 +761,12 @@ public class EntriesControllerTest {
 
         //get full log without followUPs
         ApiResultResponse<EntryDTO> fullLogWitFollowUps = assertDoesNotThrow(
-                () -> testHelperService.getFullLog(
+                () -> testControllerHelperService.getFullLog(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         newLogIDResult.getPayload(),
                         true
                 )
@@ -668,9 +778,12 @@ public class EntriesControllerTest {
 
         // check for full log with the following up one
         ApiResultResponse<EntryDTO> fullLogWithFollowingUp = assertDoesNotThrow(
-                () -> testHelperService.getFullLog(
+                () -> testControllerHelperService.getFullLog(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         newFULogIDOneResult.getPayload(),
                         false,
                         true,
@@ -686,15 +799,18 @@ public class EntriesControllerTest {
 
     @Test
     public void searchWithAnchor() {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         // create some data
         for (int idx = 0; idx < 100; idx++) {
             int finalIdx = idx;
             ApiResultResponse<String> newLogID =
                     assertDoesNotThrow(
-                            () -> testHelperService.createNewLog(
+                            () -> testControllerHelperService.createNewLog(
                                     mockMvc,
                                     status().isCreated(),
+                                    Optional.of(
+                                            "user1@slac.stanford.edu"
+                                    ),
                                     EntryNewDTO
                                             .builder()
                                             .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -709,7 +825,7 @@ public class EntriesControllerTest {
 
         // initial search
         ApiResultResponse<List<EntrySummaryDTO>> firstPageResult = assertDoesNotThrow(
-                () -> testHelperService.submitSearchByGetWithAnchor(
+                () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
                         Optional.empty(),
@@ -743,7 +859,7 @@ public class EntriesControllerTest {
         var testAnchorLog = firstPage.get(firstPage.size() - 1);
         // load next page
         ApiResultResponse<List<EntrySummaryDTO>> nextPageResult = assertDoesNotThrow(
-                () -> testHelperService.submitSearchByGetWithAnchor(
+                () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
                         Optional.of(testAnchorLog.id()),
@@ -777,7 +893,7 @@ public class EntriesControllerTest {
 
         // now get all the record upside and downside
         ApiResultResponse<List<EntrySummaryDTO>> prevPageByPinResult = assertDoesNotThrow(
-                () -> testHelperService.submitSearchByGetWithAnchor(
+                () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
                         Optional.of(testAnchorLog.id()),
@@ -800,7 +916,7 @@ public class EntriesControllerTest {
 
         // test prev and next
         ApiResultResponse<List<EntrySummaryDTO>> prevAndNextPageByPinResult = assertDoesNotThrow(
-                () -> testHelperService.submitSearchByGetWithAnchor(
+                () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
                         Optional.of(testAnchorLog.id()),
@@ -825,16 +941,19 @@ public class EntriesControllerTest {
 
     @Test
     public void searchWithTags() {
-        ApiResultResponse<LogbookDTO> logbookCreationResult = getTestLogbook();
+        ApiResultResponse<LogbookDTO> logbookCreationResult = testControllerHelperService.getTestLogbook(mockMvc);
         // create new logbooks
         // create some data
         String[] tagIds = new String[100];
         for (int idx = 0; idx < 100; idx++) {
             int finalIdx = idx;
             ApiResultResponse<String> newTagID = assertDoesNotThrow(
-                    () -> testHelperService.createNewLogbookTags(
+                    () -> testControllerHelperService.createNewLogbookTags(
                             mockMvc,
                             status().isCreated(),
+                            Optional.of(
+                                    "user1@slac.stanford.edu"
+                            ),
                             logbookCreationResult.getPayload().id(),
                             NewTagDTO
                                     .builder()
@@ -845,9 +964,12 @@ public class EntriesControllerTest {
             assertThat(newTagID.getErrorCode()).isEqualTo(0);
 
             newTagID = assertDoesNotThrow(
-                    () -> testHelperService.createNewLogbookTags(
+                    () -> testControllerHelperService.createNewLogbookTags(
                             mockMvc,
                             status().isCreated(),
+                            Optional.of(
+                                    "user1@slac.stanford.edu"
+                            ),
                             logbookCreationResult.getPayload().id(),
                             NewTagDTO
                                     .builder()
@@ -859,9 +981,12 @@ public class EntriesControllerTest {
             tagIds[idx] = newTagID.getPayload();
             ApiResultResponse<String> newLogID =
                     assertDoesNotThrow(
-                            () -> testHelperService.createNewLog(
+                            () -> testControllerHelperService.createNewLog(
                                     mockMvc,
                                     status().isCreated(),
+                                    Optional.of(
+                                            "user1@slac.stanford.edu"
+                                    ),
                                     EntryNewDTO
                                             .builder()
                                             .logbooks(List.of(logbookCreationResult.getPayload().id()))
@@ -877,7 +1002,7 @@ public class EntriesControllerTest {
 
         // initial search
         ApiResultResponse<List<EntrySummaryDTO>> findTags = assertDoesNotThrow(
-                () -> testHelperService.submitSearchByGetWithAnchor(
+                () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
                         Optional.empty(),
@@ -901,11 +1026,14 @@ public class EntriesControllerTest {
 
     @Test
     public void searchWithTagsAllInclueded() {
-        ApiResultResponse<LogbookDTO> logbookCreationResult = getTestLogbook();
+        ApiResultResponse<LogbookDTO> logbookCreationResult = testControllerHelperService.getTestLogbook(mockMvc);
         ApiResultResponse<String> newTagIDA = assertDoesNotThrow(
-                () -> testHelperService.createNewLogbookTags(
+                () -> testControllerHelperService.createNewLogbookTags(
                         mockMvc,
                         status().isCreated(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         logbookCreationResult.getPayload().id(),
                         NewTagDTO
                                 .builder()
@@ -915,9 +1043,12 @@ public class EntriesControllerTest {
         assertThat(newTagIDA).isNotNull();
         assertThat(newTagIDA.getErrorCode()).isEqualTo(0);
         ApiResultResponse<String> newTagIDB = assertDoesNotThrow(
-                () -> testHelperService.createNewLogbookTags(
+                () -> testControllerHelperService.createNewLogbookTags(
                         mockMvc,
                         status().isCreated(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         logbookCreationResult.getPayload().id(),
                         NewTagDTO
                                 .builder()
@@ -929,9 +1060,12 @@ public class EntriesControllerTest {
 
         ApiResultResponse<String> newLogIDWithMoreTag =
                 assertDoesNotThrow(
-                        () -> testHelperService.createNewLog(
+                        () -> testControllerHelperService.createNewLog(
                                 mockMvc,
                                 status().isCreated(),
+                                Optional.of(
+                                        "user1@slac.stanford.edu"
+                                ),
                                 EntryNewDTO
                                         .builder()
                                         .logbooks(List.of(logbookCreationResult.getPayload().id()))
@@ -946,9 +1080,12 @@ public class EntriesControllerTest {
 
         ApiResultResponse<String> newLogIDWithTagA =
                 assertDoesNotThrow(
-                        () -> testHelperService.createNewLog(
+                        () -> testControllerHelperService.createNewLog(
                                 mockMvc,
                                 status().isCreated(),
+                                Optional.of(
+                                        "user1@slac.stanford.edu"
+                                ),
                                 EntryNewDTO
                                         .builder()
                                         .logbooks(List.of(logbookCreationResult.getPayload().id()))
@@ -962,7 +1099,7 @@ public class EntriesControllerTest {
         assertThat(newLogIDWithMoreTag.getErrorCode()).isEqualTo(0);
         // fined entry with all the tags
         ApiResultResponse<List<EntrySummaryDTO>> findTags = assertDoesNotThrow(
-                () -> testHelperService.submitSearchByGetWithAnchor(
+                () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
                         Optional.empty(),
@@ -983,7 +1120,7 @@ public class EntriesControllerTest {
 
         //find entry any tags
         findTags = assertDoesNotThrow(
-                () -> testHelperService.submitSearchByGetWithAnchor(
+                () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
                         Optional.empty(),
@@ -1002,38 +1139,20 @@ public class EntriesControllerTest {
         assertThat(findTags.getPayload().size()).isEqualTo(2);
     }
 
-    private ApiResultResponse<LogbookDTO> getTestLogbook() {
-        ApiResultResponse<String> logbookCreationResult = assertDoesNotThrow(
-                () -> testHelperService.createNewLogbook(
-                        mockMvc,
-                        status().isCreated(),
-                        NewLogbookDTO
-                                .builder()
-                                .name(UUID.randomUUID().toString())
-                                .build()
-                ));
-        assertThat(logbookCreationResult).isNotNull();
-        assertThat(logbookCreationResult.getErrorCode()).isEqualTo(0);
-        return assertDoesNotThrow(
-                () -> testHelperService.getLogbookByID(
-                        mockMvc,
-                        status().isOk(),
-                        logbookCreationResult.getPayload()
-                )
-        );
-    }
-
     @Test
     public void searchWithText() {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         // create some data
         for (int idx = 0; idx < 100; idx++) {
             int finalIdx = idx;
             ApiResultResponse<String> newLogID =
                     assertDoesNotThrow(
-                            () -> testHelperService.createNewLog(
+                            () -> testControllerHelperService.createNewLog(
                                     mockMvc,
                                     status().isCreated(),
+                                    Optional.of(
+                                            "user1@slac.stanford.edu"
+                                    ),
                                     EntryNewDTO
                                             .builder()
                                             .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -1048,7 +1167,7 @@ public class EntriesControllerTest {
 
         // initial search
         ApiResultResponse<List<EntrySummaryDTO>> findTags = assertDoesNotThrow(
-                () -> testHelperService.submitSearchByGetWithAnchor(
+                () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
                         Optional.empty(),
@@ -1069,14 +1188,17 @@ public class EntriesControllerTest {
 
     @Test
     public void createLogWithTagFailWithNoSave() {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         TagNotFound tagNotFound =
                 assertThrows(
                         TagNotFound.class,
                         () ->
-                                testHelperService.createNewLog(
+                                testControllerHelperService.createNewLog(
                                         mockMvc,
                                         status().is4xxClientError(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -1091,13 +1213,16 @@ public class EntriesControllerTest {
 
     @Test
     public void createLogWithTagOK() {
-        ApiResultResponse<LogbookDTO> logbookCreationResult = getTestLogbook();
+        ApiResultResponse<LogbookDTO> logbookCreationResult = testControllerHelperService.getTestLogbook(mockMvc);
         ApiResultResponse<String> tag01Id =
                 assertDoesNotThrow(
                         () ->
-                                testHelperService.createNewLogbookTags(
+                                testControllerHelperService.createNewLogbookTags(
                                         mockMvc,
                                         status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         logbookCreationResult.getPayload().id(),
                                         NewTagDTO
                                                 .builder()
@@ -1108,9 +1233,12 @@ public class EntriesControllerTest {
         ApiResultResponse<String> tag02Id =
                 assertDoesNotThrow(
                         () ->
-                                testHelperService.createNewLogbookTags(
+                                testControllerHelperService.createNewLogbookTags(
                                         mockMvc,
                                         status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         logbookCreationResult.getPayload().id(),
                                         NewTagDTO
                                                 .builder()
@@ -1121,9 +1249,12 @@ public class EntriesControllerTest {
         ApiResultResponse<String> logID =
                 assertDoesNotThrow(
                         () ->
-                                testHelperService.createNewLog(
+                                testControllerHelperService.createNewLog(
                                         mockMvc,
                                         status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbooks(List.of(logbookCreationResult.getPayload().id()))
@@ -1138,13 +1269,16 @@ public class EntriesControllerTest {
 
     @Test
     public void getAllTags() {
-        ApiResultResponse<LogbookDTO> logbookCreationResult = getTestLogbook();
+        ApiResultResponse<LogbookDTO> logbookCreationResult = testControllerHelperService.getTestLogbook(mockMvc);
         ApiResultResponse<String> tag01Id =
                 assertDoesNotThrow(
                         () ->
-                                testHelperService.createNewLogbookTags(
+                                testControllerHelperService.createNewLogbookTags(
                                         mockMvc,
                                         status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         logbookCreationResult.getPayload().id(),
                                         NewTagDTO
                                                 .builder()
@@ -1155,9 +1289,12 @@ public class EntriesControllerTest {
         ApiResultResponse<String> tag02Id =
                 assertDoesNotThrow(
                         () ->
-                                testHelperService.createNewLogbookTags(
+                                testControllerHelperService.createNewLogbookTags(
                                         mockMvc,
                                         status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         logbookCreationResult.getPayload().id(),
                                         NewTagDTO
                                                 .builder()
@@ -1168,9 +1305,12 @@ public class EntriesControllerTest {
         ApiResultResponse<List<TagDTO>> allTags =
                 assertDoesNotThrow(
                         () ->
-                                testHelperService.getLogbookTags(
+                                testControllerHelperService.getLogbookTags(
                                         mockMvc,
                                         status().isOk(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         logbookCreationResult.getPayload().id()
                                 )
                 );
@@ -1185,15 +1325,18 @@ public class EntriesControllerTest {
 
     @Test
     public void searchWithAnchorUsingLoggedAtInsteadEventAt() {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         // create some data
         for (int idx = 0; idx < 100; idx++) {
             int finalIdx = idx;
             ApiResultResponse<String> newLogID =
                     assertDoesNotThrow(
-                            () -> testHelperService.createNewLog(
+                            () -> testControllerHelperService.createNewLog(
                                     mockMvc,
                                     status().isCreated(),
+                                    Optional.of(
+                                            "user1@slac.stanford.edu"
+                                    ),
                                     EntryNewDTO
                                             .builder()
                                             .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -1212,7 +1355,7 @@ public class EntriesControllerTest {
 
         // initial search
         ApiResultResponse<List<EntrySummaryDTO>> firstPageResult = assertDoesNotThrow(
-                () -> testHelperService.submitSearchByGetWithAnchor(
+                () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
                         Optional.empty(),
@@ -1246,7 +1389,7 @@ public class EntriesControllerTest {
         var testAnchorLog = firstPage.get(firstPage.size() - 1);
         // load next page
         ApiResultResponse<List<EntrySummaryDTO>> nextPageResult = assertDoesNotThrow(
-                () -> testHelperService.submitSearchByGetWithAnchor(
+                () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
                         Optional.of(testAnchorLog.id()),
@@ -1280,7 +1423,7 @@ public class EntriesControllerTest {
 
         // now get all the record upside and downside
         ApiResultResponse<List<EntrySummaryDTO>> prevPageByPinResult = assertDoesNotThrow(
-                () -> testHelperService.submitSearchByGetWithAnchor(
+                () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
                         Optional.of(testAnchorLog.id()),
@@ -1303,7 +1446,7 @@ public class EntriesControllerTest {
 
         // test prev and next
         ApiResultResponse<List<EntrySummaryDTO>> prevAndNextPageByPinResult = assertDoesNotThrow(
-                () -> testHelperService.submitSearchByGetWithAnchor(
+                () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
                         Optional.of(testAnchorLog.id()),
@@ -1328,15 +1471,18 @@ public class EntriesControllerTest {
 
     @Test
     public void searchWithAnchorUsingReversedEventAtAndDefaultOrder() {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         // create some data
         for (int idx = 0; idx < 100; idx++) {
             int finalIdx = idx;
             ApiResultResponse<String> newLogID =
                     assertDoesNotThrow(
-                            () -> testHelperService.createNewLog(
+                            () -> testControllerHelperService.createNewLog(
                                     mockMvc,
                                     status().isCreated(),
+                                    Optional.of(
+                                            "user1@slac.stanford.edu"
+                                    ),
                                     EntryNewDTO
                                             .builder()
                                             .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -1355,7 +1501,7 @@ public class EntriesControllerTest {
 
         // initial search
         ApiResultResponse<List<EntrySummaryDTO>> firstPageResult = assertDoesNotThrow(
-                () -> testHelperService.submitSearchByGetWithAnchor(
+                () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
                         Optional.empty(),
@@ -1389,7 +1535,7 @@ public class EntriesControllerTest {
         var testAnchorLog = firstPage.get(firstPage.size() - 1);
         // load next page
         ApiResultResponse<List<EntrySummaryDTO>> nextPageResult = assertDoesNotThrow(
-                () -> testHelperService.submitSearchByGetWithAnchor(
+                () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
                         Optional.of(testAnchorLog.id()),
@@ -1423,7 +1569,7 @@ public class EntriesControllerTest {
 
         // now get all the record upside and downside
         ApiResultResponse<List<EntrySummaryDTO>> prevPageByPinResult = assertDoesNotThrow(
-                () -> testHelperService.submitSearchByGetWithAnchor(
+                () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
                         Optional.of(testAnchorLog.id()),
@@ -1446,7 +1592,7 @@ public class EntriesControllerTest {
 
         // test prev and next
         ApiResultResponse<List<EntrySummaryDTO>> prevAndNextPageByPinResult = assertDoesNotThrow(
-                () -> testHelperService.submitSearchByGetWithAnchor(
+                () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
                         Optional.of(testAnchorLog.id()),
@@ -1473,15 +1619,18 @@ public class EntriesControllerTest {
     @Test
     public void searchWithAnchorUsingReversedEventAtAndDefaultOrderWithDateLimit() {
         LocalDateTime now = LocalDateTime.now();
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         // create some data
         for (int idx = 0; idx < 100; idx++) {
             int finalIdx = idx;
             ApiResultResponse<String> newLogID =
                     assertDoesNotThrow(
-                            () -> testHelperService.createNewLog(
+                            () -> testControllerHelperService.createNewLog(
                                     mockMvc,
                                     status().isCreated(),
+                                    Optional.of(
+                                            "user1@slac.stanford.edu"
+                                    ),
                                     EntryNewDTO
                                             .builder()
                                             .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -1499,7 +1648,7 @@ public class EntriesControllerTest {
 
         // initial with past limit
         ApiResultResponse<List<EntrySummaryDTO>> firstPageResult = assertDoesNotThrow(
-                () -> testHelperService.submitSearchByGetWithAnchor(
+                () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
                         Optional.empty(),
@@ -1524,7 +1673,7 @@ public class EntriesControllerTest {
 
         // end and start limit
         ApiResultResponse<List<EntrySummaryDTO>> secondPageResult = assertDoesNotThrow(
-                () -> testHelperService.submitSearchByGetWithAnchor(
+                () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
                         Optional.empty(),
@@ -1550,15 +1699,18 @@ public class EntriesControllerTest {
     @Test
     public void searchWithAnchorUsingReversedEventAtAndDefaultOrderWithDateLimitAndPaging() {
         LocalDateTime now = LocalDateTime.now();
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         // create some data
         for (int idx = 0; idx < 100; idx++) {
             int finalIdx = idx;
             ApiResultResponse<String> newLogID =
                     assertDoesNotThrow(
-                            () -> testHelperService.createNewLog(
+                            () -> testControllerHelperService.createNewLog(
                                     mockMvc,
                                     status().isCreated(),
+                                    Optional.of(
+                                            "user1@slac.stanford.edu"
+                                    ),
                                     EntryNewDTO
                                             .builder()
                                             .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -1582,7 +1734,7 @@ public class EntriesControllerTest {
             // initial with past limit
             EntrySummaryDTO finalAnchorEntry = anchorEntry;
             ApiResultResponse<List<EntrySummaryDTO>> nextPage = assertDoesNotThrow(
-                    () -> testHelperService.submitSearchByGetWithAnchor(
+                    () -> testControllerHelperService.submitSearchByGetWithAnchor(
                             mockMvc,
                             status().isOk(),
                             (finalAnchorEntry == null) ? Optional.empty() : Optional.of(finalAnchorEntry.id()),
@@ -1616,12 +1768,15 @@ public class EntriesControllerTest {
 
     @Test
     public void findSummaryId() {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         ApiResultResponse<LogbookDTO> finalNewLogBookResult2 = newLogBookResult;
         ApiResultResponse<Boolean> replacementResult = assertDoesNotThrow(
-                () -> testHelperService.updateLogbook(
+                () -> testControllerHelperService.updateLogbook(
                         mockMvc,
                         status().isCreated(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         finalNewLogBookResult2.getPayload().id(),
                         UpdateLogbookDTO
                                 .builder()
@@ -1645,9 +1800,12 @@ public class EntriesControllerTest {
 
         ApiResultResponse<LogbookDTO> finalNewLogBookResult = newLogBookResult;
         newLogBookResult = assertDoesNotThrow(
-                () -> testHelperService.getLogbookByID(
+                () -> testControllerHelperService.getLogbookByID(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         finalNewLogBookResult.getPayload().id()
                 )
         );
@@ -1656,9 +1814,12 @@ public class EntriesControllerTest {
         ApiResultResponse<String> newLogID =
                 assertDoesNotThrow(
                         () ->
-                                testHelperService.createNewLog(
+                                testControllerHelperService.createNewLog(
                                         mockMvc,
                                         status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbooks(List.of(finalNewLogBookResult1.getPayload().id()))
@@ -1680,7 +1841,7 @@ public class EntriesControllerTest {
 
         ApiResultResponse<String> foundSummaryID = assertDoesNotThrow(
                 () ->
-                        testHelperService.findSummaryIdByShiftNameAndDate(
+                        testControllerHelperService.findSummaryIdByShiftNameAndDate(
                                 mockMvc,
                                 status().isOk(),
                                 finalNewLogBookResult1.getPayload().shifts().get(0).id(),
@@ -1694,14 +1855,17 @@ public class EntriesControllerTest {
 
     @Test
     public void createNewLogWitReferenceAndFindAllReferenced() throws Exception {
-        var newLogBookResult = getTestLogbook();
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
         // create entry for use as references
         ApiResultResponse<String> newLogID1 =
                 assertDoesNotThrow(
                         () ->
-                                testHelperService.createNewLog(
+                                testControllerHelperService.createNewLog(
                                         mockMvc,
                                         status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -1717,9 +1881,12 @@ public class EntriesControllerTest {
         ApiResultResponse<String> newLogID2 =
                 assertDoesNotThrow(
                         () ->
-                                testHelperService.createNewLog(
+                                testControllerHelperService.createNewLog(
                                         mockMvc,
                                         status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -1743,9 +1910,12 @@ public class EntriesControllerTest {
         ApiResultResponse<String> newLogIDReferencer =
                 assertDoesNotThrow(
                         () ->
-                                testHelperService.createNewLog(
+                                testControllerHelperService.createNewLog(
                                         mockMvc,
                                         status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         EntryNewDTO
                                                 .builder()
                                                 .logbooks(List.of(newLogBookResult.getPayload().id()))
@@ -1761,9 +1931,12 @@ public class EntriesControllerTest {
         ApiResultResponse<List<EntrySummaryDTO>> references =
                 assertDoesNotThrow(
                         () ->
-                                testHelperService.getReferencesByEntryId(
+                                testControllerHelperService.getReferencesByEntryId(
                                         mockMvc,
                                         status().isOk(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
                                         newLogIDReferencer.getPayload()
                                 )
                 );
@@ -1776,9 +1949,12 @@ public class EntriesControllerTest {
 
         ApiResultResponse<EntryDTO> referencerEntry = assertDoesNotThrow(
                 () ->
-                        testHelperService.getFullLog(
+                        testControllerHelperService.getFullLog(
                                 mockMvc,
                                 status().isOk(),
+                                Optional.of(
+                                        "user1@slac.stanford.edu"
+                                ),
                                 newLogIDReferencer.getPayload(),
                                 true,
                                 true,
@@ -1796,9 +1972,12 @@ public class EntriesControllerTest {
 
         ApiResultResponse<EntryDTO> referenceOne = assertDoesNotThrow(
                 () ->
-                        testHelperService.getFullLog(
+                        testControllerHelperService.getFullLog(
                                 mockMvc,
                                 status().isOk(),
+                                Optional.of(
+                                        "user1@slac.stanford.edu"
+                                ),
                                 newLogID1.getPayload(),
                                 true,
                                 true,
@@ -1814,9 +1993,12 @@ public class EntriesControllerTest {
 
         ApiResultResponse<EntryDTO> referenceTwo = assertDoesNotThrow(
                 () ->
-                        testHelperService.getFullLog(
+                        testControllerHelperService.getFullLog(
                                 mockMvc,
                                 status().isOk(),
+                                Optional.of(
+                                        "user1@slac.stanford.edu"
+                                ),
                                 newLogID2.getPayload(),
                                 true,
                                 true,

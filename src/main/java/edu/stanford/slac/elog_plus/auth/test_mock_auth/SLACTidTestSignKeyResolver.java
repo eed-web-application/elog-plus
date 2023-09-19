@@ -1,4 +1,4 @@
-package edu.stanford.slac.elog_plus.v1.auth;
+package edu.stanford.slac.elog_plus.auth.test_mock_auth;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwsHeader;
@@ -9,12 +9,14 @@ import org.springframework.stereotype.Component;
 
 import java.security.Key;
 
+import static edu.stanford.slac.elog_plus.auth.test_mock_auth.JWTHelper.SECRET_KEY;
+
 @Log4j2
 @Component
 @Profile("test")
 public class SLACTidTestSignKeyResolver extends SigningKeyResolverAdapter {
     @Override
     public Key resolveSigningKey(JwsHeader header, Claims claims) {
-        return JWTHelper.SECRET_KEY;
+        return SECRET_KEY;
     }
 }

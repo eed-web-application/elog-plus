@@ -10,6 +10,8 @@ server:
 spring:
   application:
     name: 'elog-plus'
+  cache:
+    type: hazelcast
   ldap:
     urls: ${ELOG_PLUS_LDAP_URI:ldap://localhost:8389}
     base: ${ELOG_PLUS_LDAP_BASE:dc=sdf,dc=slac,dc=stanford,dc=edu}
@@ -41,6 +43,7 @@ edu:
         user-header-name: ${ELOG_PLUS_AUTH_HEADER:x-vouch-idp-accesstoken}
         image-preview-topic: ${ELOG_PLUS_IMAGE_PREVIEW_TOPIC:elog-plus-preview-creation}
         oauth-server-discover: ${ELOG_PLUS_OIDC_CONFIGURATION_ENDPOINT:https://dex.slac.stanford.edu/.well-known/openid-configuration}
+        root-user-list: ${ELOG_PLUS_ROOT_USERS}
         storage:
           url: ${ELOG_PLUS_MINIO_URL:http://localhost:9000}
           key: ${ELOG_PLUS_MINIO_KEY:minio}

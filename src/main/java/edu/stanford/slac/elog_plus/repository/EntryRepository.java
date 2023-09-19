@@ -60,4 +60,11 @@ public interface EntryRepository extends MongoRepository<Entry, String>, EntryRe
      * @return the entry associated with the origin id
      */
     Optional<Entry> findByOriginId(String originId);
+
+    /**
+     * Return all the entry that refer to the attachment
+     * @param attachmentId the attachment id
+     * @return all the entries that refer to the attachment
+     */
+    List<Entry> findAllByAttachmentsContains(String attachmentId);
 }

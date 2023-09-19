@@ -11,6 +11,7 @@ import java.util.Collections;
 @Getter
 @Builder
 public class SLACAuthenticationToken extends AbstractAuthenticationToken {
+    @Builder.Default
     private String userToken = null;
     public SLACAuthenticationToken() {
         super(Collections.emptyList());

@@ -37,6 +37,22 @@ public class EntryService {
     final private EntryMapper entryMapper;
 
     /**
+     * Return the logbook id for the entry
+     *
+     * @param id the id of the entry for which we need to return the logbook id
+     * @return the log book id which the entry belongs
+     */
+    public List<String> getLogbooksForAnEntryId(String id) {
+        return getFullEntry(id)
+                .logbooks()
+                .stream()
+                .map(
+                        LogbookSummaryDTO::id
+                )
+                .toList();
+    }
+
+    /**
      * Perform the search operation on all the entries
      *
      * @param queryWithAnchorDTO the parameter for the search operation
@@ -129,14 +145,23 @@ public class EntryService {
      * @return the id of the newly created log
      */
     @Transactional(propagation = Propagation.NESTED)
-    public String createNew(EntryNewDTO entryNewDTO) {
-        Faker faker = new Faker();
+    public String createNew(EntryNewDTO entryNewDTO, PersonDTO personDTO) {
+        String firstname = "";
+        String lastName = "";
+        String[] slittedGecos = personDTO.gecos().split(" ");
+        if (slittedGecos.length >= 2) {
+            firstname = slittedGecos[0];
+            lastName = slittedGecos[1];
+        } else if (slittedGecos.length == 1) {
+            firstname = slittedGecos[0];
+        }
+
         return createNew(
                 entryMapper.fromDTO(
                         entryNewDTO,
-                        faker.name().firstName(),
-                        faker.name().lastName(),
-                        faker.name().username()
+                        firstname,
+                        lastName,
+                        personDTO.mail()
                 )
         );
     }
@@ -315,6 +340,23 @@ public class EntryService {
     }
 
     /**
+     * Return the ids of the logbooks which the parent entry is associated
+     *
+     * @param id the attachment id
+     * @return
+     */
+    public List<EntrySummaryDTO> getEntriesThatOwnTheAttachment(String id) {
+        return wrapCatch(
+                () -> entryRepository.findAllByAttachmentsContains(id),
+                -1,
+                "LogService::createNew"
+        ).stream()
+                .map(
+                        entryMapper::toSearchResult
+                ).toList();
+    }
+
+    /**
      * Create and manage references for the entry to create
      * <p>
      * the reference will be checked for the existence
@@ -439,17 +481,17 @@ public class EntryService {
                             foundEntry.getReferences()
                                     .stream()
                                     .map(
-                                            refId->wrapCatch(
-                                                    () ->entryRepository.findById(refId)
-                                                    .map(
-                                                            entryMapper::toSearchResult
-                                                    )
-                                                    .orElseThrow(
-                                                            ()->EntryNotFound.entryNotFoundBuilder()
-                                                                    .errorCode(-4)
-                                                                    .errorDomain("LogService::getFullEntry")
-                                                                    .build()
-                                                    ),
+                                            refId -> wrapCatch(
+                                                    () -> entryRepository.findById(refId)
+                                                            .map(
+                                                                    entryMapper::toSearchResult
+                                                            )
+                                                            .orElseThrow(
+                                                                    () -> EntryNotFound.entryNotFoundBuilder()
+                                                                            .errorCode(-4)
+                                                                            .errorDomain("LogService::getFullEntry")
+                                                                            .build()
+                                                            ),
                                                     -5,
                                                     "LogService::getFullEntry"
                                             )
@@ -582,7 +624,7 @@ public class EntryService {
      * @return the id of the new follow-up log
      */
     @Transactional
-    public String createNewFollowUp(String id, EntryNewDTO newLog) {
+    public String createNewFollowUp(String id, EntryNewDTO newLog, PersonDTO personDTO) {
         Entry rootLog =
                 wrapCatch(
                         () -> entryRepository.findById(id),
@@ -594,7 +636,7 @@ public class EntryService {
                                 .errorDomain("LogService::createNewFollowUp")
                                 .build()
                 );
-        String newFollowupLogID = createNew(newLog);
+        String newFollowupLogID = createNew(newLog, personDTO);
         // update supersede
         rootLog.getFollowUps().add(newFollowupLogID);
         wrapCatch(
@@ -740,7 +782,7 @@ public class EntryService {
                 -1,
                 "EntryService::getReferencesByEntryID"
         );
-        if(foundReferencesIds==null) return emptyList();
+        if (foundReferencesIds == null) return emptyList();
         return foundReferencesIds.stream().map(
                 refId -> wrapCatch(
                         () -> entryRepository.findById(refId),
@@ -749,7 +791,7 @@ public class EntryService {
                 ).map(
                         entryMapper::toSearchResult
                 ).orElseThrow(
-                        ()->EntryNotFound.entryNotFoundBuilderWithName()
+                        () -> EntryNotFound.entryNotFoundBuilderWithName()
                                 .errorCode(-3)
                                 .entryName(refId)
                                 .errorDomain("EntryService::getReferencesByEntryID")

@@ -30,7 +30,7 @@ dependencies {
             'org.springframework.boot:spring-boot-starter-security',
             'org.springframework.boot:spring-boot-starter-actuator',
             'org.springframework.boot:spring-boot-starter-data-ldap',
-//            'org.springframework.data:spring-data-ldap:3.1.2',
+            'org.springframework.boot:spring-boot-starter-cache',
             'io.micrometer:micrometer-registry-prometheus',
             'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.2',
             'org.springdoc:springdoc-openapi-starter-webflux-ui:2.0.2',
@@ -48,6 +48,9 @@ dependencies {
             'io.jsonwebtoken:jjwt-jackson:0.11.5',
             'io.jsonwebtoken:jjwt-extensions:0.11.5',
             'com.unboundid:unboundid-ldapsdk:6.0.8'
+
+    // hazelcast
+    implementation 'com.hazelcast:hazelcast-spring:5.2.2'
 
     // MongoDB
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'

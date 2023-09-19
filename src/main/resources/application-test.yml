@@ -1,0 +1,18 @@
+spring:
+  ldap:
+    embedded:
+      base-dn: dc=sdf,dc=slac,dc=stanford,dc=edu
+      ldif: classpath:test-ldap-schema.ldif
+      port: 8389
+      validation:
+        enabled: false
+edu:
+  stanford:
+    slac:
+      elogs-plus:
+        root-user-list:
+          - user1@slac.stanford.edu
+# Set the logging level for the entire MongoDB package
+#logging:
+#    level:
+#      org.springframework.data.mongodb.core: DEBUG

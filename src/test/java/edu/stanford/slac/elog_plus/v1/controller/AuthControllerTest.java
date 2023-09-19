@@ -3,7 +3,14 @@ package edu.stanford.slac.elog_plus.v1.controller;
 import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
 import edu.stanford.slac.elog_plus.api.v1.dto.GroupDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.PersonDTO;
-import edu.stanford.slac.elog_plus.exception.NotAuthenticated;
+import edu.stanford.slac.elog_plus.config.AppProperties;
+import edu.stanford.slac.elog_plus.exception.NotAuthorized;
+import edu.stanford.slac.elog_plus.model.Attachment;
+import edu.stanford.slac.elog_plus.model.Authorization;
+import edu.stanford.slac.elog_plus.model.Entry;
+import edu.stanford.slac.elog_plus.model.Logbook;
+import edu.stanford.slac.elog_plus.service.AuthService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,6 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -33,12 +42,28 @@ public class AuthControllerTest {
     @Autowired
     private MockMvc mockMvc;
     @Autowired
-    private TestHelperService testHelperService;
+    private AppProperties appProperties;
+    @Autowired
+    private AuthService authService;
+    @Autowired
+    private MongoTemplate mongoTemplate;
+    @Autowired
+    private TestControllerHelperService testControllerHelperService;
+
+    @BeforeEach
+    public void preTest() {
+
+        //reset authorizations
+        mongoTemplate.remove(new Query(), Authorization.class);
+        appProperties.getRootUserList().clear();
+        appProperties.getRootUserList().add("user1@slac.stanford.edu");
+        authService.updateRootUser();
+    }
 
     @Test
     public void getMe() {
         ApiResultResponse<PersonDTO> meResult = assertDoesNotThrow(
-                () -> testHelperService.getMe(
+                () -> testControllerHelperService.getMe(
                         mockMvc,
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu")
@@ -52,9 +77,9 @@ public class AuthControllerTest {
 
     @Test
     public void getMeFailUnauthorized() {
-        NotAuthenticated userNotFoundException = assertThrows(
-                NotAuthenticated.class,
-                () -> testHelperService.getMe(
+        NotAuthorized userNotFoundException = assertThrows(
+                NotAuthorized.class,
+                () -> testControllerHelperService.getMe(
                         mockMvc,
                         status().isUnauthorized(),
                         Optional.empty()
@@ -68,7 +93,7 @@ public class AuthControllerTest {
     @Test
     public void findUsersOK() {
         ApiResultResponse<List<PersonDTO>> meResult = assertDoesNotThrow(
-                () -> testHelperService.findUsers(
+                () -> testControllerHelperService.findUsers(
                         mockMvc,
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
@@ -78,13 +103,13 @@ public class AuthControllerTest {
 
         assertThat(meResult).isNotNull();
         assertThat(meResult.getErrorCode()).isEqualTo(0);
-        assertThat(meResult.getPayload()).hasSize(2);
+        assertThat(meResult.getPayload()).hasSize(3);
     }
 
     @Test
     public void findUsersByNameOK() {
         ApiResultResponse<List<PersonDTO>> meResult = assertDoesNotThrow(
-                () -> testHelperService.findUsers(
+                () -> testControllerHelperService.findUsers(
                         mockMvc,
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
@@ -101,7 +126,7 @@ public class AuthControllerTest {
     @Test
     public void findUsersBySurnameOK() {
         ApiResultResponse<List<PersonDTO>> meResult = assertDoesNotThrow(
-                () -> testHelperService.findUsers(
+                () -> testControllerHelperService.findUsers(
                         mockMvc,
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
@@ -117,9 +142,9 @@ public class AuthControllerTest {
 
     @Test
     public void findUsersFailUnauthorized() {
-        NotAuthenticated userNotFoundException = assertThrows(
-                NotAuthenticated.class,
-                () -> testHelperService.findUsers(
+        NotAuthorized userNotFoundException = assertThrows(
+                NotAuthorized.class,
+                () -> testControllerHelperService.findUsers(
                         mockMvc,
                         status().isUnauthorized(),
                         Optional.empty(),
@@ -134,7 +159,7 @@ public class AuthControllerTest {
     @Test
     public void findGroupsOK() {
         ApiResultResponse<List<GroupDTO>> meResult = assertDoesNotThrow(
-                () -> testHelperService.findGroups(
+                () -> testControllerHelperService.findGroups(
                         mockMvc,
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
@@ -149,9 +174,9 @@ public class AuthControllerTest {
 
     @Test
     public void findGroupsFailUnauthorized() {
-        NotAuthenticated userNotFoundException = assertThrows(
-                NotAuthenticated.class,
-                () -> testHelperService.findGroups(
+        NotAuthorized userNotFoundException = assertThrows(
+                NotAuthorized.class,
+                () -> testControllerHelperService.findGroups(
                         mockMvc,
                         status().isUnauthorized(),
                         Optional.empty(),
@@ -162,4 +187,6 @@ public class AuthControllerTest {
         assertThat(userNotFoundException).isNotNull();
         assertThat(userNotFoundException.getErrorCode()).isEqualTo(-1);
     }
+
+
 }

@@ -27,9 +27,9 @@ import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
-import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -51,7 +51,7 @@ public class ImportControllerTest {
     private MongoTemplate mongoTemplate;
 
     @Autowired
-    private TestHelperService testHelperService;
+    private TestControllerHelperService testControllerHelperService;
 
     @Autowired
     DocumentGenerationService documentGenerationService;
@@ -67,7 +67,7 @@ public class ImportControllerTest {
     public void uploadEntryFailsWithNoEntry() {
         MissingServletRequestPartException exception = assertThrows(
                 MissingServletRequestPartException.class,
-                () -> testHelperService.uploadWholeEntry(
+                () -> testControllerHelperService.uploadWholeEntry(
                         mockMvc, status().is4xxClientError(),
                         null,
                         new MockMultipartFile[]{}
@@ -88,7 +88,7 @@ public class ImportControllerTest {
                 .build();
 
         ApiResultResponse<String> uploadResult = assertDoesNotThrow(
-                () -> testHelperService.uploadWholeEntry(mockMvc, status().isCreated(), dto, new MockMultipartFile[]{})
+                () -> testControllerHelperService.uploadWholeEntry(mockMvc, status().isCreated(), dto, new MockMultipartFile[]{})
         );
 
         assertThat(uploadResult.getErrorCode()).isEqualTo(0);
@@ -136,7 +136,7 @@ public class ImportControllerTest {
             InputStream isPng = documentGenerationService.getTestPng();
             InputStream isJpg = documentGenerationService.getTestJpeg();
             ApiResultResponse<String> uploadResult = assertDoesNotThrow(
-                    () -> testHelperService.uploadWholeEntry(
+                    () -> testControllerHelperService.uploadWholeEntry(
                             mockMvc,
                             status().isCreated(),
                             dto,
@@ -158,11 +158,14 @@ public class ImportControllerTest {
             assertThat(uploadResult.getErrorCode()).isEqualTo(0);
 
             ApiResultResponse<EntryDTO> fullLog = assertDoesNotThrow(
-                    () -> testHelperService.getFullLog(
+                    () -> testControllerHelperService.getFullLog(
                             mockMvc,
                             status().isOk(),
+                            Optional.of(
+                                    "user1@slac.stanford.edu"
+                            ),
                             uploadResult.getPayload()
-                            )
+                    )
             );
             assertThat(fullLog.getPayload().tags()).extracting("name").contains("tag-one");
         } catch (URISyntaxException e) {
@@ -172,7 +175,7 @@ public class ImportControllerTest {
 
         ControllerLogicException alreadyFound = assertThrows(
                 ControllerLogicException.class,
-                () -> testHelperService.uploadWholeEntry(
+                () -> testControllerHelperService.uploadWholeEntry(
                         mockMvc,
                         status().is5xxServerError(),
                         EntryImportDTO
@@ -189,10 +192,17 @@ public class ImportControllerTest {
     }
 
     private ApiResultResponse<LogbookDTO> getTestLogbook() {
+        return getTestLogbook("user1@slac.stanford.edu");
+    }
+
+    private ApiResultResponse<LogbookDTO> getTestLogbook(String withUserEmail) {
         ApiResultResponse<String> logbookCreationResult = assertDoesNotThrow(
-                () -> testHelperService.createNewLogbook(
+                () -> testControllerHelperService.createNewLogbook(
                         mockMvc,
                         status().isCreated(),
+                        Optional.of(
+                                withUserEmail
+                        ),
                         NewLogbookDTO
                                 .builder()
                                 .name(UUID.randomUUID().toString())
@@ -201,9 +211,12 @@ public class ImportControllerTest {
         assertThat(logbookCreationResult).isNotNull();
         assertThat(logbookCreationResult.getErrorCode()).isEqualTo(0);
         return assertDoesNotThrow(
-                () -> testHelperService.getLogbookByID(
+                () -> testControllerHelperService.getLogbookByID(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         logbookCreationResult.getPayload()
                 )
         );

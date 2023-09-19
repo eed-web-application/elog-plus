@@ -1,7 +1,6 @@
-package edu.stanford.slac.elog_plus.v1.auth;
+package edu.stanford.slac.elog_plus.auth.test_mock_auth;
 
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
 

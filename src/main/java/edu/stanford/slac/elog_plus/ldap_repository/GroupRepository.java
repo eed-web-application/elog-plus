@@ -8,4 +8,6 @@ import java.util.List;
 
 public interface GroupRepository extends LdapRepository<Group> {
     List<Group> findByCommonNameContainsIgnoreCaseOrderByCommonNameAsc(String commonNamePrefix);
+
+    List<Group> findByMemberUidContainingIgnoreCase(String memberUid);
 }

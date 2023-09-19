@@ -39,9 +39,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @ActiveProfiles(profiles = "test")
 public class LogbookServiceTest {
     @Autowired
+    private SharedUtilityService sharedUtilityService;
+    @Autowired
     private LogbookService logbookService;
     @Autowired
-    MongoTemplate mongoTemplate;
+    private MongoTemplate mongoTemplate;
 
     @BeforeEach
     public void preTest() {
@@ -50,14 +52,14 @@ public class LogbookServiceTest {
 
     @Test
     public void createNew() {
-        String newID = getTestLogbook();
+        String newID = sharedUtilityService.getTestLogbook();
 
         assertThat(newID).isNotNull().isNotEmpty();
     }
 
     @Test
     public void fetchAll() {
-        String newID = getTestLogbook();
+        String newID = sharedUtilityService.getTestLogbook();
 
         assertThat(newID).isNotNull().isNotEmpty();
 
@@ -70,7 +72,7 @@ public class LogbookServiceTest {
 
     @Test
     public void createTag() {
-        String newLogbookID = getTestLogbook();
+        String newLogbookID = sharedUtilityService.getTestLogbook();
         AssertionsForClassTypes.assertThat(newLogbookID).isNotNull().isNotEmpty();
 
         String newTagID = assertDoesNotThrow(
@@ -101,7 +103,7 @@ public class LogbookServiceTest {
 
     @Test
     public void ensureTag() {
-        String newLogbookID = getTestLogbook();
+        String newLogbookID = sharedUtilityService.getTestLogbook();
         AssertionsForClassTypes.assertThat(newLogbookID).isNotNull().isNotEmpty();
         Set<String> returnedTagID = new HashSet<>();
         Integer counter = 0;
@@ -154,7 +156,7 @@ public class LogbookServiceTest {
 
     @Test
     public void failAddingShiftWithBadTImeFrom() {
-        String newLogbookID = getTestLogbook();
+        String newLogbookID = sharedUtilityService.getTestLogbook();
         ControllerLogicException exceptBadTime = assertThrows(
                 ControllerLogicException.class,
                 () -> logbookService.addShift(
@@ -250,7 +252,7 @@ public class LogbookServiceTest {
 
     @Test
     public void shiftAddFailWrongDates() {
-        String newLogbookID = getTestLogbook();
+        String newLogbookID = sharedUtilityService.getTestLogbook();
 
         ControllerLogicException exceptNoLogbook = assertThrows(
                 ControllerLogicException.class,
@@ -324,7 +326,7 @@ public class LogbookServiceTest {
 
     @Test
     public void shiftAddOk() {
-        String newLogbookID = getTestLogbook();
+        String newLogbookID = sharedUtilityService.getTestLogbook();
         String shiftId = assertDoesNotThrow(
                 () -> logbookService.addShift(
                         newLogbookID,
@@ -360,7 +362,7 @@ public class LogbookServiceTest {
 
     @Test
     public void shiftAddFailOnOverlapping() {
-        String newLogbookID = getTestLogbook();
+        String newLogbookID = sharedUtilityService.getTestLogbook();
         String shiftId1 = assertDoesNotThrow(
                 () -> logbookService.addShift(
                         newLogbookID,
@@ -475,7 +477,7 @@ public class LogbookServiceTest {
 
     @Test
     public void shiftAddOkInTheMiddle() {
-        String newLogbookID = getTestLogbook();
+        String newLogbookID = sharedUtilityService.getTestLogbook();
         String shiftId1 = assertDoesNotThrow(
                 () -> logbookService.addShift(
                         newLogbookID,
@@ -570,7 +572,7 @@ public class LogbookServiceTest {
 
     @Test
     public void shiftReplaceOKWithEmptyLogbook() {
-        String newLogbookID = getTestLogbook();
+        String newLogbookID = sharedUtilityService.getTestLogbook();
         List<ShiftDTO> replaceShifts = new ArrayList<>();
         replaceShifts.add(
                 ShiftDTO
@@ -661,7 +663,7 @@ public class LogbookServiceTest {
 
     @Test
     public void shiftReplaceFailWithWrongID() {
-        String newLogbookID = getTestLogbook();
+        String newLogbookID = sharedUtilityService.getTestLogbook();
         List<ShiftDTO> replaceShifts = new ArrayList<>();
         replaceShifts.add(
                 ShiftDTO
@@ -826,7 +828,7 @@ public class LogbookServiceTest {
 
     @Test
     public void shiftReplaceOk() {
-        String newLogbookID = getTestLogbook();
+        String newLogbookID = sharedUtilityService.getTestLogbook();
         List<ShiftDTO> replaceShifts = new ArrayList<>();
         replaceShifts.add(
                 ShiftDTO
@@ -1000,7 +1002,7 @@ public class LogbookServiceTest {
 
     @Test
     public void shiftReplaceFailsAndRestoreOld() {
-        String newLogbookID = getTestLogbook();
+        String newLogbookID = sharedUtilityService.getTestLogbook();
         List<ShiftDTO> replaceShifts = new ArrayList<>();
         replaceShifts.add(
                 ShiftDTO
@@ -1169,7 +1171,7 @@ public class LogbookServiceTest {
 
     @Test
     public void getShiftByLocalTime() {
-        String newLogbookID = getTestLogbook();
+        String newLogbookID = sharedUtilityService.getTestLogbook();
         List<ShiftDTO> replaceShifts = new ArrayList<>();
         replaceShifts.add(
                 ShiftDTO
@@ -1268,7 +1270,7 @@ public class LogbookServiceTest {
 
     @Test
     public void getNoShiftByWrongLocalTime() {
-        String newLogbookID = getTestLogbook();
+        String newLogbookID = sharedUtilityService.getTestLogbook();
         List<ShiftDTO> replaceShifts = new ArrayList<>();
         replaceShifts.add(
                 ShiftDTO
@@ -1362,26 +1364,11 @@ public class LogbookServiceTest {
         assertThat(foundShift.isPresent()).isFalse();
     }
 
-    private String getTestLogbook() {
-        return getTestLogbook("new-logbooks");
-    }
 
-    private String getTestLogbook(String logbookName) {
-        String newLogbookID = assertDoesNotThrow(
-                () -> logbookService.createNew(
-                        NewLogbookDTO
-                                .builder()
-                                .name(logbookName)
-                                .build()
-                )
-        );
-        AssertionsForClassTypes.assertThat(newLogbookID).isNotNull().isNotEmpty();
-        return newLogbookID;
-    }
 
     @Test
     public void updateLogbookTagOK() {
-        String logbookID = getTestLogbook();
+        String logbookID = sharedUtilityService.getTestLogbook();
         LogbookDTO logbookDTO = assertDoesNotThrow(
                 () -> logbookService.getLogbook(
                         logbookID
@@ -1485,7 +1472,7 @@ public class LogbookServiceTest {
 
     @Test
     public void updateLogbookShiftOK() {
-        String logbookID = getTestLogbook();
+        String logbookID = sharedUtilityService.getTestLogbook();
 
         // update with tags
         UpdateLogbookDTO updatedLogbook = UpdateLogbookDTO
@@ -1618,9 +1605,9 @@ public class LogbookServiceTest {
 
     @Test
     public void existsTagOnLogbooks() {
-        String logbookIDA = getTestLogbook("logbook-a");
-        String logbookIDB = getTestLogbook("logbook-b");
-        String logbookIDC = getTestLogbook("logbook-c");
+        String logbookIDA = sharedUtilityService.getTestLogbook("logbook-a");
+        String logbookIDB = sharedUtilityService.getTestLogbook("logbook-b");
+        String logbookIDC = sharedUtilityService.getTestLogbook("logbook-c");
 
         String tagAID = assertDoesNotThrow(
                 () -> logbookService.ensureTag(logbookIDA, "tag-a")
