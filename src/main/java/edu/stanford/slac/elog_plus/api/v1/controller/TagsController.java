@@ -1,10 +1,10 @@
 package edu.stanford.slac.elog_plus.api.v1.controller;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
+import edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationType;
 import edu.stanford.slac.elog_plus.api.v1.dto.LogbookDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.TagDTO;
 import edu.stanford.slac.elog_plus.exception.NotAuthorized;
-import edu.stanford.slac.elog_plus.model.Authorization;
 import edu.stanford.slac.elog_plus.service.AuthService;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,10 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
-import static edu.stanford.slac.elog_plus.model.Authorization.Type.Read;
 
 @RestController()
 @RequestMapping("/v1/tags")
@@ -57,7 +55,7 @@ public class TagsController {
                 .filter(
                         lb-> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                                 authentication,
-                                Read,
+                                AuthorizationType.Read,
                                 "/logbook/%s".formatted(lb.id())
                         )
                 )

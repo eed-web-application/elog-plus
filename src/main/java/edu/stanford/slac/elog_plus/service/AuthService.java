@@ -1,6 +1,7 @@
 package edu.stanford.slac.elog_plus.service;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationType;
 import edu.stanford.slac.elog_plus.api.v1.dto.GroupDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.PersonDTO;
 import edu.stanford.slac.elog_plus.api.v1.mapper.AuthMapper;
@@ -107,7 +108,7 @@ public class AuthService {
         // only root user can create logbook
         List<AuthorizationDTO> foundAuth = getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
                 authentication.getCredentials().toString(),
-                Admin,
+                AuthorizationType.Admin,
                 "*",
                 Optional.empty()
         );
@@ -124,7 +125,7 @@ public class AuthService {
      * @param authentication the current authentication
      * @param resourcePrefix the target resource
      */
-    public boolean checkAuthorizationForOwnerAuthTypeAndResourcePrefix(Authentication authentication, Authorization.Type authorization, String resourcePrefix) {
+    public boolean checkAuthorizationForOwnerAuthTypeAndResourcePrefix(Authentication authentication, AuthorizationType authorization, String resourcePrefix) {
         if (!checkAuthentication(authentication)) return false;
         if (checkForRoot(authentication)) return true;
         List<AuthorizationDTO> foundLogbookAuth = getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
@@ -175,7 +176,7 @@ public class AuthService {
     @Cacheable(value = "user-authorization", key = "{#owner, #authorizationType, #resourcePrefix}")
     public List<AuthorizationDTO> getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
             String owner,
-            Authorization.Type authorizationType,
+            AuthorizationType authorizationType,
             String resourcePrefix) {
         return getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
                 owner,
@@ -198,7 +199,7 @@ public class AuthService {
     @Cacheable(value = "user-authorization", key = "{#owner, #authorizationType, #resourcePrefix, #allHigherAuthOnSameResource}")
     public List<AuthorizationDTO> getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
             String owner,
-            Authorization.Type authorizationType,
+            AuthorizationType authorizationType,
             String resourcePrefix,
             Optional<Boolean> allHigherAuthOnSameResource
     ) {
@@ -208,7 +209,7 @@ public class AuthService {
                         () -> authorizationRepository.findByOwnerAndOwnerTypeAndAuthorizationTypeIsGreaterThanEqualAndResourceStartingWith(
                                 owner,
                                 Authorization.OType.User,
-                                authorizationType.getValue(),
+                                authMapper.toModel(authorizationType).getValue(),
                                 resourcePrefix
                         ),
                         -1,
@@ -227,7 +228,7 @@ public class AuthService {
                                 g -> authorizationRepository.findByOwnerAndOwnerTypeAndAuthorizationTypeIsGreaterThanEqualAndResourceStartingWith(
                                         g.commonName(),
                                         Authorization.OType.Group,
-                                        authorizationType.getValue(),
+                                        authMapper.toModel(authorizationType).getValue(),
                                         resourcePrefix
 
                                 )

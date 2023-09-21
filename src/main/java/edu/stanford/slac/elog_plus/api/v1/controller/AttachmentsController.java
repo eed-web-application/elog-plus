@@ -1,6 +1,7 @@
 package edu.stanford.slac.elog_plus.api.v1.controller;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
+import edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationType;
 import edu.stanford.slac.elog_plus.api.v1.dto.EntrySummaryDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.LogbookSummaryDTO;
 import edu.stanford.slac.elog_plus.exception.NotAuthorized;
@@ -70,7 +71,7 @@ public class AttachmentsController {
                 // should be able to write on some logbook
                 () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                         authentication,
-                        Write,
+                        AuthorizationType.Write,
                         "/"
                 )
         );
@@ -139,7 +140,7 @@ public class AttachmentsController {
                                     .filter(
                                             lbSummary -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                                                     authentication,
-                                                    Read,
+                                                    AuthorizationType.Read,
                                                     "/logbook/%s".formatted(lbSummary.id())
                                             )
                                     ).toList();

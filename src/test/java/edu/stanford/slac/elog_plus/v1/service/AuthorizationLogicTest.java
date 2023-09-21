@@ -1,6 +1,7 @@
 package edu.stanford.slac.elog_plus.v1.service;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationType;
 import edu.stanford.slac.elog_plus.api.v1.dto.EntrySummaryDTO;
 import edu.stanford.slac.elog_plus.config.AppProperties;
 import edu.stanford.slac.elog_plus.model.Authorization;
@@ -121,7 +122,7 @@ public class AuthorizationLogicTest {
 
         List<AuthorizationDTO> allReadAuthorization = authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
                 "user1@slac.stanford.edu",
-                Read,
+                AuthorizationType.Read,
                 "/r"
         );
 
@@ -157,7 +158,7 @@ public class AuthorizationLogicTest {
         // remove all the authorization from the same resource and keep all the higher one
         List<AuthorizationDTO> allHigherAuthorization = authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
                 "user1@slac.stanford.edu",
-                Read,
+                AuthorizationType.Read,
                 "/r",
                 Optional.of(true)
         );

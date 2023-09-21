@@ -1,7 +1,10 @@
 package edu.stanford.slac.elog_plus.v1.mapper;
 
+import edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationType;
 import edu.stanford.slac.elog_plus.api.v1.dto.EntryNewDTO;
+import edu.stanford.slac.elog_plus.api.v1.mapper.AuthMapper;
 import edu.stanford.slac.elog_plus.api.v1.mapper.EntryMapper;
+import edu.stanford.slac.elog_plus.model.Authorization;
 import edu.stanford.slac.elog_plus.model.Entry;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -22,6 +25,8 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 public class MapperTest {
     @Autowired
     EntryMapper entryMapper;
+    @Autowired
+    AuthMapper authMapper;
     @Test
     public void logDTOAuthorName() throws Exception {
         var log = Entry.builder()
@@ -70,5 +75,15 @@ public class MapperTest {
                 "lastName",
                 "userName");
         assertThat(newEntry.getReferences()).contains("uuid-reference1","uuid-reference2");
+    }
+
+    @Test
+    public void authType() {
+        Authorization.Type mType = authMapper.toModel(AuthorizationType.Admin);
+        assertThat(mType).isEqualTo(Authorization.Type.Admin);
+        mType = authMapper.toModel(AuthorizationType.Write);
+        assertThat(mType).isEqualTo(Authorization.Type.Write);
+        mType = authMapper.toModel(AuthorizationType.Read);
+        assertThat(mType).isEqualTo(Authorization.Type.Read);
     }
 }

@@ -1,6 +1,7 @@
 package edu.stanford.slac.elog_plus.api.v1.mapper;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationType;
 import edu.stanford.slac.elog_plus.api.v1.dto.GroupDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.PersonDTO;
 import edu.stanford.slac.elog_plus.model.Authorization;
@@ -26,4 +27,6 @@ public abstract class AuthMapper {
     public abstract Authorization toModel(AuthorizationDTO a);
 
     public abstract List<Authorization> toModel(List<AuthorizationDTO> a);
+
+    public abstract Authorization.Type toModel(AuthorizationType type);
 }

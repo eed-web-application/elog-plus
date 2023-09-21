@@ -53,7 +53,7 @@ public class EntriesController {
                                 .map(
                                         logbookId -> (Supplier<Boolean>) () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                                                 authentication,
-                                                Write,
+                                                AuthorizationType.Write,
                                                 "/logbook/%s".formatted(logbookId)
                                         )
                                 )
@@ -95,7 +95,7 @@ public class EntriesController {
                                 .map(
                                         logbookId -> (Supplier<Boolean>) () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                                                 authentication,
-                                                Write,
+                                                AuthorizationType.Write,
                                                 "/logbook/%s".formatted(logbookId)
                                         )
                                 )
@@ -134,7 +134,7 @@ public class EntriesController {
                                 .map(
                                         logbookId -> (Supplier<Boolean>) () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                                                 authentication,
-                                                Write,
+                                                AuthorizationType.Write,
                                                 "/logbook/%s".formatted(logbookId)
                                         )
                                 )
@@ -203,7 +203,7 @@ public class EntriesController {
         List<String> authorizedEntryLogbook = lbForTheEntry.stream().filter(
                 lbId -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                         authentication,
-                        Read,
+                        AuthorizationType.Read,
                         "/logbook/%s".formatted(lbId)
                 )
         ).toList();
@@ -267,7 +267,7 @@ public class EntriesController {
                 .filter(
                         lbId -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                                 authentication,
-                                Read,
+                                AuthorizationType.Read,
                                 "/logbook/%s".formatted(lbId)
                         )
                 ).toList();
@@ -373,7 +373,7 @@ public class EntriesController {
                                     .filter(
                                             lb -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                                                     authentication,
-                                                    Read,
+                                                    AuthorizationType.Read,
                                                     "/logbook/%s".formatted(lb.id())
                                             )
                                     )

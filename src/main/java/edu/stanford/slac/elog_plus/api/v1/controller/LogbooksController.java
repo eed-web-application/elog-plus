@@ -8,6 +8,7 @@ import edu.stanford.slac.elog_plus.service.LogbookService;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
@@ -19,6 +20,7 @@ import java.util.Optional;
 import static edu.stanford.slac.elog_plus.exception.Utility.*;
 import static edu.stanford.slac.elog_plus.model.Authorization.Type.*;
 
+@Log4j2
 @RestController()
 @RequestMapping("/v1/logbooks")
 @AllArgsConstructor
@@ -33,8 +35,8 @@ public class LogbooksController {
     public ApiResultResponse<List<LogbookDTO>> getAllLogbook(
             @Parameter(name = "includeAuthorizations", description = "If true the authorizations will be loaded for every logbook found")
             @RequestParam("includeAuthorizations") Optional<Boolean> includeAuthorizations,
-            @Parameter(name = "filterForAuthorizationTypes", description = "Filter the logbook for authorizations types")
-            @RequestParam("filterForAuthorizationTypes") Optional<String> authorizationType,
+            @Parameter(name = "filterForAuthorizationTypes", description = "Filter the logbook for authorizations types [Read,Write,Admin]")
+            @RequestParam("filterForAuthorizationTypes") Optional<AuthorizationType> authorizationType,
             Authentication authentication
     ) {
         assertion(
@@ -54,11 +56,7 @@ public class LogbooksController {
             // get all the logbook where the user is authorized (all type of authorizations)
             List<AuthorizationDTO> authOnLogbook = authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
                     authentication.getCredentials().toString(),
-                    authorizationType.map(
-                            Authorization.Type::valueOf
-                    ).orElse(
-                            Read
-                    ),
+                    authorizationType.orElse(AuthorizationType.Read),
                     "/logbook/"
             );
             return ApiResultResponse.of(
@@ -122,7 +120,7 @@ public class LogbooksController {
                 // and need to be an admin or root
                 () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                         authentication,
-                        Admin,
+                        AuthorizationType.Admin,
                         "/logbook/%s".formatted(logbookId)
                 )
         );
@@ -153,7 +151,7 @@ public class LogbooksController {
                 // and or can write or administer the logbook
                 () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                         authentication,
-                        Write,
+                        AuthorizationType.Write,
                         "/logbook/%s".formatted(logbookId)
                 )
         );
@@ -185,7 +183,7 @@ public class LogbooksController {
                 // and or can write or administer the logbook
                 () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                         authentication,
-                        Admin,
+                        AuthorizationType.Admin,
                         "/logbook/%s".formatted(logbookId)
                 )
         );
@@ -214,7 +212,7 @@ public class LogbooksController {
                 // and can read, write or administer the logbook
                 () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                         authentication,
-                        Read,
+                        AuthorizationType.Read,
                         "/logbook/%s".formatted(logbookId)
                 )
         );
@@ -246,7 +244,7 @@ public class LogbooksController {
                 // and can write or administer the logbook
                 () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                         authentication,
-                        Admin,
+                        AuthorizationType.Admin,
                         "/logbook/%s".formatted(logbookId)
                 )
         );
