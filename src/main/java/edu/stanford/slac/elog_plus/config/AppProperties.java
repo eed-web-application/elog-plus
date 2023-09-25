@@ -8,7 +8,7 @@ import java.util.List;
 
 @Getter
 @Setter
-@ConfigurationProperties(prefix = "edu.stanford.slac.elogs-plus")
+@ConfigurationProperties(prefix = "edu.stanford.slac.elog-plus")
 public class AppProperties {
     private String appTokenJwtKey;
     private String dbAdminUri;

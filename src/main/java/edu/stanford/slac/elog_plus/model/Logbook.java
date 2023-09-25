@@ -25,4 +25,5 @@ public class Logbook {
     private List<Tag> tags = Collections.emptyList();
     @Builder.Default
     private List<Shift> shifts = Collections.emptyList();
+
 }
