@@ -1,13 +1,13 @@
 package edu.stanford.slac.elog_plus.auth.k8s_slac;
 
+import edu.stanford.slac.elog_plus.auth.BaseSignKeyResolver;
+import edu.stanford.slac.elog_plus.auth.JWTHelper;
 import edu.stanford.slac.elog_plus.auth.OIDCConfiguration;
 import edu.stanford.slac.elog_plus.auth.OIDCKeysDescription;
 import edu.stanford.slac.elog_plus.config.AppProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwsHeader;
 import io.jsonwebtoken.SigningKeyResolverAdapter;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
@@ -22,40 +22,46 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
-
 @Log4j2
 @Component
 @Profile("!test")
-public class SLACTidSignKeyResolver extends SigningKeyResolverAdapter {
+public class SLACTidSignKeyResolver extends BaseSignKeyResolver {
     private final AppProperties appProperties;
     private final RestTemplate restTemplate = new RestTemplate();
     private Map<String, OIDCKeysDescription.Key> stringKeyMap = null;
     private OIDCConfiguration oidcConfiguration;
 
-    public SLACTidSignKeyResolver(AppProperties appProperties){
+    public SLACTidSignKeyResolver(AppProperties appProperties, JWTHelper jwtHelper) {
+        super(jwtHelper);
         this.appProperties = appProperties;
     }
 
     @Override
     public Key resolveSigningKey(JwsHeader header, Claims claims) {
+        Key resultKey = null;
         try {
-            if(claims.containsKey("email")) {
-                log.debug("Validate jwt token for: %s".formatted(claims.get("email")));
+            resultKey = super.resolveSigningKey(header, claims);
+            if (resultKey == null) {
+                if (claims.containsKey("email")) {
+                    log.debug("Validate jwt token for: %s".formatted(claims.get("email")));
+                }
+                OIDCKeysDescription.Key key = getKeyByID(header.getKeyId());
+                if (key == null) {
+                    clearCache();
+                    key = getKeyByID(header.getKeyId());
+                    if(key!=null) {
+                        resultKey = key.getKey();
+                    }
+                }
             }
-
-            OIDCKeysDescription.Key key = getKeyByID(header.getKeyId());
-            if (key == null) {
-                clearCache();
-                key = getKeyByID(header.getKeyId());
-            }
-            if (key == null) {
-                throw new BadCredentialsException("No key found jwt verification using the id: %s".formatted(header.getKeyId()));
-            }
-            return key.getKey();
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+        } catch (NoSuchAlgorithmException |
+                 InvalidKeySpecException e) {
             throw new RuntimeException(e);
         }
+        if (resultKey == null) {
+            throw new BadCredentialsException("No key found jwt verification using the id: %s".formatted(header.getKeyId()));
+        }
+        return resultKey;
     }
 
     /**

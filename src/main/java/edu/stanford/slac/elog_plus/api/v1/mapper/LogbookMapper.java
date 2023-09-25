@@ -1,6 +1,7 @@
 package edu.stanford.slac.elog_plus.api.v1.mapper;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
+import edu.stanford.slac.elog_plus.model.AuthenticationToken;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import edu.stanford.slac.elog_plus.repository.AuthorizationRepository;
@@ -32,7 +33,7 @@ public abstract class LogbookMapper {
     public abstract Logbook fromDTO(LogbookDTO logbookDTO);
     public abstract Logbook fromDTO(UpdateLogbookDTO logbookDTO);
     public abstract Entry fromDTO(EntryNewDTO entryNewDTO, String firstName, String lastName, String userName);
-
+    public abstract AuthenticationToken fromDTO(NewAuthenticationTokenDTO newToken);
     /**
      * Return all the authorizations for a logbook
      * @param id the id of the logbook

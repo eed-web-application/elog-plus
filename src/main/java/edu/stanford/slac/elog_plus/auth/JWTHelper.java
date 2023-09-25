@@ -1,6 +1,8 @@
 package edu.stanford.slac.elog_plus.auth;
 
+import edu.stanford.slac.elog_plus.api.v1.dto.NewAuthenticationTokenDTO;
 import edu.stanford.slac.elog_plus.config.AppProperties;
+import edu.stanford.slac.elog_plus.model.AuthenticationToken;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -8,6 +10,9 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,7 +21,7 @@ import java.util.Map;
 @AllArgsConstructor
 public class JWTHelper {
     private final AppProperties appProperties;
-
+    public final String applicationIssuer = "elog-plus";
     private static Key secretKey = null;
     private static final long EXPIRATION_TIME_MS = 3600000;
     // For use with MockMvc
@@ -30,6 +35,23 @@ public class JWTHelper {
                 .addClaims(claims)
                 .setIssuedAt(now)
                 .setExpiration(expiration)
+                .signWith(getKey())
+                .compact();
+    }
+
+    public String generateAuthenticationToken(NewAuthenticationTokenDTO authenticationToken) {
+        Map<String,Object> claims = new HashMap<>();
+        claims.put("email", authenticationToken.name());
+        // Build the JWT
+        return Jwts.builder()
+                .addClaims(claims)
+                .setIssuedAt(new Date())
+                .setIssuer(applicationIssuer)
+                .setExpiration(
+                        Date.from(
+                                authenticationToken.expiration().atStartOfDay().toInstant(ZoneOffset.UTC)
+                        )
+                )
                 .signWith(getKey())
                 .compact();
     }

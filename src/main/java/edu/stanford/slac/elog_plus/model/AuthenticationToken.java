@@ -1,12 +1,22 @@
 package edu.stanford.slac.elog_plus.model;
 
-import java.time.LocalDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
 
 /**
  * Is the logbook custom token to authorize third parties application to access logbook data
  */
+@Data
+@Builder(toBuilder = true)
+@AllArgsConstructor
+@NoArgsConstructor
 public class AuthenticationToken {
+    private String id;
     private String name;
-    private LocalDateTime expires;
+    private LocalDate expiration;
     private String token;
 }

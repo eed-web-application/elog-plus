@@ -1,9 +1,7 @@
 package edu.stanford.slac.elog_plus.v1.service;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
-import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
-import edu.stanford.slac.elog_plus.exception.ShiftNotFound;
-import edu.stanford.slac.elog_plus.exception.TagNotFound;
+import edu.stanford.slac.elog_plus.exception.*;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import edu.stanford.slac.elog_plus.utility.DateUtilities;
@@ -20,6 +18,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -1365,7 +1364,6 @@ public class LogbookServiceTest {
     }
 
 
-
     @Test
     public void updateLogbookTagOK() {
         String logbookID = sharedUtilityService.getTestLogbook();
@@ -1628,5 +1626,349 @@ public class LogbookServiceTest {
                 () -> logbookService.tagIdExistInAnyLogbookIds(tagAID, List.of(logbookIDB, logbookIDC))
         );
         assertThat(exists).isNotNull().isFalse();
+    }
+
+    @Test
+    public void testAddAuthenticationToken() {
+        String logbookIDA = sharedUtilityService.getTestLogbook("logbook-a");
+        var success = assertDoesNotThrow(
+                () -> logbookService.addNewAuthenticationToken(
+                        logbookIDA,
+                        NewAuthenticationTokenDTO
+                                .builder()
+                                .name("token-a")
+                                .expiration(
+                                        LocalDate.of(
+                                                2023,
+                                                12,
+                                                31
+                                        )
+                                )
+                                .build()
+                )
+        );
+
+        LogbookDTO lb = assertDoesNotThrow(
+                () -> logbookService.getLogbook(
+                        logbookIDA
+                )
+        );
+
+        assertThat(lb).isNotNull();
+        assertThat(lb.authenticationTokens()).extracting(
+                AuthenticationTokenDTO::name
+        ).containsExactly(
+                "token-a"
+        );
+    }
+
+    @Test
+    public void testAddAuthenticationTokenFailWIthSameName() {
+        String logbookIDA = sharedUtilityService.getTestLogbook("logbook-a");
+        var success = assertDoesNotThrow(
+                () -> logbookService.addNewAuthenticationToken(
+                        logbookIDA,
+                        NewAuthenticationTokenDTO
+                                .builder()
+                                .name("token-a")
+                                .expiration(
+                                        LocalDate.of(
+                                                2023,
+                                                12,
+                                                31
+                                        )
+                                )
+                                .build()
+                )
+        );
+
+        ControllerLogicException exception = assertThrows(
+                ControllerLogicException.class,
+                () -> logbookService.addNewAuthenticationToken(
+                        logbookIDA,
+                        NewAuthenticationTokenDTO
+                                .builder()
+                                .name("token-a")
+                                .expiration(
+                                        LocalDate.of(
+                                                2023,
+                                                12,
+                                                31
+                                        )
+                                )
+                                .build()
+                )
+        );
+
+        assertThat(exception.getErrorCode()).isEqualTo(-2);
+    }
+
+    @Test
+    public void testAddAuthenticationTokenUpdatingLogbook() {
+        String logbookIDA = sharedUtilityService.getTestLogbook("logbook-a");
+        LogbookDTO logbookUpdated = assertDoesNotThrow(
+                () -> logbookService.update(
+                        logbookIDA,
+                        UpdateLogbookDTO
+                                .builder()
+                                .name("logbook-a")
+                                .authorizations(emptyList())
+                                .tags(emptyList())
+                                .shifts(emptyList())
+                                .authenticationTokens(
+                                        List.of(
+                                                AuthenticationTokenDTO
+                                                        .builder()
+                                                        .name("tok-a")
+                                                        .expiration(
+                                                                LocalDate.of(2023, 12, 31)
+                                                        )
+                                                        .build()
+                                                ,
+                                                AuthenticationTokenDTO
+                                                        .builder()
+                                                        .name("tok-b")
+                                                        .expiration(
+                                                                LocalDate.of(2024, 12, 31)
+                                                        )
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(
+                logbookUpdated.authenticationTokens()
+        )
+                .hasSize(2)
+                .extracting(AuthenticationTokenDTO::name)
+                .contains("tok-a", "tok-b");
+    }
+
+    @Test
+    public void testAddAuthenticationTokenUpdatingLogbookRemoving() {
+        String logbookIDA = sharedUtilityService.getTestLogbook("logbook-a");
+        LogbookDTO logbookUpdated = assertDoesNotThrow(
+                () -> logbookService.update(
+                        logbookIDA,
+                        UpdateLogbookDTO
+                                .builder()
+                                .name("logbook-a")
+                                .authorizations(emptyList())
+                                .tags(emptyList())
+                                .shifts(emptyList())
+                                .authenticationTokens(
+                                        List.of(
+                                                AuthenticationTokenDTO
+                                                        .builder()
+                                                        .name("tok-a")
+                                                        .expiration(
+                                                                LocalDate.of(2023, 12, 31)
+                                                        )
+                                                        .build()
+                                                ,
+                                                AuthenticationTokenDTO
+                                                        .builder()
+                                                        .name("tok-b")
+                                                        .expiration(
+                                                                LocalDate.of(2024, 12, 31)
+                                                        )
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(
+                logbookUpdated.authenticationTokens()
+        )
+                .hasSize(2)
+                .extracting(AuthenticationTokenDTO::name)
+                .contains("tok-a", "tok-b");
+
+        LogbookDTO finalLogbookUpdated = logbookUpdated;
+        logbookUpdated = assertDoesNotThrow(
+                () -> logbookService.update(
+                        logbookIDA,
+                        UpdateLogbookDTO
+                                .builder()
+                                .name("logbook-a")
+                                .authorizations(emptyList())
+                                .tags(emptyList())
+                                .shifts(emptyList())
+                                .authenticationTokens(
+                                        List.of(
+                                                finalLogbookUpdated.authenticationTokens().get(0)
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(
+                logbookUpdated.authenticationTokens()
+        )
+                .hasSize(1)
+                .extracting(AuthenticationTokenDTO::name)
+                .contains("tok-a");
+    }
+
+    @Test
+    public void testAddAuthenticationTokenUpdatingLogbookWrongId() {
+        String logbookIDA = sharedUtilityService.getTestLogbook("logbook-a");
+        LogbookDTO logbookUpdated = assertDoesNotThrow(
+                () -> logbookService.update(
+                        logbookIDA,
+                        UpdateLogbookDTO
+                                .builder()
+                                .name("logbook-a")
+                                .authorizations(emptyList())
+                                .tags(emptyList())
+                                .shifts(emptyList())
+                                .authenticationTokens(
+                                        List.of(
+                                                AuthenticationTokenDTO
+                                                        .builder()
+                                                        .name("tok-a")
+                                                        .expiration(
+                                                                LocalDate.of(2023, 12, 31)
+                                                        )
+                                                        .build()
+                                                ,
+                                                AuthenticationTokenDTO
+                                                        .builder()
+                                                        .name("tok-b")
+                                                        .expiration(
+                                                                LocalDate.of(2024, 12, 31)
+                                                        )
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(
+                logbookUpdated.authenticationTokens()
+        )
+                .hasSize(2)
+                .extracting(AuthenticationTokenDTO::name)
+                .contains("tok-a", "tok-b");
+        LogbookDTO finalLogbookUpdated = logbookUpdated;
+        AuthenticationTokenNotFound tokNotFoundException = assertThrows(
+                AuthenticationTokenNotFound.class,
+                () -> logbookService.update(
+                        logbookIDA,
+                        UpdateLogbookDTO
+                                .builder()
+                                .name("logbook-a")
+                                .authorizations(emptyList())
+                                .tags(emptyList())
+                                .shifts(emptyList())
+                                .authenticationTokens(
+                                        List.of(
+                                                finalLogbookUpdated.authenticationTokens().get(0).toBuilder()
+                                                        .id("wrong id")
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(tokNotFoundException.getErrorCode())
+                .isEqualTo(-7);
+    }
+
+    @Test
+    public void testUpdatingLogbookFailDoubleTokenSameName() {
+        String logbookIDA = sharedUtilityService.getTestLogbook("logbook-a");
+        DoubleAuthenticationTokenError doubleError = assertThrows(
+                DoubleAuthenticationTokenError.class,
+                () -> logbookService.update(
+                        logbookIDA,
+                        UpdateLogbookDTO
+                                .builder()
+                                .name("logbook-a")
+                                .authorizations(emptyList())
+                                .tags(emptyList())
+                                .shifts(emptyList())
+                                .authenticationTokens(
+                                        List.of(
+                                                AuthenticationTokenDTO
+                                                        .builder()
+                                                        .name("tok-a")
+                                                        .expiration(
+                                                                LocalDate.of(2023, 12, 31)
+                                                        )
+                                                        .build()
+                                                ,
+                                                AuthenticationTokenDTO
+                                                        .builder()
+                                                        .name("tok-a")
+                                                        .expiration(
+                                                                LocalDate.of(2024, 12, 31)
+                                                        )
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(doubleError.getErrorCode())
+                .isEqualTo(-7);
+    }
+
+    @Test
+    public void testUpdatingLogbookFailMandatoryField() {
+        String logbookIDA = sharedUtilityService.getTestLogbook("logbook-a");
+        AuthenticationTokenMalformed malformedError = assertThrows(
+                AuthenticationTokenMalformed.class,
+                () -> logbookService.update(
+                        logbookIDA,
+                        UpdateLogbookDTO
+                                .builder()
+                                .name("logbook-a")
+                                .authorizations(emptyList())
+                                .tags(emptyList())
+                                .shifts(emptyList())
+                                .authenticationTokens(
+                                        List.of(
+                                                AuthenticationTokenDTO
+                                                        .builder()
+                                                        .name("tok-a")
+                                                        .build()
+
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(malformedError.getErrorCode())
+                .isEqualTo(-7);
+
+        malformedError = assertThrows(
+                AuthenticationTokenMalformed.class,
+                () -> logbookService.update(
+                        logbookIDA,
+                        UpdateLogbookDTO
+                                .builder()
+                                .name("logbook-a")
+                                .authorizations(emptyList())
+                                .tags(emptyList())
+                                .shifts(emptyList())
+                                .authenticationTokens(
+                                        List.of(
+                                                AuthenticationTokenDTO
+                                                        .builder()
+                                                        .expiration(
+                                                                LocalDate.of(2024, 12, 31)
+                                                        )
+                                                        .build()
+
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(malformedError.getErrorCode())
+                .isEqualTo(-7);
     }
 }
