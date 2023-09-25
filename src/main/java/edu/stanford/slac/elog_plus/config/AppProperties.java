@@ -10,6 +10,7 @@ import java.util.List;
 @Setter
 @ConfigurationProperties(prefix = "edu.stanford.slac.elogs-plus")
 public class AppProperties {
+    private String appTokenJwtKey;
     private String dbAdminUri;
     private String userHeaderName;
     private String imagePreviewTopic;

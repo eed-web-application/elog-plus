@@ -1,7 +1,7 @@
 package edu.stanford.slac.elog_plus.api.v1.controller;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
-import edu.stanford.slac.elog_plus.auth.test_mock_auth.JWTHelper;
+import edu.stanford.slac.elog_plus.auth.JWTHelper;
 import edu.stanford.slac.elog_plus.ldap_repository.PersonRepository;
 import edu.stanford.slac.elog_plus.model.Person;
 import lombok.AllArgsConstructor;
@@ -22,6 +22,7 @@ import java.util.Map;
 @AllArgsConstructor
 @Profile("test")
 public class MockUserController {
+    JWTHelper jwtHelper;
     PersonRepository personRepository;
 
     @GetMapping(
@@ -35,7 +36,7 @@ public class MockUserController {
                 persons) {
             mockUserJWT.put(
                     p.getGecos(),
-                    JWTHelper.generateJwt(p.getMail())
+                    jwtHelper.generateJwt(p.getMail())
             );
         }
         return ApiResultResponse.of(
