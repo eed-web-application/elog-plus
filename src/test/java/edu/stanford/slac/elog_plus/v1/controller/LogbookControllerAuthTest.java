@@ -1,9 +1,6 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
-import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
-import edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.LogbookDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.UpdateLogbookDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.config.AppProperties;
 import edu.stanford.slac.elog_plus.model.Authorization;
 import edu.stanford.slac.elog_plus.model.Entry;
@@ -22,6 +19,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -209,6 +207,91 @@ public class LogbookControllerAuthTest {
                         newLogbookApiResultOne.getPayload(),
                         newLogbookApiResultTwo.getPayload(),
                         newLogbookApiResultThree.getPayload()
+                );
+    }
+
+    @Test
+    public void testGetAllLogbookForAuthTypeUsingApplicationToken() {
+        var newLogbookApiResultOne = testControllerHelperService.getNewLogbookWithNameWithAuthorizationAndAppToken(
+                mockMvc,
+                Optional.of(
+                        "user1@slac.stanford.edu"
+                ),
+                "new logbook",
+                List.of(
+                        AuthorizationDTO
+                                .builder()
+                                .owner("user2@slac.stanford.edu")
+                                .ownerType("User")
+                                .authorizationType(
+                                        Write.name()
+                                )
+                                .build(),
+                        AuthorizationDTO
+                                .builder()
+                                .owner("token-a")
+                                .ownerType("Application")
+                                .authorizationType(
+                                        Read.name()
+                                )
+                                .build()
+                ),
+                List.of(
+                        AuthenticationTokenDTO
+                                .builder()
+                                .name("token-a")
+                                .expiration(LocalDate.of(2023,12,31))
+                                .build()
+                )
+        );
+        var newLogbookApiResultTwo = testControllerHelperService.getNewLogbookWithNameWithAuthorization(
+                mockMvc,
+                Optional.of(
+                        "user1@slac.stanford.edu"
+                ),
+                "new logbook 2",
+                List.of(
+                        AuthorizationDTO
+                                .builder()
+                                .ownerType("User")
+                                .owner("user2@slac.stanford.edu")
+                                .authorizationType(
+                                        Write.name()
+                                )
+                                .build()
+                )
+        );
+
+        var newLogbookApiResultThree = testControllerHelperService.getNewLogbookWithNameWithAuthorization(
+                mockMvc,
+                Optional.of(
+                        "user1@slac.stanford.edu"
+                ),
+                "new logbook 3",
+                List.of()
+        );
+
+        var allLogbookResultUser3 = assertDoesNotThrow(
+                () -> testControllerHelperService.getAllLogbook(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user3@slac.stanford.edu"),
+                        Optional.of(false),
+                        Optional.empty()
+                )
+        );
+
+        assertThat(allLogbookResultUser3)
+                .isNotNull()
+                .extracting(
+                        ApiResultResponse::getErrorCode
+                )
+                .isEqualTo(0);
+        assertThat(allLogbookResultUser3.getPayload())
+                .hasSize(1)
+                .extracting(LogbookDTO::id)
+                .contains(
+                        newLogbookApiResultOne.getPayload()
                 );
     }
 }

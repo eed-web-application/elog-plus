@@ -1,19 +1,17 @@
 package edu.stanford.slac.elog_plus.service;
 
-import edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.GroupDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.PersonDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.api.v1.mapper.AuthMapper;
 import edu.stanford.slac.elog_plus.api.v1.mapper.LogbookMapper;
+import edu.stanford.slac.elog_plus.auth.JWTHelper;
 import edu.stanford.slac.elog_plus.config.AppProperties;
-import edu.stanford.slac.elog_plus.exception.AuthorizationMalformed;
-import edu.stanford.slac.elog_plus.exception.UserNotFound;
+import edu.stanford.slac.elog_plus.exception.*;
 import edu.stanford.slac.elog_plus.ldap_repository.GroupRepository;
-import edu.stanford.slac.elog_plus.model.Authorization;
-import edu.stanford.slac.elog_plus.model.Group;
-import edu.stanford.slac.elog_plus.model.Person;
+import edu.stanford.slac.elog_plus.model.*;
 import edu.stanford.slac.elog_plus.ldap_repository.PersonRepository;
+import edu.stanford.slac.elog_plus.repository.AuthenticationTokenRepository;
 import edu.stanford.slac.elog_plus.repository.AuthorizationRepository;
+import edu.stanford.slac.elog_plus.utility.StringUtilities;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.cache.annotation.Cacheable;
@@ -31,16 +29,20 @@ import java.util.stream.Collectors;
 import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
 import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
 import static edu.stanford.slac.elog_plus.model.Authorization.Type.*;
+import static edu.stanford.slac.elog_plus.utility.StringUtilities.tokenNameNormalization;
 
 @Service
 @Log4j2
 @AllArgsConstructor
 public class AuthService {
+    private final JWTHelper jwtHelper;
     private final AuthMapper authMapper;
     private final AppProperties appProperties;
     private final PersonRepository personRepository;
     private final GroupRepository groupRepository;
+    private final AuthenticationTokenRepository authenticationTokenRepository;
     private final AuthorizationRepository authorizationRepository;
+
     public PersonDTO findPerson(Authentication authentication) {
         return personRepository.findByMail(
                 authentication.getCredentials().toString()
@@ -94,7 +96,7 @@ public class AuthService {
      *
      * @param authentication the current authentication
      */
-    @Cacheable(value = "user-authorization", key = "{#authentication.credentials}", unless="#authentication == null")
+    @Cacheable(value = "user-authorization", key = "{#authentication.credentials}", unless = "#authentication == null")
     public boolean checkAuthentication(Authentication authentication) {
         return authentication != null && authentication.isAuthenticated();
     }
@@ -104,7 +106,7 @@ public class AuthService {
      *
      * @param authentication is the current authentication
      */
-    @Cacheable(value = "user-authorization", key = "{#authentication.credentials}", unless="#authentication == null")
+    @Cacheable(value = "user-authorization", key = "{#authentication.credentials}", unless = "#authentication == null")
     public boolean checkForRoot(Authentication authentication) {
         if (!checkAuthentication(authentication)) return false;
         // only root user can create logbook
@@ -127,7 +129,7 @@ public class AuthService {
      * @param authentication the current authentication
      * @param resourcePrefix the target resource
      */
-    @Cacheable(value = "user-authorization", key = "{#authentication.credentials, #authorization, #resourcePrefix}", unless="#authentication == null")
+    @Cacheable(value = "user-authorization", key = "{#authentication.credentials, #authorization, #resourcePrefix}", unless = "#authentication == null")
     public boolean checkAuthorizationForOwnerAuthTypeAndResourcePrefix(Authentication authentication, Authorization.Type authorization, String resourcePrefix) {
         if (!checkAuthentication(authentication)) return false;
         if (checkForRoot(authentication)) return true;
@@ -194,9 +196,9 @@ public class AuthService {
      * and the authorizations type, if the owner is of type 'User' will be checked for all the
      * entries all along with those that belongs to all the user groups.
      *
-     * @param owner             si the owner target of the result authorizations
-     * @param authorizationType filter on the @Authorization.Type
-     * @param resourcePrefix    is the prefix of the authorized resource
+     * @param owner                       si the owner target of the result authorizations
+     * @param authorizationType           filter on the @Authorization.Type
+     * @param resourcePrefix              is the prefix of the authorized resource
      * @param allHigherAuthOnSameResource return only the higher authorization for each resource
      * @return the list of found resource
      */
@@ -213,7 +215,7 @@ public class AuthService {
                 wrapCatch(
                         () -> authorizationRepository.findByOwnerAndOwnerTypeAndAuthorizationTypeIsGreaterThanEqualAndResourceStartingWith(
                                 owner,
-                                isAppToken ? Authorization.OType.Application:Authorization.OType.User,
+                                isAppToken ? Authorization.OType.Application : Authorization.OType.User,
                                 authorizationType.getValue(),
                                 resourcePrefix
                         ),
@@ -225,7 +227,7 @@ public class AuthService {
         );
 
         // get user authorizations inherited by group
-        if(!isAppToken) {
+        if (!isAppToken) {
             // in case we have a user check also the groups that belongs to the user
             List<GroupDTO> userGroups = findGroupByUserId(owner);
 
@@ -319,12 +321,105 @@ public class AuthService {
     }
 
     /**
+     * Add a new authentication token
+     *
+     * @param newAuthenticationTokenDTO is the new token information
+     */
+    public AuthenticationTokenDTO addNewAuthenticationToken(NewAuthenticationTokenDTO newAuthenticationTokenDTO) {
+        // check if a token with the same name already exists
+        assertion(
+                AuthenticationTokenMalformed.malformedAuthToken()
+                        .errorCode(-1)
+                        .errorDomain("AuthService::addNewAuthenticationToken")
+                        .build(),
+                // name well-formed
+                () -> newAuthenticationTokenDTO.name() != null && !newAuthenticationTokenDTO.name().isEmpty(),
+                // expiration well-formed
+                () -> newAuthenticationTokenDTO.expiration() != null
+        );
+
+        assertion(
+                () -> wrapCatch(
+                        () -> !authenticationTokenRepository.existsByName(newAuthenticationTokenDTO.name()),
+                        -2,
+                        "AuthService::addNewAuthenticationToken"
+                ),
+                ControllerLogicException
+                        .builder()
+                        .errorCode(-3)
+                        .errorMessage("A token with the same name already exists")
+                        .errorDomain("AuthService::addNewAuthenticationToken")
+                        .build()
+        );
+        // convert to model and normalize the name
+        AuthenticationToken authTok = authMapper.toModelToken(
+                newAuthenticationTokenDTO.toBuilder()
+                        .name(
+                                tokenNameNormalization(
+                                        newAuthenticationTokenDTO.name()
+                                )
+                        )
+                        .build()
+        );
+        return authMapper.toTokenDTO(
+                wrapCatch(
+                        () -> authenticationTokenRepository.save(
+                                authTok.toBuilder()
+                                        .token(
+                                                jwtHelper.generateAuthenticationToken(
+                                                        authTok
+                                                )
+                                        )
+                                        .build()
+                        ),
+                        -4,
+                        "AuthService::addNewAuthenticationToken"
+                )
+        );
+    }
+
+    /**
+     * Return an application token by name
+     *
+     * @param name the name of the token to return
+     * @return the found authentication token
+     */
+    public Optional<AuthenticationTokenDTO> getAuthenticationTokenByName(String name) {
+        return wrapCatch(
+                () -> authenticationTokenRepository.findByName(name)
+                        .map(
+                                authMapper::toTokenDTO
+                        ),
+                -1,
+                "AuthService::getAuthenticationTokenByName"
+        );
+    }
+
+    /**
+     * Return an application token by name
+     *
+     * @param id the unique id of the token to return
+     * @return the found authentication token
+     */
+    public Optional<AuthenticationTokenDTO> getAuthenticationTokenById(String id) {
+        return wrapCatch(
+                () -> authenticationTokenRepository.findById(id)
+                        .map(
+                                authMapper::toTokenDTO
+                        ),
+                -1,
+                "AuthService::getAuthenticationTokenByName"
+        );
+    }
+
+    /**
      * Check if the email ends with the ELOG application fake domain without the logname
+     *
      * @param email is the email to check
      * @return true is the email belong to autogenerated application token email
      */
     private boolean isAppTokenEmail(String email) {
-        if(email==null) return false;
+        if (email == null) return false;
         return email.endsWith(appProperties.getApplicationTokenDomain());
     }
 }

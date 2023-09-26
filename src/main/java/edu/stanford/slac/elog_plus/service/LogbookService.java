@@ -26,6 +26,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static edu.stanford.slac.elog_plus.api.v1.mapper.AuthMapper.APP_TOKEN_LOGBOOK_EMAIL_DOMAIN;
 import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
 import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
 
@@ -204,7 +205,7 @@ public class LogbookService {
                     lbToUpdated.getName(),
                     logbookDTO.authenticationTokens().stream()
                             .map(
-                                    at -> logbookMapper.toModelToken(at, lbToUpdated.getName())
+                                    at -> authMapper.toModelToken(at, lbToUpdated.getName())
                             ).toList(),
                     lbToUpdated.getAuthenticationTokens(),
                     -6,
@@ -318,7 +319,7 @@ public class LogbookService {
             List<AuthenticationToken> updatedAuthenticationTokenList,
             int errorCode,
             String errorDomain) {
-        String appTokAuthDomain = LogbookMapper.APP_TOKEN_DOMAIN_TEMPLATE.formatted(logbookToUpdate.getName(), appProperties.getApplicationTokenDomain());
+        String appTokAuthDomain = APP_TOKEN_LOGBOOK_EMAIL_DOMAIN.formatted(logbookToUpdate.getName(), appProperties.getApplicationTokenDomain());
         Set<ImmutablePair<String, Authorization.OType>> permissionsCheck = new HashSet<>();
         //normalize tag
         for (Authorization authorization :
@@ -1336,7 +1337,7 @@ public class LogbookService {
                         .errorDomain("LogbookService:addNewAuthenticationToken")
                         .build()
         );
-        AuthenticationToken authTok = logbookMapper.toModelToken(newAuthenticationTokenDTO, lb.getName());
+        AuthenticationToken authTok = authMapper.toModelToken(newAuthenticationTokenDTO, lb.getName());
         authTok = authTok.toBuilder()
                 .token(
                         jwtHelper.generateAuthenticationToken(
@@ -1382,7 +1383,7 @@ public class LogbookService {
                 )
                 .findFirst()
                 .map(
-                        logbookMapper::toTokenDTO
+                        authMapper::toTokenDTO
                 );
     }
 }

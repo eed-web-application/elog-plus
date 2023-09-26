@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDate;
 
@@ -14,6 +15,7 @@ import java.time.LocalDate;
 @Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
+@Document
 public class AuthenticationToken {
     private String id;
     private String name;

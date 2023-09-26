@@ -22,7 +22,13 @@ public class StringUtilities {
                         Normalizer.Form.NFD
                 ).replaceAll("[^\\p{ASCII}]", "");
     }
-
+    static public String tokenNameNormalization(String tagName) {
+        return Normalizer
+                .normalize(
+                        tagName.trim(),
+                        Normalizer.Form.NFD
+                ).replaceAll("[^\\p{ASCII}]", "");
+    }
     public static String sanitizeEntryTitle(String title) {
         return Jsoup.clean(title, Safelist.basic());
     }
