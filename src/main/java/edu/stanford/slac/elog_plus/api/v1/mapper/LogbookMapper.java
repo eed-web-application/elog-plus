@@ -1,6 +1,7 @@
 package edu.stanford.slac.elog_plus.api.v1.mapper;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
+import edu.stanford.slac.elog_plus.config.AppProperties;
 import edu.stanford.slac.elog_plus.model.AuthenticationToken;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
@@ -20,11 +21,14 @@ import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
         componentModel = "spring"
 )
 public abstract class LogbookMapper {
-    static protected final String emailAppTokenTemplate = "%s@%s.elog.slac.app";
+    static public final String APP_TOKEN_DOMAIN_TEMPLATE = "@%s.%s";
+    static public final String APP_TOKEN_EMAIL = "%s"+APP_TOKEN_DOMAIN_TEMPLATE;
     @Autowired
-    private AuthorizationRepository authorizationRepository;
+    protected AuthorizationRepository authorizationRepository;
     @Autowired
-    private AuthMapper authMapper;
+    protected AuthMapper authMapper;
+    @Autowired
+    protected AppProperties appProperties;
     public abstract LogbookSummaryDTO fromModelToSummaryDTO(Logbook log);
     public abstract LogbookSummaryDTO fromModelToSummaryDTO(LogbookDTO log);
     public abstract LogbookDTO fromModel(Logbook log);
@@ -34,10 +38,11 @@ public abstract class LogbookMapper {
     public abstract Logbook fromDTO(LogbookDTO logbookDTO);
     public abstract Logbook fromDTO(UpdateLogbookDTO logbookDTO);
     public abstract Entry fromDTO(EntryNewDTO entryNewDTO, String firstName, String lastName, String userName);
-    @Mapping(target = "email", expression = "java(emailAppTokenTemplate.formatted(a.name(),logbookName))")
+    @Mapping(target = "email", expression = "java(APP_TOKEN_EMAIL.formatted(a.name(),logbookName, appProperties.getApplicationTokenDomain()))")
     public abstract AuthenticationToken toModelToken(AuthenticationTokenDTO a, String logbookName);
-    @Mapping(target = "email", expression = "java(emailAppTokenTemplate.formatted(a.name(),logbookName))")
+    @Mapping(target = "email", expression = "java(APP_TOKEN_EMAIL.formatted(a.name(),logbookName, appProperties.getApplicationTokenDomain()))")
     public abstract AuthenticationToken toModelToken(NewAuthenticationTokenDTO a, String logbookName);
+    public abstract AuthenticationTokenDTO toTokenDTO(AuthenticationToken a);
     /**
      * Return all the authorizations for a logbook
      * @param id the id of the logbook

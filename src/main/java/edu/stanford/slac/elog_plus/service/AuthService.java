@@ -4,6 +4,7 @@ import edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.GroupDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.PersonDTO;
 import edu.stanford.slac.elog_plus.api.v1.mapper.AuthMapper;
+import edu.stanford.slac.elog_plus.api.v1.mapper.LogbookMapper;
 import edu.stanford.slac.elog_plus.config.AppProperties;
 import edu.stanford.slac.elog_plus.exception.AuthorizationMalformed;
 import edu.stanford.slac.elog_plus.exception.UserNotFound;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -39,7 +41,6 @@ public class AuthService {
     private final PersonRepository personRepository;
     private final GroupRepository groupRepository;
     private final AuthorizationRepository authorizationRepository;
-
     public PersonDTO findPerson(Authentication authentication) {
         return personRepository.findByMail(
                 authentication.getCredentials().toString()
@@ -93,6 +94,7 @@ public class AuthService {
      *
      * @param authentication the current authentication
      */
+    @Cacheable(value = "user-authorization", key = "{#authentication.credentials}", unless="#authentication == null")
     public boolean checkAuthentication(Authentication authentication) {
         return authentication != null && authentication.isAuthenticated();
     }
@@ -102,6 +104,7 @@ public class AuthService {
      *
      * @param authentication is the current authentication
      */
+    @Cacheable(value = "user-authorization", key = "{#authentication.credentials}", unless="#authentication == null")
     public boolean checkForRoot(Authentication authentication) {
         if (!checkAuthentication(authentication)) return false;
         // only root user can create logbook
@@ -124,6 +127,7 @@ public class AuthService {
      * @param authentication the current authentication
      * @param resourcePrefix the target resource
      */
+    @Cacheable(value = "user-authorization", key = "{#authentication.credentials, #authorization, #resourcePrefix}", unless="#authentication == null")
     public boolean checkAuthorizationForOwnerAuthTypeAndResourcePrefix(Authentication authentication, Authorization.Type authorization, String resourcePrefix) {
         if (!checkAuthentication(authentication)) return false;
         if (checkForRoot(authentication)) return true;
@@ -187,12 +191,13 @@ public class AuthService {
 
     /**
      * Return all the authorizations for an owner that match with the prefix
-     * and the authorizations type, will be checked the user entries but also
-     * all the group which the users belong. If a user has authorization more
+     * and the authorizations type, if the owner is of type 'User' will be checked for all the
+     * entries all along with those that belongs to all the user groups.
      *
      * @param owner             si the owner target of the result authorizations
      * @param authorizationType filter on the @Authorization.Type
      * @param resourcePrefix    is the prefix of the authorized resource
+     * @param allHigherAuthOnSameResource return only the higher authorization for each resource
      * @return the list of found resource
      */
     @Cacheable(value = "user-authorization", key = "{#owner, #authorizationType, #resourcePrefix, #allHigherAuthOnSameResource}")
@@ -202,12 +207,13 @@ public class AuthService {
             String resourcePrefix,
             Optional<Boolean> allHigherAuthOnSameResource
     ) {
+        boolean isAppToken = isAppTokenEmail(owner);
         // get user authorizations
         List<AuthorizationDTO> allAuth = new ArrayList<>(
                 wrapCatch(
                         () -> authorizationRepository.findByOwnerAndOwnerTypeAndAuthorizationTypeIsGreaterThanEqualAndResourceStartingWith(
                                 owner,
-                                Authorization.OType.User,
+                                isAppToken ? Authorization.OType.Application:Authorization.OType.User,
                                 authorizationType.getValue(),
                                 resourcePrefix
                         ),
@@ -219,34 +225,39 @@ public class AuthService {
         );
 
         // get user authorizations inherited by group
-        List<GroupDTO> userGroups = findGroupByUserId(owner);
-        allAuth.addAll(
-                userGroups
-                        .stream()
-                        .map(
-                                g -> authorizationRepository.findByOwnerAndOwnerTypeAndAuthorizationTypeIsGreaterThanEqualAndResourceStartingWith(
-                                        g.commonName(),
-                                        Authorization.OType.Group,
-                                        authorizationType.getValue(),
-                                        resourcePrefix
+        if(!isAppToken) {
+            // in case we have a user check also the groups that belongs to the user
+            List<GroupDTO> userGroups = findGroupByUserId(owner);
 
-                                )
-                        )
-                        .flatMap(List::stream)
-                        .map(
-                                authMapper::fromModel
-                        )
-                        .toList()
-        );
-        if(allHigherAuthOnSameResource.isPresent() && allHigherAuthOnSameResource.get()) {
+            // load all groups authorizations
+            allAuth.addAll(
+                    userGroups
+                            .stream()
+                            .map(
+                                    g -> authorizationRepository.findByOwnerAndOwnerTypeAndAuthorizationTypeIsGreaterThanEqualAndResourceStartingWith(
+                                            g.commonName(),
+                                            Authorization.OType.Group,
+                                            authorizationType.getValue(),
+                                            resourcePrefix
+
+                                    )
+                            )
+                            .flatMap(List::stream)
+                            .map(
+                                    authMapper::fromModel
+                            )
+                            .toList()
+            );
+        }
+        if (allHigherAuthOnSameResource.isPresent() && allHigherAuthOnSameResource.get()) {
             allAuth = allAuth.stream()
                     .collect(
                             Collectors.toMap(
-                    AuthorizationDTO::resource,
-                    auth -> auth,
-                    (existing, replacement) ->
-                        Authorization.Type.valueOf(existing.authorizationType()).getValue() >= Authorization.Type.valueOf(replacement.authorizationType()).getValue() ? existing : replacement
-                    ))
+                                    AuthorizationDTO::resource,
+                                    auth -> auth,
+                                    (existing, replacement) ->
+                                            Authorization.Type.valueOf(existing.authorizationType()).getValue() >= Authorization.Type.valueOf(replacement.authorizationType()).getValue() ? existing : replacement
+                            ))
                     .values().stream().toList();
         }
         return allAuth;
@@ -305,5 +316,15 @@ public class AuthService {
                 log.info("Root authorizations for '{}' already exists", userEmail);
             }
         }
+    }
+
+    /**
+     * Check if the email ends with the ELOG application fake domain without the logname
+     * @param email is the email to check
+     * @return true is the email belong to autogenerated application token email
+     */
+    private boolean isAppTokenEmail(String email) {
+        if(email==null) return false;
+        return email.endsWith(appProperties.getApplicationTokenDomain());
     }
 }

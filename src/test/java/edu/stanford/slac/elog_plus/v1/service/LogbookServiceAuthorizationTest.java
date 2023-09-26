@@ -2,6 +2,7 @@ package edu.stanford.slac.elog_plus.v1.service;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.config.AppProperties;
+import edu.stanford.slac.elog_plus.exception.AuthenticationTokenNotFound;
 import edu.stanford.slac.elog_plus.exception.AuthorizationMalformed;
 import edu.stanford.slac.elog_plus.exception.DoubleAuthorizationError;
 import edu.stanford.slac.elog_plus.model.Authorization;
@@ -303,7 +304,7 @@ public class LogbookServiceAuthorizationTest {
         assertThat(logbook2.authorizations()).isNotNull()
                 .hasSize(2)
                 .extracting(AuthorizationDTO::owner)
-                .contains("user2@slac.stanford.edu","user3@slac.stanford.edu");
+                .contains("user2@slac.stanford.edu", "user3@slac.stanford.edu");
     }
 
     @Test
@@ -417,7 +418,7 @@ public class LogbookServiceAuthorizationTest {
     }
 
     @Test
-    public void updateTokenAuthorization() {
+    public void updateAuthorizationOnApplicationToken() {
         Authentication authentication = sharedUtilityService.getAuthenticationMockForFirstRootUser();
         var newLogbookId =
                 assertDoesNotThrow(
@@ -454,7 +455,7 @@ public class LogbookServiceAuthorizationTest {
                                                 AuthenticationTokenDTO
                                                         .builder()
                                                         .name("tok-a")
-                                                        .expiration(LocalDate.of(2023,12,31))
+                                                        .expiration(LocalDate.of(2023, 12, 31))
                                                         .build()
                                         )
                                 )
@@ -465,5 +466,147 @@ public class LogbookServiceAuthorizationTest {
         // the authorization need to contain an owner named tok-a@logbook-test-auth.elog.app
         assertThat(updatedLogbook.authorizations())
                 .extracting("owner").contains("tok-a@logbook-test-auth.elog.slac.app");
+    }
+
+    @Test
+    public void updateAuthorizationFailOnBadApplicationToken() {
+        Authentication authentication = sharedUtilityService.getAuthenticationMockForFirstRootUser();
+        var newLogbookId =
+                assertDoesNotThrow(
+                        () -> sharedUtilityService.getTestLogbook("logbook-test-auth")
+                );
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        // fails no owner
+        AuthenticationTokenNotFound tokeNotFoundForAuthentication = assertThrows(
+                AuthenticationTokenNotFound.class,
+                () -> logbookService.update(
+                        newLogbookId,
+                        UpdateLogbookDTO
+                                .builder()
+                                .name(
+                                        "logbook-test-auth"
+                                )
+                                .tags(
+                                        emptyList()
+                                )
+                                .shifts(
+                                        emptyList()
+                                )
+                                .authorizations(
+                                        List.of(
+                                                AuthorizationDTO
+                                                        .builder()
+                                                        .authorizationType("Read")
+                                                        .ownerType("Application")
+                                                        .owner("tok-a")
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+
+        // the authorization need to contain an owner named tok-a@logbook-test-auth.elog.app
+        assertThat(tokeNotFoundForAuthentication.getErrorCode()).isEqualTo(-7);
+    }
+
+    @Test
+    public void updateAuthorizationOnApplicationTokenUpdatingOneAlreadyProcessed() {
+        Authentication authentication = sharedUtilityService.getAuthenticationMockForFirstRootUser();
+        var newLogbookId =
+                assertDoesNotThrow(
+                        () -> sharedUtilityService.getTestLogbook("logbook-test-auth")
+                );
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        // fails no owner
+        var updatedLogbook = assertDoesNotThrow(
+                () -> logbookService.update(
+                        newLogbookId,
+                        UpdateLogbookDTO
+                                .builder()
+                                .name(
+                                        "logbook-test-auth"
+                                )
+                                .tags(
+                                        emptyList()
+                                )
+                                .shifts(
+                                        emptyList()
+                                )
+                                .authorizations(
+                                        List.of(
+                                                AuthorizationDTO
+                                                        .builder()
+                                                        .authorizationType("Read")
+                                                        .ownerType("Application")
+                                                        .owner("tok-a")
+                                                        .build()
+                                        )
+                                )
+                                .authenticationTokens(
+                                        List.of(
+                                                AuthenticationTokenDTO
+                                                        .builder()
+                                                        .name("tok-a")
+                                                        .expiration(LocalDate.of(2023, 12, 31))
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+
+        // the authorization need to contain an owner named tok-a@logbook-test-auth.elog.app
+        assertThat(updatedLogbook.authorizations())
+                .extracting("owner").contains("tok-a@logbook-test-auth.elog.slac.app");
+        var processedAuthorization = updatedLogbook.authorizations().get(0);
+        updatedLogbook = assertDoesNotThrow(
+                () -> logbookService.update(
+                        newLogbookId,
+                        UpdateLogbookDTO
+                                .builder()
+                                .name(
+                                        "logbook-test-auth"
+                                )
+                                .tags(
+                                        emptyList()
+                                )
+                                .shifts(
+                                        emptyList()
+                                )
+                                .authorizations(
+                                        List.of(
+                                                processedAuthorization,
+                                                AuthorizationDTO
+                                                        .builder()
+                                                        .authorizationType("Read")
+                                                        .ownerType("Application")
+                                                        .owner("tok-b")
+                                                        .build()
+                                        )
+                                )
+                                .authenticationTokens(
+                                        List.of(
+                                                AuthenticationTokenDTO
+                                                        .builder()
+                                                        .name("tok-a")
+                                                        .expiration(LocalDate.of(2023, 12, 31))
+                                                        .build(),
+                                                AuthenticationTokenDTO
+                                                        .builder()
+                                                        .name("tok-b")
+                                                        .expiration(LocalDate.of(2023, 12, 31))
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(updatedLogbook.authorizations())
+                .extracting("owner")
+                .contains(
+                        "tok-a@logbook-test-auth.elog.slac.app",
+                        "tok-b@logbook-test-auth.elog.slac.app"
+                );
     }
 }

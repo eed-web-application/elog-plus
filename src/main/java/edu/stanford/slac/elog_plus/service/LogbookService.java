@@ -6,6 +6,7 @@ import edu.stanford.slac.elog_plus.api.v1.mapper.LogbookMapper;
 import edu.stanford.slac.elog_plus.api.v1.mapper.ShiftMapper;
 import edu.stanford.slac.elog_plus.api.v1.mapper.TagMapper;
 import edu.stanford.slac.elog_plus.auth.JWTHelper;
+import edu.stanford.slac.elog_plus.config.AppProperties;
 import edu.stanford.slac.elog_plus.exception.*;
 import edu.stanford.slac.elog_plus.model.*;
 import edu.stanford.slac.elog_plus.repository.AuthorizationRepository;
@@ -40,6 +41,7 @@ public class LogbookService {
     private final AuthorizationRepository authorizationRepository;
     private final AuthMapper authMapper;
     private final JWTHelper jwtHelper;
+    private final AppProperties appProperties;
 
     public List<LogbookDTO> getAllLogbook() {
         return getAllLogbook(Optional.empty());
@@ -316,6 +318,7 @@ public class LogbookService {
             List<AuthenticationToken> updatedAuthenticationTokenList,
             int errorCode,
             String errorDomain) {
+        String appTokAuthDomain = LogbookMapper.APP_TOKEN_DOMAIN_TEMPLATE.formatted(logbookToUpdate.getName(), appProperties.getApplicationTokenDomain());
         Set<ImmutablePair<String, Authorization.OType>> permissionsCheck = new HashSet<>();
         //normalize tag
         for (Authorization authorization :
@@ -337,13 +340,27 @@ public class LogbookService {
             }
 
             if(authorization.getOwnerType() == Authorization.OType.Application) {
+                // as owner we can have or the token name or the token email
+                String owner;
+                if(authorization.getOwner().endsWith(appTokAuthDomain)) {
+                    owner = authorization
+                            .getOwner()
+                            .substring(
+                                    0,
+                                    authorization
+                                            .getOwner()
+                                            .indexOf(appTokAuthDomain)
+                            );
+                } else {
+                    owner = authorization.getOwner();
+                }
                 // if the authentication type is an application token we need to be sure
                 // that the token is still present on the token list
                 AuthenticationToken authTokenForAuthorization = updatedAuthenticationTokenList
                         .stream()
                         .filter(
                                 at->at.getName().compareToIgnoreCase(
-                                        authorization.getOwner()
+                                        owner
                                 )==0
                         ).findFirst().orElseThrow(
                                 ()->AuthenticationTokenNotFound.authTokenNotFoundBuilder()
@@ -1338,5 +1355,34 @@ public class LogbookService {
                 "LogbookService:addNewAuthenticationToken"
         );
         return true;
+    }
+
+    /**
+     * Return from a determinate logbook the token with a specific name
+     *
+     * @param id the logbook id
+     * @param name the name of the token to return
+     * @return the found authentication token
+     */
+    public Optional<AuthenticationTokenDTO> getAuthenticationTokenByName(String id, String name) {
+        final Logbook lb = wrapCatch(
+                () -> logbookRepository.findById(id),
+                -1,
+                "LogbookService:getAuthenticationTokenByName"
+        ).orElseThrow(
+                () -> LogbookNotFound.logbookNotFoundBuilder()
+                        .errorCode(-1)
+                        .errorDomain("LogbookService:getAuthenticationTokenByName")
+                        .build()
+        );
+        // find, translate and return
+        return lb.getAuthenticationTokens().stream()
+                .filter(
+                        t->t.getName().compareToIgnoreCase(name) == 0
+                )
+                .findFirst()
+                .map(
+                        logbookMapper::toTokenDTO
+                );
     }
 }

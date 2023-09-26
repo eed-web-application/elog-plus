@@ -6,6 +6,7 @@ import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.auth.JWTHelper;
 import edu.stanford.slac.elog_plus.config.AppProperties;
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
+import edu.stanford.slac.elog_plus.service.LogbookService;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.springframework.http.MediaType;
@@ -36,9 +37,12 @@ public class TestControllerHelperService {
     private final JWTHelper jwtHelper;
     private final AppProperties appProperties;
 
-    public TestControllerHelperService(JWTHelper jwtHelper, AppProperties appProperties) {
+    private final LogbookService logbookService;
+
+    public TestControllerHelperService(JWTHelper jwtHelper, AppProperties appProperties, LogbookService logbookService) {
         this.jwtHelper = jwtHelper;
         this.appProperties = appProperties;
+        this.logbookService = logbookService;
     }
 
     public ApiResultResponse<String> getNewLogbookWithNameWithAuthorization(
@@ -89,6 +93,64 @@ public class TestControllerHelperService {
                 )
                 .isEqualTo(0);
         return newLogbookApiResult;
+    }
+
+    public ApiResultResponse<String> getNewLogbookWithNameWithAuthorizationAndAppToken(
+            MockMvc mockMvc,
+            Optional<String> userInfo,
+            String logbookName,
+            List<AuthorizationDTO> authorizations,
+            List<AuthenticationTokenDTO> authenticationTokens) {
+        var newLogbookApiResult = assertDoesNotThrow(
+                () -> createNewLogbook(
+                        mockMvc,
+                        status().isCreated(),
+                        userInfo,
+                        NewLogbookDTO
+                                .builder()
+                                .name(logbookName)
+                                .build()
+                )
+        );
+
+        AssertionsForClassTypes.assertThat(newLogbookApiResult)
+                .isNotNull()
+                .extracting(
+                        ApiResultResponse::getErrorCode
+                )
+                .isEqualTo(0);
+
+        var updateApiResult = assertDoesNotThrow(
+                () -> updateLogbook(
+                        mockMvc,
+                        status().isCreated(),
+                        userInfo,
+                        newLogbookApiResult.getPayload(),
+                        UpdateLogbookDTO
+                                .builder()
+                                .name(logbookName)
+                                .shifts(Collections.emptyList())
+                                .tags(Collections.emptyList())
+                                .authorizations(
+                                        authorizations
+                                )
+                                .authenticationTokens(
+                                        authenticationTokens
+                                )
+                                .build()
+                )
+        );
+        AssertionsForClassTypes.assertThat(updateApiResult)
+                .isNotNull()
+                .extracting(
+                        ApiResultResponse::getErrorCode
+                )
+                .isEqualTo(0);
+        return newLogbookApiResult;
+    }
+
+    public Optional<AuthenticationTokenDTO> getAuthenticationTokenByLogbookIdAndTokenName(String logbookId, String tokenName) {
+        return assertDoesNotThrow(()-> logbookService.getAuthenticationTokenByName(logbookId, tokenName));
     }
 
     public ApiResultResponse<String> newAttachment(
