@@ -39,17 +39,18 @@ public class JWTHelper {
                 .compact();
     }
 
-    public String generateAuthenticationToken(NewAuthenticationTokenDTO authenticationToken) {
+    public String generateAuthenticationToken(AuthenticationToken authenticationToken) {
         Map<String,Object> claims = new HashMap<>();
-        claims.put("email", authenticationToken.name());
+        claims.put("email", authenticationToken.getEmail());
         // Build the JWT
         return Jwts.builder()
                 .addClaims(claims)
                 .setIssuedAt(new Date())
                 .setIssuer(applicationIssuer)
+                .setSubject(authenticationToken.getName())
                 .setExpiration(
                         Date.from(
-                                authenticationToken.expiration().atStartOfDay().toInstant(ZoneOffset.UTC)
+                                authenticationToken.getExpiration().atStartOfDay().toInstant(ZoneOffset.UTC)
                         )
                 )
                 .signWith(getKey())

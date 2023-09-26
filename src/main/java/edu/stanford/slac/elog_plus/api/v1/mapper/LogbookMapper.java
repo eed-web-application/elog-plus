@@ -20,6 +20,7 @@ import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
         componentModel = "spring"
 )
 public abstract class LogbookMapper {
+    static protected final String emailAppTokenTemplate = "%s@%s.elog.slac.app";
     @Autowired
     private AuthorizationRepository authorizationRepository;
     @Autowired
@@ -33,7 +34,10 @@ public abstract class LogbookMapper {
     public abstract Logbook fromDTO(LogbookDTO logbookDTO);
     public abstract Logbook fromDTO(UpdateLogbookDTO logbookDTO);
     public abstract Entry fromDTO(EntryNewDTO entryNewDTO, String firstName, String lastName, String userName);
-    public abstract AuthenticationToken fromDTO(NewAuthenticationTokenDTO newToken);
+    @Mapping(target = "email", expression = "java(emailAppTokenTemplate.formatted(a.name(),logbookName))")
+    public abstract AuthenticationToken toModelToken(AuthenticationTokenDTO a, String logbookName);
+    @Mapping(target = "email", expression = "java(emailAppTokenTemplate.formatted(a.name(),logbookName))")
+    public abstract AuthenticationToken toModelToken(NewAuthenticationTokenDTO a, String logbookName);
     /**
      * Return all the authorizations for a logbook
      * @param id the id of the logbook

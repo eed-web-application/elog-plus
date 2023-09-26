@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -38,7 +37,6 @@ public class LogbookService {
     private final LogbookMapper logbookMapper;
     private final EntryRepository entryRepository;
     private final LogbookRepository logbookRepository;
-    private final AuthService authService;
     private final AuthorizationRepository authorizationRepository;
     private final AuthMapper authMapper;
     private final JWTHelper jwtHelper;
@@ -196,6 +194,22 @@ public class LogbookService {
                 "LogbookService:update"
         );
 
+        // check and verify authentication token
+        if (logbookDTO.authenticationTokens() != null) {
+            log.info("Update authentication tokens for logbook {}", lbToUpdated.getName());
+            // update authentication tokens
+            verifyAuthenticationTokenAndUpdate(
+                    lbToUpdated.getName(),
+                    logbookDTO.authenticationTokens().stream()
+                            .map(
+                                    at -> logbookMapper.toModelToken(at, lbToUpdated.getName())
+                            ).toList(),
+                    lbToUpdated.getAuthenticationTokens(),
+                    -6,
+                    "LogbookService:update"
+            );
+        }
+
         // check and verify authorization
         if (logbookDTO.authorizations() != null) {
             log.info("Update authorizations for logbook {}", lbToUpdated.getName());
@@ -204,17 +218,6 @@ public class LogbookService {
                     lbToUpdated,
                     authMapper.toModel(logbookDTO.authorizations()),
                     authorizationRepository.findByResourceIs(String.format("/logbook/%s", logbookId)),
-                    -6,
-                    "LogbookService:update"
-            );
-        }
-
-        // check and verify authentication token
-        if (logbookDTO.authenticationTokens() != null) {
-            log.info("Update authentication tokens for logbook {}", lbToUpdated.getName());
-            // update authorizations
-            verifyAuthenticationTokenAndUpdate(
-                    authMapper.toModelToken(logbookDTO.authenticationTokens()),
                     lbToUpdated.getAuthenticationTokens(),
                     -7,
                     "LogbookService:update"
@@ -229,11 +232,12 @@ public class LogbookService {
         );
         log.info("Logbook '{}' has been updated", lbToUpdated.getName());
         return logbookMapper.fromModel(
-                updatedLB
+                updatedLB,
+                true
         );
     }
 
-    private void verifyAuthenticationTokenAndUpdate(List<AuthenticationToken> updatedAuthenticationTokenList, List<AuthenticationToken> actualAuthenticationTokenList, int errorCode, String errorDomain) {
+    private void verifyAuthenticationTokenAndUpdate(String logbookName, List<AuthenticationToken> updatedAuthenticationTokenList, List<AuthenticationToken> actualAuthenticationTokenList, int errorCode, String errorDomain) {
         //normalize token name
         Set<String> tokenCheck = new HashSet<>();
         for (AuthenticationToken authenticationToken :
@@ -269,11 +273,7 @@ public class LogbookService {
                 );
                 authenticationToken.setToken(
                         jwtHelper.generateAuthenticationToken(
-                                NewAuthenticationTokenDTO
-                                        .builder()
-                                        .name(authenticationToken.getName())
-                                        .expiration(authenticationToken.getExpiration())
-                                        .build()
+                                authenticationToken
                         )
                 );
                 continue;
@@ -309,7 +309,13 @@ public class LogbookService {
      * @param errorCode                is the error code of the operation
      * @param errorDomain              is the domain code of the operation
      */
-    private void verifyAuthorizationAndUpdate(Logbook logbookToUpdate, List<Authorization> updatedAuthorizationList, List<Authorization> actualAuthorizationList, int errorCode, String errorDomain) {
+    private void verifyAuthorizationAndUpdate(
+            Logbook logbookToUpdate,
+            List<Authorization> updatedAuthorizationList,
+            List<Authorization> actualAuthorizationList,
+            List<AuthenticationToken> updatedAuthenticationTokenList,
+            int errorCode,
+            String errorDomain) {
         Set<ImmutablePair<String, Authorization.OType>> permissionsCheck = new HashSet<>();
         //normalize tag
         for (Authorization authorization :
@@ -328,6 +334,31 @@ public class LogbookService {
                         .owner(authorization.getOwner())
                         .errorDomain("LogbookService::verifyAuthorizationAndUpdate")
                         .build();
+            }
+
+            if(authorization.getOwnerType() == Authorization.OType.Application) {
+                // if the authentication type is an application token we need to be sure
+                // that the token is still present on the token list
+                AuthenticationToken authTokenForAuthorization = updatedAuthenticationTokenList
+                        .stream()
+                        .filter(
+                                at->at.getName().compareToIgnoreCase(
+                                        authorization.getOwner()
+                                )==0
+                        ).findFirst().orElseThrow(
+                                ()->AuthenticationTokenNotFound.authTokenNotFoundBuilder()
+                                        .errorCode(errorCode)
+                                        .errorDomain(errorDomain)
+                                        .tokenName(authorization.getOwner())
+                                        .build()
+                        );
+
+                // now the name of the owner need to be normalized to the email of the
+                // authentication token, this because the owner need to be unique across
+                // all authorized resource
+                authorization.setOwner(
+                        authTokenForAuthorization.getEmail()
+                );
             }
 
             assertion(
@@ -1288,15 +1319,17 @@ public class LogbookService {
                         .errorDomain("LogbookService:addNewAuthenticationToken")
                         .build()
         );
+        AuthenticationToken authTok = logbookMapper.toModelToken(newAuthenticationTokenDTO, lb.getName());
+        authTok = authTok.toBuilder()
+                .token(
+                        jwtHelper.generateAuthenticationToken(
+                                authTok
+                        )
+                )
+                .build();
         // add new token
         lb.getAuthenticationTokens().add(
-                logbookMapper.fromDTO(newAuthenticationTokenDTO).toBuilder()
-                        .token(
-                                jwtHelper.generateAuthenticationToken(
-                                        newAuthenticationTokenDTO
-                                )
-                        )
-                        .build()
+                authTok
         );
         // save
         wrapCatch(

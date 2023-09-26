@@ -17,6 +17,7 @@ import java.time.LocalDate;
 public class AuthenticationToken {
     private String id;
     private String name;
+    private String email;
     private LocalDate expiration;
     private String token;
 }
