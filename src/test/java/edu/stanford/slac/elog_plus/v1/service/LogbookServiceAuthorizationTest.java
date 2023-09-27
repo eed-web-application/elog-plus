@@ -581,7 +581,7 @@ public class LogbookServiceAuthorizationTest {
                                                         .builder()
                                                         .authorizationType("Read")
                                                         .ownerType("Application")
-                                                        .owner("tok-b")
+                                                        .owner("tok-b") //tok-b@<logbook name>.elog.slac.app$
                                                         .build()
                                         )
                                 )

@@ -20,6 +20,7 @@ import java.time.LocalDate;
 public record AuthenticationTokenDTO(
         String id,
         String name,
+        String email,
         LocalDate expiration,
         String token) {
 }

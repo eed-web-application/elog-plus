@@ -1,5 +1,6 @@
 package edu.stanford.slac.elog_plus.exception;
 
+import java.lang.reflect.Executable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;

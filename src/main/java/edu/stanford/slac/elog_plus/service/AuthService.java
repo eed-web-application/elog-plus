@@ -19,6 +19,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -392,6 +393,50 @@ public class AuthService {
                         ),
                 -1,
                 "AuthService::getAuthenticationTokenByName"
+        );
+    }
+
+    /**
+     * return al the global authentication tokens
+     * @return the list of all authentication tokens
+     */
+    public List<AuthenticationTokenDTO> getAllAuthenticationToken() {
+        return wrapCatch(
+                () -> authenticationTokenRepository.findAll()
+                        .stream()
+                        .map(
+                                authMapper::toTokenDTO
+                        ).toList(),
+                -1,
+                "AuthService::getAuthenticationTokenByName"
+        );
+    }
+
+    /**
+     * Delete a token by name along with all his authorization records
+     * @param id the token id
+     */
+    @Transactional
+    public void deleteToken(String id){
+        AuthenticationTokenDTO tokenToDelete =  getAuthenticationTokenById(id)
+                .orElseThrow(
+                        ()->AuthenticationTokenNotFound.authTokenNotFoundBuilder()
+                                .errorCode(-1)
+                                .errorDomain("AuthService::deleteToken")
+                                .build()
+                );
+
+        //delete authorizations
+        wrapCatch(
+                ()-> {authorizationRepository.deleteAllByOwnerIs(tokenToDelete.email());return null;},
+                -2,
+                "AuthService::deleteToken"
+        );
+        // delete token
+        wrapCatch(
+                ()-> {authenticationTokenRepository.deleteById(tokenToDelete.id());return null;},
+                -3,
+                "AuthService::deleteToken"
         );
     }
 
