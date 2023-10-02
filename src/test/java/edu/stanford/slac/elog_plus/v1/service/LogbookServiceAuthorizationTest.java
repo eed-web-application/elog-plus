@@ -446,7 +446,7 @@ public class LogbookServiceAuthorizationTest {
                                                         .builder()
                                                         .authorizationType("Read")
                                                         .ownerType("Application")
-                                                        .owner("tok-a")
+                                                        .owner(sharedUtilityService.getTokenEmailForLogbookToken("tok-a", "logbook-test-auth"))
                                                         .build()
                                         )
                                 )
@@ -539,7 +539,7 @@ public class LogbookServiceAuthorizationTest {
                                                         .builder()
                                                         .authorizationType("Read")
                                                         .ownerType("Application")
-                                                        .owner("tok-a")
+                                                        .owner(sharedUtilityService.getTokenEmailForLogbookToken("tok-a", "logbook-test-auth"))
                                                         .build()
                                         )
                                 )
@@ -581,7 +581,7 @@ public class LogbookServiceAuthorizationTest {
                                                         .builder()
                                                         .authorizationType("Read")
                                                         .ownerType("Application")
-                                                        .owner("tok-b") //tok-b@<logbook name>.elog.slac.app$
+                                                        .owner(sharedUtilityService.getTokenEmailForLogbookToken("tok-b", "logbook-test-auth")) //tok-b@<logbook name>.elog.slac.app$
                                                         .build()
                                         )
                                 )
@@ -639,13 +639,13 @@ public class LogbookServiceAuthorizationTest {
                                                         .builder()
                                                         .authorizationType("Read")
                                                         .ownerType("Application")
-                                                        .owner("tok-a")
+                                                        .owner(sharedUtilityService.getTokenEmailForLogbookToken("tok-a", "logbook-test-auth"))
                                                         .build(),
                                                 AuthorizationDTO
                                                         .builder()
                                                         .authorizationType("Read")
                                                         .ownerType("Application")
-                                                        .owner("tok-b")
+                                                        .owner(sharedUtilityService.getTokenEmailForLogbookToken("tok-b", "logbook-test-auth"))
                                                         .build()
                                         )
                                 )

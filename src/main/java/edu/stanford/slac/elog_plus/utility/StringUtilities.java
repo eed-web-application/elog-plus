@@ -38,4 +38,22 @@ public class StringUtilities {
         safelist.addTags("h1", "h2", "h3", "h4");
         return Jsoup.clean(text, safelist);
     }
+
+    public static String logbookNameNormalization(String name) {
+        return Normalizer
+                .normalize(
+                        name.trim().toLowerCase(),
+                        Normalizer.Form.NFD
+                ).replaceAll("[^\\p{ASCII}]", "")
+                .replaceAll(" ", "-");
+    }
+
+    public static String authenticationTokenNormalization(String name) {
+        return Normalizer
+                .normalize(
+                        name.trim().toLowerCase(),
+                        Normalizer.Form.NFD
+                ).replaceAll("[^\\p{ASCII}]", "")
+                .replaceAll(" ", "-");
+    }
 }

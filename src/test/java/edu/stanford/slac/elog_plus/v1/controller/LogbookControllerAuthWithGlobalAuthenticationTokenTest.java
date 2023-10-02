@@ -1,9 +1,6 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
-import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
-import edu.stanford.slac.elog_plus.api.v1.dto.AuthenticationTokenDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.LogbookDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.config.AppProperties;
 import edu.stanford.slac.elog_plus.model.AuthenticationToken;
 import edu.stanford.slac.elog_plus.model.Authorization;
@@ -38,7 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles({"test"})
-public class LogbookControllerAuthWithAuthenticationTokenTest {
+public class LogbookControllerAuthWithGlobalAuthenticationTokenTest {
     @Autowired
     private MockMvc mockMvc;
     @Autowired
@@ -64,7 +61,29 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
 
     @Test
     public void testGetAllLogbookForAuthType() {
-        var newLogbookApiResultOne = testControllerHelperService.getNewLogbookWithNameWithAuthorizationAndAppToken(
+        // create token
+        ApiResultResponse<AuthenticationTokenDTO> tokenResult = assertDoesNotThrow(
+                () ->
+                        testControllerHelperService.createNewAuthenticationToken(
+                                mockMvc,
+                                status().isCreated(),
+                                Optional.of(
+                                        "user1@slac.stanford.edu"
+                                ),
+                                NewAuthenticationTokenDTO
+                                        .builder()
+                                        .name("global-token-a")
+                                        .expiration(LocalDate.of(2023,12,31))
+                                        .build()
+                        )
+        );
+        assertThat(tokenResult.getErrorCode()).isEqualTo(0);
+        assertThat(tokenResult.getPayload()).extracting(AuthenticationTokenDTO::name).isEqualTo("global-token-a");
+        assertThat(tokenResult.getPayload()).extracting(AuthenticationTokenDTO::email).isEqualTo("global-token-a@%s".formatted(appProperties.getApplicationTokenDomain()));
+        assertThat(tokenResult.getPayload()).extracting(AuthenticationTokenDTO::token).isNotNull();
+
+        //authorize token to a logbook
+        var newLogbookApiResultOne = testControllerHelperService.getNewLogbookWithNameWithAuthorization(
                 mockMvc,
                 Optional.of(
                         "user1@slac.stanford.edu"
@@ -73,35 +92,16 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
                 List.of(
                         AuthorizationDTO
                                 .builder()
-                                .owner(testControllerHelperService.getTokenEmailForLogbookToken("token-a", "new logbook"))
+                                .owner(tokenResult.getPayload().email())
                                 .ownerType("Application")
                                 .authorizationType(
                                         Write.name()
                                 )
-                                .build(),
-                        AuthorizationDTO
-                                .builder()
-                                .owner(testControllerHelperService.getTokenEmailForLogbookToken("token-b", "new logbook"))
-                                .ownerType("Application")
-                                .authorizationType(
-                                        Read.name()
-                                )
-                                .build()
-                ),
-                List.of(
-                        AuthenticationTokenDTO
-                                .builder()
-                                .name("token-a")
-                                .expiration(LocalDate.of(2023,12,31))
-                                .build(),
-                        AuthenticationTokenDTO
-                                .builder()
-                                .name("token-b")
-                                .expiration(LocalDate.of(2023,12,31))
                                 .build()
                 )
         );
-        var newLogbookApiResultTwo = testControllerHelperService.getNewLogbookWithNameWithAuthorizationAndAppToken(
+        // creaae new logbook for another user
+        var newLogbookApiResultTwo = testControllerHelperService.getNewLogbookWithNameWithAuthorization(
                 mockMvc,
                 Optional.of(
                         "user1@slac.stanford.edu"
@@ -110,18 +110,11 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
                 List.of(
                         AuthorizationDTO
                                 .builder()
-                                .owner(testControllerHelperService.getTokenEmailForLogbookToken("token-a", "new logbook two"))
-                                .ownerType("Application")
+                                .owner("user2@slac.stanford.edu")
+                                .ownerType("User")
                                 .authorizationType(
                                         Write.name()
                                 )
-                                .build()
-                ),
-                List.of(
-                        AuthenticationTokenDTO
-                                .builder()
-                                .name("token-a")
-                                .expiration(LocalDate.of(2023,12,31))
                                 .build()
                 )
         );
@@ -129,7 +122,7 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
                 () -> testControllerHelperService.getAllLogbook(
                         mockMvc,
                         status().isOk(),
-                        Optional.of("token-a@new-logbook.elog.slac.app$"),
+                        Optional.of(tokenResult.getPayload().email()),
                         Optional.of(false),
                         Optional.empty()
                 )
@@ -146,29 +139,6 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
                 .extracting(LogbookDTO::id)
                 .contains(
                         newLogbookApiResultOne.getPayload()
-                );
-
-        var allLogbookResultTokenB = assertDoesNotThrow(
-                () -> testControllerHelperService.getAllLogbook(
-                        mockMvc,
-                        status().isOk(),
-                        Optional.of("token-a@new-logbook-two.elog.slac.app$"),
-                        Optional.of(false),
-                        Optional.empty()
-                )
-        );
-
-        assertThat(allLogbookResultTokenB)
-                .isNotNull()
-                .extracting(
-                        ApiResultResponse::getErrorCode
-                )
-                .isEqualTo(0);
-        assertThat(allLogbookResultTokenB.getPayload())
-                .hasSize(1)
-                .extracting(LogbookDTO::id)
-                .contains(
-                        newLogbookApiResultTwo.getPayload()
                 );
     }
 

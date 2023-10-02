@@ -7,6 +7,8 @@ import edu.stanford.slac.elog_plus.auth.JWTHelper;
 import edu.stanford.slac.elog_plus.config.AppProperties;
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.service.LogbookService;
+import edu.stanford.slac.elog_plus.utility.StringUtilities;
+import edu.stanford.slac.elog_plus.v1.service.SharedUtilityService;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.springframework.http.MediaType;
@@ -27,6 +29,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static edu.stanford.slac.elog_plus.api.v1.mapper.AuthMapper.APP_TOKEN_LOGBOOK_EMAIL_DOMAIN;
+import static edu.stanford.slac.elog_plus.utility.StringUtilities.logbookNameNormalization;
+import static edu.stanford.slac.elog_plus.utility.StringUtilities.tokenNameNormalization;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -36,13 +41,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class TestControllerHelperService {
     private final JWTHelper jwtHelper;
     private final AppProperties appProperties;
-
     private final LogbookService logbookService;
-
-    public TestControllerHelperService(JWTHelper jwtHelper, AppProperties appProperties, LogbookService logbookService) {
+    private final SharedUtilityService sharedUtilityService;
+    public TestControllerHelperService(JWTHelper jwtHelper, AppProperties appProperties, LogbookService logbookService, SharedUtilityService sharedUtilityService) {
         this.jwtHelper = jwtHelper;
         this.appProperties = appProperties;
         this.logbookService = logbookService;
+        this.sharedUtilityService = sharedUtilityService;
     }
 
     public ApiResultResponse<String> getNewLogbookWithNameWithAuthorization(
@@ -93,6 +98,10 @@ public class TestControllerHelperService {
                 )
                 .isEqualTo(0);
         return newLogbookApiResult;
+    }
+
+    public String getTokenEmailForLogbookToken(String tokenName, String logbookName) {
+        return sharedUtilityService.getTokenEmailForLogbookToken(tokenName, logbookName);
     }
 
     public ApiResultResponse<String> getNewLogbookWithNameWithAuthorizationAndAppToken(

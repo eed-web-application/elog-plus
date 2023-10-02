@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 
+import static edu.stanford.slac.elog_plus.utility.StringUtilities.logbookNameNormalization;
+import static edu.stanford.slac.elog_plus.utility.StringUtilities.tokenNameNormalization;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @Service
@@ -42,6 +44,12 @@ public class SharedUtilityService {
         return newLogbookID;
     }
 
+    public String getTokenEmailForLogbookToken(String tokenName, String logbookName) {
+        return "%s@%s.%s".formatted(
+                tokenNameNormalization(tokenName),
+                logbookNameNormalization(logbookName),
+                appProperties.getApplicationTokenDomain());
+    }
 
     public Authentication getAuthenticationMockForFirstRootUser() {
         if(appProperties.getRootUserList().isEmpty()) {

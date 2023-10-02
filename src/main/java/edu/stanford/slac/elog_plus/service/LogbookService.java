@@ -9,6 +9,7 @@ import edu.stanford.slac.elog_plus.auth.JWTHelper;
 import edu.stanford.slac.elog_plus.config.AppProperties;
 import edu.stanford.slac.elog_plus.exception.*;
 import edu.stanford.slac.elog_plus.model.*;
+import edu.stanford.slac.elog_plus.repository.AuthenticationTokenRepository;
 import edu.stanford.slac.elog_plus.repository.AuthorizationRepository;
 import edu.stanford.slac.elog_plus.repository.EntryRepository;
 import edu.stanford.slac.elog_plus.repository.LogbookRepository;
@@ -40,6 +41,7 @@ public class LogbookService {
     private final EntryRepository entryRepository;
     private final LogbookRepository logbookRepository;
     private final AuthorizationRepository authorizationRepository;
+    private final AuthenticationTokenRepository authenticationTokenRepository;
     private final AuthMapper authMapper;
     private final JWTHelper jwtHelper;
     private final AppProperties appProperties;
@@ -180,7 +182,7 @@ public class LogbookService {
         }
         // normalize name and shift
         lbToUpdated.setName(
-                StringUtilities.tagNameNormalization(logbookDTO.name())
+                StringUtilities.logbookNameNormalization(logbookDTO.name())
         );
         // check that all shifts id are present, the shift with no id it's ok because he will be created
         verifyShiftAndUpdate(
@@ -255,7 +257,7 @@ public class LogbookService {
             }
             //normalize name
             authenticationToken.setName(
-                    StringUtilities.tagNameNormalization(
+                    StringUtilities.authenticationTokenNormalization(
                             authenticationToken.getName()
                     )
             );
@@ -342,42 +344,42 @@ public class LogbookService {
             }
 
             if(authorization.getOwnerType() == Authorization.OType.Application) {
-                // as owner we can have or the token name or the token email
-                String owner;
+                // as owner, we can have or the token name or the token email
+                String owner ;
                 if(authorization.getOwner().endsWith(appTokAuthDomain)) {
-                    owner = authorization
-                            .getOwner()
-                            .substring(
-                                    0,
-                                    authorization
-                                            .getOwner()
-                                            .indexOf(appTokAuthDomain)
+                    // the authentication token need to be found on the logbook tokens
+                    updatedAuthenticationTokenList
+                            .stream()
+                            .filter(
+                                    at->at.getEmail().compareToIgnoreCase(
+                                            authorization.getOwner()
+                                    )==0
+                            ).findFirst().orElseThrow(
+                                    ()->AuthenticationTokenNotFound.authTokenNotFoundBuilder()
+                                            .errorCode(errorCode)
+                                            .errorDomain(errorDomain)
+                                            .tokenName(authorization.getOwner())
+                                            .build()
                             );
+                } else if(authorization.getOwner().endsWith(appProperties.getApplicationTokenDomain())) {
+                    // the authentication token need to be found from global tokens
+                    authenticationTokenRepository.findByEmailIs(
+                            authorization.getOwner()
+                    ).orElseThrow(
+                            ()->AuthenticationTokenNotFound.authTokenNotFoundBuilder()
+                                    .errorCode(errorCode)
+                                    .errorDomain(errorDomain)
+                                    .tokenName(authorization.getOwner())
+                                    .build()
+                    );
                 } else {
-                    owner = authorization.getOwner();
+                    // the application token has not been recognized
+                    throw AuthenticationTokenNotFound.authTokenNotFoundBuilder()
+                            .errorCode(errorCode)
+                            .errorDomain(errorDomain)
+                            .tokenName(authorization.getOwner())
+                            .build();
                 }
-                // if the authentication type is an application token we need to be sure
-                // that the token is still present on the token list
-                AuthenticationToken authTokenForAuthorization = updatedAuthenticationTokenList
-                        .stream()
-                        .filter(
-                                at->at.getName().compareToIgnoreCase(
-                                        owner
-                                )==0
-                        ).findFirst().orElseThrow(
-                                ()->AuthenticationTokenNotFound.authTokenNotFoundBuilder()
-                                        .errorCode(errorCode)
-                                        .errorDomain(errorDomain)
-                                        .tokenName(authorization.getOwner())
-                                        .build()
-                        );
-
-                // now the name of the owner need to be normalized to the email of the
-                // authentication token, this because the owner need to be unique across
-                // all authorized resource
-                authorization.setOwner(
-                        authTokenForAuthorization.getEmail()
-                );
             }
 
             assertion(
