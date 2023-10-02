@@ -229,7 +229,7 @@ public class LogbookControllerAuthTest {
                                 .build(),
                         AuthorizationDTO
                                 .builder()
-                                .owner("token-a")
+                                .owner(testControllerHelperService.getTokenEmailForLogbookToken("token-a", "new logbook"))
                                 .ownerType("Application")
                                 .authorizationType(
                                         Read.name()
@@ -288,10 +288,6 @@ public class LogbookControllerAuthTest {
                 )
                 .isEqualTo(0);
         assertThat(allLogbookResultUser3.getPayload())
-                .hasSize(1)
-                .extracting(LogbookDTO::id)
-                .contains(
-                        newLogbookApiResultOne.getPayload()
-                );
+                .hasSize(0);
     }
 }

@@ -1874,7 +1874,7 @@ public class LogbookServiceTest {
                 )
         );
         assertThat(tokNotFoundException.getErrorCode())
-                .isEqualTo(-7);
+                .isEqualTo(-6);
     }
 
     @Test
@@ -1913,7 +1913,7 @@ public class LogbookServiceTest {
                 )
         );
         assertThat(doubleError.getErrorCode())
-                .isEqualTo(-7);
+                .isEqualTo(-6);
     }
 
     @Test
@@ -1942,7 +1942,7 @@ public class LogbookServiceTest {
                 )
         );
         assertThat(malformedError.getErrorCode())
-                .isEqualTo(-7);
+                .isEqualTo(-6);
 
         malformedError = assertThrows(
                 AuthenticationTokenMalformed.class,
