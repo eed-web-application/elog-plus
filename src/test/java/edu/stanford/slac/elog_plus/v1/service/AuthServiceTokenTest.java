@@ -162,6 +162,9 @@ public class AuthServiceTokenTest {
                 );
     }
 
+    /**
+     * The deletion of the token delete also the authorization
+     */
     @Test
     public void deleteTokenDeleteAlsoAuthorization() {
         AuthenticationTokenDTO newAuthToken1 = assertDoesNotThrow(
@@ -197,8 +200,12 @@ public class AuthServiceTokenTest {
         assertThat(exists).isFalse();
     }
 
+    /**
+     * Here is simulated the exception during to delete of the token and in this way the
+     * authorization, that are deleted before it will not be erased due to transaction abortion
+     */
     @Test
-    public void testExceptionOnDeleteTokenNotDeleteAuth(){
+    public void testExceptionOnDeletingTokenNotDeleteAuth(){
         // throw exception during the delete operation of the authentication token
         AuthenticationTokenDTO newAuthToken1 = assertDoesNotThrow(
                 () -> authService.addNewAuthenticationToken(

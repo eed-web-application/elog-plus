@@ -1,8 +1,6 @@
 package edu.stanford.slac.elog_plus.api.v1.controller;
 
-import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
-import edu.stanford.slac.elog_plus.api.v1.dto.GroupDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.PersonDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.exception.NotAuthorized;
 import edu.stanford.slac.elog_plus.model.Attachment;
 import edu.stanford.slac.elog_plus.model.Authorization;
@@ -17,12 +15,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
@@ -135,5 +131,97 @@ public class AuthorizationController {
                         search.orElse("")
                 )
         );
+    }
+
+    /**
+     * return all the application token
+     */
+    @PostMapping(
+            path = "/application-token",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResultResponse<AuthenticationTokenDTO> createNewAuthenticationToken(
+            @RequestBody NewAuthenticationTokenDTO newAuthenticationTokenDTO,
+            Authentication authentication
+    ) {
+        // assert that all the user that are root of whatever resource
+        assertion(
+                NotAuthorized
+                        .notAuthorizedBuilder()
+                        .errorCode(-1)
+                        .errorDomain("AuthorizationController::findPeople")
+                        .build(),
+                // is authenticated
+                () -> authService.checkAuthentication(authentication),
+                // is admin
+                () -> authService.checkForRoot(
+                        authentication
+                )
+        );
+        return ApiResultResponse.of(
+                authService.addNewAuthenticationToken(newAuthenticationTokenDTO)
+        );
+    }
+
+    /**
+     * return all the application token
+     */
+    @GetMapping(
+            path = "/application-token",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    public ApiResultResponse<List<AuthenticationTokenDTO>> getAuthenticationToken(
+            Authentication authentication
+    ) {
+        // assert that all the user that are root of whatever resource
+        assertion(
+                NotAuthorized
+                        .notAuthorizedBuilder()
+                        .errorCode(-1)
+                        .errorDomain("AuthorizationController::findPeople")
+                        .build(),
+                // is authenticated
+                () -> authService.checkAuthentication(authentication),
+                // is admin
+                () -> authService.checkForRoot(
+                        authentication
+                )
+
+        );
+        return ApiResultResponse.of(
+                authService.getAllAuthenticationToken()
+        );
+    }
+
+    /**
+     * return all the application token
+     */
+    @DeleteMapping(
+            path = "/application-token/{id}",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    public ApiResultResponse<Boolean> deleteAuthenticationToken(
+            @Parameter(description = "Is the unique eid of the authentication token")
+            @PathVariable() String id,
+            Authentication authentication
+    ) {
+        // assert that all the user that are root of whatever resource
+        assertion(
+                NotAuthorized
+                        .notAuthorizedBuilder()
+                        .errorCode(-1)
+                        .errorDomain("AuthorizationController::findPeople")
+                        .build(),
+                // is authenticated
+                () -> authService.checkAuthentication(authentication),
+                // is admin
+                () -> authService.checkForRoot(
+                        authentication
+                )
+
+        );
+        authService.deleteToken(id);
+        return ApiResultResponse.of(true);
     }
 }

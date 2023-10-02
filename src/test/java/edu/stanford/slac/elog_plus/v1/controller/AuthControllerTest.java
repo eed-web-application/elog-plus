@@ -1,14 +1,10 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
-import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
-import edu.stanford.slac.elog_plus.api.v1.dto.GroupDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.PersonDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.config.AppProperties;
+import edu.stanford.slac.elog_plus.exception.AuthenticationTokenMalformed;
 import edu.stanford.slac.elog_plus.exception.NotAuthorized;
-import edu.stanford.slac.elog_plus.model.Attachment;
-import edu.stanford.slac.elog_plus.model.Authorization;
-import edu.stanford.slac.elog_plus.model.Entry;
-import edu.stanford.slac.elog_plus.model.Logbook;
+import edu.stanford.slac.elog_plus.model.*;
 import edu.stanford.slac.elog_plus.service.AuthService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +20,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -54,6 +51,7 @@ public class AuthControllerTest {
     public void preTest() {
 
         //reset authorizations
+        mongoTemplate.remove(new Query(), AuthenticationToken.class);
         mongoTemplate.remove(new Query(), Authorization.class);
         appProperties.getRootUserList().clear();
         appProperties.getRootUserList().add("user1@slac.stanford.edu");
@@ -188,5 +186,193 @@ public class AuthControllerTest {
         assertThat(userNotFoundException.getErrorCode()).isEqualTo(-1);
     }
 
+    @Test
+    public void createAuthenticationTokenFailsOnMalformed() {
+        AuthenticationTokenMalformed userNotFoundException = assertThrows(
+                AuthenticationTokenMalformed.class,
+                () -> testControllerHelperService.createNewAuthenticationToken(
+                        mockMvc,
+                        status().isBadRequest(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewAuthenticationTokenDTO
+                                .builder()
+                                .build()
+                )
+        );
 
+        assertThat(userNotFoundException.getErrorCode()).isEqualTo(-1);
+
+        userNotFoundException = assertThrows(
+                AuthenticationTokenMalformed.class,
+                () -> testControllerHelperService.createNewAuthenticationToken(
+                        mockMvc,
+                        status().isBadRequest(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewAuthenticationTokenDTO
+                                .builder()
+                                .name("tok-name")
+                                .build()
+                )
+        );
+
+        assertThat(userNotFoundException.getErrorCode()).isEqualTo(-1);
+
+        userNotFoundException = assertThrows(
+                AuthenticationTokenMalformed.class,
+                () -> testControllerHelperService.createNewAuthenticationToken(
+                        mockMvc,
+                        status().isBadRequest(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewAuthenticationTokenDTO
+                                .builder()
+                                .expiration(LocalDate.of(2023,12,31))
+                                .build()
+                )
+        );
+
+        assertThat(userNotFoundException.getErrorCode()).isEqualTo(-1);
+    }
+
+    @Test
+    public void createAuthenticationTokenOK() {
+        ApiResultResponse<AuthenticationTokenDTO> authToken = assertDoesNotThrow(
+                () -> testControllerHelperService.createNewAuthenticationToken(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewAuthenticationTokenDTO
+                                .builder()
+                                .name("token-a")
+                                .expiration(LocalDate.of(2023,12,31))
+                                .build()
+                )
+        );
+        assertThat(authToken.getErrorCode()).isEqualTo(0);
+    }
+
+    @Test
+    public void getAllAuthenticationTokenOK() {
+        ApiResultResponse<AuthenticationTokenDTO> authToken1 = assertDoesNotThrow(
+                () -> testControllerHelperService.createNewAuthenticationToken(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewAuthenticationTokenDTO
+                                .builder()
+                                .name("token-a")
+                                .expiration(LocalDate.of(2023,12,31))
+                                .build()
+                )
+        );
+        assertThat(authToken1.getErrorCode()).isEqualTo(0);
+
+        ApiResultResponse<AuthenticationTokenDTO> authToken2 = assertDoesNotThrow(
+                () -> testControllerHelperService.createNewAuthenticationToken(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewAuthenticationTokenDTO
+                                .builder()
+                                .name("token-b")
+                                .expiration(LocalDate.of(2023,12,31))
+                                .build()
+                )
+        );
+        assertThat(authToken2.getErrorCode()).isEqualTo(0);
+
+        ApiResultResponse<List<AuthenticationTokenDTO>> allToken =  assertDoesNotThrow(
+                () -> testControllerHelperService.getAllAuthenticationToken(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu")
+                )
+        );
+        assertThat(allToken.getErrorCode()).isEqualTo(0);
+        assertThat(allToken.getPayload())
+                .hasSize(2)
+                .extracting(
+                        AuthenticationTokenDTO::name
+                )
+                .contains(
+                        "token-a",
+                        "token-b"
+                );
+    }
+
+    @Test
+    public void deleteAllAuthenticationTokenOK() {
+        ApiResultResponse<AuthenticationTokenDTO> authToken1 = assertDoesNotThrow(
+                () -> testControllerHelperService.createNewAuthenticationToken(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewAuthenticationTokenDTO
+                                .builder()
+                                .name("token-a")
+                                .expiration(LocalDate.of(2023,12,31))
+                                .build()
+                )
+        );
+        assertThat(authToken1.getErrorCode()).isEqualTo(0);
+
+        ApiResultResponse<AuthenticationTokenDTO> authToken2 = assertDoesNotThrow(
+                () -> testControllerHelperService.createNewAuthenticationToken(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewAuthenticationTokenDTO
+                                .builder()
+                                .name("token-b")
+                                .expiration(LocalDate.of(2023,12,31))
+                                .build()
+                )
+        );
+        assertThat(authToken2.getErrorCode()).isEqualTo(0);
+
+        ApiResultResponse<List<AuthenticationTokenDTO>> allToken =  assertDoesNotThrow(
+                () -> testControllerHelperService.getAllAuthenticationToken(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu")
+                )
+        );
+        assertThat(allToken.getErrorCode()).isEqualTo(0);
+        assertThat(allToken.getPayload())
+                .hasSize(2)
+                .extracting(
+                        AuthenticationTokenDTO::name
+                )
+                .contains(
+                        "token-a",
+                        "token-b"
+                );
+
+        ApiResultResponse<Boolean> deleteOpResult = assertDoesNotThrow(
+                () -> testControllerHelperService.deleteAuthenticationToken(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        authToken2.getPayload().id()
+                )
+        );
+        assertThat(deleteOpResult.getErrorCode()).isEqualTo(0);
+
+        // now we will have only one token
+        allToken =  assertDoesNotThrow(
+                () -> testControllerHelperService.getAllAuthenticationToken(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu")
+                )
+        );
+        assertThat(allToken.getErrorCode()).isEqualTo(0);
+        assertThat(allToken.getPayload())
+                .hasSize(1)
+                .extracting(
+                        AuthenticationTokenDTO::name
+                )
+                .contains(
+                        "token-a"
+                );
+    }
 }

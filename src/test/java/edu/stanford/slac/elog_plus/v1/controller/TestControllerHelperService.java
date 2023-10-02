@@ -876,6 +876,84 @@ public class TestControllerHelperService {
                 new TypeReference<>() {
                 });
     }
+
+    public ApiResultResponse<AuthenticationTokenDTO> createNewAuthenticationToken(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            NewAuthenticationTokenDTO newAuthenticationTokenDTO) throws Exception {
+        MockHttpServletRequestBuilder postBuilder =
+                post("/v1/auth/application-token")
+                        .content(
+                                new ObjectMapper().writeValueAsString(
+                                        newAuthenticationTokenDTO
+                                )
+                        )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON);
+        userInfo.ifPresent(login -> postBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
+        MvcResult result = mockMvc.perform(
+                        postBuilder
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
+
+    public ApiResultResponse<List<AuthenticationTokenDTO>> getAllAuthenticationToken(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo) throws Exception {
+        MockHttpServletRequestBuilder getBuilder =
+                get("/v1/auth/application-token")
+                        .accept(MediaType.APPLICATION_JSON);
+        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
+        MvcResult result = mockMvc.perform(
+                        getBuilder
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
+
+    public ApiResultResponse<Boolean> deleteAuthenticationToken(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String id) throws Exception {
+        MockHttpServletRequestBuilder deleteBuilder =
+                delete("/v1/auth/application-token/{id}", id)
+                        .accept(MediaType.APPLICATION_JSON);
+        userInfo.ifPresent(login -> deleteBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
+        MvcResult result = mockMvc.perform(
+                        deleteBuilder
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
+
     public ApiResultResponse<LogbookDTO> getTestLogbook(MockMvc mockMvc) {
         return getTestLogbook(mockMvc, "user1@slac.stanford.edu");
     }
