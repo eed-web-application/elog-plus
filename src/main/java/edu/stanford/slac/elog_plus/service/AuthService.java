@@ -97,7 +97,6 @@ public class AuthService {
      *
      * @param authentication the current authentication
      */
-    @Cacheable(value = "user-authorization", key = "{#authentication.credentials}", unless = "#authentication == null")
     public boolean checkAuthentication(Authentication authentication) {
         return authentication != null && authentication.isAuthenticated();
     }
@@ -107,7 +106,7 @@ public class AuthService {
      *
      * @param authentication is the current authentication
      */
-    @Cacheable(value = "user-authorization", key = "{#authentication.credentials}", unless = "#authentication == null")
+    @Cacheable(value = "user-root-authorization", key = "{#authentication.credentials}", unless = "#authentication == null")
     public boolean checkForRoot(Authentication authentication) {
         if (!checkAuthentication(authentication)) return false;
         // only root user can create logbook

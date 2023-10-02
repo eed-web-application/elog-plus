@@ -297,30 +297,6 @@ public class LogbookService {
             );
         }
 
-        //check which authentication token
-//        for (AuthenticationToken authenticationToken:
-//                actualAuthenticationTokenList) {
-//            // cheek if we need to update
-//            boolean toDelete = updatedAuthenticationTokenList.stream().anyMatch(
-//                    ut -> ut.getId() != null && ut.getId().compareTo(authenticationToken.getId()) == 0
-//            );
-//
-//            if (toDelete) {
-//                // need to be removed
-//                wrapCatch(
-//                        () -> {
-//                            authorizationRepository.deleteAllByOwnerIs(
-//                                    authenticationToken.getEmail()
-//                            );
-//                            return null;
-//                        },
-//                        -3,
-//                        "LogbookService:verifyAuthorizationAndUpdate"
-//                );
-//                log.info("Deleted authentications for token '{}' for logbook '{}'", authenticationToken, logbookName);
-//            }
-//        }
-
         //replace the token
         actualAuthenticationTokenList.clear();
         actualAuthenticationTokenList.addAll(
