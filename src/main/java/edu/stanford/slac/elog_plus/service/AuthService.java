@@ -2,36 +2,35 @@ package edu.stanford.slac.elog_plus.service;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.api.v1.mapper.AuthMapper;
-import edu.stanford.slac.elog_plus.api.v1.mapper.LogbookMapper;
 import edu.stanford.slac.elog_plus.auth.JWTHelper;
 import edu.stanford.slac.elog_plus.config.AppProperties;
 import edu.stanford.slac.elog_plus.exception.*;
 import edu.stanford.slac.elog_plus.ldap_repository.GroupRepository;
-import edu.stanford.slac.elog_plus.model.*;
 import edu.stanford.slac.elog_plus.ldap_repository.PersonRepository;
+import edu.stanford.slac.elog_plus.model.AuthenticationToken;
+import edu.stanford.slac.elog_plus.model.Authorization;
+import edu.stanford.slac.elog_plus.model.Group;
+import edu.stanford.slac.elog_plus.model.Person;
 import edu.stanford.slac.elog_plus.repository.AuthenticationTokenRepository;
 import edu.stanford.slac.elog_plus.repository.AuthorizationRepository;
-import edu.stanford.slac.elog_plus.utility.StringUtilities;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationTypeDTO.Admin;
 import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
 import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
-import static edu.stanford.slac.elog_plus.model.Authorization.Type.*;
 import static edu.stanford.slac.elog_plus.utility.StringUtilities.tokenNameNormalization;
 
 @Service
@@ -132,7 +131,7 @@ public class AuthService {
      * @param resourcePrefix the target resource
      */
     @Cacheable(value = "user-authorization", key = "{#authentication.credentials, #authorization, #resourcePrefix}", unless = "#authentication == null")
-    public boolean checkAuthorizationForOwnerAuthTypeAndResourcePrefix(Authentication authentication, Authorization.Type authorization, String resourcePrefix) {
+    public boolean checkAuthorizationForOwnerAuthTypeAndResourcePrefix(Authentication authentication, AuthorizationTypeDTO authorization, String resourcePrefix) {
         if (!checkAuthentication(authentication)) return false;
         if (checkForRoot(authentication)) return true;
         List<AuthorizationDTO> foundLogbookAuth = getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
@@ -183,7 +182,7 @@ public class AuthService {
     @Cacheable(value = "user-authorization", key = "{#owner, #authorizationType, #resourcePrefix}")
     public List<AuthorizationDTO> getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
             String owner,
-            Authorization.Type authorizationType,
+            AuthorizationTypeDTO authorizationType,
             String resourcePrefix) {
         return getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
                 owner,
@@ -207,7 +206,7 @@ public class AuthService {
     @Cacheable(value = "user-authorization", key = "{#owner, #authorizationType, #resourcePrefix, #allHigherAuthOnSameResource}")
     public List<AuthorizationDTO> getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
             String owner,
-            Authorization.Type authorizationType,
+            AuthorizationTypeDTO authorizationType,
             String resourcePrefix,
             Optional<Boolean> allHigherAuthOnSameResource
     ) {
@@ -218,7 +217,7 @@ public class AuthService {
                         () -> authorizationRepository.findByOwnerAndOwnerTypeAndAuthorizationTypeIsGreaterThanEqualAndResourceStartingWith(
                                 owner,
                                 isAppToken ? Authorization.OType.Application : Authorization.OType.User,
-                                authorizationType.getValue(),
+                                authMapper.toModel(authorizationType).getValue(),
                                 resourcePrefix
                         ),
                         -1,
@@ -241,7 +240,7 @@ public class AuthService {
                                     g -> authorizationRepository.findByOwnerAndOwnerTypeAndAuthorizationTypeIsGreaterThanEqualAndResourceStartingWith(
                                             g.commonName(),
                                             Authorization.OType.Group,
-                                            authorizationType.getValue(),
+                                            authMapper.toModel(authorizationType).getValue(),
                                             resourcePrefix
 
                                     )
@@ -260,7 +259,8 @@ public class AuthService {
                                     AuthorizationDTO::resource,
                                     auth -> auth,
                                     (existing, replacement) ->
-                                            Authorization.Type.valueOf(existing.authorizationType()).getValue() >= Authorization.Type.valueOf(replacement.authorizationType()).getValue() ? existing : replacement
+
+                                            authMapper.toModel(existing.authorizationType()).getValue() >= authMapper.toModel(replacement.authorizationType()).getValue() ? existing : replacement
                             ))
                     .values().stream().toList();
         }
@@ -275,7 +275,7 @@ public class AuthService {
         //load actual root
         List<Authorization> currentRootUser = authorizationRepository.findByResourceIsAndAuthorizationTypeIsGreaterThanEqual(
                 "*",
-                Admin.getValue()
+                authMapper.toModel(Admin).getValue()
         );
 
         // find root users to remove
@@ -290,7 +290,7 @@ public class AuthService {
             authorizationRepository.deleteByOwnerIsAndResourceIsAndAuthorizationTypeIs(
                     userEmailToRemove,
                     "*",
-                    Admin.getValue()
+                    authMapper.toModel(Admin).getValue()
             );
         }
 
@@ -302,14 +302,14 @@ public class AuthService {
             Optional<Authorization> rootAuth = authorizationRepository.findByOwnerIsAndResourceIsAndAuthorizationTypeIsGreaterThanEqual(
                     userEmail,
                     "*",
-                    Admin.getValue()
+                    authMapper.toModel(Admin).getValue()
             );
             if (rootAuth.isEmpty()) {
                 log.info("Create root authorizations for user '{}'", userEmail);
                 authorizationRepository.save(
                         Authorization
                                 .builder()
-                                .authorizationType(Admin.getValue())
+                                .authorizationType(authMapper.toModel(Admin).getValue())
                                 .owner(userEmail)
                                 .ownerType(Authorization.OType.User)
                                 .resource("*")
@@ -366,14 +366,14 @@ public class AuthService {
         Optional<Authorization> rootAuth = authorizationRepository.findByOwnerIsAndResourceIsAndAuthorizationTypeIsGreaterThanEqual(
                 email,
                 "*",
-                Admin.getValue()
+                authMapper.toModel(Admin).getValue()
         );
         if (rootAuth.isPresent()) return;
         wrapCatch(
                 () -> authorizationRepository.save(
                         Authorization
                                 .builder()
-                                .authorizationType(Admin.getValue())
+                                .authorizationType(authMapper.toModel(Admin).getValue())
                                 .owner(email)
                                 .ownerType(isAppToken ? Authorization.OType.Application : Authorization.OType.User)
                                 .resource("*")
@@ -394,7 +394,7 @@ public class AuthService {
         Optional<Authorization> rootAuth = authorizationRepository.findByOwnerIsAndResourceIsAndAuthorizationTypeIsGreaterThanEqual(
                 email,
                 "*",
-                Admin.getValue()
+                authMapper.toModel(Admin).getValue()
         );
         if (rootAuth.isEmpty()) return;
 
@@ -583,7 +583,6 @@ public class AuthService {
                 -2,
                 "AuthService::deleteToken"
         );
-
     }
 
     /**
@@ -644,5 +643,4 @@ public class AuthService {
         final Matcher matcher = pattern.matcher(email);
         return matcher.matches();
     }
-
 }

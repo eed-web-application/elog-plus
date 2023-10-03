@@ -25,9 +25,9 @@ public abstract class AuthMapper {
     protected AppProperties appProperties;
     public abstract PersonDTO fromModel(Person p);
     public abstract GroupDTO fromModel(Group g);
-    @Mapping(target = "authorizationType", expression = "java(Authorization.Type.fromValue(a.getAuthorizationType()).name())")
+    @Mapping(target = "authorizationType", expression = "java(AuthorizationTypeDTO.valueOf(Authorization.Type.fromValue(a.getAuthorizationType()).name()))")
     public abstract AuthorizationDTO fromModel(Authorization a);
-    @Mapping(target = "authorizationType", expression = "java(Authorization.Type.valueOf(a.authorizationType()).getValue())")
+    @Mapping(target = "authorizationType", expression = "java(Authorization.Type.valueOf(a.authorizationType().name()).getValue())")
     public abstract Authorization toModel(AuthorizationDTO a);
     public abstract List<Authorization> toModel(List<AuthorizationDTO> a);
     @Mapping(target = "email", expression = "java(APP_TOKEN_LOGBOOK_EMAIL.formatted(a.name(),logbookName, appProperties.getApplicationTokenDomain()))")
@@ -39,4 +39,5 @@ public abstract class AuthMapper {
     @Mapping(target = "email", expression = "java(APP_TOKEN_EMAIL.formatted(a.name(), appProperties.getApplicationTokenDomain()))")
     public abstract AuthenticationToken toModelToken(NewAuthenticationTokenDTO a);
     public abstract AuthenticationTokenDTO toTokenDTO(AuthenticationToken a);
+    public abstract Authorization.Type toModel(AuthorizationTypeDTO type);
 }
