@@ -2,8 +2,7 @@ package edu.stanford.slac.elog_plus.v1.controller;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.config.AppProperties;
-import edu.stanford.slac.elog_plus.exception.AuthenticationTokenMalformed;
-import edu.stanford.slac.elog_plus.exception.NotAuthorized;
+import edu.stanford.slac.elog_plus.exception.*;
 import edu.stanford.slac.elog_plus.model.*;
 import edu.stanford.slac.elog_plus.service.AuthService;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,7 +24,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.AssertionsForInterfaceTypes.*;
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -53,6 +52,7 @@ public class AuthControllerTest {
     public void preTest() {
 
         //reset authorizations
+        mongoTemplate.remove(new Query(), Logbook.class);
         mongoTemplate.remove(new Query(), AuthenticationToken.class);
         mongoTemplate.remove(new Query(), Authorization.class);
         appProperties.getRootUserList().clear();
@@ -376,5 +376,207 @@ public class AuthControllerTest {
                 .contains(
                         "token-a"
                 );
+    }
+
+    @Test
+    public void createAuthTokenAndMakItRootFailOnNotExistingPerson() {
+        PersonNotFound personNotFoundException = assertThrows(
+                PersonNotFound.class,
+                ()->testControllerHelperService.createNewRootUser(
+                        mockMvc,
+                        status().isNotFound(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        "wrong@user.email"
+                )
+        );
+
+        assertThat(personNotFoundException.getErrorCode()).isEqualTo(-1);
+    }
+
+    @Test
+    public void createAuthTokenAndMakItRootFailOnNotExistingLogbookToken() {
+        AuthenticationTokenNotFound tokenNotFoundException = assertThrows(
+                AuthenticationTokenNotFound.class,
+                ()->testControllerHelperService.createNewRootUser(
+                        mockMvc,
+                        status().isNotFound(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        testControllerHelperService.getTokenEmailForLogbookToken("tok-a", "logbook")
+                )
+        );
+
+        assertThat(tokenNotFoundException.getErrorCode()).isEqualTo(-1);
+    }
+
+    @Test
+    public void createAuthTokenAndMakItRootFailOnNotExistingGlobalToken() {
+        AuthenticationTokenNotFound tokenNotFoundException = assertThrows(
+                AuthenticationTokenNotFound.class,
+                ()->testControllerHelperService.createNewRootUser(
+                        mockMvc,
+                        status().isNotFound(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        "mail@%s".formatted(appProperties.getApplicationTokenDomain())
+                )
+        );
+
+        assertThat(tokenNotFoundException.getErrorCode()).isEqualTo(-1);
+    }
+
+    @Test
+    public void createRootForGlobalToken() {
+        var authenticationCreationResponse = assertDoesNotThrow(
+                ()->testControllerHelperService.createNewAuthenticationToken(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewAuthenticationTokenDTO
+                                .builder()
+                                .name("token-a")
+                                .expiration(LocalDate.of(2023,12,31))
+                                .build()
+                )
+        );
+        assertThat(authenticationCreationResponse.getErrorCode()).isEqualTo(0);
+        // create root user for token
+        var rootUseCreatedResponse = assertDoesNotThrow(
+                ()->testControllerHelperService.createNewRootUser(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        authenticationCreationResponse.getPayload().email()
+                )
+        );
+
+        assertThat(rootUseCreatedResponse.getErrorCode()).isEqualTo(0);
+        // check if token has been created
+        var allRootUseResponse = assertDoesNotThrow(
+                ()->testControllerHelperService.findAllRootUser(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu")
+                )
+        );
+        assertThat(allRootUseResponse.getErrorCode()).isEqualTo(0);
+        assertThat(allRootUseResponse.getPayload())
+                .extracting(AuthorizationDTO::owner)
+                .hasSize(2)
+                .contains(authenticationCreationResponse.getPayload().email());
+
+        var deleteRootUserResponse = assertDoesNotThrow(
+                ()->testControllerHelperService.deleteRootUser(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        authenticationCreationResponse.getPayload().email()
+                )
+        );
+        assertThat(deleteRootUserResponse.getErrorCode()).isEqualTo(0);
+
+        // check if token has been delete (only the default one should be present)
+        allRootUseResponse = assertDoesNotThrow(
+                ()->testControllerHelperService.findAllRootUser(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu")
+                )
+        );
+        assertThat(allRootUseResponse.getErrorCode()).isEqualTo(0);
+        assertThat(allRootUseResponse.getPayload())
+                .extracting(AuthorizationDTO::owner)
+                .hasSize(1)
+                .doesNotContain(authenticationCreationResponse.getPayload().email());
+    }
+
+    @Test
+    public void createRootForLogbookToken() {
+        var logbookCreationResponse = assertDoesNotThrow(
+                ()->testControllerHelperService.getNewLogbookWithNameWithAuthorizationAndAppToken(
+                        mockMvc,
+                        Optional.of("user1@slac.stanford.edu"),
+                        "new logbook",
+                        List.of(
+                                AuthorizationDTO
+                                        .builder()
+                                        .owner(testControllerHelperService.getTokenEmailForLogbookToken("token-a","new logbook"))
+                                        .authorizationType("Read")
+                                        .ownerType("Application")
+                                        .build()
+                        ),
+                        List.of(
+                                AuthenticationTokenDTO
+                                        .builder()
+                                        .name("token-a")
+                                        .expiration(LocalDate.of(2023,12,31))
+                                        .build()
+                        )
+                )
+        );
+        assertThat(logbookCreationResponse.getErrorCode()).isEqualTo(0);
+        // create root user for token
+        var logbookTokenException = assertThrows(
+                ControllerLogicException.class,
+                ()->testControllerHelperService.createNewRootUser(
+                        mockMvc,
+                        status().isInternalServerError(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        testControllerHelperService.getTokenEmailForLogbookToken("token-a","new logbook")
+                )
+        );
+        assertThat(logbookTokenException.getErrorCode()).isEqualTo(-1);
+    }
+
+    @Test
+    public void checkIfRootUserCanCreateOtherRootUser() {
+        var authenticationTokenCreationResponse = assertDoesNotThrow(
+                ()->testControllerHelperService.createNewAuthenticationToken(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewAuthenticationTokenDTO
+                                .builder()
+                                .name("token-a")
+                                .expiration(LocalDate.of(2023,12,31))
+                                .build()
+                )
+        );
+        assertThat(authenticationTokenCreationResponse.getErrorCode()).isEqualTo(0);
+        // create root user for token
+        var rootUseCreatedResponse = assertDoesNotThrow(
+                ()->testControllerHelperService.createNewRootUser(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        authenticationTokenCreationResponse.getPayload().email()
+                )
+        );
+
+        assertThat(rootUseCreatedResponse.getErrorCode()).isEqualTo(0);
+
+        // create new token and root auth with this new token
+        var anotherAuthenticationTokenCreationResponse = assertDoesNotThrow(
+                ()->testControllerHelperService.createNewAuthenticationToken(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of(authenticationTokenCreationResponse.getPayload().email()),
+                        NewAuthenticationTokenDTO
+                                .builder()
+                                .name("token-b-made-by-a")
+                                .expiration(LocalDate.of(2023,12,31))
+                                .build()
+                )
+        );
+        assertThat(anotherAuthenticationTokenCreationResponse.getErrorCode()).isEqualTo(0);
+
+        var anotheRootAuthorizationCreatedResponse = assertDoesNotThrow(
+                ()->testControllerHelperService.createNewRootUser(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of(authenticationTokenCreationResponse.getPayload().email()),
+                        anotherAuthenticationTokenCreationResponse.getPayload().email()
+                )
+        );
+
+        assertThat(anotheRootAuthorizationCreatedResponse.getErrorCode()).isEqualTo(0);
     }
 }

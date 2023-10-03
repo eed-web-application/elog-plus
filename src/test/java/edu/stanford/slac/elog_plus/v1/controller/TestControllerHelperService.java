@@ -963,6 +963,77 @@ public class TestControllerHelperService {
                 });
     }
 
+    public ApiResultResponse<Boolean> createNewRootUser(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String userEmail) throws Exception {
+        MockHttpServletRequestBuilder requestBuilder =
+                post("/v1/auth/root/{email}", userEmail)
+                        .accept(MediaType.APPLICATION_JSON);
+        userInfo.ifPresent(login -> requestBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
+        MvcResult result = mockMvc.perform(
+                        requestBuilder
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
+
+    public ApiResultResponse<Boolean> deleteRootUser(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String userEmail) throws Exception {
+        MockHttpServletRequestBuilder requestBuilder =
+                delete("/v1/auth/root/{email}", userEmail)
+                        .accept(MediaType.APPLICATION_JSON);
+        userInfo.ifPresent(login -> requestBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
+        MvcResult result = mockMvc.perform(
+                        requestBuilder
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
+
+    public ApiResultResponse<List<AuthorizationDTO>> findAllRootUser(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo) throws Exception {
+        MockHttpServletRequestBuilder requestBuilder =
+                get("/v1/auth/root")
+                        .accept(MediaType.APPLICATION_JSON);
+        userInfo.ifPresent(login -> requestBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
+        MvcResult result = mockMvc.perform(
+                        requestBuilder
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
+
     public ApiResultResponse<LogbookDTO> getTestLogbook(MockMvc mockMvc) {
         return getTestLogbook(mockMvc, "user1@slac.stanford.edu");
     }

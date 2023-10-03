@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
@@ -321,6 +323,109 @@ public class AuthService {
     }
 
     /**
+     * Add user identified by email as root
+     *
+     * @param email the user email
+     */
+    public void addRootAuthorization(String email, String creator) {
+        boolean isAppToken = isAppTokenEmail(email);
+
+        // check fi the user or app token exists
+        if(isAppToken) {
+            // give error in case of a logbook token(it cannot be root
+            assertion(
+                    ControllerLogicException.builder()
+                            .errorCode(-1)
+                            .errorMessage("Logbook token cannot became root")
+                            .errorDomain("AuthService::addRootAuthorization")
+                            .build(),
+                    ()->!isAppLogbookTokenEmail(email)
+            );
+            // create root for global token
+            authenticationTokenRepository
+                    .findByEmailIs(email)
+                    .orElseThrow(
+                            ()->AuthenticationTokenNotFound.authTokenNotFoundBuilder()
+                                    .errorCode(-1)
+                                    .errorDomain("AuthService::addRootAuthorization")
+                                    .build()
+                    );
+        } else {
+            // find the user
+            personRepository.findByMail(email)
+                    .orElseThrow(
+                            ()->PersonNotFound.personNotFoundBuilder()
+                                    .errorCode(-1)
+                                    .email(email)
+                                    .errorDomain("AuthService::addRootAuthorization")
+                                    .build()
+                    );
+        }
+
+        // check if root authorization is already benn granted
+        Optional<Authorization> rootAuth = authorizationRepository.findByOwnerIsAndResourceIsAndAuthorizationTypeIsGreaterThanEqual(
+                email,
+                "*",
+                Admin.getValue()
+        );
+        if (rootAuth.isPresent()) return;
+        wrapCatch(
+                () -> authorizationRepository.save(
+                        Authorization
+                                .builder()
+                                .authorizationType(Admin.getValue())
+                                .owner(email)
+                                .ownerType(isAppToken ? Authorization.OType.Application : Authorization.OType.User)
+                                .resource("*")
+                                .creationBy(creator)
+                                .build()
+                ),
+                -1,
+                "AuthService::addRootAuthorization"
+        );
+    }
+
+    /**
+     * Remove user identified by email as root user
+     *
+     * @param email that identify the user
+     */
+    public void removeRootAuthorization(String email) {
+        Optional<Authorization> rootAuth = authorizationRepository.findByOwnerIsAndResourceIsAndAuthorizationTypeIsGreaterThanEqual(
+                email,
+                "*",
+                Admin.getValue()
+        );
+        if (rootAuth.isEmpty()) return;
+
+        wrapCatch(
+                () -> {
+                    authorizationRepository.delete(rootAuth.get());
+                    return null;
+                },
+                -1,
+                "AuthService::addRootAuthorization"
+        );
+    }
+
+    /**
+     * Return all root authorization
+     * @return all the root authorization
+     */
+    public List<AuthorizationDTO> findAllRoot() {
+        return wrapCatch(
+                () -> authorizationRepository.findByResourceIs("*"),
+                -1,
+                "AuthService::findAllRoot"
+        )
+                .stream()
+                .map(
+                        authMapper::fromModel
+                )
+                .toList();
+    }
+
+    /**
      * Add a new authentication token
      *
      * @param newAuthenticationTokenDTO is the new token information
@@ -473,5 +578,11 @@ public class AuthService {
     private boolean isAppTokenEmail(String email) {
         if (email == null) return false;
         return email.endsWith(appProperties.getApplicationTokenDomain());
+    }
+
+    private boolean isAppLogbookTokenEmail(String email) {
+        final Pattern pattern = Pattern.compile(appProperties.getLogbookEmailRegex(), Pattern.MULTILINE);
+        final Matcher matcher = pattern.matcher(email);
+        return matcher.matches();
     }
 }

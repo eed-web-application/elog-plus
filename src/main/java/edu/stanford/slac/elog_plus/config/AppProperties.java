@@ -19,4 +19,5 @@ public class AppProperties {
     private List<String> rootUserList;
     // all email that belong to this domain belongs to application toke authorization
     private String applicationTokenDomain = "elog.slac.app$";
+    private String logbookEmailRegex =  ".*@.*\\.elog\\.slac\\.app\\$";
 }

@@ -134,6 +134,99 @@ public class AuthorizationController {
     }
 
     /**
+     * Create root user
+     */
+    @PostMapping(
+            path = "/root/{email}",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResultResponse<Boolean> setRootUser(
+            @PathVariable String email,
+            Authentication authentication
+    ) {
+        // assert that all the user that are root of whatever resource
+        assertion(
+                NotAuthorized
+                        .notAuthorizedBuilder()
+                        .errorCode(-1)
+                        .errorDomain("AuthorizationController::setRootUser")
+                        .build(),
+                // is authenticated
+                () -> authService.checkAuthentication(authentication),
+                // is admin
+                () -> authService.checkForRoot(
+                        authentication
+                )
+        );
+        authService.addRootAuthorization(email, authentication.getCredentials().toString());
+        return ApiResultResponse.of(
+                true
+        );
+    }
+
+    /**
+     * Delete root user
+     */
+    @DeleteMapping(
+            path = "/root/{email}",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    public ApiResultResponse<Boolean> removeAsRootUser(
+            @PathVariable String email,
+            Authentication authentication
+    ) {
+        // assert that all the user that are root of whatever resource
+        assertion(
+                NotAuthorized
+                        .notAuthorizedBuilder()
+                        .errorCode(-1)
+                        .errorDomain("AuthorizationController::setRootUser")
+                        .build(),
+                // is authenticated
+                () -> authService.checkAuthentication(authentication),
+                // is admin
+                () -> authService.checkForRoot(
+                        authentication
+                )
+        );
+        authService.removeRootAuthorization(email);
+        return ApiResultResponse.of(
+                true
+        );
+    }
+
+    /**
+     * Delete root user
+     */
+    @GetMapping(
+            path = "/root",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    public ApiResultResponse<List<AuthorizationDTO>> findAllRoot(
+            Authentication authentication
+    ) {
+        // assert that all the user that are root of whatever resource
+        assertion(
+                NotAuthorized
+                        .notAuthorizedBuilder()
+                        .errorCode(-1)
+                        .errorDomain("AuthorizationController::setRootUser")
+                        .build(),
+                // is authenticated
+                () -> authService.checkAuthentication(authentication),
+                // is admin
+                () -> authService.checkForRoot(
+                        authentication
+                )
+        );
+
+        return ApiResultResponse.of(
+                authService.findAllRoot()
+        );
+    }
+
+    /**
      * return all the application token
      */
     @PostMapping(
@@ -150,7 +243,7 @@ public class AuthorizationController {
                 NotAuthorized
                         .notAuthorizedBuilder()
                         .errorCode(-1)
-                        .errorDomain("AuthorizationController::findPeople")
+                        .errorDomain("AuthorizationController::createNewAuthenticationToken")
                         .build(),
                 // is authenticated
                 () -> authService.checkAuthentication(authentication),
@@ -179,7 +272,7 @@ public class AuthorizationController {
                 NotAuthorized
                         .notAuthorizedBuilder()
                         .errorCode(-1)
-                        .errorDomain("AuthorizationController::findPeople")
+                        .errorDomain("AuthorizationController::getAuthenticationToken")
                         .build(),
                 // is authenticated
                 () -> authService.checkAuthentication(authentication),
@@ -211,7 +304,7 @@ public class AuthorizationController {
                 NotAuthorized
                         .notAuthorizedBuilder()
                         .errorCode(-1)
-                        .errorDomain("AuthorizationController::findPeople")
+                        .errorDomain("AuthorizationController::deleteAuthenticationToken")
                         .build(),
                 // is authenticated
                 () -> authService.checkAuthentication(authentication),
