@@ -24,11 +24,11 @@ public class InitAuthenticationTokenIndex extends MongoDDLOps {
                 mongoTemplate,
                 new Index()
                         .on(
-                                "name",
+                                "email",
                                 Sort.Direction.ASC
                         )
                         .unique()
-                        .named("name")
+                        .named("email")
         );
     }
 

@@ -1,6 +1,7 @@
 package edu.stanford.slac.elog_plus.api.v1.controller;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
+import edu.stanford.slac.elog_plus.config.AppProperties;
 import edu.stanford.slac.elog_plus.exception.NotAuthorized;
 import edu.stanford.slac.elog_plus.service.AuthService;
 import edu.stanford.slac.elog_plus.service.EntryService;
@@ -31,6 +32,7 @@ import static edu.stanford.slac.elog_plus.model.Authorization.Type.Write;
 public class EntriesController {
     private AuthService authService;
     private EntryService entryService;
+    private AppProperties appProperties;
 
     @PostMapping(produces = {MediaType.APPLICATION_JSON_VALUE})
     @Operation(description = "Perform the query on all log entries")
@@ -60,10 +62,21 @@ public class EntriesController {
                                 .toList()
                 )
         );
+        PersonDTO creator = null;
+        if(authentication.getCredentials().toString().endsWith(appProperties.getApplicationTokenDomain())){
+            // create fake person for authentication token
+            creator = PersonDTO
+                    .builder()
+                    .gecos("Application Token")
+                    .mail(authentication.getPrincipal().toString())
+                    .build();
+        } else {
+            creator = authService.findPerson(authentication);
+        }
         return ApiResultResponse.of(
                 entryService.createNew(
                         newEntry,
-                        authService.findPerson(authentication)
+                        creator
                 )
         );
     }
