@@ -86,13 +86,13 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                         .builder()
                                         .ownerType("User")
                                         .owner("user2@slac.stanford.edu")
-                                        .authorizationType("Write")
+                                        .authorizationType(AuthorizationTypeDTO.Write)
                                         .build(),
                                 AuthorizationDTO
                                         .builder()
                                         .ownerType("User")
                                         .owner("user3@slac.stanford.edu")
-                                        .authorizationType("Admin")
+                                        .authorizationType(AuthorizationTypeDTO.Admin)
                                         .build()
                         )
                 )
@@ -158,7 +158,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                         .builder()
                                         .ownerType("Group")
                                         .owner("group-2")
-                                        .authorizationType("Write")
+                                        .authorizationType(AuthorizationTypeDTO.Write)
                                         .build()
                         )
                 )
@@ -202,7 +202,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                         .builder()
                                         .ownerType("User")
                                         .owner("user2@slac.stanford.edu")
-                                        .authorizationType("Read")
+                                        .authorizationType(AuthorizationTypeDTO.Read)
                                         .build()
                         )
                 )
@@ -220,7 +220,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                         .builder()
                                         .ownerType("User")
                                         .owner("user3@slac.stanford.edu")
-                                        .authorizationType("Read")
+                                        .authorizationType(AuthorizationTypeDTO.Read)
                                         .build()
                         )
                 )
@@ -291,7 +291,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                                         "LogbookAuthTest1"
                                                 )
                                         )
-                                        .authorizationType("Write")
+                                        .authorizationType(AuthorizationTypeDTO.Write)
                                         .build(),
                                 AuthorizationDTO
                                         .builder()
@@ -302,7 +302,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                                         "LogbookAuthTest1"
                                                 )
                                         )
-                                        .authorizationType("Admin")
+                                        .authorizationType(AuthorizationTypeDTO.Admin)
                                         .build()
                         ),
                         List.of(
@@ -425,7 +425,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                                         "token-a"
                                                 )
                                         )
-                                        .authorizationType("Write")
+                                        .authorizationType(AuthorizationTypeDTO.Write)
                                         .build(),
                                 AuthorizationDTO
                                         .builder()
@@ -435,7 +435,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                                         "token-b"
                                                 )
                                         )
-                                        .authorizationType("Admin")
+                                        .authorizationType(AuthorizationTypeDTO.Admin)
                                         .build()
                         )
                 )

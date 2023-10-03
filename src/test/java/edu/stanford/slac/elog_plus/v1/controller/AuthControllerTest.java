@@ -499,7 +499,7 @@ public class AuthControllerTest {
                                 AuthorizationDTO
                                         .builder()
                                         .owner(testControllerHelperService.getTokenEmailForLogbookToken("token-a","new logbook"))
-                                        .authorizationType("Read")
+                                        .authorizationType(AuthorizationTypeDTO.Read)
                                         .ownerType("Application")
                                         .build()
                         ),

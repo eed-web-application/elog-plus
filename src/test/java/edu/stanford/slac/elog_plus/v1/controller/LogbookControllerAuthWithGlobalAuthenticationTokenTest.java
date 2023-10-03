@@ -25,8 +25,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-import static edu.stanford.slac.elog_plus.model.Authorization.Type.Read;
-import static edu.stanford.slac.elog_plus.model.Authorization.Type.Write;
+import static edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationTypeDTO.Write;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -97,7 +96,7 @@ public class LogbookControllerAuthWithGlobalAuthenticationTokenTest {
                                 .owner(tokenResult.getPayload().email())
                                 .ownerType("Application")
                                 .authorizationType(
-                                        Write.name()
+                                        Write
                                 )
                                 .build()
                 )
@@ -115,7 +114,7 @@ public class LogbookControllerAuthWithGlobalAuthenticationTokenTest {
                                 .owner("user2@slac.stanford.edu")
                                 .ownerType("User")
                                 .authorizationType(
-                                        Write.name()
+                                        Write
                                 )
                                 .build()
                 )

@@ -28,8 +28,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-import static edu.stanford.slac.elog_plus.model.Authorization.Type.Read;
-import static edu.stanford.slac.elog_plus.model.Authorization.Type.Write;
+import static edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationTypeDTO.Read;
+import static edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationTypeDTO.Write;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -78,7 +78,7 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
                                 .owner(testControllerHelperService.getTokenEmailForLogbookToken("token-a", "new logbook"))
                                 .ownerType("Application")
                                 .authorizationType(
-                                        Write.name()
+                                        Write
                                 )
                                 .build(),
                         AuthorizationDTO
@@ -86,7 +86,7 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
                                 .owner(testControllerHelperService.getTokenEmailForLogbookToken("token-b", "new logbook"))
                                 .ownerType("Application")
                                 .authorizationType(
-                                        Read.name()
+                                        Read
                                 )
                                 .build()
                 ),
@@ -115,7 +115,7 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
                                 .owner(testControllerHelperService.getTokenEmailForLogbookToken("token-a", "new logbook two"))
                                 .ownerType("Application")
                                 .authorizationType(
-                                        Write.name()
+                                        Write
                                 )
                                 .build()
                 ),

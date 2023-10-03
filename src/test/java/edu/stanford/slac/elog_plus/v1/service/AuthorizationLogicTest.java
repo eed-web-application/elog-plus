@@ -1,7 +1,7 @@
 package edu.stanford.slac.elog_plus.v1.service;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.EntrySummaryDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.elog_plus.config.AppProperties;
 import edu.stanford.slac.elog_plus.model.Authorization;
 import edu.stanford.slac.elog_plus.repository.AuthorizationRepository;
@@ -20,14 +20,12 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
-import static edu.stanford.slac.elog_plus.model.Authorization.Type.*;
-import static org.assertj.core.api.AssertionsForClassTypes.not;
+import static edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationTypeDTO.*;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @AutoConfigureMockMvc
 @SpringBootTest(properties = {})
@@ -54,13 +52,13 @@ public class AuthorizationLogicTest {
     @Test
     public void authorizationEnumTest() {
         Authorization.Type type = Authorization.Type.valueOf("Read");
-        assertThat(type).isEqualTo(Read);
+        assertThat(type).isEqualTo(Authorization.Type.Read);
     }
 
     @Test
     public void authorizationEnumIntegerTest() {
         Integer type = Authorization.Type.valueOf("Read").getValue();
-        assertThat(type).isEqualTo(Read.getValue());
+        assertThat(type).isEqualTo(Authorization.Type.Read.getValue());
     }
 
     @Test
@@ -69,7 +67,7 @@ public class AuthorizationLogicTest {
         Authorization newAuthWriteUser1 = assertDoesNotThrow(
                 () -> authorizationRepository.save(
                         Authorization.builder()
-                                .authorizationType(Read.getValue())
+                                .authorizationType(Authorization.Type.Read.getValue())
                                 .owner("user1@slac.stanford.edu")
                                 .ownerType(Authorization.OType.User)
                                 .resource("/r1")
@@ -80,7 +78,7 @@ public class AuthorizationLogicTest {
         Authorization newAuthWriteGroups1_1 = assertDoesNotThrow(
                 () -> authorizationRepository.save(
                         Authorization.builder()
-                                .authorizationType(Write.getValue())
+                                .authorizationType(Authorization.Type.Write.getValue())
                                 .owner("group-1")
                                 .ownerType(Authorization.OType.Group)
                                 .resource("/r1")
@@ -91,7 +89,7 @@ public class AuthorizationLogicTest {
         Authorization newAuthWriteGroups1_2 = assertDoesNotThrow(
                 () -> authorizationRepository.save(
                         Authorization.builder()
-                                .authorizationType(Write.getValue())
+                                .authorizationType(Authorization.Type.Write.getValue())
                                 .owner("group-1")
                                 .ownerType(Authorization.OType.Group)
                                 .resource("/r2")
@@ -102,7 +100,7 @@ public class AuthorizationLogicTest {
         Authorization newAuthWriteGroups1_3 = assertDoesNotThrow(
                 () -> authorizationRepository.save(
                         Authorization.builder()
-                                .authorizationType(Read.getValue())
+                                .authorizationType(Authorization.Type.Read.getValue())
                                 .owner("group-1")
                                 .ownerType(Authorization.OType.Group)
                                 .resource("/r3")
@@ -113,7 +111,7 @@ public class AuthorizationLogicTest {
         Authorization newAuthWriteGroups2_1 = assertDoesNotThrow(
                 () -> authorizationRepository.save(
                         Authorization.builder()
-                                .authorizationType(Admin.getValue())
+                                .authorizationType(Authorization.Type.Admin.getValue())
                                 .owner("group-2")
                                 .ownerType(Authorization.OType.Group)
                                 .resource("/r3")
@@ -131,7 +129,7 @@ public class AuthorizationLogicTest {
         assertThat(allReadAuthorization)
                 .filteredOn(auth -> auth.resource().compareToIgnoreCase("/r1") == 0)
                 .filteredOn(
-                        auth -> auth.authorizationType().compareToIgnoreCase("Write") == 0
+                        auth -> auth.authorizationType() == AuthorizationTypeDTO.Write
                 )
                 .extracting(AuthorizationDTO::owner)
                 .contains("group-1");
@@ -140,7 +138,7 @@ public class AuthorizationLogicTest {
         assertThat(allReadAuthorization)
                 .filteredOn(auth -> auth.resource().compareToIgnoreCase("/r2") == 0)
                 .filteredOn(
-                        auth -> auth.authorizationType().compareToIgnoreCase("Write") == 0
+                        auth -> auth.authorizationType() == AuthorizationTypeDTO.Write
                 )
                 .extracting(AuthorizationDTO::owner)
                 .contains("group-1");
@@ -150,8 +148,8 @@ public class AuthorizationLogicTest {
                 .filteredOn(auth -> auth.resource().compareToIgnoreCase("/r3") == 0)
                 .filteredOn(
                         auth ->
-                                auth.authorizationType().compareToIgnoreCase("Read") == 0 ||
-                                        auth.authorizationType().compareToIgnoreCase("Admin") == 0
+                                auth.authorizationType() == Read ||
+                                        auth.authorizationType() == AuthorizationTypeDTO.Admin
                 )
                 .extracting(AuthorizationDTO::owner)
                 .contains("group-1", "group-2");
@@ -168,7 +166,7 @@ public class AuthorizationLogicTest {
         assertThat(allReadAuthorization)
                 .filteredOn(auth -> auth.resource().compareToIgnoreCase("/r1") == 0)
                 .filteredOn(
-                        auth -> auth.authorizationType().compareToIgnoreCase("Write") == 0
+                        auth -> auth.authorizationType() == Write
                 )
                 .extracting(AuthorizationDTO::owner)
                 .contains("group-1");
@@ -177,7 +175,7 @@ public class AuthorizationLogicTest {
         assertThat(allReadAuthorization)
                 .filteredOn(auth -> auth.resource().compareToIgnoreCase("/r2") == 0)
                 .filteredOn(
-                        auth -> auth.authorizationType().compareToIgnoreCase("Write") == 0
+                        auth -> auth.authorizationType() == Read
                 )
                 .extracting(AuthorizationDTO::owner)
                 .contains("group-1");
@@ -186,7 +184,7 @@ public class AuthorizationLogicTest {
         assertThat(allReadAuthorization)
                 .filteredOn(auth -> auth.resource().compareToIgnoreCase("/r3") == 0)
                 .filteredOn(
-                        auth -> auth.authorizationType().compareToIgnoreCase("Admin") == 0
+                        auth -> auth.authorizationType() == Admin
                 )
                 .extracting(AuthorizationDTO::owner)
                 .contains("group-2");
@@ -199,7 +197,7 @@ public class AuthorizationLogicTest {
         Authorization newAuthReadUser2 = assertDoesNotThrow(
                 () -> authorizationRepository.save(
                         Authorization.builder()
-                                .authorizationType(Read.getValue())
+                                .authorizationType(Authorization.Type.Read.getValue())
                                 .owner("user2@slac.stanford.edu")
                                 .resource("/r1")
                                 .build()
@@ -209,7 +207,7 @@ public class AuthorizationLogicTest {
         Authorization newAuthWriteUser3 = assertDoesNotThrow(
                 () -> authorizationRepository.save(
                         Authorization.builder()
-                                .authorizationType(Write.getValue())
+                                .authorizationType(Authorization.Type.Write.getValue())
                                 .owner("user3@slac.stanford.edu")
                                 .resource("/r1")
                                 .build()
@@ -219,7 +217,7 @@ public class AuthorizationLogicTest {
         Authorization newAuthAdminUser4 = assertDoesNotThrow(
                 () -> authorizationRepository.save(
                         Authorization.builder()
-                                .authorizationType(Admin.getValue())
+                                .authorizationType(Authorization.Type.Admin.getValue())
                                 .owner("user4@slac.stanford.edu")
                                 .resource("/r1")
                                 .build()
@@ -230,7 +228,7 @@ public class AuthorizationLogicTest {
         List<Authorization> readerShouldBeAllUser = assertDoesNotThrow(
                 () -> authorizationRepository.findByResourceIsAndAuthorizationTypeIsGreaterThanEqual(
                         "/r1",
-                        Read.getValue()
+                        Authorization.Type.Read.getValue()
                 )
         );
 
@@ -247,7 +245,7 @@ public class AuthorizationLogicTest {
         List<Authorization> writerShouldBeUser3And4 = assertDoesNotThrow(
                 () -> authorizationRepository.findByResourceIsAndAuthorizationTypeIsGreaterThanEqual(
                         "/r1",
-                        Write.getValue()
+                        Authorization.Type.Write.getValue()
                 )
         );
 
@@ -263,7 +261,7 @@ public class AuthorizationLogicTest {
         List<Authorization> adminShouldBeUser4 = assertDoesNotThrow(
                 () -> authorizationRepository.findByResourceIsAndAuthorizationTypeIsGreaterThanEqual(
                         "/r1",
-                        Admin.getValue()
+                        Authorization.Type.Admin.getValue()
                 )
         );
 

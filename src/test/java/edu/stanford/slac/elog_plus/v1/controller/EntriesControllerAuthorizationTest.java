@@ -1,9 +1,6 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
-import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
-import edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.EntryNewDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.LogbookDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.config.AppProperties;
 import edu.stanford.slac.elog_plus.exception.NotAuthorized;
 import edu.stanford.slac.elog_plus.model.Attachment;
@@ -92,7 +89,7 @@ public class EntriesControllerAuthorizationTest {
                                         .builder()
                                         .ownerType("User")
                                         .owner("user2@slac.stanford.edu")
-                                        .authorizationType("Read")
+                                        .authorizationType(AuthorizationTypeDTO.Read)
                                         .build()
                         )
                 )
@@ -137,7 +134,7 @@ public class EntriesControllerAuthorizationTest {
                                         .builder()
                                         .ownerType("User")
                                         .owner("user2@slac.stanford.edu")
-                                        .authorizationType("Read")
+                                        .authorizationType(AuthorizationTypeDTO.Read)
                                         .build()
                         )
                 )
@@ -182,13 +179,13 @@ public class EntriesControllerAuthorizationTest {
                                         .builder()
                                         .ownerType("User")
                                         .owner("user2@slac.stanford.edu")
-                                        .authorizationType("Write")
+                                        .authorizationType(AuthorizationTypeDTO.Write)
                                         .build(),
                                 AuthorizationDTO
                                         .builder()
                                         .ownerType("User")
                                         .owner("user3@slac.stanford.edu")
-                                        .authorizationType("Admin")
+                                        .authorizationType(AuthorizationTypeDTO.Admin)
                                         .build()
                         )
                 )
@@ -254,7 +251,7 @@ public class EntriesControllerAuthorizationTest {
                                         .builder()
                                         .ownerType("Group")
                                         .owner("group-2")
-                                        .authorizationType("Write")
+                                        .authorizationType(AuthorizationTypeDTO.Write)
                                         .build()
                         )
                 )
@@ -298,7 +295,7 @@ public class EntriesControllerAuthorizationTest {
                                         .builder()
                                         .ownerType("User")
                                         .owner("user2@slac.stanford.edu")
-                                        .authorizationType("Read")
+                                        .authorizationType(AuthorizationTypeDTO.Read)
                                         .build()
                         )
                 )
@@ -316,7 +313,7 @@ public class EntriesControllerAuthorizationTest {
                                         .builder()
                                         .ownerType("User")
                                         .owner("user3@slac.stanford.edu")
-                                        .authorizationType("Read")
+                                        .authorizationType(AuthorizationTypeDTO.Read)
                                         .build()
                         )
                 )
