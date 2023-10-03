@@ -394,18 +394,18 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void createAuthTokenAndMakItRootFailOnNotExistingLogbookToken() {
-        AuthenticationTokenNotFound tokenNotFoundException = assertThrows(
-                AuthenticationTokenNotFound.class,
+    public void createAuthTokenAndMakeItRootFailOnLogbookToken() {
+        ControllerLogicException logbookTokenCannotBeRootExcept = assertThrows(
+                ControllerLogicException.class,
                 ()->testControllerHelperService.createNewRootUser(
                         mockMvc,
-                        status().isNotFound(),
+                        status().isInternalServerError(),
                         Optional.of("user1@slac.stanford.edu"),
-                        testControllerHelperService.getTokenEmailForLogbookToken("tok-a", "logbook")
+                        testControllerHelperService.getTokenEmailForLogbookToken("token-a", "logbook")
                 )
         );
 
-        assertThat(tokenNotFoundException.getErrorCode()).isEqualTo(-1);
+        assertThat(logbookTokenCannotBeRootExcept.getErrorCode()).isEqualTo(-1);
     }
 
     @Test
@@ -416,7 +416,7 @@ public class AuthControllerTest {
                         mockMvc,
                         status().isNotFound(),
                         Optional.of("user1@slac.stanford.edu"),
-                        "mail@%s".formatted(appProperties.getApplicationTokenDomain())
+                        testControllerHelperService.getTokenEmailForGlobalToken("token-a")
                 )
         );
 
