@@ -397,6 +397,7 @@ public class AuthService {
 
     /**
      * return al the global authentication tokens
+     *
      * @return the list of all authentication tokens
      */
     public List<AuthenticationTokenDTO> getAllAuthenticationToken() {
@@ -413,30 +414,37 @@ public class AuthService {
 
     /**
      * Delete a token by name along with all his authorization records
+     *
      * @param id the token id
      */
     @Transactional
-    public void deleteToken(String id){
-        AuthenticationTokenDTO tokenToDelete =  getAuthenticationTokenById(id)
+    public void deleteToken(String id) {
+        AuthenticationTokenDTO tokenToDelete = getAuthenticationTokenById(id)
                 .orElseThrow(
-                        ()->AuthenticationTokenNotFound.authTokenNotFoundBuilder()
+                        () -> AuthenticationTokenNotFound.authTokenNotFoundBuilder()
                                 .errorCode(-1)
                                 .errorDomain("AuthService::deleteToken")
                                 .build()
                 );
-
-        //delete authorizations
-        wrapCatch(
-                ()-> {authorizationRepository.deleteAllByOwnerIs(tokenToDelete.email());return null;},
-                -2,
-                "AuthService::deleteToken"
-        );
         // delete token
         wrapCatch(
-                ()-> {authenticationTokenRepository.deleteById(tokenToDelete.id());return null;},
+                () -> {
+                    authenticationTokenRepository.deleteById(tokenToDelete.id());
+                    return null;
+                },
                 -3,
                 "AuthService::deleteToken"
         );
+        //delete authorizations
+        wrapCatch(
+                () -> {
+                    authorizationRepository.deleteAllByOwnerIs(tokenToDelete.email());
+                    return null;
+                },
+                -2,
+                "AuthService::deleteToken"
+        );
+
     }
 
     /**

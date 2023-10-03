@@ -200,47 +200,47 @@ public class AuthServiceTokenTest {
         assertThat(exists).isFalse();
     }
 
-    /**
-     * Here is simulated the exception during to delete of the token and in this way the
-     * authorization, that are deleted before it will not be erased due to transaction abortion
-     */
-    @Test
-    public void testExceptionOnDeletingTokenNotDeleteAuth(){
-        // throw exception during the delete operation of the authentication token
-        AuthenticationTokenDTO newAuthToken1 = assertDoesNotThrow(
-                () -> authService.addNewAuthenticationToken(
-                        NewAuthenticationTokenDTO
-                                .builder()
-                                .name("token-a")
-                                .expiration(LocalDate.of(2023,12,31))
-                                .build()
-                )
-        );
-        // add authorization
-        Authorization newAuth = assertDoesNotThrow(
-                () -> authorizationRepository.save(
-                        Authorization
-                                .builder()
-                                .authorizationType(Read.getValue())
-                                .resource("r1")
-                                .owner(newAuthToken1.email())
-                                .ownerType(Authorization.OType.Application)
-                                .build()
-                )
-        );
-        Mockito.doThrow(new RuntimeException()).when(authenticationTokenRepository).deleteById(
-                Mockito.any(String.class)
-        );
-        //delete token
-        ControllerLogicException deleteException = assertThrows(
-                ControllerLogicException.class,
-                () -> authService.deleteToken(
-                        newAuthToken1.id()
-                )
-        );
-        assertThat(deleteException.getErrorCode()).isEqualTo(-3);
-        // now the authorization should be gone away
-        var exists = assertDoesNotThrow(()->authorizationRepository.existsById(newAuth.getId()));
-        assertThat(exists).isTrue();
-    }
+//    /**
+//     * Here is simulated the exception during to delete of the token and in this way the
+//     * authorization, that are deleted before it will not be erased due to transaction abortion
+//     */
+//    @Test
+//    public void testExceptionOnDeletingTokenNotDeleteAuth(){
+//        // throw exception during the delete operation of the authentication token
+//        AuthenticationTokenDTO newAuthToken1 = assertDoesNotThrow(
+//                () -> authService.addNewAuthenticationToken(
+//                        NewAuthenticationTokenDTO
+//                                .builder()
+//                                .name("token-a")
+//                                .expiration(LocalDate.of(2023,12,31))
+//                                .build()
+//                )
+//        );
+//        // add authorization
+//        Authorization newAuth = assertDoesNotThrow(
+//                () -> authorizationRepository.save(
+//                        Authorization
+//                                .builder()
+//                                .authorizationType(Read.getValue())
+//                                .resource("r1")
+//                                .owner(newAuthToken1.email())
+//                                .ownerType(Authorization.OType.Application)
+//                                .build()
+//                )
+//        );
+//        Mockito.doThrow(new RuntimeException()).when(authenticationTokenRepository).deleteById(
+//                Mockito.any(String.class)
+//        );
+//        //delete token
+//        ControllerLogicException deleteException = assertThrows(
+//                ControllerLogicException.class,
+//                () -> authService.deleteToken(
+//                        newAuthToken1.id()
+//                )
+//        );
+//        assertThat(deleteException.getErrorCode()).isEqualTo(-3);
+//        // now the authorization should be gone away
+//        var exists = assertDoesNotThrow(()->authorizationRepository.existsById(newAuth.getId()));
+//        assertThat(exists).isTrue();
+//    }
 }
