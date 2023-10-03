@@ -209,7 +209,7 @@ public class LogbookService {
                             .map(
                                     at -> authMapper.toModelToken(at, lbToUpdated.getName())
                             ).toList(),
-                    lbToUpdated.getAuthenticationTokens(),
+                    authenticationTokenRepository.findAllByEmailEndsWith("%s.%s".formatted(lbToUpdated.getName(), appProperties.getApplicationTokenDomain())),
                     -6,
                     "LogbookService:update"
             );
@@ -223,7 +223,7 @@ public class LogbookService {
                     lbToUpdated,
                     authMapper.toModel(logbookDTO.authorizations()),
                     authorizationRepository.findByResourceIs(String.format("/logbook/%s", logbookId)),
-                    lbToUpdated.getAuthenticationTokens(),
+                    authenticationTokenRepository.findAllByEmailEndsWith("%s.%s".formatted(lbToUpdated.getName(), appProperties.getApplicationTokenDomain())),
                     -7,
                     "LogbookService:update"
             );
@@ -281,6 +281,13 @@ public class LogbookService {
                                 authenticationToken
                         )
                 );
+                wrapCatch(
+                        () -> authenticationTokenRepository.save(
+                                authenticationToken
+                        ),
+                        errorCode,
+                        errorDomain
+                );
                 log.info("New authentication token '{}' for logbook '{}'", authenticationToken, logbookName);
                 continue;
             }
@@ -299,11 +306,35 @@ public class LogbookService {
             );
         }
 
+        //check which authorizations should be removed
+        for (AuthenticationToken authenticationToken :
+                actualAuthenticationTokenList) {
+            // cheek if we need to update
+            AuthenticationToken updatedAuth = actualAuthenticationTokenList.stream().filter(
+                    ut -> ut.getId() != null && ut.getId().compareTo(authenticationToken.getId()) == 0
+            ).findFirst().orElse(null);
+
+            if (updatedAuth != null) {
+                // need to be removed
+                wrapCatch(
+                        () -> {
+                            authenticationTokenRepository.deleteById(
+                                    authenticationToken.getId()
+                            );
+                            return null;
+                        },
+                        -3,
+                        "LogbookService:verifyAuthorizationAndUpdate"
+                );
+                log.info("Deleted authorizations '{}' for logbook '{}'", authenticationToken, logbookName);
+            }
+        }
         //replace the token
         actualAuthenticationTokenList.clear();
         actualAuthenticationTokenList.addAll(
                 updatedAuthenticationTokenList
         );
+
     }
 
     /**
@@ -343,30 +374,30 @@ public class LogbookService {
                         .build();
             }
 
-            if(authorization.getOwnerType() == Authorization.OType.Application) {
+            if (authorization.getOwnerType() == Authorization.OType.Application) {
                 // as owner, we can have or the token name or the token email
-                String owner ;
-                if(authorization.getOwner().endsWith(appTokAuthDomain)) {
+                String owner;
+                if (authorization.getOwner().endsWith(appTokAuthDomain)) {
                     // the authentication token need to be found on the logbook tokens
                     updatedAuthenticationTokenList
                             .stream()
                             .filter(
-                                    at->at.getEmail().compareToIgnoreCase(
+                                    at -> at.getEmail().compareToIgnoreCase(
                                             authorization.getOwner()
-                                    )==0
+                                    ) == 0
                             ).findFirst().orElseThrow(
-                                    ()->AuthenticationTokenNotFound.authTokenNotFoundBuilder()
+                                    () -> AuthenticationTokenNotFound.authTokenNotFoundBuilder()
                                             .errorCode(errorCode)
                                             .errorDomain(errorDomain)
                                             .tokenName(authorization.getOwner())
                                             .build()
                             );
-                } else if(authorization.getOwner().endsWith(appProperties.getApplicationTokenDomain())) {
+                } else if (authorization.getOwner().endsWith(appProperties.getApplicationTokenDomain())) {
                     // the authentication token need to be found from global tokens
                     authenticationTokenRepository.findByEmailIs(
                             authorization.getOwner()
                     ).orElseThrow(
-                            ()->AuthenticationTokenNotFound.authTokenNotFoundBuilder()
+                            () -> AuthenticationTokenNotFound.authTokenNotFoundBuilder()
                                     .errorCode(errorCode)
                                     .errorDomain(errorDomain)
                                     .tokenName(authorization.getOwner())
@@ -1315,6 +1346,7 @@ public class LogbookService {
      * @param id                        the logbook id
      * @param newAuthenticationTokenDTO is the new token information
      */
+    @Transactional
     public boolean addNewAuthenticationToken(String id, NewAuthenticationTokenDTO newAuthenticationTokenDTO) {
         final Logbook lb = wrapCatch(
                 () -> logbookRepository.findById(id),
@@ -1328,7 +1360,13 @@ public class LogbookService {
         );
 
         assertion(
-                () -> lb.getAuthenticationTokens().stream()
+                () -> authenticationTokenRepository.findAllByEmailEndsWith(
+                                "%s.%s".formatted(
+                                        lb.getName(),
+                                        appProperties.getApplicationTokenDomain()
+                                )
+                        )
+                        .stream()
                         .filter(
                                 (t) -> t.getName().compareToIgnoreCase(newAuthenticationTokenDTO.name()) == 0
                         )
@@ -1348,14 +1386,16 @@ public class LogbookService {
                         )
                 )
                 .build();
-        // add new token
-        lb.getAuthenticationTokens().add(
-                authTok
+        AuthenticationToken finalAuthTok = authTok;
+        wrapCatch(
+                () -> authenticationTokenRepository.save(finalAuthTok),
+                -3,
+                "LogbookService:addNewAuthenticationToken"
         );
         // save
         wrapCatch(
                 () -> logbookRepository.save(lb),
-                -1,
+                -4,
                 "LogbookService:addNewAuthenticationToken"
         );
         return true;
@@ -1364,7 +1404,7 @@ public class LogbookService {
     /**
      * Return from a determinate logbook the token with a specific name
      *
-     * @param id the logbook id
+     * @param id   the logbook id
      * @param name the name of the token to return
      * @return the found authentication token
      */
@@ -1380,13 +1420,14 @@ public class LogbookService {
                         .build()
         );
         // find, translate and return
-        return lb.getAuthenticationTokens().stream()
-                .filter(
-                        t->t.getName().compareToIgnoreCase(name) == 0
-                )
-                .findFirst()
-                .map(
-                        authMapper::toTokenDTO
-                );
+        return wrapCatch(
+                () -> authenticationTokenRepository.findByNameIsAndEmailEndsWith(
+                        name,
+                        "%s.%s".formatted(lb.getName(), appProperties.getApplicationTokenDomain())),
+                -2,
+                "LogbookService:getAuthenticationTokenByName"
+        ).map(
+                authMapper::toTokenDTO
+        );
     }
 }
