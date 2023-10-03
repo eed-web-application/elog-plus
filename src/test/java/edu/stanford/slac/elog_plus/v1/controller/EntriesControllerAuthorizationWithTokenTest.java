@@ -1,9 +1,6 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
-import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
-import edu.stanford.slac.elog_plus.api.v1.dto.AuthenticationTokenDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.EntryNewDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.config.AppProperties;
 import edu.stanford.slac.elog_plus.exception.NotAuthorized;
 import edu.stanford.slac.elog_plus.model.*;
@@ -361,6 +358,125 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                         testControllerHelperService.getTokenEmailForLogbookToken(
                                                 "token-b",
                                                 "LogbookAuthTest1"
+                                        )
+                                ),
+                                EntryNewDTO
+                                        .builder()
+                                        .logbooks(
+                                                List.of(
+                                                        newLogBookResult.getPayload()
+                                                )
+                                        )
+                                        .text("This is a log for test")
+                                        .title("A very wonderful log")
+                                        .build()
+                        )
+                );
+
+        assertThat(newLogIdForWriter.getErrorCode()).isEqualTo(0);
+    }
+
+    @Test
+    public void createNewLogSuccessWithGlobalAuthentication() throws Exception {
+
+        assertDoesNotThrow(
+                () -> testControllerHelperService.createNewAuthenticationToken(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
+                        NewAuthenticationTokenDTO
+                                .builder()
+                                .name("token-a")
+                                .expiration(LocalDate.of(2023,12,31))
+                                .build()
+                )
+        );
+
+        assertDoesNotThrow(
+                () -> testControllerHelperService.createNewAuthenticationToken(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
+                        NewAuthenticationTokenDTO
+                                .builder()
+                                .name("token-b")
+                                .expiration(LocalDate.of(2023,12,31))
+                                .build()
+                )
+        );
+
+        var newLogBookResult = assertDoesNotThrow(
+                () -> testControllerHelperService.getNewLogbookWithNameWithAuthorization(
+                        mockMvc,
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
+                        "LogbookAuthTest1",
+                        List.of(
+                                AuthorizationDTO
+                                        .builder()
+                                        .ownerType("Application")
+                                        .owner(
+                                                testControllerHelperService.getTokenEmailForGlobalToken(
+                                                        "token-a"
+                                                )
+                                        )
+                                        .authorizationType("Write")
+                                        .build(),
+                                AuthorizationDTO
+                                        .builder()
+                                        .ownerType("Application")
+                                        .owner(
+                                                testControllerHelperService.getTokenEmailForGlobalToken(
+                                                        "token-b"
+                                                )
+                                        )
+                                        .authorizationType("Admin")
+                                        .build()
+                        )
+                )
+        );
+        assertThat(newLogBookResult.getErrorCode()).isEqualTo(0);
+
+        // try to create with writer token
+        var newLogIdForWriter =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.createNewLog(
+                                mockMvc,
+                                status().isCreated(),
+                                Optional.of(
+                                        testControllerHelperService.getTokenEmailForGlobalToken(
+                                                "token-a"
+                                        )
+                                ),
+                                EntryNewDTO
+                                        .builder()
+                                        .logbooks(
+                                                List.of(
+                                                        newLogBookResult.getPayload()
+                                                )
+                                        )
+                                        .text("This is a log for test")
+                                        .title("A very wonderful log")
+                                        .build()
+                        )
+                );
+
+        assertThat(newLogIdForWriter.getErrorCode()).isEqualTo(0);
+
+        // try to write with the admin
+        var newLogIdForAdmin =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.createNewLog(
+                                mockMvc,
+                                status().isCreated(),
+                                Optional.of(
+                                        testControllerHelperService.getTokenEmailForGlobalToken(
+                                                "token-b"
                                         )
                                 ),
                                 EntryNewDTO

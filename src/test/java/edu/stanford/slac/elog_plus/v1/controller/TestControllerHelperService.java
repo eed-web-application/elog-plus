@@ -104,6 +104,10 @@ public class TestControllerHelperService {
         return sharedUtilityService.getTokenEmailForLogbookToken(tokenName, logbookName);
     }
 
+    public String getTokenEmailForGlobalToken(String tokenName) {
+        return sharedUtilityService.getTokenEmailForGlobalToken(tokenName);
+    }
+
     public ApiResultResponse<String> getNewLogbookWithNameWithAuthorizationAndAppToken(
             MockMvc mockMvc,
             Optional<String> userInfo,
