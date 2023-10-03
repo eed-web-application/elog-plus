@@ -6,6 +6,8 @@ spring:
       port: 8389
       validation:
         enabled: false
+  cache:
+    type: none
 edu:
   stanford:
     slac:
@@ -14,6 +16,6 @@ edu:
           - user1@slac.stanford.edu
         app-token-jwt-key: dabd148ddd89bf64236b3c2563a54921d95c959dbe6a872be3eefaa2f284a4cb
 # Set the logging level for the entire MongoDB package
-logging:
-    level:
-      org.springframework.data.mongodb: DEBUG
+#logging:
+#    level:
+#      org.springframework.data.mongodb: DEBUG

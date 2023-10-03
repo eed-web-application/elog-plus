@@ -50,6 +50,7 @@ public class AttachmentServiceTest {
 
     @BeforeEach
     public void preTest() {
+
         mongoTemplate.remove(new Query(), Attachment.class);
     }
 

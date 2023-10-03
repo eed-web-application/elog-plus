@@ -2,6 +2,7 @@ package edu.stanford.slac.elog_plus.v1.controller;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.config.AppProperties;
+import edu.stanford.slac.elog_plus.model.AuthenticationToken;
 import edu.stanford.slac.elog_plus.model.Authorization;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
@@ -53,6 +54,7 @@ public class LogbookControllerAuthTest {
         mongoTemplate.remove(new Query(), Entry.class);
         //reset authorizations
         mongoTemplate.remove(new Query(), Authorization.class);
+        mongoTemplate.remove(new Query(), AuthenticationToken.class);
         appProperties.getRootUserList().clear();
         appProperties.getRootUserList().add("user1@slac.stanford.edu");
         authService.updateRootUser();
