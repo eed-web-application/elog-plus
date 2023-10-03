@@ -1969,6 +1969,6 @@ public class LogbookServiceTest {
                 )
         );
         assertThat(malformedError.getErrorCode())
-                .isEqualTo(-7);
+                .isEqualTo(-6);
     }
 }
