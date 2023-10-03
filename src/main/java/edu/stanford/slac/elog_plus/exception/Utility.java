@@ -1,5 +1,6 @@
 package edu.stanford.slac.elog_plus.exception;
 
+import java.lang.reflect.Executable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -53,11 +54,13 @@ public class Utility {
         } catch (ControllerLogicException e) {
             throw e;
         } catch (Exception e) {
-            throw ControllerLogicException.builder()
+            var ex = ControllerLogicException.builder()
                     .errorCode(errorCode)
                     .errorMessage(e.getMessage())
                     .errorDomain(errorDomain)
-                    .build(); // or return null, or whatever you want
+                    .build();
+            ex.setStackTrace(e.getStackTrace());
+            throw ex; // or return null, or whatever you want
         }
     }
 

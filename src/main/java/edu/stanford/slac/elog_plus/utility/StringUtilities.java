@@ -22,7 +22,13 @@ public class StringUtilities {
                         Normalizer.Form.NFD
                 ).replaceAll("[^\\p{ASCII}]", "");
     }
-
+    static public String tokenNameNormalization(String tagName) {
+        return Normalizer
+                .normalize(
+                        tagName.trim(),
+                        Normalizer.Form.NFD
+                ).replaceAll("[^\\p{ASCII}]", "");
+    }
     public static String sanitizeEntryTitle(String title) {
         return Jsoup.clean(title, Safelist.basic());
     }
@@ -31,5 +37,23 @@ public class StringUtilities {
         Safelist safelist = Safelist.basic();
         safelist.addTags("h1", "h2", "h3", "h4");
         return Jsoup.clean(text, safelist);
+    }
+
+    public static String logbookNameNormalization(String name) {
+        return Normalizer
+                .normalize(
+                        name.trim().toLowerCase(),
+                        Normalizer.Form.NFD
+                ).replaceAll("[^\\p{ASCII}]", "")
+                .replaceAll(" ", "-");
+    }
+
+    public static String authenticationTokenNormalization(String name) {
+        return Normalizer
+                .normalize(
+                        name.trim().toLowerCase(),
+                        Normalizer.Form.NFD
+                ).replaceAll("[^\\p{ASCII}]", "")
+                .replaceAll(" ", "-");
     }
 }

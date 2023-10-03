@@ -22,4 +22,5 @@ public interface AuthorizationRepository extends MongoRepository<Authorization, 
     void deleteByOwnerIsAndResourceIsAndAuthorizationTypeIs(String owner, String resource, Integer authorizationType);
     void deleteAllByResourceStartingWith(String resourcePrefix);
     void deleteAllByResourceIs(String resource);
+    void deleteAllByOwnerIs(String owner);
 }

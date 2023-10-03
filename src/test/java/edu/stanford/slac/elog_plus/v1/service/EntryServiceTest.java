@@ -22,6 +22,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.MediaType;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.io.ByteArrayInputStream;
@@ -41,7 +42,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @SpringBootTest()
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(MockitoExtension.class)
-@ActiveProfiles(profiles = "test")
+@ActiveProfiles({"test"})
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class EntryServiceTest {
     @Autowired
     private EntryService entryService;

@@ -1,5 +1,6 @@
 package edu.stanford.slac.elog_plus.auth.k8s_slac;
 
+import edu.stanford.slac.elog_plus.auth.BaseSignKeyResolver;
 import edu.stanford.slac.elog_plus.config.AppProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
@@ -19,7 +20,7 @@ import org.springframework.stereotype.Component;
 @AllArgsConstructor
 public class SLACAuthenticationProvider implements AuthenticationProvider {
     private final AppProperties appProperties;
-    private final SigningKeyResolverAdapter signingKeyResolverAdapter;
+    private final BaseSignKeyResolver signKeyResolver;
 
     @Override
     public boolean supports(Class<?> authentication) {
@@ -37,7 +38,7 @@ public class SLACAuthenticationProvider implements AuthenticationProvider {
             Jws<Claims> j = Jwts.parserBuilder()
                     .setSigningKeyResolver
                             (
-                                    signingKeyResolverAdapter
+                                    signKeyResolver
                             )
                     .build()
                     .parseClaimsJws(((SLACAuthenticationToken) authentication).getUserToken());

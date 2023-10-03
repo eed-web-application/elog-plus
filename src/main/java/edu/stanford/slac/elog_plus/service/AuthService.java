@@ -1,18 +1,17 @@
 package edu.stanford.slac.elog_plus.service;
 
-import edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.GroupDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.PersonDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.api.v1.mapper.AuthMapper;
+import edu.stanford.slac.elog_plus.api.v1.mapper.LogbookMapper;
+import edu.stanford.slac.elog_plus.auth.JWTHelper;
 import edu.stanford.slac.elog_plus.config.AppProperties;
-import edu.stanford.slac.elog_plus.exception.AuthorizationMalformed;
-import edu.stanford.slac.elog_plus.exception.UserNotFound;
+import edu.stanford.slac.elog_plus.exception.*;
 import edu.stanford.slac.elog_plus.ldap_repository.GroupRepository;
-import edu.stanford.slac.elog_plus.model.Authorization;
-import edu.stanford.slac.elog_plus.model.Group;
-import edu.stanford.slac.elog_plus.model.Person;
+import edu.stanford.slac.elog_plus.model.*;
 import edu.stanford.slac.elog_plus.ldap_repository.PersonRepository;
+import edu.stanford.slac.elog_plus.repository.AuthenticationTokenRepository;
 import edu.stanford.slac.elog_plus.repository.AuthorizationRepository;
+import edu.stanford.slac.elog_plus.utility.StringUtilities;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.cache.annotation.Cacheable;
@@ -20,24 +19,31 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
 import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
 import static edu.stanford.slac.elog_plus.model.Authorization.Type.*;
+import static edu.stanford.slac.elog_plus.utility.StringUtilities.tokenNameNormalization;
 
 @Service
 @Log4j2
 @AllArgsConstructor
 public class AuthService {
+    private final JWTHelper jwtHelper;
     private final AuthMapper authMapper;
     private final AppProperties appProperties;
     private final PersonRepository personRepository;
     private final GroupRepository groupRepository;
+    private final AuthenticationTokenRepository authenticationTokenRepository;
     private final AuthorizationRepository authorizationRepository;
 
     public PersonDTO findPerson(Authentication authentication) {
@@ -102,6 +108,7 @@ public class AuthService {
      *
      * @param authentication is the current authentication
      */
+    @Cacheable(value = "user-root-authorization", key = "{#authentication.credentials}", unless = "#authentication == null")
     public boolean checkForRoot(Authentication authentication) {
         if (!checkAuthentication(authentication)) return false;
         // only root user can create logbook
@@ -124,6 +131,7 @@ public class AuthService {
      * @param authentication the current authentication
      * @param resourcePrefix the target resource
      */
+    @Cacheable(value = "user-authorization", key = "{#authentication.credentials, #authorization, #resourcePrefix}", unless = "#authentication == null")
     public boolean checkAuthorizationForOwnerAuthTypeAndResourcePrefix(Authentication authentication, Authorization.Type authorization, String resourcePrefix) {
         if (!checkAuthentication(authentication)) return false;
         if (checkForRoot(authentication)) return true;
@@ -187,12 +195,13 @@ public class AuthService {
 
     /**
      * Return all the authorizations for an owner that match with the prefix
-     * and the authorizations type, will be checked the user entries but also
-     * all the group which the users belong. If a user has authorization more
+     * and the authorizations type, if the owner is of type 'User' will be checked for all the
+     * entries all along with those that belongs to all the user groups.
      *
-     * @param owner             si the owner target of the result authorizations
-     * @param authorizationType filter on the @Authorization.Type
-     * @param resourcePrefix    is the prefix of the authorized resource
+     * @param owner                       si the owner target of the result authorizations
+     * @param authorizationType           filter on the @Authorization.Type
+     * @param resourcePrefix              is the prefix of the authorized resource
+     * @param allHigherAuthOnSameResource return only the higher authorization for each resource
      * @return the list of found resource
      */
     @Cacheable(value = "user-authorization", key = "{#owner, #authorizationType, #resourcePrefix, #allHigherAuthOnSameResource}")
@@ -202,12 +211,13 @@ public class AuthService {
             String resourcePrefix,
             Optional<Boolean> allHigherAuthOnSameResource
     ) {
+        boolean isAppToken = isAppTokenEmail(owner);
         // get user authorizations
         List<AuthorizationDTO> allAuth = new ArrayList<>(
                 wrapCatch(
                         () -> authorizationRepository.findByOwnerAndOwnerTypeAndAuthorizationTypeIsGreaterThanEqualAndResourceStartingWith(
                                 owner,
-                                Authorization.OType.User,
+                                isAppToken ? Authorization.OType.Application : Authorization.OType.User,
                                 authorizationType.getValue(),
                                 resourcePrefix
                         ),
@@ -219,34 +229,39 @@ public class AuthService {
         );
 
         // get user authorizations inherited by group
-        List<GroupDTO> userGroups = findGroupByUserId(owner);
-        allAuth.addAll(
-                userGroups
-                        .stream()
-                        .map(
-                                g -> authorizationRepository.findByOwnerAndOwnerTypeAndAuthorizationTypeIsGreaterThanEqualAndResourceStartingWith(
-                                        g.commonName(),
-                                        Authorization.OType.Group,
-                                        authorizationType.getValue(),
-                                        resourcePrefix
+        if (!isAppToken) {
+            // in case we have a user check also the groups that belongs to the user
+            List<GroupDTO> userGroups = findGroupByUserId(owner);
 
-                                )
-                        )
-                        .flatMap(List::stream)
-                        .map(
-                                authMapper::fromModel
-                        )
-                        .toList()
-        );
-        if(allHigherAuthOnSameResource.isPresent() && allHigherAuthOnSameResource.get()) {
+            // load all groups authorizations
+            allAuth.addAll(
+                    userGroups
+                            .stream()
+                            .map(
+                                    g -> authorizationRepository.findByOwnerAndOwnerTypeAndAuthorizationTypeIsGreaterThanEqualAndResourceStartingWith(
+                                            g.commonName(),
+                                            Authorization.OType.Group,
+                                            authorizationType.getValue(),
+                                            resourcePrefix
+
+                                    )
+                            )
+                            .flatMap(List::stream)
+                            .map(
+                                    authMapper::fromModel
+                            )
+                            .toList()
+            );
+        }
+        if (allHigherAuthOnSameResource.isPresent() && allHigherAuthOnSameResource.get()) {
             allAuth = allAuth.stream()
                     .collect(
                             Collectors.toMap(
-                    AuthorizationDTO::resource,
-                    auth -> auth,
-                    (existing, replacement) ->
-                        Authorization.Type.valueOf(existing.authorizationType()).getValue() >= Authorization.Type.valueOf(replacement.authorizationType()).getValue() ? existing : replacement
-                    ))
+                                    AuthorizationDTO::resource,
+                                    auth -> auth,
+                                    (existing, replacement) ->
+                                            Authorization.Type.valueOf(existing.authorizationType()).getValue() >= Authorization.Type.valueOf(replacement.authorizationType()).getValue() ? existing : replacement
+                            ))
                     .values().stream().toList();
         }
         return allAuth;
@@ -306,4 +321,328 @@ public class AuthService {
             }
         }
     }
+
+    /**
+     * Add user identified by email as root
+     *
+     * @param email the user email
+     */
+    public void addRootAuthorization(String email, String creator) {
+        boolean isAppToken = isAppTokenEmail(email);
+
+        // check fi the user or app token exists
+        if (isAppToken) {
+            // give error in case of a logbook token(it cannot be root
+            assertion(
+                    ControllerLogicException.builder()
+                            .errorCode(-1)
+                            .errorMessage("Logbook token cannot became root")
+                            .errorDomain("AuthService::addRootAuthorization")
+                            .build(),
+                    () -> !isAppLogbookTokenEmail(email)
+            );
+            // create root for global token
+            authenticationTokenRepository
+                    .findByEmailIs(email)
+                    .orElseThrow(
+                            () -> AuthenticationTokenNotFound.authTokenNotFoundBuilder()
+                                    .errorCode(-1)
+                                    .errorDomain("AuthService::addRootAuthorization")
+                                    .build()
+                    );
+        } else {
+            // find the user
+            personRepository.findByMail(email)
+                    .orElseThrow(
+                            () -> PersonNotFound.personNotFoundBuilder()
+                                    .errorCode(-1)
+                                    .email(email)
+                                    .errorDomain("AuthService::addRootAuthorization")
+                                    .build()
+                    );
+        }
+
+        // check if root authorization is already benn granted
+        Optional<Authorization> rootAuth = authorizationRepository.findByOwnerIsAndResourceIsAndAuthorizationTypeIsGreaterThanEqual(
+                email,
+                "*",
+                Admin.getValue()
+        );
+        if (rootAuth.isPresent()) return;
+        wrapCatch(
+                () -> authorizationRepository.save(
+                        Authorization
+                                .builder()
+                                .authorizationType(Admin.getValue())
+                                .owner(email)
+                                .ownerType(isAppToken ? Authorization.OType.Application : Authorization.OType.User)
+                                .resource("*")
+                                .creationBy(creator)
+                                .build()
+                ),
+                -1,
+                "AuthService::addRootAuthorization"
+        );
+    }
+
+    /**
+     * Remove user identified by email as root user
+     *
+     * @param email that identify the user
+     */
+    public void removeRootAuthorization(String email) {
+        Optional<Authorization> rootAuth = authorizationRepository.findByOwnerIsAndResourceIsAndAuthorizationTypeIsGreaterThanEqual(
+                email,
+                "*",
+                Admin.getValue()
+        );
+        if (rootAuth.isEmpty()) return;
+
+        wrapCatch(
+                () -> {
+                    authorizationRepository.delete(rootAuth.get());
+                    return null;
+                },
+                -1,
+                "AuthService::addRootAuthorization"
+        );
+    }
+
+    /**
+     * Return all root authorization
+     *
+     * @return all the root authorization
+     */
+    public List<AuthorizationDTO> findAllRoot() {
+        return wrapCatch(
+                () -> authorizationRepository.findByResourceIs("*"),
+                -1,
+                "AuthService::findAllRoot"
+        )
+                .stream()
+                .map(
+                        authMapper::fromModel
+                )
+                .toList();
+    }
+
+    /**
+     * Ensure token
+     * @param authenticationToken token to ensure
+     */
+    public String ensureAuthenticationToken(AuthenticationToken authenticationToken) {
+        Optional<AuthenticationToken> token = wrapCatch(
+                () -> authenticationTokenRepository.findByEmailIs(authenticationToken.getEmail()),
+                -1,
+                "AuthService:ensureAuthenticationToken"
+        );
+        if (token.isPresent()) return token.get().getId();
+
+        authenticationToken.setName(
+                tokenNameNormalization(
+                        authenticationToken.getName()
+                )
+        );
+
+        authenticationToken.setToken(
+                jwtHelper.generateAuthenticationToken(
+                        authenticationToken
+                )
+        );
+        AuthenticationToken newToken = wrapCatch(
+                () -> authenticationTokenRepository.save(
+                        authenticationToken
+                ),
+                -2,
+                "AuthService:ensureAuthenticationToken"
+        );
+        return newToken.getId();
+    }
+
+    /**
+     * Add a new authentication token
+     *
+     * @param newAuthenticationTokenDTO is the new token information
+     */
+    public AuthenticationTokenDTO addNewAuthenticationToken(NewAuthenticationTokenDTO newAuthenticationTokenDTO) {
+        // check if a token with the same name already exists
+        assertion(
+                AuthenticationTokenMalformed.malformedAuthToken()
+                        .errorCode(-1)
+                        .errorDomain("AuthService::addNewAuthenticationToken")
+                        .build(),
+                // name well-formed
+                () -> newAuthenticationTokenDTO.name() != null && !newAuthenticationTokenDTO.name().isEmpty(),
+                // expiration well-formed
+                () -> newAuthenticationTokenDTO.expiration() != null
+        );
+
+        assertion(
+                () -> wrapCatch(
+                        () -> !authenticationTokenRepository.existsByName(newAuthenticationTokenDTO.name()),
+                        -2,
+                        "AuthService::addNewAuthenticationToken"
+                ),
+                ControllerLogicException
+                        .builder()
+                        .errorCode(-3)
+                        .errorMessage("A token with the same name already exists")
+                        .errorDomain("AuthService::addNewAuthenticationToken")
+                        .build()
+        );
+        // convert to model and normalize the name
+        AuthenticationToken authTok = authMapper.toModelToken(
+                newAuthenticationTokenDTO.toBuilder()
+                        .name(
+                                tokenNameNormalization(
+                                        newAuthenticationTokenDTO.name()
+                                )
+                        )
+                        .build()
+        );
+        return authMapper.toTokenDTO(
+                wrapCatch(
+                        () -> authenticationTokenRepository.save(
+                                authTok.toBuilder()
+                                        .token(
+                                                jwtHelper.generateAuthenticationToken(
+                                                        authTok
+                                                )
+                                        )
+                                        .build()
+                        ),
+                        -4,
+                        "AuthService::addNewAuthenticationToken"
+                )
+        );
+    }
+
+    /**
+     * Return an application token by name
+     *
+     * @param name the name of the token to return
+     * @return the found authentication token
+     */
+    public Optional<AuthenticationTokenDTO> getAuthenticationTokenByName(String name) {
+        return wrapCatch(
+                () -> authenticationTokenRepository.findByName(name)
+                        .map(
+                                authMapper::toTokenDTO
+                        ),
+                -1,
+                "AuthService::getAuthenticationTokenByName"
+        );
+    }
+
+    /**
+     * return al the global authentication tokens
+     *
+     * @return the list of all authentication tokens
+     */
+    public List<AuthenticationTokenDTO> getAllAuthenticationToken() {
+        return wrapCatch(
+                () -> authenticationTokenRepository.findAll()
+                        .stream()
+                        .map(
+                                authMapper::toTokenDTO
+                        ).toList(),
+                -1,
+                "AuthService::getAuthenticationTokenByName"
+        );
+    }
+
+    /**
+     * Delete a token by name along with all his authorization records
+     *
+     * @param id the token id
+     */
+    @Transactional
+    public void deleteToken(String id) {
+        AuthenticationTokenDTO tokenToDelete = getAuthenticationTokenById(id)
+                .orElseThrow(
+                        () -> AuthenticationTokenNotFound.authTokenNotFoundBuilder()
+                                .errorCode(-1)
+                                .errorDomain("AuthService::deleteToken")
+                                .build()
+                );
+        // delete token
+        wrapCatch(
+                () -> {
+                    authenticationTokenRepository.deleteById(tokenToDelete.id());
+                    return null;
+                },
+                -3,
+                "AuthService::deleteToken"
+        );
+        //delete authorizations
+        wrapCatch(
+                () -> {
+                    authorizationRepository.deleteAllByOwnerIs(tokenToDelete.email());
+                    return null;
+                },
+                -2,
+                "AuthService::deleteToken"
+        );
+
+    }
+
+    /**
+     * Return an application token by name
+     *
+     * @param id the unique id of the token to return
+     * @return the found authentication token
+     */
+    public Optional<AuthenticationTokenDTO> getAuthenticationTokenById(String id) {
+        return wrapCatch(
+                () -> authenticationTokenRepository.findById(id)
+                        .map(
+                                authMapper::toTokenDTO
+                        ),
+                -1,
+                "AuthService::getAuthenticationTokenByName"
+        );
+    }
+
+    /**
+     *
+     * @param email
+     * @return
+     */
+    public boolean existsAuthenticationTokenByEmail(String email) {
+        return wrapCatch(
+                () -> authenticationTokenRepository.existsByEmail(email),
+                -1,
+                "AuthService::existsAuthenticationTokenByEmail"
+        );
+    }
+
+    /**
+     * delete all the authorization where the email ends with the postfix
+     * @param emailPostfix the terminal string of the email
+     */
+    public void deleteAllAuthenticationTokenWithEmailEndWith(String emailPostfix) {
+        wrapCatch(
+                () -> {authenticationTokenRepository.deleteAllByEmailEndsWith(emailPostfix); return null;},
+                -1,
+                "AuthService::deleteAllAuthenticationTokenWithEmailEndWith"
+        );
+    }
+
+    /**
+     * Check if the email ends with the ELOG application fake domain without the logname
+     *
+     * @param email is the email to check
+     * @return true is the email belong to autogenerated application token email
+     */
+    private boolean isAppTokenEmail(String email) {
+        if (email == null) return false;
+        return email.endsWith(appProperties.getApplicationTokenDomain());
+    }
+
+    private boolean isAppLogbookTokenEmail(String email) {
+        final Pattern pattern = Pattern.compile(appProperties.getLogbookEmailRegex(), Pattern.MULTILINE);
+        final Matcher matcher = pattern.matcher(email);
+        return matcher.matches();
+    }
+
 }

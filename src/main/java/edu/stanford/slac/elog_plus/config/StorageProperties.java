@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Getter
 @Setter
-@ConfigurationProperties(prefix = "edu.stanford.slac.elogs-plus.storage")
+@ConfigurationProperties(prefix = "edu.stanford.slac.elog-plus.storage")
 public class StorageProperties {
     private String url;
     private String bucket;

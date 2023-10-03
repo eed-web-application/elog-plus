@@ -1,10 +1,10 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
+import edu.stanford.slac.elog_plus.config.AppProperties;
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
-import edu.stanford.slac.elog_plus.model.Attachment;
-import edu.stanford.slac.elog_plus.model.Entry;
-import edu.stanford.slac.elog_plus.model.Logbook;
+import edu.stanford.slac.elog_plus.model.*;
+import edu.stanford.slac.elog_plus.service.AuthService;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import edu.stanford.slac.elog_plus.v1.service.DocumentGenerationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +19,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
@@ -39,13 +40,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest()
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(MockitoExtension.class)
-@ActiveProfiles(profiles = "test")
+@ActiveProfiles({"test"})
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class ImportControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
     @Autowired
-    LogbookService logbookService;
+    private LogbookService logbookService;
 
     @Autowired
     private MongoTemplate mongoTemplate;
@@ -54,13 +56,24 @@ public class ImportControllerTest {
     private TestControllerHelperService testControllerHelperService;
 
     @Autowired
-    DocumentGenerationService documentGenerationService;
+    private DocumentGenerationService documentGenerationService;
+
+    @Autowired
+    private AppProperties appProperties;
+
+    @Autowired
+    private AuthService authService;
 
     @BeforeEach
     public void preTest() {
         mongoTemplate.remove(new Query(), Entry.class);
         mongoTemplate.remove(new Query(), Attachment.class);
         mongoTemplate.remove(new Query(), Logbook.class);
+        mongoTemplate.remove(new Query(), Authorization.class);
+        mongoTemplate.remove(new Query(), AuthenticationToken.class);
+        appProperties.getRootUserList().clear();
+        appProperties.getRootUserList().add("user1@slac.stanford.edu");
+        authService.updateRootUser();
     }
 
     @Test

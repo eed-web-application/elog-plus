@@ -3,11 +3,12 @@ package edu.stanford.slac.elog_plus.v1.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
+import edu.stanford.slac.elog_plus.auth.JWTHelper;
 import edu.stanford.slac.elog_plus.config.AppProperties;
 import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
-import edu.stanford.slac.elog_plus.auth.test_mock_auth.JWTHelper;
+import edu.stanford.slac.elog_plus.service.LogbookService;
+import edu.stanford.slac.elog_plus.utility.StringUtilities;
 import edu.stanford.slac.elog_plus.v1.service.SharedUtilityService;
-import lombok.AllArgsConstructor;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.springframework.http.MediaType;
@@ -28,8 +29,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static edu.stanford.slac.elog_plus.model.Authorization.Type.Read;
-import static edu.stanford.slac.elog_plus.model.Authorization.Type.Write;
+import static edu.stanford.slac.elog_plus.api.v1.mapper.AuthMapper.APP_TOKEN_LOGBOOK_EMAIL_DOMAIN;
+import static edu.stanford.slac.elog_plus.utility.StringUtilities.logbookNameNormalization;
+import static edu.stanford.slac.elog_plus.utility.StringUtilities.tokenNameNormalization;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -37,10 +39,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @Service()
 public class TestControllerHelperService {
+    private final JWTHelper jwtHelper;
     private final AppProperties appProperties;
-
-    public TestControllerHelperService(AppProperties appProperties) {
+    private final LogbookService logbookService;
+    private final SharedUtilityService sharedUtilityService;
+    public TestControllerHelperService(JWTHelper jwtHelper, AppProperties appProperties, LogbookService logbookService, SharedUtilityService sharedUtilityService) {
+        this.jwtHelper = jwtHelper;
         this.appProperties = appProperties;
+        this.logbookService = logbookService;
+        this.sharedUtilityService = sharedUtilityService;
     }
 
     public ApiResultResponse<String> getNewLogbookWithNameWithAuthorization(
@@ -93,13 +100,79 @@ public class TestControllerHelperService {
         return newLogbookApiResult;
     }
 
+    public String getTokenEmailForLogbookToken(String tokenName, String logbookName) {
+        return sharedUtilityService.getTokenEmailForLogbookToken(tokenName, logbookName);
+    }
+
+    public String getTokenEmailForGlobalToken(String tokenName) {
+        return sharedUtilityService.getTokenEmailForGlobalToken(tokenName);
+    }
+
+    public ApiResultResponse<String> getNewLogbookWithNameWithAuthorizationAndAppToken(
+            MockMvc mockMvc,
+            Optional<String> userInfo,
+            String logbookName,
+            List<AuthorizationDTO> authorizations,
+            List<AuthenticationTokenDTO> authenticationTokens) {
+        var newLogbookApiResult = assertDoesNotThrow(
+                () -> createNewLogbook(
+                        mockMvc,
+                        status().isCreated(),
+                        userInfo,
+                        NewLogbookDTO
+                                .builder()
+                                .name(logbookName)
+                                .build()
+                )
+        );
+
+        AssertionsForClassTypes.assertThat(newLogbookApiResult)
+                .isNotNull()
+                .extracting(
+                        ApiResultResponse::getErrorCode
+                )
+                .isEqualTo(0);
+
+        var updateApiResult = assertDoesNotThrow(
+                () -> updateLogbook(
+                        mockMvc,
+                        status().isCreated(),
+                        userInfo,
+                        newLogbookApiResult.getPayload(),
+                        UpdateLogbookDTO
+                                .builder()
+                                .name(logbookName)
+                                .shifts(Collections.emptyList())
+                                .tags(Collections.emptyList())
+                                .authorizations(
+                                        authorizations
+                                )
+                                .authenticationTokens(
+                                        authenticationTokens
+                                )
+                                .build()
+                )
+        );
+        AssertionsForClassTypes.assertThat(updateApiResult)
+                .isNotNull()
+                .extracting(
+                        ApiResultResponse::getErrorCode
+                )
+                .isEqualTo(0);
+        return newLogbookApiResult;
+    }
+
+    public Optional<AuthenticationTokenDTO> getAuthenticationTokenByLogbookIdAndTokenName(String logbookId, String tokenName) {
+        return assertDoesNotThrow(()-> logbookService.getAuthenticationTokenByName(logbookId, tokenName));
+    }
+
     public ApiResultResponse<String> newAttachment(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
             MockMultipartFile file) throws Exception {
         var requestBuilder =   multipart("/v1/attachment").file(file);
-        userInfo.ifPresent(login -> requestBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
+        userInfo.ifPresent(login -> requestBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
         MvcResult result_upload = mockMvc.perform(
                         requestBuilder
                 )
@@ -123,7 +196,7 @@ public class TestControllerHelperService {
             String mediaType) throws Exception {
         var requestBuilder =  get("/v1/attachment/{id}/download", attachmentID)
                 .contentType(mediaType);
-        userInfo.ifPresent(login -> requestBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
+        userInfo.ifPresent(login -> requestBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
         MvcResult result = mockMvc.perform(
                         requestBuilder
                 )
@@ -145,7 +218,7 @@ public class TestControllerHelperService {
             String mediaType) throws Exception {
         var requestBuilder =  get("/v1/attachment/{id}/preview.jpg", attachmentID)
                 .contentType(mediaType);
-        userInfo.ifPresent(login -> requestBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
+        userInfo.ifPresent(login -> requestBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
         MvcResult result = mockMvc.perform(
                         requestBuilder
                 )
@@ -173,7 +246,7 @@ public class TestControllerHelperService {
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON);
 
-        userInfo.ifPresent(login -> postBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
+        userInfo.ifPresent(login -> postBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
 
         MvcResult result = mockMvc.perform(postBuilder)
                 .andExpect(resultMatcher)
@@ -242,7 +315,7 @@ public class TestControllerHelperService {
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON);
 
-        userInfo.ifPresent(login -> postBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
+        userInfo.ifPresent(login -> postBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
 
         MvcResult result = mockMvc.perform(
                         postBuilder
@@ -273,7 +346,7 @@ public class TestControllerHelperService {
                 )
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON);
-        userInfo.ifPresent(login -> postBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
+        userInfo.ifPresent(login -> postBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
         MvcResult result = mockMvc.perform(
                         postBuilder
                 )
@@ -298,7 +371,7 @@ public class TestControllerHelperService {
                 "/v1/entries/{id}/follow-ups",
                 followedLogID)
                 .accept(MediaType.APPLICATION_JSON);
-        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
+        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
         MvcResult result = mockMvc.perform(
                         getBuilder
                 )
@@ -321,7 +394,7 @@ public class TestControllerHelperService {
     ) throws Exception {
         var getBuilder = get("/v1/entries/{id}", id)
                 .accept(MediaType.APPLICATION_JSON);
-        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
+        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
         MvcResult result = mockMvc.perform(
                         getBuilder
                 )
@@ -344,7 +417,7 @@ public class TestControllerHelperService {
             String id) throws Exception {
         var getBuilder = get("/v1/entries/{id}", id)
                 .accept(MediaType.APPLICATION_JSON);
-        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
+        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
         MvcResult result = mockMvc.perform(
                         getBuilder
                 )
@@ -389,7 +462,7 @@ public class TestControllerHelperService {
             boolean includeReferencedBy) throws Exception {
         MockHttpServletRequestBuilder getBuilder = get("/v1/entries/{id}", id)
                 .accept(MediaType.APPLICATION_JSON);
-        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
+        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
         if (includeFollowUps) {
             getBuilder.param("includeFollowUps", String.valueOf(true));
         }
@@ -427,7 +500,7 @@ public class TestControllerHelperService {
             String id) throws Exception {
         MockHttpServletRequestBuilder getBuilder = get("/v1/entries/{id}/references", id)
                 .accept(MediaType.APPLICATION_JSON);
-        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
+        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
         MvcResult result = mockMvc.perform(
                         getBuilder
                 )
@@ -504,7 +577,7 @@ public class TestControllerHelperService {
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON);
         //apply auth
-        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
+        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
         MvcResult result = mockMvc.perform(
                         getBuilder
                 )
@@ -531,7 +604,7 @@ public class TestControllerHelperService {
         MockHttpServletRequestBuilder getBuilder =
                 get("/v1/logbooks")
                         .accept(MediaType.APPLICATION_JSON);
-        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
+        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
         includeAuthorizations.ifPresent(b -> getBuilder.param("includeAuthorizations", String.valueOf(b)));
         filterForAuthorizationTypes.ifPresent(authStr -> {
             String[] tlArray = new String[authStr.size()];
@@ -557,7 +630,7 @@ public class TestControllerHelperService {
         MockHttpServletRequestBuilder getBuilder =
                 get("/v1/logbooks/{logbookId}", logbookID)
                         .accept(MediaType.APPLICATION_JSON);
-        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
+        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
         MvcResult result = mockMvc.perform(
                         getBuilder
                 )
@@ -584,7 +657,7 @@ public class TestControllerHelperService {
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON);
 
-        userInfo.ifPresent(login -> postBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
+        userInfo.ifPresent(login -> postBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
 
         MvcResult result = mockMvc.perform(
                         postBuilder
@@ -608,7 +681,7 @@ public class TestControllerHelperService {
             String logbookId) throws Exception {
         var getBuilder = get("/v1/logbooks/{logbookId}/tags", logbookId)
                 .accept(MediaType.APPLICATION_JSON);
-        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
+        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
         MvcResult result = mockMvc.perform(getBuilder)
                 .andExpect(resultMatcher)
                 .andReturn();
@@ -629,7 +702,7 @@ public class TestControllerHelperService {
             Optional<List<String>> logbooksName) throws Exception {
         MockHttpServletRequestBuilder getBuilder = get("/v1/tags")
                 .accept(MediaType.APPLICATION_JSON);
-        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
+        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
         logbooksName.ifPresent(lb -> {
             String[] lbArray = new String[lb.size()];
             lb.toArray(lbArray);
@@ -667,7 +740,7 @@ public class TestControllerHelperService {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON);
 
-        userInfo.ifPresent(login -> putBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
+        userInfo.ifPresent(login -> putBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
 
         MvcResult result = mockMvc.perform(
                         putBuilder
@@ -699,7 +772,7 @@ public class TestControllerHelperService {
                         )
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON);
-        userInfo.ifPresent(login -> putBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
+        userInfo.ifPresent(login -> putBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
         MvcResult result = mockMvc.perform(
                         putBuilder
                 )
@@ -751,7 +824,7 @@ public class TestControllerHelperService {
         MockHttpServletRequestBuilder getBuilder =
                 get("/v1/auth/me")
                         .accept(MediaType.APPLICATION_JSON);
-        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
+        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
         MvcResult result = mockMvc.perform(
                         getBuilder
                 )
@@ -775,7 +848,7 @@ public class TestControllerHelperService {
         MockHttpServletRequestBuilder getBuilder =
                 get("/v1/auth/users")
                         .accept(MediaType.APPLICATION_JSON);
-        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
+        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
         search.ifPresent(string -> getBuilder.param("search", string));
         MvcResult result = mockMvc.perform(
                         getBuilder
@@ -800,7 +873,7 @@ public class TestControllerHelperService {
         MockHttpServletRequestBuilder getBuilder =
                 get("/v1/auth/groups")
                         .accept(MediaType.APPLICATION_JSON);
-        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), JWTHelper.generateJwt(login)));
+        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
         search.ifPresent(string -> getBuilder.param("search", string));
         MvcResult result = mockMvc.perform(
                         getBuilder
@@ -816,6 +889,155 @@ public class TestControllerHelperService {
                 new TypeReference<>() {
                 });
     }
+
+    public ApiResultResponse<AuthenticationTokenDTO> createNewAuthenticationToken(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            NewAuthenticationTokenDTO newAuthenticationTokenDTO) throws Exception {
+        MockHttpServletRequestBuilder postBuilder =
+                post("/v1/auth/application-token")
+                        .content(
+                                new ObjectMapper().writeValueAsString(
+                                        newAuthenticationTokenDTO
+                                )
+                        )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON);
+        userInfo.ifPresent(login -> postBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
+        MvcResult result = mockMvc.perform(
+                        postBuilder
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
+
+    public ApiResultResponse<List<AuthenticationTokenDTO>> getAllAuthenticationToken(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo) throws Exception {
+        MockHttpServletRequestBuilder getBuilder =
+                get("/v1/auth/application-token")
+                        .accept(MediaType.APPLICATION_JSON);
+        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
+        MvcResult result = mockMvc.perform(
+                        getBuilder
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
+
+    public ApiResultResponse<Boolean> deleteAuthenticationToken(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String id) throws Exception {
+        MockHttpServletRequestBuilder deleteBuilder =
+                delete("/v1/auth/application-token/{id}", id)
+                        .accept(MediaType.APPLICATION_JSON);
+        userInfo.ifPresent(login -> deleteBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
+        MvcResult result = mockMvc.perform(
+                        deleteBuilder
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
+
+    public ApiResultResponse<Boolean> createNewRootUser(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String userEmail) throws Exception {
+        MockHttpServletRequestBuilder requestBuilder =
+                post("/v1/auth/root/{email}", userEmail)
+                        .accept(MediaType.APPLICATION_JSON);
+        userInfo.ifPresent(login -> requestBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
+        MvcResult result = mockMvc.perform(
+                        requestBuilder
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
+
+    public ApiResultResponse<Boolean> deleteRootUser(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String userEmail) throws Exception {
+        MockHttpServletRequestBuilder requestBuilder =
+                delete("/v1/auth/root/{email}", userEmail)
+                        .accept(MediaType.APPLICATION_JSON);
+        userInfo.ifPresent(login -> requestBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
+        MvcResult result = mockMvc.perform(
+                        requestBuilder
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
+
+    public ApiResultResponse<List<AuthorizationDTO>> findAllRootUser(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo) throws Exception {
+        MockHttpServletRequestBuilder requestBuilder =
+                get("/v1/auth/root")
+                        .accept(MediaType.APPLICATION_JSON);
+        userInfo.ifPresent(login -> requestBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
+        MvcResult result = mockMvc.perform(
+                        requestBuilder
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
+
     public ApiResultResponse<LogbookDTO> getTestLogbook(MockMvc mockMvc) {
         return getTestLogbook(mockMvc, "user1@slac.stanford.edu");
     }

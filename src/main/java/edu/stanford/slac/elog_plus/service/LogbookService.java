@@ -5,11 +5,11 @@ import edu.stanford.slac.elog_plus.api.v1.mapper.AuthMapper;
 import edu.stanford.slac.elog_plus.api.v1.mapper.LogbookMapper;
 import edu.stanford.slac.elog_plus.api.v1.mapper.ShiftMapper;
 import edu.stanford.slac.elog_plus.api.v1.mapper.TagMapper;
+import edu.stanford.slac.elog_plus.auth.JWTHelper;
+import edu.stanford.slac.elog_plus.config.AppProperties;
 import edu.stanford.slac.elog_plus.exception.*;
-import edu.stanford.slac.elog_plus.model.Authorization;
-import edu.stanford.slac.elog_plus.model.Logbook;
-import edu.stanford.slac.elog_plus.model.Shift;
-import edu.stanford.slac.elog_plus.model.Tag;
+import edu.stanford.slac.elog_plus.model.*;
+import edu.stanford.slac.elog_plus.repository.AuthenticationTokenRepository;
 import edu.stanford.slac.elog_plus.repository.AuthorizationRepository;
 import edu.stanford.slac.elog_plus.repository.EntryRepository;
 import edu.stanford.slac.elog_plus.repository.LogbookRepository;
@@ -27,6 +27,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static edu.stanford.slac.elog_plus.api.v1.mapper.AuthMapper.APP_TOKEN_LOGBOOK_EMAIL_DOMAIN;
 import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
 import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
 
@@ -39,9 +40,12 @@ public class LogbookService {
     private final LogbookMapper logbookMapper;
     private final EntryRepository entryRepository;
     private final LogbookRepository logbookRepository;
-    private final AuthService authService;
     private final AuthorizationRepository authorizationRepository;
+    private final AuthenticationTokenRepository authenticationTokenRepository;
+    private final AuthService authService;
     private final AuthMapper authMapper;
+    private final JWTHelper jwtHelper;
+    private final AppProperties appProperties;
 
     public List<LogbookDTO> getAllLogbook() {
         return getAllLogbook(Optional.empty());
@@ -179,7 +183,7 @@ public class LogbookService {
         }
         // normalize name and shift
         lbToUpdated.setName(
-                StringUtilities.tagNameNormalization(logbookDTO.name())
+                StringUtilities.logbookNameNormalization(logbookDTO.name())
         );
         // check that all shifts id are present, the shift with no id it's ok because he will be created
         verifyShiftAndUpdate(
@@ -195,6 +199,26 @@ public class LogbookService {
                 -5,
                 "LogbookService:update"
         );
+
+        // check and verify authentication token
+        if (logbookDTO.authenticationTokens() != null) {
+            log.info("Update authentication tokens for logbook {}", lbToUpdated.getName());
+            // update authentication tokens
+            verifyAuthenticationTokenAndUpdate(
+                    lbToUpdated.getName(),
+                    logbookDTO.authenticationTokens().stream()
+                            .map(
+                                    at -> authMapper.toModelToken(at, lbToUpdated.getName())
+                            ).toList(),
+                    authenticationTokenRepository.findAllByEmailEndsWith("%s.%s".formatted(lbToUpdated.getName(), appProperties.getApplicationTokenDomain())),
+                    -6,
+                    "LogbookService:update"
+            );
+        } else {
+            authService.deleteAllAuthenticationTokenWithEmailEndWith("%s.%s".formatted(lbToUpdated.getName(), appProperties.getApplicationTokenDomain()));
+        }
+
+        // check and verify authorization
         if (logbookDTO.authorizations() != null) {
             log.info("Update authorizations for logbook {}", lbToUpdated.getName());
             // update authorizations
@@ -202,11 +226,10 @@ public class LogbookService {
                     lbToUpdated,
                     authMapper.toModel(logbookDTO.authorizations()),
                     authorizationRepository.findByResourceIs(String.format("/logbook/%s", logbookId)),
-                    -6,
+                    -7,
                     "LogbookService:update"
             );
         }
-
 
         //we can save the logbooks
         var updatedLB = wrapCatch(
@@ -216,8 +239,90 @@ public class LogbookService {
         );
         log.info("Logbook '{}' has been updated", lbToUpdated.getName());
         return logbookMapper.fromModel(
-                updatedLB
+                updatedLB,
+                true
         );
+    }
+
+    private void verifyAuthenticationTokenAndUpdate(String logbookName, List<AuthenticationToken> updatedAuthenticationTokenList, List<AuthenticationToken> actualAuthenticationTokenList, int errorCode, String errorDomain) {
+        //normalize token name
+        Set<String> tokenCheck = new HashSet<>();
+        for (AuthenticationToken authenticationToken :
+                updatedAuthenticationTokenList) {
+            if (authenticationToken.getName() == null ||
+                    authenticationToken.getName().isEmpty() ||
+                    authenticationToken.getExpiration() == null) {
+                throw AuthenticationTokenMalformed.malformedAuthToken()
+                        .errorCode(errorCode)
+                        .errorDomain(errorDomain)
+                        .build();
+            }
+            //normalize name
+            authenticationToken.setName(
+                    StringUtilities.authenticationTokenNormalization(
+                            authenticationToken.getName()
+                    )
+            );
+            assertion(
+                    DoubleAuthenticationTokenError.doubleAuthTokenError()
+                            .errorCode(errorCode)
+                            .tokenName(authenticationToken.getName())
+                            .errorDomain(errorDomain)
+                            .build(),
+                    () -> !tokenCheck.contains(
+                            authenticationToken.getName()
+                    )
+            );
+            tokenCheck.add(authenticationToken.getName());
+            if (authenticationToken.getToken() == null) {
+                authService.ensureAuthenticationToken(authenticationToken);
+                log.info("New authentication token '{}' for logbook '{}'", authenticationToken, logbookName);
+                continue;
+            }
+
+            // check if the auth with the same id exists, in case fire exception
+            boolean exists = actualAuthenticationTokenList.stream().anyMatch(
+                    s -> s.getId().compareTo(authenticationToken.getId()) == 0
+            );
+            assertion(
+                    () -> exists,
+                    AuthenticationTokenNotFound.authTokenNotFoundBuilder()
+                            .errorCode(errorCode)
+                            .tokenName(authenticationToken.getName())
+                            .errorDomain(errorDomain)
+                            .build()
+            );
+        }
+
+        //check which authentication should be removed
+        for (AuthenticationToken authenticationToken :
+                actualAuthenticationTokenList) {
+            // cheek if we need to update
+            AuthenticationToken updatedAuth = updatedAuthenticationTokenList.stream().filter(
+                    ut -> ut.getId() != null && ut.getId().compareTo(authenticationToken.getId()) == 0
+            ).findFirst().orElse(null);
+
+            if (updatedAuth == null) {
+                // need to be removed
+                wrapCatch(
+                        () -> {
+                            authenticationTokenRepository.deleteById(
+                                    authenticationToken.getId()
+                            );
+                            return null;
+                        },
+                        -3,
+                        "LogbookService:verifyAuthorizationAndUpdate"
+                );
+                log.info("Deleted authorizations '{}' for logbook '{}'", authenticationToken, logbookName);
+            }
+        }
+        //replace the token
+        actualAuthenticationTokenList.clear();
+        actualAuthenticationTokenList.addAll(
+                updatedAuthenticationTokenList
+        );
+
     }
 
     /**
@@ -229,7 +334,13 @@ public class LogbookService {
      * @param errorCode                is the error code of the operation
      * @param errorDomain              is the domain code of the operation
      */
-    private void verifyAuthorizationAndUpdate(Logbook logbookToUpdate, List<Authorization> updatedAuthorizationList, List<Authorization> actualAuthorizationList, int errorCode, String errorDomain) {
+    private void verifyAuthorizationAndUpdate(
+            Logbook logbookToUpdate,
+            List<Authorization> updatedAuthorizationList,
+            List<Authorization> actualAuthorizationList,
+            int errorCode,
+            String errorDomain) {
+        String appTokAuthDomain = APP_TOKEN_LOGBOOK_EMAIL_DOMAIN.formatted(logbookToUpdate.getName(), appProperties.getApplicationTokenDomain());
         Set<ImmutablePair<String, Authorization.OType>> permissionsCheck = new HashSet<>();
         //normalize tag
         for (Authorization authorization :
@@ -248,6 +359,18 @@ public class LogbookService {
                         .owner(authorization.getOwner())
                         .errorDomain("LogbookService::verifyAuthorizationAndUpdate")
                         .build();
+            }
+
+            if (authorization.getOwnerType() == Authorization.OType.Application) {
+                // as owner, we can have or the token name or the token email
+                assertion(
+                        AuthenticationTokenNotFound.authTokenNotFoundBuilder()
+                                .errorCode(errorCode)
+                                .errorDomain(errorDomain)
+                                .tokenName(authorization.getOwner())
+                                .build(),
+                        ()->authService.existsAuthenticationTokenByEmail(authorization.getOwner())
+                );
             }
 
             assertion(
@@ -1147,60 +1270,6 @@ public class LogbookService {
     }
 
     /**
-     * Return the shift which the date fall in its range
-     *
-     * @param logbookName the logbooks unique name identifier
-     * @param localTime   the time of the event in the day
-     * @return the found shift, if eny matches
-     */
-    public Optional<LogbookShiftDTO> findShiftByLocalTimeWithLogbookName(String logbookName, LocalTime localTime) {
-        LogbookSummaryDTO summaryDTO = logbookMapper.fromModelToSummaryDTO(
-                getLogbookByName(logbookName)
-        );
-        Optional<LogbookShiftDTO> result = wrapCatch(
-                () -> logbookRepository.findShiftFromLocalTime(
-                        summaryDTO.id(),
-                        localTime
-                ).map(
-                        shiftMapper::fromModelToLogbookShift
-                ),
-                -1,
-                "LogbookService:getShiftByLocalTime"
-        );
-        if (result.isPresent()) {
-            result = Optional.of(
-                    result.get()
-                            .toBuilder()
-                            .logbook(
-                                    summaryDTO
-                            )
-                            .build()
-            );
-        }
-        return result;
-    }
-
-    /**
-     * Return the shift which the date fall in its range
-     *
-     * @param logbookId the logbooks unique id identifier
-     * @param localTime the time of the event in the day
-     * @return the found shift, if eny matches
-     */
-//    public Optional<ShiftDTO> findShiftByLocalTimeWithLogbookId(String logbookId, LocalTime localTime) {
-//        return wrapCatch(
-//                () -> logbookRepository.findShiftFromLocalTimeWithLogbookId(
-//                        logbookId,
-//                        localTime
-//                ).map(
-//                        shiftMapper::fromModel
-//                ),
-//                -2,
-//                "LogbookService:getShiftByLocalTime"
-//        );
-//    }
-
-    /**
      * Check if the tad id exists in any of logbooks names
      *
      * @param tagId      the id of the tag to find
@@ -1231,4 +1300,94 @@ public class LogbookService {
         );
     }
 
+    /**
+     * Add a new authentication token to the logbook
+     *
+     * @param id                        the logbook id
+     * @param newAuthenticationTokenDTO is the new token information
+     */
+    @Transactional
+    public boolean addNewAuthenticationToken(String id, NewAuthenticationTokenDTO newAuthenticationTokenDTO) {
+        final Logbook lb = wrapCatch(
+                () -> logbookRepository.findById(id),
+                -1,
+                "LogbookService:addNewAuthenticationToken"
+        ).orElseThrow(
+                () -> LogbookNotFound.logbookNotFoundBuilder()
+                        .errorCode(-1)
+                        .errorDomain("LogbookService:addNewAuthenticationToken")
+                        .build()
+        );
+
+        assertion(
+                () -> authenticationTokenRepository.findAllByEmailEndsWith(
+                                "%s.%s".formatted(
+                                        lb.getName(),
+                                        appProperties.getApplicationTokenDomain()
+                                )
+                        )
+                        .stream()
+                        .filter(
+                                (t) -> t.getName().compareToIgnoreCase(newAuthenticationTokenDTO.name()) == 0
+                        )
+                        .findAny().isEmpty(),
+                ControllerLogicException
+                        .builder()
+                        .errorCode(-2)
+                        .errorMessage("A token with the same name already exists")
+                        .errorDomain("LogbookService:addNewAuthenticationToken")
+                        .build()
+        );
+        AuthenticationToken authTok = authMapper.toModelToken(newAuthenticationTokenDTO, lb.getName());
+        authTok = authTok.toBuilder()
+                .token(
+                        jwtHelper.generateAuthenticationToken(
+                                authTok
+                        )
+                )
+                .build();
+        AuthenticationToken finalAuthTok = authTok;
+        wrapCatch(
+                () -> authenticationTokenRepository.save(finalAuthTok),
+                -3,
+                "LogbookService:addNewAuthenticationToken"
+        );
+        // save
+        wrapCatch(
+                () -> logbookRepository.save(lb),
+                -4,
+                "LogbookService:addNewAuthenticationToken"
+        );
+        return true;
+    }
+
+    /**
+     * Return from a determinate logbook the token with a specific name
+     *
+     * @param id   the logbook id
+     * @param name the name of the token to return
+     * @return the found authentication token
+     */
+    public Optional<AuthenticationTokenDTO> getAuthenticationTokenByName(String id, String name) {
+        final Logbook lb = wrapCatch(
+                () -> logbookRepository.findById(id),
+                -1,
+                "LogbookService:getAuthenticationTokenByName"
+        ).orElseThrow(
+                () -> LogbookNotFound.logbookNotFoundBuilder()
+                        .errorCode(-1)
+                        .errorDomain("LogbookService:getAuthenticationTokenByName")
+                        .build()
+        );
+        // find, translate and return
+        return wrapCatch(
+                () -> authenticationTokenRepository.findByNameIsAndEmailEndsWith(
+                        name,
+                        "%s.%s".formatted(lb.getName(), appProperties.getApplicationTokenDomain())),
+                -2,
+                "LogbookService:getAuthenticationTokenByName"
+        ).map(
+                authMapper::toTokenDTO
+        );
+    }
 }
