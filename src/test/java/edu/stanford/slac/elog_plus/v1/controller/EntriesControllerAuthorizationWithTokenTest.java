@@ -287,7 +287,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                         List.of(
                                 AuthorizationDTO
                                         .builder()
-                                        .ownerType("User")
+                                        .ownerType("Application")
                                         .owner(
                                                 testControllerHelperService.getTokenEmailForLogbookToken(
                                                         "token-a",
@@ -298,10 +298,10 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                         .build(),
                                 AuthorizationDTO
                                         .builder()
-                                        .ownerType("User")
+                                        .ownerType("Application")
                                         .owner(
                                                 testControllerHelperService.getTokenEmailForLogbookToken(
-                                                        "token-a",
+                                                        "token-b",
                                                         "LogbookAuthTest1"
                                                 )
                                         )
@@ -323,13 +323,18 @@ public class EntriesControllerAuthorizationWithTokenTest {
                 )
         );
         assertThat(newLogBookResult.getErrorCode()).isEqualTo(0);
+
+        // try to create with writer token
         var newLogIdForWriter =
                 assertDoesNotThrow(
                         () -> testControllerHelperService.createNewLog(
                                 mockMvc,
                                 status().isCreated(),
                                 Optional.of(
-                                        "user2@slac.stanford.edu"
+                                        testControllerHelperService.getTokenEmailForLogbookToken(
+                                                "token-a",
+                                                "LogbookAuthTest1"
+                                        )
                                 ),
                                 EntryNewDTO
                                         .builder()
@@ -345,13 +350,18 @@ public class EntriesControllerAuthorizationWithTokenTest {
                 );
 
         assertThat(newLogIdForWriter.getErrorCode()).isEqualTo(0);
+
+        // try to write with the admin
         var newLogIdForAdmin =
                 assertDoesNotThrow(
                         () -> testControllerHelperService.createNewLog(
                                 mockMvc,
                                 status().isCreated(),
                                 Optional.of(
-                                        "user3@slac.stanford.edu"
+                                        testControllerHelperService.getTokenEmailForLogbookToken(
+                                                "token-b",
+                                                "LogbookAuthTest1"
+                                        )
                                 ),
                                 EntryNewDTO
                                         .builder()
