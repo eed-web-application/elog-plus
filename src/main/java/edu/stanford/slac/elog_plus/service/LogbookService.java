@@ -42,6 +42,7 @@ public class LogbookService {
     private final LogbookRepository logbookRepository;
     private final AuthorizationRepository authorizationRepository;
     private final AuthenticationTokenRepository authenticationTokenRepository;
+    private final AuthService authService;
     private final AuthMapper authMapper;
     private final JWTHelper jwtHelper;
     private final AppProperties appProperties;
@@ -213,6 +214,8 @@ public class LogbookService {
                     -6,
                     "LogbookService:update"
             );
+        } else {
+            authService.deleteAllAuthenticationTokenWithEmailEndWith("%s.%s".formatted(lbToUpdated.getName(), appProperties.getApplicationTokenDomain()));
         }
 
         // check and verify authorization
@@ -223,7 +226,6 @@ public class LogbookService {
                     lbToUpdated,
                     authMapper.toModel(logbookDTO.authorizations()),
                     authorizationRepository.findByResourceIs(String.format("/logbook/%s", logbookId)),
-                    authenticationTokenRepository.findAllByEmailEndsWith("%s.%s".formatted(lbToUpdated.getName(), appProperties.getApplicationTokenDomain())),
                     -7,
                     "LogbookService:update"
             );
@@ -273,21 +275,7 @@ public class LogbookService {
             );
             tokenCheck.add(authenticationToken.getName());
             if (authenticationToken.getToken() == null) {
-                authenticationToken.setId(
-                        UUID.randomUUID().toString()
-                );
-                authenticationToken.setToken(
-                        jwtHelper.generateAuthenticationToken(
-                                authenticationToken
-                        )
-                );
-                wrapCatch(
-                        () -> authenticationTokenRepository.save(
-                                authenticationToken
-                        ),
-                        errorCode,
-                        errorDomain
-                );
+                authService.ensureAuthenticationToken(authenticationToken);
                 log.info("New authentication token '{}' for logbook '{}'", authenticationToken, logbookName);
                 continue;
             }
@@ -306,15 +294,15 @@ public class LogbookService {
             );
         }
 
-        //check which authorizations should be removed
+        //check which authentication should be removed
         for (AuthenticationToken authenticationToken :
                 actualAuthenticationTokenList) {
             // cheek if we need to update
-            AuthenticationToken updatedAuth = actualAuthenticationTokenList.stream().filter(
+            AuthenticationToken updatedAuth = updatedAuthenticationTokenList.stream().filter(
                     ut -> ut.getId() != null && ut.getId().compareTo(authenticationToken.getId()) == 0
             ).findFirst().orElse(null);
 
-            if (updatedAuth != null) {
+            if (updatedAuth == null) {
                 // need to be removed
                 wrapCatch(
                         () -> {
@@ -350,7 +338,6 @@ public class LogbookService {
             Logbook logbookToUpdate,
             List<Authorization> updatedAuthorizationList,
             List<Authorization> actualAuthorizationList,
-            List<AuthenticationToken> updatedAuthenticationTokenList,
             int errorCode,
             String errorDomain) {
         String appTokAuthDomain = APP_TOKEN_LOGBOOK_EMAIL_DOMAIN.formatted(logbookToUpdate.getName(), appProperties.getApplicationTokenDomain());
@@ -376,41 +363,14 @@ public class LogbookService {
 
             if (authorization.getOwnerType() == Authorization.OType.Application) {
                 // as owner, we can have or the token name or the token email
-                String owner;
-                if (authorization.getOwner().endsWith(appTokAuthDomain)) {
-                    // the authentication token need to be found on the logbook tokens
-                    updatedAuthenticationTokenList
-                            .stream()
-                            .filter(
-                                    at -> at.getEmail().compareToIgnoreCase(
-                                            authorization.getOwner()
-                                    ) == 0
-                            ).findFirst().orElseThrow(
-                                    () -> AuthenticationTokenNotFound.authTokenNotFoundBuilder()
-                                            .errorCode(errorCode)
-                                            .errorDomain(errorDomain)
-                                            .tokenName(authorization.getOwner())
-                                            .build()
-                            );
-                } else if (authorization.getOwner().endsWith(appProperties.getApplicationTokenDomain())) {
-                    // the authentication token need to be found from global tokens
-                    authenticationTokenRepository.findByEmailIs(
-                            authorization.getOwner()
-                    ).orElseThrow(
-                            () -> AuthenticationTokenNotFound.authTokenNotFoundBuilder()
-                                    .errorCode(errorCode)
-                                    .errorDomain(errorDomain)
-                                    .tokenName(authorization.getOwner())
-                                    .build()
-                    );
-                } else {
-                    // the application token has not been recognized
-                    throw AuthenticationTokenNotFound.authTokenNotFoundBuilder()
-                            .errorCode(errorCode)
-                            .errorDomain(errorDomain)
-                            .tokenName(authorization.getOwner())
-                            .build();
-                }
+                assertion(
+                        AuthenticationTokenNotFound.authTokenNotFoundBuilder()
+                                .errorCode(errorCode)
+                                .errorDomain(errorDomain)
+                                .tokenName(authorization.getOwner())
+                                .build(),
+                        ()->authService.existsAuthenticationTokenByEmail(authorization.getOwner())
+                );
             }
 
             assertion(

@@ -331,7 +331,7 @@ public class AuthService {
         boolean isAppToken = isAppTokenEmail(email);
 
         // check fi the user or app token exists
-        if(isAppToken) {
+        if (isAppToken) {
             // give error in case of a logbook token(it cannot be root
             assertion(
                     ControllerLogicException.builder()
@@ -339,13 +339,13 @@ public class AuthService {
                             .errorMessage("Logbook token cannot became root")
                             .errorDomain("AuthService::addRootAuthorization")
                             .build(),
-                    ()->!isAppLogbookTokenEmail(email)
+                    () -> !isAppLogbookTokenEmail(email)
             );
             // create root for global token
             authenticationTokenRepository
                     .findByEmailIs(email)
                     .orElseThrow(
-                            ()->AuthenticationTokenNotFound.authTokenNotFoundBuilder()
+                            () -> AuthenticationTokenNotFound.authTokenNotFoundBuilder()
                                     .errorCode(-1)
                                     .errorDomain("AuthService::addRootAuthorization")
                                     .build()
@@ -354,7 +354,7 @@ public class AuthService {
             // find the user
             personRepository.findByMail(email)
                     .orElseThrow(
-                            ()->PersonNotFound.personNotFoundBuilder()
+                            () -> PersonNotFound.personNotFoundBuilder()
                                     .errorCode(-1)
                                     .email(email)
                                     .errorDomain("AuthService::addRootAuthorization")
@@ -410,6 +410,7 @@ public class AuthService {
 
     /**
      * Return all root authorization
+     *
      * @return all the root authorization
      */
     public List<AuthorizationDTO> findAllRoot() {
@@ -423,6 +424,39 @@ public class AuthService {
                         authMapper::fromModel
                 )
                 .toList();
+    }
+
+    /**
+     * Ensure token
+     * @param authenticationToken token to ensure
+     */
+    public String ensureAuthenticationToken(AuthenticationToken authenticationToken) {
+        Optional<AuthenticationToken> token = wrapCatch(
+                () -> authenticationTokenRepository.findByEmailIs(authenticationToken.getEmail()),
+                -1,
+                "AuthService:ensureAuthenticationToken"
+        );
+        if (token.isPresent()) return token.get().getId();
+
+        authenticationToken.setName(
+                tokenNameNormalization(
+                        authenticationToken.getName()
+                )
+        );
+
+        authenticationToken.setToken(
+                jwtHelper.generateAuthenticationToken(
+                        authenticationToken
+                )
+        );
+        AuthenticationToken newToken = wrapCatch(
+                () -> authenticationTokenRepository.save(
+                        authenticationToken
+                ),
+                -2,
+                "AuthService:ensureAuthenticationToken"
+        );
+        return newToken.getId();
     }
 
     /**
@@ -570,6 +604,31 @@ public class AuthService {
     }
 
     /**
+     *
+     * @param email
+     * @return
+     */
+    public boolean existsAuthenticationTokenByEmail(String email) {
+        return wrapCatch(
+                () -> authenticationTokenRepository.existsByEmail(email),
+                -1,
+                "AuthService::existsAuthenticationTokenByEmail"
+        );
+    }
+
+    /**
+     * delete all the authorization where the email ends with the postfix
+     * @param emailPostfix the terminal string of the email
+     */
+    public void deleteAllAuthenticationTokenWithEmailEndWith(String emailPostfix) {
+        wrapCatch(
+                () -> {authenticationTokenRepository.deleteAllByEmailEndsWith(emailPostfix); return null;},
+                -1,
+                "AuthService::deleteAllAuthenticationTokenWithEmailEndWith"
+        );
+    }
+
+    /**
      * Check if the email ends with the ELOG application fake domain without the logname
      *
      * @param email is the email to check
@@ -585,4 +644,5 @@ public class AuthService {
         final Matcher matcher = pattern.matcher(email);
         return matcher.matches();
     }
+
 }

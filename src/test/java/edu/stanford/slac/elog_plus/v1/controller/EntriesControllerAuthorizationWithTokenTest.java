@@ -1,6 +1,7 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
+import edu.stanford.slac.elog_plus.api.v1.dto.AuthenticationTokenDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.EntryNewDTO;
 import edu.stanford.slac.elog_plus.config.AppProperties;
@@ -23,6 +24,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -142,7 +144,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                         )
                 );
 
-        assertThat(newLogIdForWriter.getErrorCode()).isEqualTo(0);
+        assertThat(newLogIdForAdmin.getErrorCode()).isEqualTo(0);
     }
 
     @Test
@@ -273,4 +275,97 @@ public class EntriesControllerAuthorizationWithTokenTest {
         assertThat(entryForUser3.getPayload().logbooks()).extracting("id").contains(newLogBookResult2.getPayload());
     }
 
+    @Test
+    public void createNewLogSuccessWithAuthenticationTokenOnLogbook() throws Exception {
+        var newLogBookResult = assertDoesNotThrow(
+                () -> testControllerHelperService.getNewLogbookWithNameWithAuthorizationAndAppToken(
+                        mockMvc,
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
+                        "LogbookAuthTest1",
+                        List.of(
+                                AuthorizationDTO
+                                        .builder()
+                                        .ownerType("User")
+                                        .owner(
+                                                testControllerHelperService.getTokenEmailForLogbookToken(
+                                                        "token-a",
+                                                        "LogbookAuthTest1"
+                                                )
+                                        )
+                                        .authorizationType("Write")
+                                        .build(),
+                                AuthorizationDTO
+                                        .builder()
+                                        .ownerType("User")
+                                        .owner(
+                                                testControllerHelperService.getTokenEmailForLogbookToken(
+                                                        "token-a",
+                                                        "LogbookAuthTest1"
+                                                )
+                                        )
+                                        .authorizationType("Admin")
+                                        .build()
+                        ),
+                        List.of(
+                                AuthenticationTokenDTO
+                                        .builder()
+                                        .name("token-a")
+                                        .expiration(LocalDate.of(2023,12,31))
+                                        .build(),
+                                AuthenticationTokenDTO
+                                        .builder()
+                                        .name("token-b")
+                                        .expiration(LocalDate.of(2023,12,31))
+                                        .build()
+                        )
+                )
+        );
+        assertThat(newLogBookResult.getErrorCode()).isEqualTo(0);
+        var newLogIdForWriter =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.createNewLog(
+                                mockMvc,
+                                status().isCreated(),
+                                Optional.of(
+                                        "user2@slac.stanford.edu"
+                                ),
+                                EntryNewDTO
+                                        .builder()
+                                        .logbooks(
+                                                List.of(
+                                                        newLogBookResult.getPayload()
+                                                )
+                                        )
+                                        .text("This is a log for test")
+                                        .title("A very wonderful log")
+                                        .build()
+                        )
+                );
+
+        assertThat(newLogIdForWriter.getErrorCode()).isEqualTo(0);
+        var newLogIdForAdmin =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.createNewLog(
+                                mockMvc,
+                                status().isCreated(),
+                                Optional.of(
+                                        "user3@slac.stanford.edu"
+                                ),
+                                EntryNewDTO
+                                        .builder()
+                                        .logbooks(
+                                                List.of(
+                                                        newLogBookResult.getPayload()
+                                                )
+                                        )
+                                        .text("This is a log for test")
+                                        .title("A very wonderful log")
+                                        .build()
+                        )
+                );
+
+        assertThat(newLogIdForWriter.getErrorCode()).isEqualTo(0);
+    }
 }

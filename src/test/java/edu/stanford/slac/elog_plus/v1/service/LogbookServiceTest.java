@@ -2,6 +2,8 @@ package edu.stanford.slac.elog_plus.v1.service;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.exception.*;
+import edu.stanford.slac.elog_plus.model.AuthenticationToken;
+import edu.stanford.slac.elog_plus.model.Authorization;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import edu.stanford.slac.elog_plus.utility.DateUtilities;
@@ -49,6 +51,8 @@ public class LogbookServiceTest {
     @BeforeEach
     public void preTest() {
         mongoTemplate.remove(new Query(), Logbook.class);
+        mongoTemplate.remove(new Query(), Authorization.class);
+        mongoTemplate.remove(new Query(), AuthenticationToken.class);
     }
 
     @Test
@@ -1854,7 +1858,6 @@ public class LogbookServiceTest {
                 .hasSize(2)
                 .extracting(AuthenticationTokenDTO::name)
                 .contains("tok-a", "tok-b");
-        LogbookDTO finalLogbookUpdated = logbookUpdated;
         AuthenticationTokenNotFound tokNotFoundException = assertThrows(
                 AuthenticationTokenNotFound.class,
                 () -> logbookService.update(
@@ -1867,7 +1870,7 @@ public class LogbookServiceTest {
                                 .shifts(emptyList())
                                 .authenticationTokens(
                                         List.of(
-                                                finalLogbookUpdated.authenticationTokens().get(0).toBuilder()
+                                                logbookUpdated.authenticationTokens().get(0).toBuilder()
                                                         .id("wrong id")
                                                         .build()
                                         )

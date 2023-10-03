@@ -5,6 +5,7 @@ import edu.stanford.slac.elog_plus.config.AppProperties;
 import edu.stanford.slac.elog_plus.exception.AuthenticationTokenNotFound;
 import edu.stanford.slac.elog_plus.exception.AuthorizationMalformed;
 import edu.stanford.slac.elog_plus.exception.DoubleAuthorizationError;
+import edu.stanford.slac.elog_plus.model.AuthenticationToken;
 import edu.stanford.slac.elog_plus.model.Authorization;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import edu.stanford.slac.elog_plus.service.AuthService;
@@ -52,6 +53,7 @@ public class LogbookServiceAuthorizationTest {
     public void preTest() {
         mongoTemplate.remove(new Query(), Logbook.class);
         mongoTemplate.remove(new Query(), Authorization.class);
+        mongoTemplate.remove(new Query(), AuthenticationToken.class);
     }
 
     @Test
@@ -561,6 +563,7 @@ public class LogbookServiceAuthorizationTest {
         assertThat(updatedLogbook.authorizations())
                 .extracting("owner").contains("tok-a@logbook-test-auth.elog.slac.app$");
         var processedAuthorization = updatedLogbook.authorizations().get(0);
+        var processedAuthentication = updatedLogbook.authenticationTokens().get(0);
         updatedLogbook = assertDoesNotThrow(
                 () -> logbookService.update(
                         newLogbookId,
@@ -588,11 +591,7 @@ public class LogbookServiceAuthorizationTest {
                                 )
                                 .authenticationTokens(
                                         List.of(
-                                                AuthenticationTokenDTO
-                                                        .builder()
-                                                        .name("tok-a")
-                                                        .expiration(LocalDate.of(2023, 12, 31))
-                                                        .build(),
+                                                processedAuthentication,
                                                 AuthenticationTokenDTO
                                                         .builder()
                                                         .name("tok-b")
@@ -671,7 +670,7 @@ public class LogbookServiceAuthorizationTest {
         // the authorization need to contain an owner named tok-a@logbook-test-auth.elog.app
         assertThat(updatedLogbook.authorizations())
                 .extracting("owner").contains("tok-a@logbook-test-auth.elog.slac.app$", "tok-b@logbook-test-auth.elog.slac.app$");
-        //we are going to reproduce the situation whenre the uer delete a token but not the authorization
+        //we are going to reproduce the situation where the uer delete a token but not the authorization
         //in this case an error is fired. Each time the token is removed also the authorization needs to be erased.
         var processedAuthorizations = updatedLogbook.authorizations();
         var processedAuthTokens = updatedLogbook.authenticationTokens();

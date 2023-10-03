@@ -12,6 +12,12 @@ public interface AuthenticationTokenRepository extends MongoRepository<Authentic
     boolean existsByName(String name);
 
     Optional<AuthenticationToken> findByEmailIs(String email);
+
     Optional<AuthenticationToken> findByNameIsAndEmailEndsWith(String name, String emailPostfix);
+
     List<AuthenticationToken> findAllByEmailEndsWith(String emailPostfix);
+
+    boolean existsByEmail(String email);
+
+    void deleteAllByEmailEndsWith(String emailPostfix);
 }
