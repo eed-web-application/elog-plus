@@ -175,7 +175,7 @@ public class AuthorizationLogicTest {
         assertThat(allReadAuthorization)
                 .filteredOn(auth -> auth.resource().compareToIgnoreCase("/r2") == 0)
                 .filteredOn(
-                        auth -> auth.authorizationType() == Read
+                        auth -> auth.authorizationType() == Write
                 )
                 .extracting(AuthorizationDTO::owner)
                 .contains("group-1");
