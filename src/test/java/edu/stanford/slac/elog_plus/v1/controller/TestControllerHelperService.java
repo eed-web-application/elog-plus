@@ -598,7 +598,7 @@ public class TestControllerHelperService {
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
             Optional<Boolean> includeAuthorizations,
-            Optional<List<String>> filterForAuthorizationTypes
+            Optional<String> filterForAuthorizationTypes
     ) throws Exception {
 
         MockHttpServletRequestBuilder getBuilder =
@@ -606,11 +606,7 @@ public class TestControllerHelperService {
                         .accept(MediaType.APPLICATION_JSON);
         userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
         includeAuthorizations.ifPresent(b -> getBuilder.param("includeAuthorizations", String.valueOf(b)));
-        filterForAuthorizationTypes.ifPresent(authStr -> {
-            String[] tlArray = new String[authStr.size()];
-            authStr.toArray(tlArray);
-            getBuilder.param("filterForAuthorizationTypes", tlArray);
-        });
+        filterForAuthorizationTypes.ifPresent(authType-> getBuilder.param("filterForAuthorizationTypes", authType));
         MvcResult result = mockMvc.perform(
                         getBuilder
                 )

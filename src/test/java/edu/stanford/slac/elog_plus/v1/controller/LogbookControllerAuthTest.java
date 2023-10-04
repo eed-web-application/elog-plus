@@ -172,7 +172,7 @@ public class LogbookControllerAuthTest {
                         Optional.of("user2@slac.stanford.edu"),
                         Optional.of(false),
                         Optional.of(
-                                List.of(Read.name())
+                                Read.name()
                         )
                 )
         );
