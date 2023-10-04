@@ -21,9 +21,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import static edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationTypeDTO.Read;
+import static edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationTypeDTO.Write;
 import static edu.stanford.slac.elog_plus.exception.Utility.*;
-import static edu.stanford.slac.elog_plus.model.Authorization.Type.Read;
-import static edu.stanford.slac.elog_plus.model.Authorization.Type.Write;
 
 @RestController()
 @RequestMapping("/v1/entries")

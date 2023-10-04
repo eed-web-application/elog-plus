@@ -2,7 +2,6 @@ package edu.stanford.slac.elog_plus.api.v1.controller;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.exception.NotAuthorized;
-import edu.stanford.slac.elog_plus.model.Authorization;
 import edu.stanford.slac.elog_plus.service.AuthService;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,8 +15,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 
+import static edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationTypeDTO.*;
 import static edu.stanford.slac.elog_plus.exception.Utility.*;
-import static edu.stanford.slac.elog_plus.model.Authorization.Type.*;
 
 @RestController()
 @RequestMapping("/v1/logbooks")
@@ -34,7 +33,7 @@ public class LogbooksController {
             @Parameter(name = "includeAuthorizations", description = "If true the authorizations will be loaded for every logbook found")
             @RequestParam("includeAuthorizations") Optional<Boolean> includeAuthorizations,
             @Parameter(name = "filterForAuthorizationTypes", description = "Filter the logbook for authorizations types")
-            @RequestParam("filterForAuthorizationTypes") Optional<String> authorizationType,
+            @RequestParam("filterForAuthorizationTypes") Optional<AuthorizationTypeDTO> authorizationType,
             Authentication authentication
     ) {
         assertion(
@@ -54,9 +53,7 @@ public class LogbooksController {
             // get all the logbook where the user is authorized (all type of authorizations)
             List<AuthorizationDTO> authOnLogbook = authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
                     authentication.getCredentials().toString(),
-                    authorizationType.map(
-                            Authorization.Type::valueOf
-                    ).orElse(
+                    authorizationType.orElse(
                             Read
                     ),
                     "/logbook/"

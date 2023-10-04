@@ -1,6 +1,9 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
-import edu.stanford.slac.elog_plus.api.v1.dto.*;
+import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
+import edu.stanford.slac.elog_plus.api.v1.dto.AuthenticationTokenDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.LogbookDTO;
 import edu.stanford.slac.elog_plus.config.AppProperties;
 import edu.stanford.slac.elog_plus.model.AuthenticationToken;
 import edu.stanford.slac.elog_plus.model.Authorization;
@@ -22,12 +25,11 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static edu.stanford.slac.elog_plus.model.Authorization.Type.Read;
-import static edu.stanford.slac.elog_plus.model.Authorization.Type.Write;
+import static edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationTypeDTO.Read;
+import static edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationTypeDTO.Write;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -76,7 +78,7 @@ public class LogbookControllerAuthTest {
                                 .owner("user2@slac.stanford.edu")
                                 .ownerType("User")
                                 .authorizationType(
-                                        Write.name()
+                                        Write
                                 )
                                 .build(),
                         AuthorizationDTO
@@ -84,7 +86,7 @@ public class LogbookControllerAuthTest {
                                 .owner("user3@slac.stanford.edu")
                                 .ownerType("User")
                                 .authorizationType(
-                                        Read.name()
+                                        Read
                                 )
                                 .build()
                 )
@@ -101,7 +103,7 @@ public class LogbookControllerAuthTest {
                                 .ownerType("User")
                                 .owner("user2@slac.stanford.edu")
                                 .authorizationType(
-                                        Write.name()
+                                        Write
                                 )
                                 .build()
                 )
@@ -170,7 +172,7 @@ public class LogbookControllerAuthTest {
                         Optional.of("user2@slac.stanford.edu"),
                         Optional.of(false),
                         Optional.of(
-                                List.of(Read.name())
+                                Read.name()
                         )
                 )
         );
@@ -228,7 +230,7 @@ public class LogbookControllerAuthTest {
                                 .owner("user2@slac.stanford.edu")
                                 .ownerType("User")
                                 .authorizationType(
-                                        Write.name()
+                                        Write
                                 )
                                 .build(),
                         AuthorizationDTO
@@ -236,7 +238,7 @@ public class LogbookControllerAuthTest {
                                 .owner(testControllerHelperService.getTokenEmailForLogbookToken("token-a", "new logbook"))
                                 .ownerType("Application")
                                 .authorizationType(
-                                        Read.name()
+                                        Read
                                 )
                                 .build()
                 ),
@@ -260,7 +262,7 @@ public class LogbookControllerAuthTest {
                                 .ownerType("User")
                                 .owner("user2@slac.stanford.edu")
                                 .authorizationType(
-                                        Write.name()
+                                        Write
                                 )
                                 .build()
                 )
