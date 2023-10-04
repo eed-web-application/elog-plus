@@ -40,8 +40,10 @@ public class SLACTidSignKeyResolver extends BaseSignKeyResolver {
     public Key resolveSigningKey(JwsHeader header, Claims claims) {
         Key resultKey = null;
         try {
+            log.debug("Call superclass method for validate: %s".formatted(claims.get("email")));
             resultKey = super.resolveSigningKey(header, claims);
             if (resultKey == null) {
+                log.debug("Use oidc configuration for validate: %s".formatted(claims.get("email")));
                 if (claims.containsKey("email")) {
                     log.debug("Validate jwt token for: %s".formatted(claims.get("email")));
                 }
