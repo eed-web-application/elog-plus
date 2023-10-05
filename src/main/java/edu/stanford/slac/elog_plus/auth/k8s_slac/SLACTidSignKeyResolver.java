@@ -49,11 +49,14 @@ public class SLACTidSignKeyResolver extends BaseSignKeyResolver {
                 }
                 OIDCKeysDescription.Key key = getKeyByID(header.getKeyId());
                 if (key == null) {
+                    log.debug("Key has not been found try a second time for: %s".formatted(claims.get("email")));
                     clearCache();
                     key = getKeyByID(header.getKeyId());
                     if(key!=null) {
                         resultKey = key.getKey();
                     }
+                } else {
+                    resultKey = key.getKey();
                 }
             }
         } catch (NoSuchAlgorithmException |
@@ -89,17 +92,19 @@ public class SLACTidSignKeyResolver extends BaseSignKeyResolver {
      */
     synchronized private Map<String, OIDCKeysDescription.Key> getOIDCKeys(String keysUrl) {
         if (stringKeyMap == null) {
+            log.debug("Fill cache key from {}", keysUrl);
             stringKeyMap = new HashMap<>();
             ResponseEntity<OIDCKeysDescription> responseEntity = restTemplate.getForEntity(keysUrl, OIDCKeysDescription.class);
-            ;
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
                 Objects.requireNonNull(responseEntity.getBody()).getKeys().forEach(
                         k -> {
                             stringKeyMap.put(k.getKeyId(), k);
                         }
                 );
+                log.debug("Filled cache key: {}", stringKeyMap);
                 return stringKeyMap;
             } else {
+                log.error("Error fetching keys: {}", responseEntity.getBody());
                 // Handle the error, e.g., log an error message or throw an exception
                 throw new RuntimeException("Failed to fetch OIDC configuration");
             }
@@ -110,11 +115,17 @@ public class SLACTidSignKeyResolver extends BaseSignKeyResolver {
     synchronized private OIDCKeysDescription.Key getKeyByID(String keyId) {
         OIDCKeysDescription.Key key = null;
         OIDCConfiguration conf = getOIDCConfiguration();
+        log.debug("Get keys from {}", conf.getJwksUri());
         if (conf.getJwksUri() != null) {
             Map<String, OIDCKeysDescription.Key> keys = getOIDCKeys(conf.getJwksUri());
             if (keys.containsKey(keyId)) {
+                log.debug("Found key for {}", keyId);
                 key = keys.getOrDefault(keyId, null);
+            } else {
+                log.error("Key has not been found for {}", keyId);
             }
+        } else {
+            log.error("No url for check key has been found");
         }
         return key;
     }
