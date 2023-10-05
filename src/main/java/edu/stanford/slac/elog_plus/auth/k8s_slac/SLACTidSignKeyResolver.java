@@ -55,6 +55,8 @@ public class SLACTidSignKeyResolver extends BaseSignKeyResolver {
                     if(key!=null) {
                         resultKey = key.getKey();
                     }
+                } else {
+                    resultKey = key.getKey();
                 }
             }
         } catch (NoSuchAlgorithmException |
