@@ -1,6 +1,6 @@
 logging:
   level:
-    edu.stanford.slac.elog_plus: ${ELOG_PLUS_LOG_LEVEL:TRACE}
+    edu.stanford.slac.elog_plus: ${ELOG_PLUS_LOG_LEVEL:DEBUG}
 
 server:
   tomcat:

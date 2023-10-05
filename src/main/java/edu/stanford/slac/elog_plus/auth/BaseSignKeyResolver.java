@@ -23,11 +23,13 @@ public  abstract class BaseSignKeyResolver extends SigningKeyResolverAdapter {
                                 jwtHelper.applicationIssuer
                         ) == 0
         ) {
+            Key result = null;
             if (claims.containsKey(Claims.SUBJECT)) {
                 log.debug("Validate jwt token for logbook token application: %s".formatted(claims.get(Claims.SUBJECT)));
+                // the key is the application signing key
+                result = jwtHelper.getKey();
             }
-            // the key is the application signing key
-            return jwtHelper.getKey();
+           return result;
         }
         return null;
 
