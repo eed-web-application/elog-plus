@@ -273,24 +273,39 @@ public class AuthService {
     public void updateRootUser() {
         log.info("Find current authorizations");
         //load actual root
-        List<Authorization> currentRootUser = authorizationRepository.findByResourceIsAndAuthorizationTypeIsGreaterThanEqual(
-                "*",
-                authMapper.toModel(Admin).getValue()
+        List<Authorization> currentRootUser = wrapCatch(
+                () -> authorizationRepository.findByResourceIsAndAuthorizationTypeIsGreaterThanEqual(
+                        "*",
+                        authMapper.toModel(Admin).getValue()
+                ),
+                -1,
+                "AuthService::updateRootUser"
         );
 
         // find root users to remove
         List<String> rootUserToRemove = currentRootUser.stream().map(
                 Authorization::getOwner
         ).toList().stream().filter(
-                userEmail -> !appProperties.getRootUserList().contains(userEmail)
+                userEmail -> !wrapCatch(
+                        () -> appProperties.getRootUserList().contains(userEmail),
+                        -2,
+                        "AuthService::updateRootUser"
+                )
         ).toList();
         for (String userEmailToRemove :
                 rootUserToRemove) {
             log.info("Remove root authorizations: {}", userEmailToRemove);
-            authorizationRepository.deleteByOwnerIsAndResourceIsAndAuthorizationTypeIs(
-                    userEmailToRemove,
-                    "*",
-                    authMapper.toModel(Admin).getValue()
+            wrapCatch(
+                    () -> {
+                        authorizationRepository.deleteByOwnerIsAndResourceIsAndAuthorizationTypeIs(
+                                userEmailToRemove,
+                                "*",
+                                authMapper.toModel(Admin).getValue()
+                        );
+                        return null;
+                    },
+                    -2,
+                    "AuthService::updateRootUser"
             );
         }
 
@@ -299,25 +314,135 @@ public class AuthService {
         for (String userEmail :
                 appProperties.getRootUserList()) {
             // find root authorizations for user email
-            Optional<Authorization> rootAuth = authorizationRepository.findByOwnerIsAndResourceIsAndAuthorizationTypeIsGreaterThanEqual(
-                    userEmail,
-                    "*",
-                    authMapper.toModel(Admin).getValue()
+            Optional<Authorization> rootAuth = wrapCatch(
+                    () -> authorizationRepository.findByOwnerIsAndResourceIsAndAuthorizationTypeIsGreaterThanEqual(
+                            userEmail,
+                            "*",
+                            authMapper.toModel(Admin).getValue()
+                    ),
+                    -2,
+                    "AuthService::updateRootUser"
             );
             if (rootAuth.isEmpty()) {
                 log.info("Create root authorizations for user '{}'", userEmail);
-                authorizationRepository.save(
-                        Authorization
-                                .builder()
-                                .authorizationType(authMapper.toModel(Admin).getValue())
-                                .owner(userEmail)
-                                .ownerType(Authorization.OType.User)
-                                .resource("*")
-                                .creationBy("elog-plus")
-                                .build()
+                wrapCatch(
+                        () -> authorizationRepository.save(
+                                Authorization
+                                        .builder()
+                                        .authorizationType(authMapper.toModel(Admin).getValue())
+                                        .owner(userEmail)
+                                        .ownerType(Authorization.OType.User)
+                                        .resource("*")
+                                        .creationBy("elog-plus")
+                                        .build()
+                        ),
+                        -2,
+                        "AuthService::updateRootUser"
                 );
             } else {
                 log.info("Root authorizations for '{}' already exists", userEmail);
+            }
+        }
+    }
+
+    /**
+     *
+     */
+    @Transactional
+    public void updateAutoManagedRootToken() {
+        log.info("Find current authentication token app managed");
+        //load actual root
+        if (appProperties.getRootAuthenticationTokenList().isEmpty()) {
+            List<AuthenticationToken> foundAuthenticationTokens = wrapCatch(
+                    () -> wrapCatch(
+                                authenticationTokenRepository::findAllByApplicationManagedIsTrue,
+                                -1,
+                                "AuthService::updateAutoManagedRootToken"
+                        ),
+                    -2,
+                    "AuthService::updateAutoManagedRootToken"
+            );
+            for (AuthenticationToken authToken:
+                    foundAuthenticationTokens) {
+                wrapCatch(
+                        () -> {
+                            deleteToken(
+                                    authToken.getId()
+                            );
+                            return null;
+                        },
+                        -3,
+                        "AuthService::updateAutoManagedRootToken"
+                );
+            }
+            wrapCatch(
+                    () -> {authenticationTokenRepository.deleteAllByApplicationManagedIsTrue(); return null;},
+                    -4,
+                    "AuthService::updateAutoManagedRootToken"
+            );
+        }
+        List<AuthenticationToken> foundAuthenticationTokens = wrapCatch(
+                authenticationTokenRepository::findAllByApplicationManagedIsTrue,
+                -5,
+                "AuthService::updateAutoManagedRootToken"
+        );
+
+        // check which we need to create
+        for (
+                NewAuthenticationTokenDTO newAuthenticationTokenDTO :
+                appProperties.getRootAuthenticationTokenList()
+        ) {
+            var toCreate = foundAuthenticationTokens
+                    .stream()
+                    .filter(t -> t.getName().compareToIgnoreCase(newAuthenticationTokenDTO.name()) == 0)
+                    .findAny().isEmpty();
+            if (toCreate) {
+                var newAuthCreated = wrapCatch(
+                        () -> addNewAuthenticationToken(
+                                newAuthenticationTokenDTO,
+                                true
+                        ),
+                        -6,
+                        "AuthService::updateAutoManagedRootToken"
+                );
+                log.info("Created authentication token with name {}", newAuthCreated.name());
+
+                wrapCatch(
+                        ()->{
+                            addRootAuthorization(
+                                    newAuthCreated.email(),
+                                    "elog-plus"
+                            );
+                            return null;
+                        },
+                        -7,
+                        "AuthService::updateAutoManagedRootToken"
+                );
+                log.info("Created root authorization for token with name {}", newAuthCreated.name());
+            }
+        }
+
+        // check which we need to remove
+        for (
+                AuthenticationToken foundAuthenticationToken :
+                foundAuthenticationTokens
+        ) {
+            var toDelete = appProperties.getRootAuthenticationTokenList()
+                    .stream()
+                    .filter(t -> t.name().compareToIgnoreCase(foundAuthenticationToken.getName()) == 0)
+                    .findAny().isEmpty();
+            if (toDelete) {
+                log.info("Delete authentication token for id {}", foundAuthenticationToken.getName());
+                wrapCatch(
+                        () -> {
+                            deleteToken(
+                                    foundAuthenticationToken.getId()
+                            );
+                            return null;
+                        },
+                        -8,
+                        "AuthService::updateAutoManagedRootToken"
+                );
             }
         }
     }
@@ -428,6 +553,7 @@ public class AuthService {
 
     /**
      * Ensure token
+     *
      * @param authenticationToken token to ensure
      */
     public String ensureAuthenticationToken(AuthenticationToken authenticationToken) {
@@ -458,13 +584,15 @@ public class AuthService {
         );
         return newToken.getId();
     }
-
+    public AuthenticationTokenDTO addNewAuthenticationToken(NewAuthenticationTokenDTO newAuthenticationTokenDTO) {
+        return addNewAuthenticationToken(newAuthenticationTokenDTO, false);
+    }
     /**
      * Add a new authentication token
      *
      * @param newAuthenticationTokenDTO is the new token information
      */
-    public AuthenticationTokenDTO addNewAuthenticationToken(NewAuthenticationTokenDTO newAuthenticationTokenDTO) {
+    public AuthenticationTokenDTO addNewAuthenticationToken(NewAuthenticationTokenDTO newAuthenticationTokenDTO, boolean appManaged) {
         // check if a token with the same name already exists
         assertion(
                 AuthenticationTokenMalformed.malformedAuthToken()
@@ -504,6 +632,7 @@ public class AuthService {
                 wrapCatch(
                         () -> authenticationTokenRepository.save(
                                 authTok.toBuilder()
+                                        .applicationManaged(appManaged)
                                         .token(
                                                 jwtHelper.generateAuthenticationToken(
                                                         authTok
@@ -603,7 +732,6 @@ public class AuthService {
     }
 
     /**
-     *
      * @param email
      * @return
      */
@@ -617,11 +745,15 @@ public class AuthService {
 
     /**
      * delete all the authorization where the email ends with the postfix
+     *
      * @param emailPostfix the terminal string of the email
      */
     public void deleteAllAuthenticationTokenWithEmailEndWith(String emailPostfix) {
         wrapCatch(
-                () -> {authenticationTokenRepository.deleteAllByEmailEndsWith(emailPostfix); return null;},
+                () -> {
+                    authenticationTokenRepository.deleteAllByEmailEndsWith(emailPostfix);
+                    return null;
+                },
                 -1,
                 "AuthService::deleteAllAuthenticationTokenWithEmailEndWith"
         );
@@ -643,4 +775,5 @@ public class AuthService {
         final Matcher matcher = pattern.matcher(email);
         return matcher.matches();
     }
+
 }

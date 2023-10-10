@@ -20,7 +20,16 @@ public class RootAuthorizationManagement extends MongoDDLOps {
 
     @Execution
     public void changeSet() {
-        authService.updateRootUser();
+        try {
+            authService.updateRootUser();
+        } catch (RuntimeException ex) {
+            log.error("Error during root user management: {}", ex.toString());
+        }
+        try {
+            authService.updateAutoManagedRootToken();
+        } catch (RuntimeException ex) {
+            log.error("Error during root user management: {}", ex.toString());
+        }
     }
 
     @RollbackExecution
