@@ -744,6 +744,21 @@ public class AuthService {
     }
 
     /**
+     * Return the authentication token by email
+     * @param email the email of the authentication token to return
+     * @return the authentication token found
+     */
+    public Optional<AuthenticationTokenDTO> getAuthenticationTokenByEmail(String email) {
+        return wrapCatch(
+                () -> authenticationTokenRepository.findByEmailIs(email),
+                -1,
+                "AuthService::existsAuthenticationTokenByEmail"
+        ).map(
+                authMapper::toTokenDTO
+        );
+    }
+
+    /**
      * delete all the authorization where the email ends with the postfix
      *
      * @param emailPostfix the terminal string of the email
@@ -775,5 +790,4 @@ public class AuthService {
         final Matcher matcher = pattern.matcher(email);
         return matcher.matches();
     }
-
 }

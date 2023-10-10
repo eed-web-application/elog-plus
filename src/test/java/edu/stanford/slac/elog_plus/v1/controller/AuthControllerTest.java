@@ -253,6 +253,91 @@ public class AuthControllerTest {
     }
 
     @Test
+    public void createAuthenticationTokenFailOnSameAppManagedToken() {
+        appProperties.getRootAuthenticationTokenList().clear();
+        appProperties.getRootAuthenticationTokenList().add(
+                NewAuthenticationTokenDTO
+                        .builder()
+                        .name("token-root-a")
+                        .expiration(LocalDate.of(3000, 12, 31))
+                        .build()
+        );
+
+        assertDoesNotThrow(
+                () -> authService.updateAutoManagedRootToken()
+        );
+
+        ControllerLogicException exceptionForSaveAlreadyExistingToken = assertThrows(
+                ControllerLogicException.class,
+                () -> testControllerHelperService.createNewAuthenticationToken(
+                        mockMvc,
+                        status().is5xxServerError(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewAuthenticationTokenDTO
+                                .builder()
+                                .name("token-root-a")
+                                .expiration(LocalDate.of(2023,12,31))
+                                .build()
+                )
+        );
+        assertThat(exceptionForSaveAlreadyExistingToken.getErrorCode()).isEqualTo(-3);
+    }
+
+    @Test
+    public void createRootAuthorizationFailOnSameAppManagedToken() {
+        appProperties.getRootAuthenticationTokenList().clear();
+        appProperties.getRootAuthenticationTokenList().add(
+                NewAuthenticationTokenDTO
+                        .builder()
+                        .name("token-root-a")
+                        .expiration(LocalDate.of(3000, 12, 31))
+                        .build()
+        );
+
+        assertDoesNotThrow(
+                () -> authService.updateAutoManagedRootToken()
+        );
+
+        NotAuthorized notAuthorizedOnAppManagedToken = assertThrows(
+                NotAuthorized.class,
+                ()->testControllerHelperService.createNewRootUser(
+                        mockMvc,
+                        status().isUnauthorized(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        testControllerHelperService.getTokenEmailForGlobalToken("token-root-a")
+                )
+        );
+        assertThat(notAuthorizedOnAppManagedToken.getErrorCode()).isEqualTo(-2);
+    }
+
+    @Test
+    public void deleteRootAuthorizationFailOnSameAppManagedToken() {
+        appProperties.getRootAuthenticationTokenList().clear();
+        appProperties.getRootAuthenticationTokenList().add(
+                NewAuthenticationTokenDTO
+                        .builder()
+                        .name("token-root-a")
+                        .expiration(LocalDate.of(3000, 12, 31))
+                        .build()
+        );
+
+        assertDoesNotThrow(
+                () -> authService.updateAutoManagedRootToken()
+        );
+
+        NotAuthorized notAuthorizedOnAppManagedToken = assertThrows(
+                NotAuthorized.class,
+                ()->testControllerHelperService.deleteRootUser(
+                        mockMvc,
+                        status().isUnauthorized(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        testControllerHelperService.getTokenEmailForGlobalToken("token-root-a")
+                )
+        );
+        assertThat(notAuthorizedOnAppManagedToken.getErrorCode()).isEqualTo(-2);
+    }
+
+    @Test
     public void getAllAuthenticationTokenOK() {
         ApiResultResponse<AuthenticationTokenDTO> authToken1 = assertDoesNotThrow(
                 () -> testControllerHelperService.createNewAuthenticationToken(

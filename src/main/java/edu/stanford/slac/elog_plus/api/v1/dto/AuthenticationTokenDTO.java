@@ -25,5 +25,6 @@ public record AuthenticationTokenDTO(
         @JsonDeserialize(using = LocalDateDeserializer.class)
         @JsonSerialize(using = LocalDateSerializer.class)
         LocalDate expiration,
-        String token) {
+        String token,
+        Boolean applicationManaged) {
 }
