@@ -364,6 +364,13 @@ public class AuthService {
             );
             for (AuthenticationToken authToken:
                     foundAuthenticationTokens) {
+
+                wrapCatch(
+                        ()->{authorizationRepository.deleteAllByOwnerIs(authToken.getEmail()); return null;},
+                        -3,
+                        "AuthService::updateAutoManagedRootToken"
+                );
+
                 wrapCatch(
                         () -> {
                            authenticationTokenRepository.deleteById(
@@ -380,6 +387,7 @@ public class AuthService {
                     -4,
                     "AuthService::updateAutoManagedRootToken"
             );
+            return;
         }
         List<AuthenticationToken> foundAuthenticationTokens = wrapCatch(
                 authenticationTokenRepository::findAllByApplicationManagedIsTrue,

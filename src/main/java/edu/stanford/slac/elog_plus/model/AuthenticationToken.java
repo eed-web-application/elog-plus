@@ -28,6 +28,7 @@ public class AuthenticationToken {
     private String email;
     // the auto-generated jwt-token
     private String token;
+    @Builder.Default
     // this application managed token and cannot be modified by user or admin
-    private Boolean applicationManaged;
+    private Boolean applicationManaged = false;
 }
