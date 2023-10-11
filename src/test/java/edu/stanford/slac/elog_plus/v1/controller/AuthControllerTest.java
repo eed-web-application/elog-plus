@@ -298,16 +298,16 @@ public class AuthControllerTest {
                 () -> authService.updateAutoManagedRootToken()
         );
 
-        NotAuthorized notAuthorizedOnAppManagedToken = assertThrows(
-                NotAuthorized.class,
+        ControllerLogicException notAuthorizedOnAppManagedToken = assertThrows(
+                ControllerLogicException.class,
                 ()->testControllerHelperService.createNewRootUser(
                         mockMvc,
-                        status().isUnauthorized(),
+                        status().isInternalServerError(),
                         Optional.of("user1@slac.stanford.edu"),
                         testControllerHelperService.getTokenEmailForGlobalToken("token-root-a")
                 )
         );
-        assertThat(notAuthorizedOnAppManagedToken.getErrorCode()).isEqualTo(-2);
+        assertThat(notAuthorizedOnAppManagedToken.getErrorCode()).isEqualTo(-1);
     }
 
     @Test
@@ -325,16 +325,16 @@ public class AuthControllerTest {
                 () -> authService.updateAutoManagedRootToken()
         );
 
-        NotAuthorized notAuthorizedOnAppManagedToken = assertThrows(
-                NotAuthorized.class,
+        ControllerLogicException notAuthorizedOnAppManagedToken = assertThrows(
+                ControllerLogicException.class,
                 ()->testControllerHelperService.deleteRootUser(
                         mockMvc,
-                        status().isUnauthorized(),
+                        status().isInternalServerError(),
                         Optional.of("user1@slac.stanford.edu"),
                         testControllerHelperService.getTokenEmailForGlobalToken("token-root-a")
                 )
         );
-        assertThat(notAuthorizedOnAppManagedToken.getErrorCode()).isEqualTo(-2);
+        assertThat(notAuthorizedOnAppManagedToken.getErrorCode()).isEqualTo(-1);
     }
 
     @Test
@@ -465,8 +465,8 @@ public class AuthControllerTest {
 
     @Test
     public void createAuthTokenAndMakItRootFailOnNotExistingPerson() {
-        PersonNotFound personNotFoundException = assertThrows(
-                PersonNotFound.class,
+        ControllerLogicException personNotFoundException = assertThrows(
+                ControllerLogicException.class,
                 ()->testControllerHelperService.createNewRootUser(
                         mockMvc,
                         status().isNotFound(),

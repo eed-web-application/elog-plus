@@ -13,8 +13,10 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import static edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationTypeDTO.Admin;
 import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
@@ -139,13 +141,6 @@ public class AuthorizationController {
             Authentication authentication
     ) {
         // assert that all the user that are root of whatever resource
-        Optional<AuthenticationTokenDTO> authTokenFound = authService.getAuthenticationTokenByEmail(email);
-        AuthenticationTokenDTO authTokenInstance = authTokenFound.orElseThrow(
-                () -> AuthenticationTokenNotFound.authTokenNotFoundBuilder()
-                        .errorCode(-1)
-                        .errorDomain("AuthorizationController::setRootUser")
-                        .build()
-        );
         assertion(
                 NotAuthorized
                         .notAuthorizedBuilder()
@@ -157,9 +152,7 @@ public class AuthorizationController {
                 // is admin
                 () -> authService.checkForRoot(
                         authentication
-                ),
-                // token cannot be an application managed one
-                () -> !authTokenInstance.applicationManaged()
+                )
         );
         authService.addRootAuthorization(email, authentication.getCredentials().toString());
         return ApiResultResponse.of(
@@ -178,13 +171,6 @@ public class AuthorizationController {
             @PathVariable String email,
             Authentication authentication
     ) {
-        Optional<AuthenticationTokenDTO> authTokenFound = authService.getAuthenticationTokenByEmail(email);
-        AuthenticationTokenDTO authTokenInstance = authTokenFound.orElseThrow(
-                () -> AuthenticationTokenNotFound.authTokenNotFoundBuilder()
-                        .errorCode(-1)
-                        .errorDomain("AuthorizationController::setRootUser")
-                        .build()
-        );
         // assert that all the user that are root of whatever resource
         assertion(
                 NotAuthorized
@@ -197,9 +183,7 @@ public class AuthorizationController {
                 // is admin
                 () -> authService.checkForRoot(
                         authentication
-                ),
-                // should be not an application managed app token
-                () -> !authTokenInstance.applicationManaged()
+                )
         );
         authService.removeRootAuthorization(email);
         return ApiResultResponse.of(

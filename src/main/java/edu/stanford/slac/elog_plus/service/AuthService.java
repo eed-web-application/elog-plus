@@ -366,7 +366,7 @@ public class AuthService {
                     foundAuthenticationTokens) {
                 wrapCatch(
                         () -> {
-                            deleteToken(
+                           authenticationTokenRepository.deleteById(
                                     authToken.getId()
                             );
                             return null;
@@ -397,28 +397,33 @@ public class AuthService {
                     .filter(t -> t.getName().compareToIgnoreCase(newAuthenticationTokenDTO.name()) == 0)
                     .findAny().isEmpty();
             if (toCreate) {
-                var newAuthCreated = wrapCatch(
-                        () -> addNewAuthenticationToken(
-                                newAuthenticationTokenDTO,
-                                true
+                var newAuthTok = wrapCatch(
+                        () -> authenticationTokenRepository.save(
+                                getAuthenticationToken(
+                                        newAuthenticationTokenDTO,
+                                        true
+                                )
                         ),
                         -6,
                         "AuthService::updateAutoManagedRootToken"
                 );
-                log.info("Created authentication token with name {}", newAuthCreated.name());
-
+                log.info("Created authentication token with name {}", newAuthTok.getName());
                 wrapCatch(
-                        ()->{
-                            addRootAuthorization(
-                                    newAuthCreated.email(),
-                                    "elog-plus"
-                            );
-                            return null;
-                        },
+                        () -> authorizationRepository.save(
+                                Authorization
+                                        .builder()
+                                        .authorizationType(authMapper.toModel(Admin).getValue())
+                                        .owner(newAuthTok.getEmail())
+                                        .ownerType(Authorization.OType.Application)
+                                        .resource("*")
+                                        .creationBy("elog")
+                                        .build()
+                        ),
                         -7,
                         "AuthService::updateAutoManagedRootToken"
                 );
-                log.info("Created root authorization for token with name {}", newAuthCreated.name());
+
+                log.info("Created root authorization for token with name {}", newAuthTok.getName());
             }
         }
 
@@ -467,7 +472,7 @@ public class AuthService {
                     () -> !isAppLogbookTokenEmail(email)
             );
             // create root for global token
-            authenticationTokenRepository
+            var authenticationTokenFound = authenticationTokenRepository
                     .findByEmailIs(email)
                     .orElseThrow(
                             () -> AuthenticationTokenNotFound.authTokenNotFoundBuilder()
@@ -475,6 +480,16 @@ public class AuthService {
                                     .errorDomain("AuthService::addRootAuthorization")
                                     .build()
                     );
+            assertion(
+                    ControllerLogicException
+                            .builder()
+                            .errorCode(-1)
+                            .errorMessage("Authentication Token managed byt the elog application cannot be managed by user")
+                            .errorDomain("AuthService::addRootAuthorization")
+                            .build(),
+                    // should be not an application managed app token
+                    () -> !authenticationTokenFound.getApplicationManaged()
+            );
         } else {
             // find the user
             personRepository.findByMail(email)
@@ -516,6 +531,28 @@ public class AuthService {
      * @param email that identify the user
      */
     public void removeRootAuthorization(String email) {
+        boolean isAppToken = isAppTokenEmail(email);
+        if (isAppToken) {
+            // check if the authentication token exists before remove
+            var authenticationTokenFound = authenticationTokenRepository
+                    .findByEmailIs(email)
+                    .orElseThrow(
+                            () -> AuthenticationTokenNotFound.authTokenNotFoundBuilder()
+                                    .errorCode(-1)
+                                    .errorDomain("AuthService::removeRootAuthorization")
+                                    .build()
+                    );
+            assertion(
+                    ControllerLogicException
+                            .builder()
+                            .errorCode(-1)
+                            .errorMessage("Authentication Token managed byt the elog application cannot be managed by user")
+                            .errorDomain("AuthService::removeRootAuthorization")
+                            .build(),
+                    // should be not an application managed app token
+                    () -> !authenticationTokenFound.getApplicationManaged()
+            );
+        }
         Optional<Authorization> rootAuth = authorizationRepository.findByOwnerIsAndResourceIsAndAuthorizationTypeIsGreaterThanEqual(
                 email,
                 "*",
@@ -619,6 +656,21 @@ public class AuthService {
                         .build()
         );
         // convert to model and normalize the name
+        return authMapper.toTokenDTO(
+                wrapCatch(
+                        () -> authenticationTokenRepository.save(
+                                getAuthenticationToken(
+                                        newAuthenticationTokenDTO,
+                                        appManaged
+                                )
+                        ),
+                        -4,
+                        "AuthService::addNewAuthenticationToken"
+                )
+        );
+    }
+
+    private AuthenticationToken getAuthenticationToken(NewAuthenticationTokenDTO newAuthenticationTokenDTO, boolean appManaged) {
         AuthenticationToken authTok = authMapper.toModelToken(
                 newAuthenticationTokenDTO.toBuilder()
                         .name(
@@ -628,22 +680,14 @@ public class AuthService {
                         )
                         .build()
         );
-        return authMapper.toTokenDTO(
-                wrapCatch(
-                        () -> authenticationTokenRepository.save(
-                                authTok.toBuilder()
-                                        .applicationManaged(appManaged)
-                                        .token(
-                                                jwtHelper.generateAuthenticationToken(
-                                                        authTok
-                                                )
-                                        )
-                                        .build()
-                        ),
-                        -4,
-                        "AuthService::addNewAuthenticationToken"
+        return authTok.toBuilder()
+                .applicationManaged(appManaged)
+                .token(
+                        jwtHelper.generateAuthenticationToken(
+                                authTok
+                        )
                 )
-        );
+                .build();
     }
 
     /**
@@ -780,12 +824,12 @@ public class AuthService {
      * @param email is the email to check
      * @return true is the email belong to autogenerated application token email
      */
-    private boolean isAppTokenEmail(String email) {
+    public boolean isAppTokenEmail(String email) {
         if (email == null) return false;
         return email.endsWith(appProperties.getApplicationTokenDomain());
     }
 
-    private boolean isAppLogbookTokenEmail(String email) {
+    public boolean isAppLogbookTokenEmail(String email) {
         final Pattern pattern = Pattern.compile(appProperties.getLogbookEmailRegex(), Pattern.MULTILINE);
         final Matcher matcher = pattern.matcher(email);
         return matcher.matches();
