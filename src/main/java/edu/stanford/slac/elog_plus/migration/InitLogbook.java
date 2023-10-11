@@ -17,7 +17,7 @@ import java.util.List;
 import static java.util.Arrays.asList;
 
 @Log4j2
-@Profile("!test")
+@Profile("init-logbook")
 @AllArgsConstructor
 @ChangeUnit(id = "logbooks-initializer", order = "4", author = "bisegni")
 public class InitLogbook {
