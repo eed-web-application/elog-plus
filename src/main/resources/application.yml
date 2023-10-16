@@ -45,6 +45,7 @@ edu:
         image-preview-topic: ${ELOG_PLUS_IMAGE_PREVIEW_TOPIC:elog-plus-preview-creation}
         oauth-server-discover: ${ELOG_PLUS_OIDC_CONFIGURATION_ENDPOINT:https://dex.slac.stanford.edu/.well-known/openid-configuration}
         root-user-list: ${ELOG_PLUS_ROOT_USERS}
+        root-authentication-token-list:
         storage:
           url: ${ELOG_PLUS_MINIO_URL:http://localhost:9000}
           key: ${ELOG_PLUS_MINIO_KEY:minio}

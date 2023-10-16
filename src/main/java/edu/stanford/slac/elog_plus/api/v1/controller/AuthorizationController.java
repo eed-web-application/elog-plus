@@ -1,6 +1,7 @@
 package edu.stanford.slac.elog_plus.api.v1.controller;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
+import edu.stanford.slac.elog_plus.exception.AuthenticationTokenNotFound;
 import edu.stanford.slac.elog_plus.exception.NotAuthorized;
 import edu.stanford.slac.elog_plus.service.AuthService;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -12,8 +13,10 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import static edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationTypeDTO.Admin;
 import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
@@ -141,7 +144,7 @@ public class AuthorizationController {
         assertion(
                 NotAuthorized
                         .notAuthorizedBuilder()
-                        .errorCode(-1)
+                        .errorCode(-2)
                         .errorDomain("AuthorizationController::setRootUser")
                         .build(),
                 // is authenticated
@@ -172,7 +175,7 @@ public class AuthorizationController {
         assertion(
                 NotAuthorized
                         .notAuthorizedBuilder()
-                        .errorCode(-1)
+                        .errorCode(-2)
                         .errorDomain("AuthorizationController::setRootUser")
                         .build(),
                 // is authenticated
