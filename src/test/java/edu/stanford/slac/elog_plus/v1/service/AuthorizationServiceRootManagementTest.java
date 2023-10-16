@@ -40,7 +40,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class AuthorizationServiceRootManagementTest {
     @Autowired
-    AppProperties appProperties;
+    private AppProperties appProperties;
     @Autowired
     private AuthorizationRepository authorizationRepository;
     @Autowired
