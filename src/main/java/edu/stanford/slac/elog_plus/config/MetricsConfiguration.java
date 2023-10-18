@@ -14,7 +14,8 @@ public class MetricsConfiguration {
     public Counter previewProcessedCounter() {
         return Counter
                 .builder("elog_plus_preview_processing_event")
-                .tag("processed", "success")
+                .tag("operation", "processing")
+                .tag("state", "success")
                 .description("The number of preview processed successfully")
                 .register(meterRegistry);
     }
@@ -23,7 +24,8 @@ public class MetricsConfiguration {
     public Counter previewErrorsCounter() {
         return Counter
                 .builder("elog_plus_preview_processing_event")
-                .tag("processed", "errors")
+                .tag("operation", "processing")
+                .tag("state", "failed")
                 .description("The number of preview processed with errors")
                 .register(meterRegistry);
     }
@@ -32,7 +34,8 @@ public class MetricsConfiguration {
     public Counter previewSubmittedCounter() {
         return Counter
                 .builder("elog_plus_preview_processing_event")
-                .tag("submissions", "success")
+                .tag("operation", "submission")
+                .tag("state", "success")
                 .description("The number of preview request submitted")
                 .register(meterRegistry);
     }
