@@ -6,6 +6,7 @@ import edu.stanford.slac.elog_plus.model.FileObjectDescription;
 import edu.stanford.slac.elog_plus.repository.AttachmentRepository;
 import edu.stanford.slac.elog_plus.repository.StorageRepository;
 import edu.stanford.slac.elog_plus.service.AttachmentService;
+import io.micrometer.core.instrument.Counter;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import net.coobird.thumbnailator.Thumbnails;
@@ -26,10 +27,10 @@ import java.io.IOException;
 @Component
 @AllArgsConstructor
 public class ProcessingPreview {
-    final private AppProperties appProperties;
     final private AttachmentService attachmentService;
-    final private AttachmentRepository attachmentRepository;
     final private StorageRepository storageRepository;
+    final private Counter previewProcessedCounter;
+    final private Counter previewErrorsCounter;
 
     @RetryableTopic(attempts = "3", backoff = @Backoff(delay = 2_000, maxDelay = 10_000, multiplier = 2), autoCreateTopics = "false")
     @KafkaListener(topics = "${edu.stanford.slac.elog-plus.image-preview-topic}")
@@ -69,13 +70,16 @@ public class ProcessingPreview {
             attachmentService.setMiniPreview(attachment.getId(), baos.toByteArray());
 
             attachmentService.setPreviewProcessingState(attachment.getId(), Attachment.PreviewProcessingState.Completed);
+            previewProcessedCounter.increment();
         } catch (UnsupportedFormatException e) {
             attachmentService.setPreviewProcessingState(attachment.getId(), Attachment.PreviewProcessingState.PreviewNotAvailable);
             // in this case we manage this error with the state of image not available
             log.info("Unsupported image for preview for the attachment {}", attachment);
+            previewErrorsCounter.increment();
         } catch (Throwable e) {
             attachmentService.setPreviewProcessingState(attachment.getId(), Attachment.PreviewProcessingState.Error);
             log.error("Error during preview generation for the attachment {} with error with message '{}' - [{}]", attachment, e.getMessage(), e);
+            previewErrorsCounter.increment();
             throw new RuntimeException(e);
         } finally {
             if(fod != null && fod.getIs() != null) {

@@ -8,6 +8,7 @@ import edu.stanford.slac.elog_plus.model.Attachment;
 import edu.stanford.slac.elog_plus.model.FileObjectDescription;
 import edu.stanford.slac.elog_plus.repository.AttachmentRepository;
 import edu.stanford.slac.elog_plus.repository.StorageRepository;
+import io.micrometer.core.instrument.Counter;
 import jdk.jfr.ContentType;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -35,7 +36,7 @@ public class AttachmentService {
     final private StorageRepository storageRepository;
     final private AttachmentRepository attachmentRepository;
     final private KafkaTemplate<String, Attachment> attachmentProducer;
-
+    final private Counter previewSubmittedCounter;
     /**
      * @param attachment
      * @return
@@ -75,6 +76,7 @@ public class AttachmentService {
 
         if (createPreview) {
             attachmentProducer.send(appProperties.getImagePreviewTopic(), att);
+            previewSubmittedCounter.increment();
         }
         log.info("New attachment created with id {}", newAttachmentID.getId());
         return newAttachmentID.getId();
