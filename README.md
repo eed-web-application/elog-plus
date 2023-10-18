@@ -1,19 +1,14 @@
 # ELOG+
 ## Overview
 
-Welcome to the Log Entry Microservice documentation. This Java-based microservice provides a robust 
-platform for managing log entries, logbooks, and offers secure authentication and authorization mechanisms.
+The ELOG+ is a Java-based microservice that provides a robust platform for managing log entries, logbooks, and offers secure authentication and authorization mechanisms.
 
 ## Table of Contents
 
 - [Features](#features)
 - [Getting Started](#getting-started)
-- [Authentication and Authorization](#authentication-and-authorization)
-- [API Endpoints](#api-endpoints)
-- [Configuration](#configuration)
-- [Dependencies](#dependencies)
-- [Contributing](#contributing)
-- [License](#license)
+- [Application tokens](#application-tokens)
+
 
 ## Features
 
@@ -42,12 +37,20 @@ http request that can be processed.
 
 ### Prerequisites
 
-ELOG+ run on java virtual machine version 19+. It uses Spring Boot Framework 3.x
+ELOG+ run on java virtual machine version 19+. A dockerfile is provided to permit the creation of a container image.
 
-## JWT Application token key
-the ***app-token-jwt-key*** properties can be filled using the openssl tools like shown below
+## Application tokens
+ELOG+ provides robust support for external application authentication through the use of custom-managed JSON Web Tokens (JWT). This functionality allows for secure and token-based communication between ELOG+ and third-party applications. To utilize this feature, a cryptographic key must be configured through the ELOG_PLUS_APP_TOKEN_JWT environment variable. To generate a cryptographic key for JWT token verification, you need to execute the following command using OpenSSL:
+
 ```shell
 openssl rand -hex <size> 
 ```
 
+Here, <size> should be replaced by the desired byte size for the cryptographic key. This generated key needs to be set in the ELOG_PLUS_APP_TOKEN_JWT environment variable for ELOG+ to utilize it for JWT token generation and validation.
+To pre-configure a root token, associate a JSON-formatted string to the ***ELOG_PLUS_ROOT_AUTHENTICATION_TOKEN_JSON*** environment variable. The JSON string should include the name and expiration properties for each root token you wish to establish.
+The following code snippet demonstrates how to create a root token named ***root-token-1*** with an expiration date set to December 31, 2024:
+
+```properties
+ELOG_PLUS_ROOT_AUTHENTICATION_TOKEN_JSON: '[{"name":"root-token-1","expiration":"2024-12-31"}]'
+```
 
