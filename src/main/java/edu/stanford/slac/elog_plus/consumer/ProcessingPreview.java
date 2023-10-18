@@ -31,7 +31,7 @@ public class ProcessingPreview {
     final private AttachmentRepository attachmentRepository;
     final private StorageRepository storageRepository;
 
-    @RetryableTopic(attempts = "3", backoff = @Backoff(delay = 2_000, maxDelay = 10_000, multiplier = 2))
+    @RetryableTopic(attempts = "3", backoff = @Backoff(delay = 2_000, maxDelay = 10_000, multiplier = 2), autoCreateTopics = "false")
     @KafkaListener(topics = "${edu.stanford.slac.elog-plus.image-preview-topic}")
     public void processPreview(
             Attachment attachment,
