@@ -75,7 +75,7 @@ public class ProcessingPreview {
             log.info("Unsupported image for preview for the attachment {}", attachment);
         } catch (Throwable e) {
             attachmentService.setPreviewProcessingState(attachment.getId(), Attachment.PreviewProcessingState.Error);
-            log.error("Error during preview generation for the attachment {} with error {}", attachment, e.getCause());
+            log.error("Error during preview generation for the attachment {} with error with message '{}' - [{}]", attachment, e.getMessage(), e);
             throw new RuntimeException(e);
         } finally {
             if(fod != null && fod.getIs() != null) {
