@@ -8,6 +8,7 @@ import edu.stanford.slac.elog_plus.exception.ShiftNotFound;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.FileObjectDescription;
 import edu.stanford.slac.elog_plus.model.Logbook;
+import edu.stanford.slac.elog_plus.repository.AttachmentRepository;
 import edu.stanford.slac.elog_plus.service.AttachmentService;
 import edu.stanford.slac.elog_plus.service.EntryService;
 import edu.stanford.slac.elog_plus.service.LogbookService;
@@ -51,6 +52,8 @@ public class EntryServiceTest {
     private LogbookService logbookService;
     @Autowired
     private AttachmentService attachmentService;
+    @Autowired
+    private AttachmentRepository attachmentRepository;
     @Autowired
     private SharedUtilityService sharedUtilityService;
     @Autowired
@@ -565,6 +568,11 @@ public class EntryServiceTest {
         assertThat(foundLog.attachments().size()).isEqualTo(1);
         assertThat(foundLog.attachments().get(0).fileName()).isEqualTo(fileName);
         assertThat(foundLog.attachments().get(0).contentType()).isEqualTo(MediaType.APPLICATION_PDF_VALUE);
+
+        // verify that attachment is in use
+        var attachmentModel = attachmentRepository.findById(attachmentID);
+        assertThat(attachmentModel.isPresent()).isTrue();
+        assertThat(attachmentModel.get().getInUse()).isTrue();
     }
 
     @Test

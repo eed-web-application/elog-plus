@@ -68,4 +68,17 @@ public class AttachmentRepositoryImpl implements AttachmentRepositoryCustom{
         );
         return a.orElseThrow().getPreviewState();
     }
+
+    @Override
+    public void setInUseState(String id, Boolean inUse) {
+        Query q = new Query();
+        q.addCriteria(
+                Criteria.where("id").is(id)
+        );
+        Update u = new Update();
+        u.set("inUse", inUse);
+
+        UpdateResult ur = mongoTemplate.updateFirst(q, u, Attachment.class);
+        log.debug("Set 'in use' state update operation {}", ur.getModifiedCount()==1);
+    }
 }

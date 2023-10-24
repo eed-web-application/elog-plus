@@ -1,6 +1,7 @@
 package edu.stanford.slac.elog_plus.service;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.AttachmentDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.ObjectListResultDTO;
 import edu.stanford.slac.elog_plus.api.v1.mapper.AttachmentMapper;
 import edu.stanford.slac.elog_plus.config.AppProperties;
 import edu.stanford.slac.elog_plus.exception.AttachmentNotFound;
@@ -37,9 +38,11 @@ public class AttachmentService {
     final private AttachmentRepository attachmentRepository;
     final private KafkaTemplate<String, Attachment> attachmentProducer;
     final private Counter previewSubmittedCounter;
+
     /**
-     * @param attachment
-     * @return
+     * Create a new attachment
+     * @param attachment the new attachment content
+     * @return the id of the new created attachment
      */
     public String createAttachment(FileObjectDescription attachment, boolean createPreview) {
         Attachment att = Attachment
@@ -92,7 +95,8 @@ public class AttachmentService {
     }
 
     /**
-     * @param id
+     * Return the attachment raw content file
+     * @param id the unique id of the attachment
      */
     public FileObjectDescription getAttachmentContent(String id) {
         FileObjectDescription attachment = FileObjectDescription.builder().build();
@@ -124,8 +128,9 @@ public class AttachmentService {
     }
 
     /**
-     * @param id
-     * @return
+     * return the preview content
+     * @param id the id of the attachment
+     * @return the preview content
      */
     public FileObjectDescription getPreviewContent(String id) {
         FileObjectDescription attachment = FileObjectDescription.builder().build();
@@ -157,6 +162,7 @@ public class AttachmentService {
 
     /**
      * Return the mini preview object description
+     *
      * @param id the unique identifier of the attachment
      * @return the object stream of the mini preview
      */
@@ -208,7 +214,8 @@ public class AttachmentService {
 
     /**
      * Set the preview id
-     * @param id the id of the attachment
+     *
+     * @param id        the id of the attachment
      * @param previewID the preview identifier for fetch it from object store
      */
     public void setPreviewID(String id, String previewID) {
@@ -287,7 +294,8 @@ public class AttachmentService {
 
     /**
      * Set the mini preview of an attachment
-     * @param id the unique identifier of an attachment
+     *
+     * @param id        the unique identifier of an attachment
      * @param byteArray the byte array represent the mini preview
      */
     public void setMiniPreview(String id, byte[] byteArray) {
@@ -312,5 +320,45 @@ public class AttachmentService {
                 "AttachmentService::setMiniPreview"
         );
         log.info("Set the mini preview for the attachment {}", foundAttachment.getId());
+    }
+
+    /**
+     * return the list of objet in a paged way
+     * @param maxKeysPerPage
+     * @param continuationToken
+     * @return
+     */
+    public ObjectListResultDTO listFromStorage(int maxKeysPerPage, String continuationToken) {
+        return wrapCatch(
+                () -> attachmentMapper.fromModel(
+                        storageRepository.listFilesInBucket(
+                                maxKeysPerPage,
+                                continuationToken
+                        )
+                ),
+                -1,
+                "AttachmentService::listFromStorage"
+        );
+    }
+
+    /**
+     * Set the in use flag of an attachment
+     * @param attachmentID the attachment id
+     * @param inUse the 'in use' flag
+     * @return true
+     */
+    public Boolean setInUse(String attachmentID, boolean inUse) {
+        wrapCatch(
+                () -> {
+                    attachmentRepository.setInUseState(
+                            attachmentID,
+                            inUse
+                    );
+                    return null;
+                },
+                -1,
+                "AttachmentService::setInUse"
+        );
+        return true;
     }
 }

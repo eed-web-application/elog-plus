@@ -83,8 +83,9 @@ public class LogbookService {
                         .map(
                                 logbookMapper::fromModelToSummaryDTO
                         ).orElseThrow(
-                                () -> LogbookNotFound.logbookNotFoundBuilder()
+                                () -> LogbookNotFound.logbookNotFoundBuilderWitLId()
                                         .errorCode(-1)
+                                        .logbookId(logbookId)
                                         .errorDomain("LogbookService::getSummaryById")
                                         .build()
                         ),

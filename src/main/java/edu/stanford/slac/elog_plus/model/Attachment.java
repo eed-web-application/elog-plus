@@ -30,6 +30,8 @@ public class Attachment {
     private String previewID;
     private byte[] miniPreview;
     @Builder.Default
+    private Boolean inUse = false;
+    @Builder.Default
     private PreviewProcessingState previewState = PreviewProcessingState.Waiting;
     @CreatedDate
     private LocalDateTime creationData;

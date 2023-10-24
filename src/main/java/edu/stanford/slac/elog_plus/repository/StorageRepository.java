@@ -1,8 +1,11 @@
 package edu.stanford.slac.elog_plus.repository;
 
+import edu.stanford.slac.elog_plus.api.v1.dto.ObjectListResultDTO;
 import edu.stanford.slac.elog_plus.config.StorageProperties;
 import edu.stanford.slac.elog_plus.model.FileObjectDescription;
+import edu.stanford.slac.elog_plus.model.ObjectListResult;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import org.springframework.stereotype.Repository;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -11,6 +14,9 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
 import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
@@ -42,7 +48,7 @@ public class StorageRepository {
         putObjectResponse = s3Client.putObject(
                 PutObjectRequest.builder()
                         .bucket(objectStorageProperties.getBucket())
-                        .key(id)
+                        .key("attachment/%s".formatted(id))
                         .contentType(attachment.getContentType())
                         .build(),
                 RequestBody.fromInputStream(
@@ -63,7 +69,7 @@ public class StorageRepository {
                         () -> s3Client.getObject(
                                 GetObjectRequest.builder()
                                         .bucket(objectStorageProperties.getBucket())
-                                        .key(id)
+                                        .key("attachment/%s".formatted(id))
                                         .build(),
                                 ResponseTransformer.toInputStream()
                         ),
@@ -73,4 +79,32 @@ public class StorageRepository {
         objDesc.setIs(objectResponse);
         objDesc.setContentType(objectResponse.response().contentType());
     }
+
+    /**
+     * Cycle on all storage file giving the maximum number of element ad using a continuation token
+     *
+     * @param maxKeysPerPage    the maximum number of elements
+     * @param continuationToken the token returned in the last call if the new call is a continuation
+     * @return the list of found key
+     */
+    public ObjectListResult listFilesInBucket(int maxKeysPerPage, String continuationToken) {
+        List<String> foundKeys = new ArrayList<>();
+        ListObjectsV2Request request = ListObjectsV2Request.builder()
+                .bucket(objectStorageProperties.getBucket())
+                .maxKeys(maxKeysPerPage)
+                .prefix("attachment/")
+                .continuationToken(continuationToken)
+                .build();
+
+        ListObjectsV2Response result = s3Client.listObjectsV2(request);
+
+        result.contents().forEach(content -> foundKeys.add(content.key()));
+
+        return ObjectListResult
+                .builder()
+                .continuationToken(result.nextContinuationToken())
+                .keyFounds(foundKeys)
+                .build();
+    }
 }
+

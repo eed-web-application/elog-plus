@@ -11,4 +11,8 @@ public class LogbookNotFound extends ControllerLogicException {
     public LogbookNotFound(Integer errorCode, String errorDomain) {
         super(errorCode, "The logbooks has not been found", errorDomain);
     }
+    @Builder(builderMethodName = "logbookNotFoundBuilderWitLId")
+    public LogbookNotFound(Integer errorCode, String logbookId, String errorDomain) {
+        super(errorCode, "The logbooks %s has not been found".formatted(logbookId), errorDomain);
+    }
 }
