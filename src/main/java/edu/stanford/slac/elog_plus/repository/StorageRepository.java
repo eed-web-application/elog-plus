@@ -48,7 +48,7 @@ public class StorageRepository {
         putObjectResponse = s3Client.putObject(
                 PutObjectRequest.builder()
                         .bucket(objectStorageProperties.getBucket())
-                        .key(id)
+                        .key("attachment/%s".formatted(id))
                         .contentType(attachment.getContentType())
                         .build(),
                 RequestBody.fromInputStream(
@@ -69,7 +69,7 @@ public class StorageRepository {
                         () -> s3Client.getObject(
                                 GetObjectRequest.builder()
                                         .bucket(objectStorageProperties.getBucket())
-                                        .key(id)
+                                        .key("attachment/%s".formatted(id))
                                         .build(),
                                 ResponseTransformer.toInputStream()
                         ),
@@ -92,6 +92,7 @@ public class StorageRepository {
         ListObjectsV2Request request = ListObjectsV2Request.builder()
                 .bucket(objectStorageProperties.getBucket())
                 .maxKeys(maxKeysPerPage)
+                .prefix("attachment/")
                 .continuationToken(continuationToken)
                 .build();
 

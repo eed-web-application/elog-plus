@@ -4,6 +4,7 @@ import edu.stanford.slac.elog_plus.api.v1.dto.AttachmentDTO;
 import edu.stanford.slac.elog_plus.config.AppProperties;
 import edu.stanford.slac.elog_plus.model.Attachment;
 import edu.stanford.slac.elog_plus.model.FileObjectDescription;
+import edu.stanford.slac.elog_plus.repository.AttachmentRepository;
 import edu.stanford.slac.elog_plus.repository.StorageRepository;
 import edu.stanford.slac.elog_plus.service.AttachmentService;
 import edu.stanford.slac.elog_plus.service.EntryService;
@@ -50,6 +51,8 @@ public class AttachmentServiceTest {
     private S3Client s3Client;
     @Autowired
     private AttachmentService attachmentService;
+    @Autowired
+    private AttachmentRepository attachmentRepository;
     @Autowired
     private DocumentGenerationService documentGenerationService;
     @Autowired
@@ -117,7 +120,7 @@ public class AttachmentServiceTest {
                     .until(
                             () -> {
                                 String state = attachmentService.getPreviewProcessingState(attachmentID);
-                                log.info("state {} for attachement id {}", state, attachmentID);
+                                log.info("state {} for attachment id {}", state, attachmentID);
                                 return state.compareTo(Attachment.PreviewProcessingState.Completed.name()) == 0;
                             }
                     );
@@ -126,6 +129,10 @@ public class AttachmentServiceTest {
                     () -> attachmentService.getAttachment(attachmentID)
             );
             assertThat(attachment.previewState()).isEqualTo(Attachment.PreviewProcessingState.Completed.name());
+
+            var attachmentModel = attachmentRepository.findById(attachmentID);
+            assertThat(attachmentModel.isPresent()).isTrue();
+            assertThat(attachmentModel.get().getInUse()).isFalse();
         }
     }
 
@@ -221,7 +228,7 @@ public class AttachmentServiceTest {
                         .until(
                                 () -> {
                                     String state = attachmentService.getPreviewProcessingState(attachmentID);
-                                    log.info("state {} for attachement id {}", state, attachmentID);
+                                    log.info("state {} for attachment id {}", state, attachmentID);
                                     return state.compareTo(Attachment.PreviewProcessingState.Completed.name()) == 0;
                                 }
                         );

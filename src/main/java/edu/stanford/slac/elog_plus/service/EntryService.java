@@ -244,13 +244,18 @@ public class EntryService {
                 .getAttachments()
                 .forEach(
                         attachmentID -> {
-                            if (!attachmentService.exists(attachmentID)) {
-                                throw ControllerLogicException.of(
-                                        -3,
-                                        "The attachment id '%s' has not been found".formatted(attachmentID),
-                                        "LogService::createNew"
-                                );
-                            }
+                            // check for presence of the attachment
+                            assertion(
+                                    ControllerLogicException.builder()
+                                            .errorCode(-3)
+                                            .errorMessage("The attachment id '%s' has not been found".formatted(attachmentID))
+                                            .errorDomain("LogService::createNew")
+                                            .build(),
+                                    ()->attachmentService.exists(attachmentID)
+                            );
+
+                            //tag attachment as used
+                            attachmentService.setInUse(attachmentID, true);
                         }
                 );
         // check for tags

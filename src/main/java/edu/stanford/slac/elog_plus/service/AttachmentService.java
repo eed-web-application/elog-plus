@@ -40,8 +40,9 @@ public class AttachmentService {
     final private Counter previewSubmittedCounter;
 
     /**
-     * @param attachment
-     * @return
+     * Create a new attachment
+     * @param attachment the new attachment content
+     * @return the id of the new created attachment
      */
     public String createAttachment(FileObjectDescription attachment, boolean createPreview) {
         Attachment att = Attachment
@@ -94,7 +95,8 @@ public class AttachmentService {
     }
 
     /**
-     * @param id
+     * Return the attachment raw content file
+     * @param id the unique id of the attachment
      */
     public FileObjectDescription getAttachmentContent(String id) {
         FileObjectDescription attachment = FileObjectDescription.builder().build();
@@ -126,8 +128,9 @@ public class AttachmentService {
     }
 
     /**
-     * @param id
-     * @return
+     * return the preview content
+     * @param id the id of the attachment
+     * @return the preview content
      */
     public FileObjectDescription getPreviewContent(String id) {
         FileObjectDescription attachment = FileObjectDescription.builder().build();
@@ -319,6 +322,12 @@ public class AttachmentService {
         log.info("Set the mini preview for the attachment {}", foundAttachment.getId());
     }
 
+    /**
+     * return the list of objet in a paged way
+     * @param maxKeysPerPage
+     * @param continuationToken
+     * @return
+     */
     public ObjectListResultDTO listFromStorage(int maxKeysPerPage, String continuationToken) {
         return wrapCatch(
                 () -> attachmentMapper.fromModel(
@@ -330,5 +339,26 @@ public class AttachmentService {
                 -1,
                 "AttachmentService::listFromStorage"
         );
+    }
+
+    /**
+     * Set the in use flag of an attachment
+     * @param attachmentID the attachment id
+     * @param inUse the 'in use' flag
+     * @return true
+     */
+    public Boolean setInUse(String attachmentID, boolean inUse) {
+        wrapCatch(
+                () -> {
+                    attachmentRepository.setInUseState(
+                            attachmentID,
+                            inUse
+                    );
+                    return null;
+                },
+                -1,
+                "AttachmentService::setInUse"
+        );
+        return true;
     }
 }
