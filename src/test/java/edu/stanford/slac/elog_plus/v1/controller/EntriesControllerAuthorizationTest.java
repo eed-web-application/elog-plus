@@ -2,6 +2,7 @@ package edu.stanford.slac.elog_plus.v1.controller;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.config.AppProperties;
+import edu.stanford.slac.elog_plus.exception.LogbookNotAuthorized;
 import edu.stanford.slac.elog_plus.exception.NotAuthorized;
 import edu.stanford.slac.elog_plus.model.Attachment;
 import edu.stanford.slac.elog_plus.model.Authorization;
@@ -403,9 +404,83 @@ public class EntriesControllerAuthorizationTest {
                         )
                 )
         );
+
+        // add one entry into first logbook
+        ApiResultResponse<String> newLogID1 =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.createNewLog(
+                                mockMvc,
+                                status().isCreated(),
+                                Optional.of(
+                                        "user1@slac.stanford.edu"
+                                ),
+                                EntryNewDTO
+                                        .builder()
+                                        .logbooks(
+                                                List.of(
+                                                        newLogBookResult1.getPayload()
+                                                )
+                                        )
+                                        .text("This is a log for test")
+                                        .title("A very wonderful log for logbook1")
+                                        .build()
+                        )
+                );
+
+        assertThat(newLogID1.getErrorCode()).isEqualTo(0);
+
+        // add two entry into second logbook
+        ApiResultResponse<String> newLogID2 =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.createNewLog(
+                                mockMvc,
+                                status().isCreated(),
+                                Optional.of(
+                                        "user1@slac.stanford.edu"
+                                ),
+                                EntryNewDTO
+                                        .builder()
+                                        .logbooks(
+                                                List.of(
+                                                        newLogBookResult1.getPayload(),
+                                                        newLogBookResult2.getPayload()
+                                                )
+                                        )
+                                        .text("This is a log for test")
+                                        .title("A very wonderful logbook 1 and 2")
+                                        .build()
+                        )
+                );
+
+        assertThat(newLogID2.getErrorCode()).isEqualTo(0);
+
+        ApiResultResponse<String> newLogID3 =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.createNewLog(
+                                mockMvc,
+                                status().isCreated(),
+                                Optional.of(
+                                        "user1@slac.stanford.edu"
+                                ),
+                                EntryNewDTO
+                                        .builder()
+                                        .logbooks(
+                                                List.of(
+                                                        newLogBookResult1.getPayload(),
+                                                        newLogBookResult2.getPayload()
+                                                )
+                                        )
+                                        .text("This is a log for test")
+                                        .title("Another very wonderful logbook 1 and 2")
+                                        .build()
+                        )
+                );
+
+        assertThat(newLogID3.getErrorCode()).isEqualTo(0);
+
         //execute search with user two
         var searchResult = assertDoesNotThrow(
-                ()->testControllerHelperService.submitSearchByGetWithAnchor(
+                () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
                         Optional.of(
@@ -425,19 +500,149 @@ public class EntriesControllerAuthorizationTest {
         );
         assertThat(searchResult).isNotNull();
         assertThat(searchResult.getErrorCode()).isEqualTo(0);
-        assertThat(searchResult.getPayload()).hasSize(1);
+        assertThat(searchResult.getPayload()).hasSize(3);
         assertThat(searchResult.getPayload())
-                .extracting(EntrySummaryDTO::logbooks)
-                .extracting("name")
-                .isEqualTo("LogbookAuthTest1");
+                .extracting(EntrySummaryDTO::id)
+                .contains(
+                        newLogID1.getPayload(),
+                        newLogID2.getPayload(),
+                        newLogID3.getPayload()
+                );
+
+        // search same user on al the authorized logbook
+        searchResult = assertDoesNotThrow(
+                () -> testControllerHelperService.submitSearchByGetWithAnchor(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of(
+                                "user2@slac.stanford.edu"
+                        ),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty()
+                )
+        );
+        assertThat(searchResult).isNotNull();
+        assertThat(searchResult.getErrorCode()).isEqualTo(0);
+        assertThat(searchResult.getPayload()).hasSize(3);
+        assertThat(searchResult.getPayload())
+                .extracting(EntrySummaryDTO::id)
+                .contains(
+                        newLogID1.getPayload(),
+                        newLogID2.getPayload(),
+                        newLogID3.getPayload()
+                );
 
         //execute search with user three
         searchResult = assertDoesNotThrow(
-                ()->testControllerHelperService.submitSearchByGetWithAnchor(
+                () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
                         Optional.of(
+                                "user3@slac.stanford.edu"
+                        ),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(List.of(newLogBookResult2.getPayload())),
+                        Optional.empty()
+                )
+        );
+        assertThat(searchResult).isNotNull();
+        assertThat(searchResult.getErrorCode()).isEqualTo(0);
+        assertThat(searchResult.getPayload()).hasSize(2);
+        assertThat(searchResult.getPayload())
+                .extracting(EntrySummaryDTO::id)
+                .contains(
+                        newLogID2.getPayload(),
+                        newLogID3.getPayload()
+                );
+    }
+
+    @Test
+    public void searchFailsOnNonAuthorizedLogbook() {
+        var newLogBookResult1 = assertDoesNotThrow(
+                () -> testControllerHelperService.getNewLogbookWithNameWithAuthorization(
+                        mockMvc,
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
+                        "LogbookAuthTest1",
+                        List.of(
+                                AuthorizationDTO
+                                        .builder()
+                                        .ownerType("User")
+                                        .owner("user2@slac.stanford.edu")
+                                        .authorizationType(AuthorizationTypeDTO.Read)
+                                        .build()
+                        )
+                )
+        );
+        assertThat(newLogBookResult1.getErrorCode()).isEqualTo(0);
+        var newLogBookResult2 = assertDoesNotThrow(
+                () -> testControllerHelperService.getNewLogbookWithNameWithAuthorization(
+                        mockMvc,
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
+                        "LogbookAuthTest2",
+                        List.of(
+                                AuthorizationDTO
+                                        .builder()
+                                        .ownerType("User")
+                                        .owner("user3@slac.stanford.edu")
+                                        .authorizationType(AuthorizationTypeDTO.Read)
+                                        .build()
+                        )
+                )
+        );
+
+
+        // this should give exception because user 2 is not authorized on logbook 2
+        var exceptionForUser2 = assertThrows(
+                LogbookNotAuthorized.class,
+                () -> testControllerHelperService.submitSearchByGetWithAnchor(
+                        mockMvc,
+                        status().isUnauthorized(),
+                        Optional.of(
                                 "user2@slac.stanford.edu"
+                        ),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(List.of(newLogBookResult2.getPayload())),
+                        Optional.empty()
+                )
+        );
+        assertThat(exceptionForUser2.getErrorCode()).isEqualTo(-1);
+        assertThat(exceptionForUser2.getErrorMessage()).contains("logbookauthtest2");
+
+
+        // this should give exception because user 3 is not authorized on logbook 1
+        var exceptionForUser3 = assertThrows(
+                LogbookNotAuthorized.class,
+                () -> testControllerHelperService.submitSearchByGetWithAnchor(
+                        mockMvc,
+                        status().isUnauthorized(),
+                        Optional.of(
+                                "user3@slac.stanford.edu"
                         ),
                         Optional.empty(),
                         Optional.empty(),
@@ -451,12 +656,7 @@ public class EntriesControllerAuthorizationTest {
                         Optional.empty()
                 )
         );
-        assertThat(searchResult).isNotNull();
-        assertThat(searchResult.getErrorCode()).isEqualTo(0);
-        assertThat(searchResult.getPayload()).hasSize(1);
-        assertThat(searchResult.getPayload())
-                .extracting(EntrySummaryDTO::logbooks)
-                .extracting("name")
-                .isEqualTo("LogbookAuthTest2");
+        assertThat(exceptionForUser3.getErrorCode()).isEqualTo(-1);
+        assertThat(exceptionForUser3.getErrorMessage()).contains("logbookauthtest1");
     }
 }

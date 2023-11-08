@@ -558,6 +558,10 @@ public class TestControllerHelperService {
                 )
                 .andExpect(resultMatcher)
                 .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
         return new ObjectMapper().readValue(
                 result.getResponse().getContentAsString(),
                 new TypeReference<>() {

@@ -377,7 +377,7 @@ public class EntriesController {
                                 .startDate(startDate.orElse(null))
                                 .endDate(endDate.orElse(null))
                                 .contextSize(contextSize.orElse(0))
-                                .limit(limit.orElse(0))
+                                .limit(limit.orElse(10))
                                 .search(search.orElse(null))
                                 .tags(tags.orElse(Collections.emptyList()))
                                 .logbooks(logBook.orElse(authorizeLogbooks))
