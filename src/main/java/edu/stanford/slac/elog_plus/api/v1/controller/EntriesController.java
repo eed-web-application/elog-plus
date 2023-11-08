@@ -2,9 +2,12 @@ package edu.stanford.slac.elog_plus.api.v1.controller;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.config.AppProperties;
+import edu.stanford.slac.elog_plus.exception.LogbookNotAuthorized;
+import edu.stanford.slac.elog_plus.exception.LogbookNotFound;
 import edu.stanford.slac.elog_plus.exception.NotAuthorized;
 import edu.stanford.slac.elog_plus.service.AuthService;
 import edu.stanford.slac.elog_plus.service.EntryService;
+import edu.stanford.slac.elog_plus.service.LogbookService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -30,9 +33,10 @@ import static edu.stanford.slac.elog_plus.exception.Utility.*;
 @AllArgsConstructor
 @Schema(description = "Main set of api for the query on the log entries")
 public class EntriesController {
-    private AuthService authService;
-    private EntryService entryService;
-    private AppProperties appProperties;
+    final private AuthService authService;
+    final private EntryService entryService;
+    final private AppProperties appProperties;
+    final private LogbookService logbookService;
 
     @PostMapping(produces = {MediaType.APPLICATION_JSON_VALUE})
     @Operation(description = "Perform the query on all log entries")
@@ -63,7 +67,7 @@ public class EntriesController {
                 )
         );
         PersonDTO creator = null;
-        if(authentication.getCredentials().toString().endsWith(appProperties.getApplicationTokenDomain())){
+        if (authentication.getCredentials().toString().endsWith(appProperties.getApplicationTokenDomain())) {
             // create fake person for authentication token
             creator = PersonDTO
                     .builder()
@@ -333,7 +337,38 @@ public class EntriesController {
             @Parameter(name = "hideSummaries", description = "Hide the summaries from the search(default is false)")
             @RequestParam(value = "hideSummaries", defaultValue = "false") Optional<Boolean> hideSummaries,
             @Parameter(name = "requireAllTags", description = "Require that all entries found includes all the tags")
-            @RequestParam(value = "requireAllTags", defaultValue = "false") Optional<Boolean> requireAllTags) {
+            @RequestParam(value = "requireAllTags", defaultValue = "false") Optional<Boolean> requireAllTags,
+            Authentication authentication
+    ) {
+        List<String> authorizeLogbooks = authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
+                        authentication.getCredentials().toString(),
+                        Read,
+                        "/logbook/"
+                ).stream().map(
+                        auth -> auth.resource().substring(
+                                auth.resource().lastIndexOf("/") + 1
+                        )
+                )
+                .toList();
+
+        if (logBook.isPresent() && !logBook.get().isEmpty()) {
+            // filter out logbook id that are not authorized for the
+            // current user
+            logBook.get().forEach(
+                    lId -> {
+                        if(!authorizeLogbooks.contains(lId)) {
+                            // notify the error on logbook authorization
+                            var logbook = logbookService.getLogbook(lId);
+                            throw LogbookNotAuthorized.logbookAuthorizedBuilder()
+                                    .errorCode(-1)
+                                    .logbookName(logbook.name())
+                                    .errorDomain("EntriesController::search")
+                                    .build();
+                        }
+
+                    }
+            );
+        }
         return ApiResultResponse.of(
                 entryService.searchAll(
                         QueryWithAnchorDTO
@@ -345,7 +380,7 @@ public class EntriesController {
                                 .limit(limit.orElse(0))
                                 .search(search.orElse(null))
                                 .tags(tags.orElse(Collections.emptyList()))
-                                .logbooks(logBook.orElse(Collections.emptyList()))
+                                .logbooks(logBook.orElse(authorizeLogbooks))
                                 .sortByLogDate(sortByLogDate.orElse(false))
                                 .hideSummaries(hideSummaries.orElse(false))
                                 .requireAllTags(requireAllTags.orElse(false))

@@ -252,6 +252,9 @@ public class EntriesControllerTest {
         var queryResult = testControllerHelperService.submitSearchByGetWithAnchor(
                 mockMvc,
                 status().isOk(),
+                Optional.of(
+                        "user1@slac.stanford.edu"
+                ),
                 Optional.empty(),
                 Optional.empty(),
                 Optional.empty(),
@@ -382,6 +385,9 @@ public class EntriesControllerTest {
         var queryResult = testControllerHelperService.submitSearchByGetWithAnchor(
                 mockMvc,
                 status().isOk(),
+                Optional.of(
+                        "user1@slac.stanford.edu"
+                ),
                 Optional.empty(),
                 Optional.empty(),
                 Optional.empty(),
@@ -830,6 +836,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
@@ -864,6 +873,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         Optional.of(testAnchorLog.id()),
                         Optional.empty(),
                         Optional.empty(),
@@ -898,6 +910,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         Optional.of(testAnchorLog.id()),
                         Optional.empty(),
                         Optional.empty(),
@@ -921,6 +936,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         Optional.of(testAnchorLog.id()),
                         Optional.empty(),
                         Optional.empty(),
@@ -1007,6 +1025,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
@@ -1104,6 +1125,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
@@ -1125,6 +1149,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
@@ -1172,6 +1199,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
@@ -1360,6 +1390,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
@@ -1394,6 +1427,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         Optional.of(testAnchorLog.id()),
                         Optional.empty(),
                         Optional.empty(),
@@ -1428,6 +1464,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         Optional.of(testAnchorLog.id()),
                         Optional.empty(),
                         Optional.empty(),
@@ -1451,6 +1490,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         Optional.of(testAnchorLog.id()),
                         Optional.empty(),
                         Optional.empty(),
@@ -1506,6 +1548,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
@@ -1540,6 +1585,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         Optional.of(testAnchorLog.id()),
                         Optional.empty(),
                         Optional.empty(),
@@ -1574,6 +1622,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         Optional.of(testAnchorLog.id()),
                         Optional.empty(),
                         Optional.empty(),
@@ -1597,6 +1648,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         Optional.of(testAnchorLog.id()),
                         Optional.empty(),
                         Optional.empty(),
@@ -1653,6 +1707,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         Optional.empty(),
                         Optional.of(now.minusDays(10)),
                         Optional.empty(),
@@ -1678,6 +1735,9 @@ public class EntriesControllerTest {
                 () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
                         status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
                         Optional.empty(),
                         Optional.of(now.minusDays(10)),
                         Optional.of(now.minusDays(5)),
@@ -1739,6 +1799,9 @@ public class EntriesControllerTest {
                     () -> testControllerHelperService.submitSearchByGetWithAnchor(
                             mockMvc,
                             status().isOk(),
+                            Optional.of(
+                                    "user1@slac.stanford.edu"
+                            ),
                             (finalAnchorEntry == null) ? Optional.empty() : Optional.of(finalAnchorEntry.id()),
                             Optional.of(now.minusDays(50)),
                             Optional.of(now.minusDays(1)),

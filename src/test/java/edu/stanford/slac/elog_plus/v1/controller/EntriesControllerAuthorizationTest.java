@@ -25,6 +25,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -365,4 +366,97 @@ public class EntriesControllerAuthorizationTest {
         assertThat(entryForUser3.getPayload().logbooks()).extracting("id").contains(newLogBookResult2.getPayload());
     }
 
+    @Test
+    public void testEntriesSearchForAuthorization() {
+        var newLogBookResult1 = assertDoesNotThrow(
+                () -> testControllerHelperService.getNewLogbookWithNameWithAuthorization(
+                        mockMvc,
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
+                        "LogbookAuthTest1",
+                        List.of(
+                                AuthorizationDTO
+                                        .builder()
+                                        .ownerType("User")
+                                        .owner("user2@slac.stanford.edu")
+                                        .authorizationType(AuthorizationTypeDTO.Read)
+                                        .build()
+                        )
+                )
+        );
+        assertThat(newLogBookResult1.getErrorCode()).isEqualTo(0);
+        var newLogBookResult2 = assertDoesNotThrow(
+                () -> testControllerHelperService.getNewLogbookWithNameWithAuthorization(
+                        mockMvc,
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
+                        "LogbookAuthTest2",
+                        List.of(
+                                AuthorizationDTO
+                                        .builder()
+                                        .ownerType("User")
+                                        .owner("user3@slac.stanford.edu")
+                                        .authorizationType(AuthorizationTypeDTO.Read)
+                                        .build()
+                        )
+                )
+        );
+        //execute search with user two
+        var searchResult = assertDoesNotThrow(
+                ()->testControllerHelperService.submitSearchByGetWithAnchor(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of(
+                                "user2@slac.stanford.edu"
+                        ),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(List.of(newLogBookResult1.getPayload())),
+                        Optional.empty()
+                )
+        );
+        assertThat(searchResult).isNotNull();
+        assertThat(searchResult.getErrorCode()).isEqualTo(0);
+        assertThat(searchResult.getPayload()).hasSize(1);
+        assertThat(searchResult.getPayload())
+                .extracting(EntrySummaryDTO::logbooks)
+                .extracting("name")
+                .isEqualTo("LogbookAuthTest1");
+
+        //execute search with user three
+        searchResult = assertDoesNotThrow(
+                ()->testControllerHelperService.submitSearchByGetWithAnchor(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of(
+                                "user2@slac.stanford.edu"
+                        ),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(List.of(newLogBookResult1.getPayload())),
+                        Optional.empty()
+                )
+        );
+        assertThat(searchResult).isNotNull();
+        assertThat(searchResult.getErrorCode()).isEqualTo(0);
+        assertThat(searchResult.getPayload()).hasSize(1);
+        assertThat(searchResult.getPayload())
+                .extracting(EntrySummaryDTO::logbooks)
+                .extracting("name")
+                .isEqualTo("LogbookAuthTest2");
+    }
 }
