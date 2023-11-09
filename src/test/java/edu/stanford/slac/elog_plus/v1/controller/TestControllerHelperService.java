@@ -519,6 +519,7 @@ public class TestControllerHelperService {
     public ApiResultResponse<List<EntrySummaryDTO>> submitSearchByGetWithAnchor(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
+            Optional<String> userInfo,
             Optional<String> anchorId,
             Optional<LocalDateTime> startDate,
             Optional<LocalDateTime> endDate,
@@ -551,11 +552,16 @@ public class TestControllerHelperService {
             logbook.toArray(lbArray);
             getBuilder.param("logbooks", lbArray);
         });
+        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
         MvcResult result = mockMvc.perform(
                         getBuilder
                 )
                 .andExpect(resultMatcher)
                 .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
         return new ObjectMapper().readValue(
                 result.getResponse().getContentAsString(),
                 new TypeReference<>() {
