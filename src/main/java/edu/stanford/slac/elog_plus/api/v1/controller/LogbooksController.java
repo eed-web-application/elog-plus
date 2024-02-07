@@ -26,15 +26,23 @@ public class LogbooksController {
     private AuthService authService;
     private LogbookService logbookService;
 
+    /**
+     * Get all the logbooks
+     *
+     * @param authentication the authentication object
+     * @param includeAuthorizations if true the authorizations will be loaded for every logbook found
+     * @param authorizationType filter the logbook for authorizations types
+     * @return a list of logbooks
+     */
     @GetMapping(
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     public ApiResultResponse<List<LogbookDTO>> getAllLogbook(
+            Authentication authentication,
             @Parameter(name = "includeAuthorizations", description = "If true the authorizations will be loaded for every logbook found")
             @RequestParam("includeAuthorizations") Optional<Boolean> includeAuthorizations,
             @Parameter(name = "filterForAuthorizationTypes", description = "Filter the logbook for authorizations types")
-            @RequestParam("filterForAuthorizationTypes") Optional<AuthorizationTypeDTO> authorizationType,
-            Authentication authentication
+            @RequestParam("filterForAuthorizationTypes") Optional<AuthorizationTypeDTO> authorizationType
     ) {
         assertion(
                 () -> authService.checkAuthentication(authentication),

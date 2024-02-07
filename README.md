@@ -57,6 +57,9 @@ ELOG_PLUS_ROOT_AUTHENTICATION_TOKEN_JSON: '[{"name":"root-token-1","expiration":
 ### Execute the application in docker
 To launch the backend application, simply execute the following command:
 ```shell
-docker compose -f docker-compose.yml -f docker-compose-app.yml up
+docker compose -f docker-compose.yml -f docker-compose-app.yml up --build 
 ```
+
+***Note***: the '**_--build_**' parameter force the backend service to be rebuilt every time is started up (useful when the code is updated).
+
 This command initiates the Docker Compose setup, which includes spinning up Minio, Kafka, MongoDB, and the backend as a unified Docker Compose application. Once the process is complete, you can access the backend through port 8080.
