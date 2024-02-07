@@ -246,7 +246,7 @@ public class LogbookControllerAuthTest {
                         AuthenticationTokenDTO
                                 .builder()
                                 .name("token-a")
-                                .expiration(LocalDate.of(2023,12,31))
+                                .expiration(LocalDate.of(2023, 12, 31))
                                 .build()
                 )
         );
@@ -295,5 +295,102 @@ public class LogbookControllerAuthTest {
                 .isEqualTo(0);
         assertThat(allLogbookResultUser3.getPayload())
                 .hasSize(0);
+    }
+    @Test
+    public void getAsReadAuthorizedUser() {
+        var newLogbookApiResultOneReader = assertDoesNotThrow(
+                () -> testControllerHelperService.getNewLogbookWithNameWithAuthorizationAndAppToken(
+                        mockMvc,
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
+                        "new logbook",
+                        List.of(
+                                AuthorizationDTO
+                                        .builder()
+                                        .owner("user2@slac.stanford.edu")
+                                        .ownerType("User")
+                                        .authorizationType(
+                                                Read
+                                        )
+                                        .build()
+                        ),
+                        List.of()
+                )
+        );
+        var newLogbookApiResultTwoWriter = assertDoesNotThrow(
+                () -> testControllerHelperService.getNewLogbookWithNameWithAuthorizationAndAppToken(
+                        mockMvc,
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
+                        "new logbook 2",
+                        List.of(
+                                AuthorizationDTO
+                                        .builder()
+                                        .owner("user2@slac.stanford.edu")
+                                        .ownerType("User")
+                                        .authorizationType(
+                                                Write
+                                        )
+                                        .build()
+                        ),
+                        List.of()
+                )
+        );
+        var newLogbookApiResultThreeReader = assertDoesNotThrow(
+                () -> testControllerHelperService.getNewLogbookWithNameWithAuthorizationAndAppToken(
+                        mockMvc,
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
+                        "new logbook 3",
+                        List.of(
+                                AuthorizationDTO
+                                        .builder()
+                                        .owner("user2@slac.stanford.edu")
+                                        .ownerType("User")
+                                        .authorizationType(
+                                                Read
+                                        )
+                                        .build()
+                        ),
+                        List.of()
+                )
+        );
+
+        var logbookThaUser2CanRead = assertDoesNotThrow(
+                () -> testControllerHelperService.getAllLogbook(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user2@slac.stanford.edu"),
+                        Optional.of(false),
+                        Optional.of(Read.name())
+                )
+        );
+        assertThat(logbookThaUser2CanRead.getPayload())
+                .hasSize(3)
+                .extracting(LogbookDTO::id)
+                .contains(
+                        newLogbookApiResultOneReader.getPayload(),
+                        newLogbookApiResultTwoWriter.getPayload(),
+                        newLogbookApiResultThreeReader.getPayload()
+                );
+
+        var logbookThaUser2CanWrite = assertDoesNotThrow(
+                () -> testControllerHelperService.getAllLogbook(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user2@slac.stanford.edu"),
+                        Optional.of(false),
+                        Optional.of(Write.name())
+                )
+        );
+        assertThat(logbookThaUser2CanWrite.getPayload())
+                .hasSize(1)
+                .extracting(LogbookDTO::id)
+                .contains(
+                        newLogbookApiResultTwoWriter.getPayload()
+                );
     }
 }
