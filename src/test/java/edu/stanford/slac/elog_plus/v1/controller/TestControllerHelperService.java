@@ -77,7 +77,7 @@ public class TestControllerHelperService {
         var updateApiResult = assertDoesNotThrow(
                 () -> updateLogbook(
                         mockMvc,
-                        status().isCreated(),
+                        status().isOk(),
                         userInfo,
                         newLogbookApiResult.getPayload(),
                         UpdateLogbookDTO
