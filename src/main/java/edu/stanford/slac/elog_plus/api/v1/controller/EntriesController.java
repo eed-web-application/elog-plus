@@ -340,35 +340,54 @@ public class EntriesController {
             @RequestParam(value = "requireAllTags", defaultValue = "false") Optional<Boolean> requireAllTags,
             Authentication authentication
     ) {
-        List<String> authorizeLogbooks = authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
-                        authentication.getCredentials().toString(),
-                        Read,
-                        "/logbook/"
-                ).stream().map(
-                        auth -> auth.resource().substring(
-                                auth.resource().lastIndexOf("/") + 1
-                        )
-                )
-                .toList();
+        List<String> authorizeLogbooks = null;
+        // check authorization on
+        assertion(
+                NotAuthorized.notAuthorizedBuilder()
+                        .errorCode(-1)
+                        .errorDomain("EntriesController::search")
+                        .build(),
+                // need to be authenticated
+                () -> authService.checkAuthentication(authentication)
+        );
 
-        if (logBook.isPresent() && !logBook.get().isEmpty()) {
-            // filter out logbook id that are not authorized for the
-            // current user
-            logBook.get().forEach(
-                    lId -> {
-                        if(!authorizeLogbooks.contains(lId)) {
-                            // notify the error on logbook authorization
-                            var logbook = logbookService.getLogbook(lId);
-                            throw LogbookNotAuthorized.logbookAuthorizedBuilder()
-                                    .errorCode(-1)
-                                    .logbookName(logbook.name())
-                                    .errorDomain("EntriesController::search")
-                                    .build();
+        if(!authService.checkForRoot(authentication)) {
+            // if user is not root whe t check for specific authorization
+            authorizeLogbooks = authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
+                            authentication.getCredentials().toString(),
+                            Read,
+                            "/logbook/"
+                    ).stream().map(
+                            auth -> auth.resource().substring(
+                                    auth.resource().lastIndexOf("/") + 1
+                            )
+                    )
+                    .toList();
+
+            if (logBook.isPresent() && !logBook.get().isEmpty()) {
+                // filter out logbook id that are not authorized for the
+                // current user
+                List<String> finalAuthorizeLogbooks = authorizeLogbooks;
+                logBook.get().forEach(
+                        lId -> {
+                            if(!finalAuthorizeLogbooks.contains(lId)) {
+                                // notify the error on logbook authorization
+                                var logbook = logbookService.getLogbook(lId);
+                                throw LogbookNotAuthorized.logbookAuthorizedBuilder()
+                                        .errorCode(-1)
+                                        .logbookName(logbook.name())
+                                        .errorDomain("EntriesController::search")
+                                        .build();
+                            }
+
                         }
-
-                    }
-            );
+                );
+            }
+        } else {
+            // if user is root we can use all logbook
+            authorizeLogbooks = logBook.orElse(Collections.emptyList());
         }
+
         return ApiResultResponse.of(
                 entryService.searchAll(
                         QueryWithAnchorDTO
@@ -380,7 +399,7 @@ public class EntriesController {
                                 .limit(limit.orElse(0))
                                 .search(search.orElse(null))
                                 .tags(tags.orElse(Collections.emptyList()))
-                                .logbooks(logBook.orElse(authorizeLogbooks))
+                                .logbooks(authorizeLogbooks)
                                 .sortByLogDate(sortByLogDate.orElse(false))
                                 .hideSummaries(hideSummaries.orElse(false))
                                 .requireAllTags(requireAllTags.orElse(false))

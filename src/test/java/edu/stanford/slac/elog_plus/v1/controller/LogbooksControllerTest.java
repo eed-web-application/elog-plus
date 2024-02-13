@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -411,7 +412,7 @@ public class LogbooksControllerTest {
         ApiResultResponse<Boolean> replacementResult = assertDoesNotThrow(
                 () -> testControllerHelperService.updateLogbook(
                         mockMvc,
-                        status().isCreated(),
+                        status().isOk(),
                         Optional.of(
                                 "user1@slac.stanford.edu"
                         ),
@@ -479,7 +480,7 @@ public class LogbooksControllerTest {
         ApiResultResponse<Boolean> replacementResult = assertDoesNotThrow(
                 () -> testControllerHelperService.updateLogbook(
                         mockMvc,
-                        status().isCreated(),
+                        status().isOk(),
                         Optional.of(
                                 "user1@slac.stanford.edu"
                         ),
@@ -488,7 +489,7 @@ public class LogbooksControllerTest {
                                 .builder()
                                 .name("updated name")
                                 .tags(
-                                        Collections.emptyList()
+                                        emptyList()
                                 )
                                 .shifts(
                                         List.of(
@@ -664,5 +665,113 @@ public class LogbooksControllerTest {
         assertThat(allTagsResult).isNotNull();
         assertThat(allTagsResult.getErrorCode()).isEqualTo(0);
         assertThat(allTagsResult.getPayload().size()).isEqualTo(200);
+    }
+
+    /**
+     * Test for issue #180
+     * <a href="https://github.com/eed-web-application/elog-plus/issues/180"/>
+     */
+    @Test
+    public void testIssue180AuthorizationNotDeleted() {
+        ApiResultResponse<String> creationResult = assertDoesNotThrow(
+                () -> testControllerHelperService.createNewLogbook(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
+                        NewLogbookDTO.builder()
+                                .name("new-logbooks")
+                                .build()
+                )
+        );
+
+        assertThat(creationResult).isNotNull();
+        assertThat(creationResult.getErrorCode()).isEqualTo(0);
+        assertThat(creationResult.getPayload()).isNotEmpty();
+        // add authorization
+        ApiResultResponse<Boolean> replacementResult = assertDoesNotThrow(
+                () -> testControllerHelperService.updateLogbook(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
+                        creationResult.getPayload(),
+                        UpdateLogbookDTO
+                                .builder()
+                                .name("updated name")
+                                .tags(emptyList())
+                                .shifts(emptyList())
+                                .authorizations(
+                                        List.of(
+                                                AuthorizationDTO
+                                                        .builder()
+                                                        .authorizationType(AuthorizationTypeDTO.Write)
+                                                        .owner("user2@slac.stanford.edu")
+                                                        .ownerType("User")
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(replacementResult).isNotNull();
+        assertThat(replacementResult.getErrorCode()).isEqualTo(0);
+
+        ApiResultResponse<LogbookDTO> fullLogbook = assertDoesNotThrow(
+                () -> testControllerHelperService.getLogbookByID(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
+                        creationResult.getPayload(),
+                        Optional.of(true)
+                )
+        );
+        assertThat(fullLogbook.getErrorCode()).isEqualTo(0);
+        assertThat(fullLogbook.getPayload().name()).isEqualTo("updated-name");
+        assertThat(fullLogbook.getPayload().authorizations())
+                .hasSize(1)
+                .extracting(AuthorizationDTO::owner)
+                .contains("user2@slac.stanford.edu");
+
+        // try to remove auth
+        replacementResult = assertDoesNotThrow(
+                () -> testControllerHelperService.updateLogbook(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
+                        creationResult.getPayload(),
+                        UpdateLogbookDTO
+                                .builder()
+                                .name("updated name")
+                                .tags(emptyList())
+                                .shifts(emptyList())
+                                .authorizations(emptyList())
+                                .build()
+                )
+        );
+        assertThat(replacementResult).isNotNull();
+        assertThat(replacementResult.getErrorCode()).isEqualTo(0);
+
+        // check if authorization has been removed
+        fullLogbook = assertDoesNotThrow(
+                () -> testControllerHelperService.getLogbookByID(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
+                        creationResult.getPayload(),
+                        Optional.of(true)
+                )
+        );
+        assertThat(fullLogbook.getErrorCode()).isEqualTo(0);
+        assertThat(fullLogbook.getPayload().name()).isEqualTo("updated-name");
+        assertThat(fullLogbook.getPayload().authorizations()) .hasSize(0);
     }
 }

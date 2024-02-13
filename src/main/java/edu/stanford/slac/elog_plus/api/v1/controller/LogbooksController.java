@@ -141,7 +141,7 @@ public class LogbooksController {
             consumes = {MediaType.APPLICATION_JSON_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @ResponseStatus(HttpStatus.CREATED)
+    @ResponseStatus(HttpStatus.OK)
     public ApiResultResponse<Boolean> updateLogbook(
             @PathVariable String logbookId,
             @RequestBody UpdateLogbookDTO updateLogbookDTO,
