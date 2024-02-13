@@ -1838,7 +1838,7 @@ public class EntriesControllerTest {
         ApiResultResponse<Boolean> replacementResult = assertDoesNotThrow(
                 () -> testControllerHelperService.updateLogbook(
                         mockMvc,
-                        status().isCreated(),
+                        status().isOk(),
                         Optional.of(
                                 "user1@slac.stanford.edu"
                         ),

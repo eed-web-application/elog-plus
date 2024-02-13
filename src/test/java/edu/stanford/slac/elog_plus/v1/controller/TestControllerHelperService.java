@@ -644,6 +644,38 @@ public class TestControllerHelperService {
                 });
     }
 
+    /**
+     * Get logbook by id
+     * @param mockMvc  MockMvc
+     * @param resultMatcher ResultMatcher
+     * @param userInfo Optional<String>
+     * @param logbookID String
+     * @param includeAuthorizations Optional<Boolean>
+     * @return ApiResultResponse<LogbookDTO>
+     * @throws Exception Exception
+     */
+    public ApiResultResponse<LogbookDTO> getLogbookByID(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String logbookID,
+            Optional<Boolean> includeAuthorizations) throws Exception {
+        MockHttpServletRequestBuilder getBuilder =
+                get("/v1/logbooks/{logbookId}", logbookID)
+                        .accept(MediaType.APPLICATION_JSON);
+        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
+        includeAuthorizations.ifPresent(b -> getBuilder.param("includeAuthorizations", String.valueOf(b)));
+        MvcResult result = mockMvc.perform(
+                        getBuilder
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
+
     public ApiResultResponse<String> createNewLogbookTags(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
