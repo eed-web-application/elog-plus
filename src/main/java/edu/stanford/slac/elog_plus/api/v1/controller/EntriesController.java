@@ -368,6 +368,9 @@ public class EntriesController {
 
                     }
             );
+        } else {
+            // If logBook parameter is empty, restrict the entries to the authorized logbooks
+            logBook = Optional.of(authorizeLogbooks);
         }
         return ApiResultResponse.of(
                 entryService.searchAll(
