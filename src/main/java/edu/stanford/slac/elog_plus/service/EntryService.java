@@ -1,6 +1,8 @@
 package edu.stanford.slac.elog_plus.service;
 
 import com.github.javafaker.Faker;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.PersonDTO;
+import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.api.v1.mapper.EntryMapper;
 import edu.stanford.slac.elog_plus.api.v1.mapper.QueryParameterMapper;
@@ -22,8 +24,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
-import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
+import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
+import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 import static java.util.Collections.emptyList;
 
 @Service

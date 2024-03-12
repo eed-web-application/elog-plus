@@ -1,10 +1,13 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.*;
+import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
+import edu.stanford.slac.ad.eed.baselib.model.AuthenticationToken;
+import edu.stanford.slac.ad.eed.baselib.model.Authorization;
+import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
-import edu.stanford.slac.elog_plus.config.AppProperties;
-import edu.stanford.slac.elog_plus.exception.NotAuthorized;
+import edu.stanford.slac.elog_plus.config.ELOGAppProperties;
 import edu.stanford.slac.elog_plus.model.*;
-import edu.stanford.slac.elog_plus.service.AuthService;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import edu.stanford.slac.elog_plus.v1.service.DocumentGenerationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,6 +28,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO.Token;
+import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO.User;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -44,7 +49,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
     private LogbookService logbookService;
 
     @Autowired
-    AppProperties appProperties;
+    private AppProperties appProperties;
 
     @Autowired
     private AuthService authService;
@@ -84,13 +89,13 @@ public class EntriesControllerAuthorizationWithTokenTest {
                         List.of(
                                 AuthorizationDTO
                                         .builder()
-                                        .ownerType("User")
+                                        .ownerType(User)
                                         .owner("user2@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Write)
                                         .build(),
                                 AuthorizationDTO
                                         .builder()
-                                        .ownerType("User")
+                                        .ownerType(User)
                                         .owner("user3@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Admin)
                                         .build()
@@ -156,7 +161,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                         List.of(
                                 AuthorizationDTO
                                         .builder()
-                                        .ownerType("Group")
+                                        .ownerType(AuthorizationOwnerTypeDTO.Group)
                                         .owner("group-2")
                                         .authorizationType(AuthorizationTypeDTO.Write)
                                         .build()
@@ -200,7 +205,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                         List.of(
                                 AuthorizationDTO
                                         .builder()
-                                        .ownerType("User")
+                                        .ownerType(User)
                                         .owner("user2@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Read)
                                         .build()
@@ -218,7 +223,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                         List.of(
                                 AuthorizationDTO
                                         .builder()
-                                        .ownerType("User")
+                                        .ownerType(User)
                                         .owner("user3@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Read)
                                         .build()
@@ -284,7 +289,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                         List.of(
                                 AuthorizationDTO
                                         .builder()
-                                        .ownerType("Application")
+                                        .ownerType(Token)
                                         .owner(
                                                 testControllerHelperService.getTokenEmailForLogbookToken(
                                                         "token-a",
@@ -295,7 +300,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                         .build(),
                                 AuthorizationDTO
                                         .builder()
-                                        .ownerType("Application")
+                                        .ownerType(Token)
                                         .owner(
                                                 testControllerHelperService.getTokenEmailForLogbookToken(
                                                         "token-b",
@@ -419,7 +424,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                         List.of(
                                 AuthorizationDTO
                                         .builder()
-                                        .ownerType("Application")
+                                        .ownerType(Token)
                                         .owner(
                                                 testControllerHelperService.getTokenEmailForGlobalToken(
                                                         "token-a"
@@ -429,7 +434,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                         .build(),
                                 AuthorizationDTO
                                         .builder()
-                                        .ownerType("Application")
+                                        .ownerType(Token)
                                         .owner(
                                                 testControllerHelperService.getTokenEmailForGlobalToken(
                                                         "token-b"

@@ -1,11 +1,11 @@
 package edu.stanford.slac.elog_plus.v1.service;
 
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.PersonDTO;
+import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
+import edu.stanford.slac.ad.eed.baselib.service.AuthService;
+import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService;
 import edu.stanford.slac.elog_plus.api.v1.dto.NewLogbookDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.PersonDTO;
-import edu.stanford.slac.elog_plus.config.AppProperties;
-import edu.stanford.slac.elog_plus.service.AuthService;
 import edu.stanford.slac.elog_plus.service.LogbookService;
-import lombok.AllArgsConstructor;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -26,6 +26,8 @@ public class SharedUtilityService {
     private LogbookService logbookService;
     @Autowired
     private AuthService authService;
+    @Autowired
+    private PeopleGroupService peopleGroupService;
 
     public String getTestLogbook() {
         return getTestLogbook("new-logbooks");
@@ -48,13 +50,13 @@ public class SharedUtilityService {
         return "%s@%s.%s".formatted(
                 tokenNameNormalization(tokenName),
                 logbookNameNormalization(logbookName),
-                appProperties.getApplicationTokenDomain());
+                appProperties.getAppEmailPostfix());
     }
 
     public String getTokenEmailForGlobalToken(String tokenName) {
         return "%s@%s".formatted(
                 tokenNameNormalization(tokenName),
-                appProperties.getApplicationTokenDomain());
+                appProperties.getAuthenticationTokenDomain());
     }
 
     public Authentication getAuthenticationMockForFirstRootUser() {
@@ -69,7 +71,7 @@ public class SharedUtilityService {
 
 
     public PersonDTO getPersonForEmail(String mail) {
-        return authService.findPerson(getAuthenticationMockForEmail(mail));
+        return peopleGroupService.findPerson(getAuthenticationMockForEmail(mail));
     }
 
     public Authentication getAuthenticationMockForEmail(String email) {

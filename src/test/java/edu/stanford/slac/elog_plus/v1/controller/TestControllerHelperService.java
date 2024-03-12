@@ -2,12 +2,13 @@ package edu.stanford.slac.elog_plus.v1.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.*;
+import edu.stanford.slac.ad.eed.baselib.auth.JWTHelper;
+import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
+import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
-import edu.stanford.slac.elog_plus.auth.JWTHelper;
-import edu.stanford.slac.elog_plus.config.AppProperties;
-import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
+import edu.stanford.slac.elog_plus.config.ELOGAppProperties;
 import edu.stanford.slac.elog_plus.service.LogbookService;
-import edu.stanford.slac.elog_plus.utility.StringUtilities;
 import edu.stanford.slac.elog_plus.v1.service.SharedUtilityService;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.AssertionsForClassTypes;
@@ -29,9 +30,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static edu.stanford.slac.elog_plus.api.v1.mapper.AuthMapper.APP_TOKEN_LOGBOOK_EMAIL_DOMAIN;
-import static edu.stanford.slac.elog_plus.utility.StringUtilities.logbookNameNormalization;
-import static edu.stanford.slac.elog_plus.utility.StringUtilities.tokenNameNormalization;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -851,78 +849,6 @@ public class TestControllerHelperService {
                 });
     }
 
-    public ApiResultResponse<PersonDTO> getMe(
-            MockMvc mockMvc,
-            ResultMatcher resultMatcher,
-            Optional<String> userInfo) throws Exception {
-        MockHttpServletRequestBuilder getBuilder =
-                get("/v1/auth/me")
-                        .accept(MediaType.APPLICATION_JSON);
-        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
-        MvcResult result = mockMvc.perform(
-                        getBuilder
-                )
-                .andExpect(resultMatcher)
-                .andReturn();
-        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
-        if (someException.isPresent()) {
-            throw someException.get();
-        }
-        return new ObjectMapper().readValue(
-                result.getResponse().getContentAsString(),
-                new TypeReference<>() {
-                });
-    }
-
-    public ApiResultResponse<List<PersonDTO>> findUsers(
-            MockMvc mockMvc,
-            ResultMatcher resultMatcher,
-            Optional<String> userInfo,
-            Optional<String> search) throws Exception {
-        MockHttpServletRequestBuilder getBuilder =
-                get("/v1/auth/users")
-                        .accept(MediaType.APPLICATION_JSON);
-        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
-        search.ifPresent(string -> getBuilder.param("search", string));
-        MvcResult result = mockMvc.perform(
-                        getBuilder
-                )
-                .andExpect(resultMatcher)
-                .andReturn();
-        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
-        if (someException.isPresent()) {
-            throw someException.get();
-        }
-        return new ObjectMapper().readValue(
-                result.getResponse().getContentAsString(),
-                new TypeReference<>() {
-                });
-    }
-
-    public ApiResultResponse<List<GroupDTO>> findGroups(
-            MockMvc mockMvc,
-            ResultMatcher resultMatcher,
-            Optional<String> userInfo,
-            Optional<String> search) throws Exception {
-        MockHttpServletRequestBuilder getBuilder =
-                get("/v1/auth/groups")
-                        .accept(MediaType.APPLICATION_JSON);
-        userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
-        search.ifPresent(string -> getBuilder.param("search", string));
-        MvcResult result = mockMvc.perform(
-                        getBuilder
-                )
-                .andExpect(resultMatcher)
-                .andReturn();
-        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
-        if (someException.isPresent()) {
-            throw someException.get();
-        }
-        return new ObjectMapper().readValue(
-                result.getResponse().getContentAsString(),
-                new TypeReference<>() {
-                });
-    }
 
     public ApiResultResponse<AuthenticationTokenDTO> createNewAuthenticationToken(
             MockMvc mockMvc,

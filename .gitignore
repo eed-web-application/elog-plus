@@ -5,3 +5,4 @@ build
 dump.zip
 dump/elogs/entry.bson
 dump/elogs/entry.metadata.json
+/gradle.properties

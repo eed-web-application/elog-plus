@@ -3,37 +3,30 @@ package edu.stanford.slac.elog_plus.service;
 import edu.stanford.slac.elog_plus.api.v1.dto.AttachmentDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.ObjectListResultDTO;
 import edu.stanford.slac.elog_plus.api.v1.mapper.AttachmentMapper;
-import edu.stanford.slac.elog_plus.config.AppProperties;
+import edu.stanford.slac.elog_plus.config.ELOGAppProperties;
 import edu.stanford.slac.elog_plus.exception.AttachmentNotFound;
 import edu.stanford.slac.elog_plus.model.Attachment;
 import edu.stanford.slac.elog_plus.model.FileObjectDescription;
 import edu.stanford.slac.elog_plus.repository.AttachmentRepository;
 import edu.stanford.slac.elog_plus.repository.StorageRepository;
 import io.micrometer.core.instrument.Counter;
-import jdk.jfr.ContentType;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.MediaType;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 
-import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
-import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
+import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
+
 
 @Log4j2
 @Service
 @AllArgsConstructor
 public class AttachmentService {
     final private AttachmentMapper attachmentMapper;
-    final private AppProperties appProperties;
+    final private ELOGAppProperties appProperties;
     final private StorageRepository storageRepository;
     final private AttachmentRepository attachmentRepository;
     final private KafkaTemplate<String, Attachment> attachmentProducer;

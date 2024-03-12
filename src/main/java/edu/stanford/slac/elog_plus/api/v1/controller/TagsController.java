@@ -1,10 +1,10 @@
 package edu.stanford.slac.elog_plus.api.v1.controller;
 
-import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
+import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
+import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.LogbookDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.TagDTO;
-import edu.stanford.slac.elog_plus.exception.NotAuthorized;
-import edu.stanford.slac.elog_plus.service.AuthService;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -21,8 +21,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationTypeDTO.Read;
-import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
+import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Read;
+import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 
 @RestController()
 @RequestMapping("/v1/tags")

@@ -1,8 +1,7 @@
 package edu.stanford.slac.elog_plus.migration;
 
 
-import edu.stanford.slac.elog_plus.model.Authorization;
-import edu.stanford.slac.elog_plus.model.Entry;
+import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import io.mongock.api.annotations.ChangeUnit;
 import io.mongock.api.annotations.Execution;
 import io.mongock.api.annotations.RollbackExecution;
@@ -10,7 +9,6 @@ import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.index.Index;
-import org.springframework.data.mongodb.core.index.TextIndexDefinition;
 import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 
 @AllArgsConstructor

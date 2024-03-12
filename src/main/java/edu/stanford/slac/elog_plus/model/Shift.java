@@ -1,18 +1,15 @@
 package edu.stanford.slac.elog_plus.model;
 
-import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
+import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.utility.DateUtilities;
 import lombok.*;
 import org.springframework.data.annotation.Transient;
 
-import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
+import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 
 /**
  * Represent the shift during the day

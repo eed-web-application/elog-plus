@@ -1,11 +1,13 @@
 package edu.stanford.slac.elog_plus.api.v1.controller;
 
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.PersonDTO;
+import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
+import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
+import edu.stanford.slac.ad.eed.baselib.service.AuthService;
+import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
-import edu.stanford.slac.elog_plus.config.AppProperties;
 import edu.stanford.slac.elog_plus.exception.LogbookNotAuthorized;
-import edu.stanford.slac.elog_plus.exception.LogbookNotFound;
-import edu.stanford.slac.elog_plus.exception.NotAuthorized;
-import edu.stanford.slac.elog_plus.service.AuthService;
 import edu.stanford.slac.elog_plus.service.EntryService;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,15 +26,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import static edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationTypeDTO.Read;
-import static edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationTypeDTO.Write;
-import static edu.stanford.slac.elog_plus.exception.Utility.*;
+import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Read;
+import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Write;
+import static edu.stanford.slac.ad.eed.baselib.exception.Utility.*;
 
 @RestController()
 @RequestMapping("/v1/entries")
 @AllArgsConstructor
 @Schema(description = "Main set of api for the query on the log entries")
 public class EntriesController {
+    final private PeopleGroupService peopleGroupService;
     final private AuthService authService;
     final private EntryService entryService;
     final private AppProperties appProperties;
@@ -67,7 +70,7 @@ public class EntriesController {
                 )
         );
         PersonDTO creator = null;
-        if (authentication.getCredentials().toString().endsWith(appProperties.getApplicationTokenDomain())) {
+        if (authentication.getCredentials().toString().endsWith(appProperties.getAuthenticationTokenDomain())) {
             // create fake person for authentication token
             creator = PersonDTO
                     .builder()
@@ -75,7 +78,7 @@ public class EntriesController {
                     .mail(authentication.getPrincipal().toString())
                     .build();
         } else {
-            creator = authService.findPerson(authentication);
+            creator = peopleGroupService.findPerson(authentication);
         }
         return ApiResultResponse.of(
                 entryService.createNew(
@@ -162,7 +165,7 @@ public class EntriesController {
                 entryService.createNewFollowUp(
                         id,
                         newFollowUpEntry,
-                        authService.findPerson(authentication)
+                        peopleGroupService.findPerson(authentication)
                 )
         );
     }
@@ -356,7 +359,8 @@ public class EntriesController {
             authorizeLogbooks = authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
                             authentication.getCredentials().toString(),
                             Read,
-                            "/logbook/"
+                            "/logbook/",
+                    Optional.empty()
                     ).stream().map(
                             auth -> auth.resource().substring(
                                     auth.resource().lastIndexOf("/") + 1

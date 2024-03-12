@@ -1,10 +1,9 @@
 package edu.stanford.slac.elog_plus.repository;
 
-import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
+import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.QueryParameterWithAnchor;
 import lombok.AllArgsConstructor;
-import org.bson.types.ObjectId;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.*;
@@ -15,7 +14,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
 import static java.util.Collections.emptyList;
 
 @Repository

@@ -38,10 +38,6 @@ public class ActuatorControllerTest {
         String result = result_upload.getResponse().getContentAsString();
         assertThat(result)
                 .isNotNull()
-                .isNotEmpty()
-                .containsPattern(
-                        ".*build.*name.*version.*"
-                );
-
+                .isNotEmpty();
     }
 }

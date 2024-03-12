@@ -7,17 +7,15 @@ import edu.stanford.slac.elog_plus.exception.LogbookNotFound;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import edu.stanford.slac.elog_plus.model.Tag;
 import edu.stanford.slac.elog_plus.repository.LogbookRepository;
-import edu.stanford.slac.elog_plus.service.LogbookService;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.Named;
 import org.mapstruct.ReportingPolicy;
-import org.mapstruct.factory.Mappers;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Optional;
 
-import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
+import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
+
 
 @Mapper(
         unmappedTargetPolicy = ReportingPolicy.IGNORE,

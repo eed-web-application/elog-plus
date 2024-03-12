@@ -1,13 +1,11 @@
 package edu.stanford.slac.elog_plus.v1.service;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.AttachmentDTO;
-import edu.stanford.slac.elog_plus.config.AppProperties;
+import edu.stanford.slac.elog_plus.config.ELOGAppProperties;
 import edu.stanford.slac.elog_plus.model.Attachment;
 import edu.stanford.slac.elog_plus.model.FileObjectDescription;
 import edu.stanford.slac.elog_plus.repository.AttachmentRepository;
-import edu.stanford.slac.elog_plus.repository.StorageRepository;
 import edu.stanford.slac.elog_plus.service.AttachmentService;
-import edu.stanford.slac.elog_plus.service.EntryService;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,7 +29,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Iterator;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -58,7 +55,7 @@ public class AttachmentServiceTest {
     @Autowired
     private MongoTemplate mongoTemplate;
     @Autowired
-    private AppProperties appProperties;
+    private ELOGAppProperties appProperties;
 
     @BeforeEach
     public void preTest() {
