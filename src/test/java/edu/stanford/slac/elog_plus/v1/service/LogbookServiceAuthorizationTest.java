@@ -2,10 +2,10 @@ package edu.stanford.slac.elog_plus.v1.service;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthenticationTokenDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationDTO;
+import edu.stanford.slac.ad.eed.baselib.exception.AuthenticationTokenNotFound;
 import edu.stanford.slac.ad.eed.baselib.model.AuthenticationToken;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
-import edu.stanford.slac.elog_plus.exception.AuthenticationTokenNotFound;
 import edu.stanford.slac.elog_plus.exception.AuthorizationMalformed;
 import edu.stanford.slac.elog_plus.exception.DoubleAuthorizationError;
 import edu.stanford.slac.elog_plus.model.Logbook;

@@ -13,7 +13,7 @@ sourceCompatibility = '19'
 
 ext{
     ad_eed_baselib_version="0.1.42"
-    ad_eed_base_mongodb_lib_version="0.1.15"
+    ad_eed_base_mongodb_lib_version="0.1.16"
     javaSourceCompatibility = JavaVersion.VERSION_21
     javaTargetCompatibility = JavaVersion.VERSION_21
 }
@@ -112,7 +112,7 @@ dependencies {
             'org.springframework.security:spring-security-test',
             'org.springframework.ldap:spring-ldap-test',
             'org.awaitility:awaitility:4.2.0',
-            'org.apache.pdfbox:pdfbox:3.0.1'
+            'org.apache.pdfbox:pdfbox:2.0.30'
 
 }
 

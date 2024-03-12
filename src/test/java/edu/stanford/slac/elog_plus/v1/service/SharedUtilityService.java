@@ -56,7 +56,7 @@ public class SharedUtilityService {
     public String getTokenEmailForGlobalToken(String tokenName) {
         return "%s@%s".formatted(
                 tokenNameNormalization(tokenName),
-                appProperties.getAppEmailPostfix());
+                appProperties.getAuthenticationTokenDomain());
     }
 
     public Authentication getAuthenticationMockForFirstRootUser() {

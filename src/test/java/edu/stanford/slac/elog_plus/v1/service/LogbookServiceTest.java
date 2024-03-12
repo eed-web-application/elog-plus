@@ -2,6 +2,8 @@ package edu.stanford.slac.elog_plus.v1.service;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthenticationTokenDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.NewAuthenticationTokenDTO;
+import edu.stanford.slac.ad.eed.baselib.exception.AuthenticationTokenMalformed;
+import edu.stanford.slac.ad.eed.baselib.exception.AuthenticationTokenNotFound;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.model.AuthenticationToken;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;

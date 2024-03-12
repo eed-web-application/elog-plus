@@ -12,8 +12,6 @@ import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.util.List;
 
-import static org.apache.pdfbox.pdmodel.font.Standard14Fonts.FontName.HELVETICA;
-
 @Service
 public class DocumentGenerationService {
     private static final float MARGIN = 50;
@@ -30,57 +28,25 @@ public class DocumentGenerationService {
 
     public PDDocument generatePdf() throws IOException {
         Faker faker = new Faker();
-        PDDocument document = new PDDocument();
-        PDPage page = new PDPage();
-
-        document.addPage(page);
-        PDPageContentStream contentStream = new PDPageContentStream(document, page);
-        var font = new PDType1Font(HELVETICA);
-        contentStream.setFont(font, FONT_SIZE);
+        PDDocument doc = new PDDocument();
         List<String> paragraphs = faker.lorem().paragraphs(10);
-        float yStart = page.getMediaBox().getHeight() - MARGIN;
-        float xPosition = MARGIN;
-        float yPosition = yStart;
 
-        contentStream.beginText();
-        contentStream.newLineAtOffset(xPosition, yPosition);
+        PDPage page = new PDPage();
+        doc.addPage(page);
 
-        for (String paragraph : paragraphs) {
-            String[] words = paragraph.split(" ");
-            for (String word : words) {
-                String text = word + " ";
-                float textWidth = FONT_SIZE * font.getStringWidth(text) / 1000;
-                xPosition += textWidth;
+        try (PDPageContentStream contents = new PDPageContentStream(doc, page)) {
+            contents.beginText();
+            contents.setFont(PDType1Font.HELVETICA, 14);
+            contents.newLineAtOffset(100, 700);
 
-                if (xPosition + textWidth > page.getMediaBox().getWidth() - MARGIN) {
-                    contentStream.newLineAtOffset(-xPosition + MARGIN, -LEADING);
-                    xPosition = MARGIN;
-                    yPosition -= LEADING;
-
-                    if (yPosition < MARGIN) {
-                        contentStream.endText();
-                        contentStream.close();
-
-                        page = new PDPage();
-                        document.addPage(page);
-                        contentStream = new PDPageContentStream(document, page);
-                        contentStream.setFont(font, FONT_SIZE);
-                        contentStream.beginText();
-                        contentStream.newLineAtOffset(MARGIN, yStart);
-
-                        yPosition = yStart;
-                    }
-                }
-
-                contentStream.showText(text);
+            for (String paragraph : paragraphs) {
+                contents.showText(paragraph);
+                contents.newLineAtOffset(0, -15); // Move to the next line
             }
-            contentStream.newLineAtOffset(-xPosition + MARGIN, -LEADING);
-            xPosition = MARGIN;
-            yPosition -= LEADING;
+            contents.endText();
+        } catch (IOException e) {
+            System.err.println("Exception while trying to create pdf document - " + e);
         }
-
-        contentStream.endText();
-        contentStream.close();
-        return document;
+        return doc;
     }
 }

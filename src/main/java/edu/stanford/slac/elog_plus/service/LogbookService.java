@@ -7,6 +7,8 @@ import edu.stanford.slac.ad.eed.baselib.api.v1.dto.NewAuthenticationTokenDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.mapper.AuthMapper;
 import edu.stanford.slac.ad.eed.baselib.auth.JWTHelper;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
+import edu.stanford.slac.ad.eed.baselib.exception.AuthenticationTokenMalformed;
+import edu.stanford.slac.ad.eed.baselib.exception.AuthenticationTokenNotFound;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.model.AuthenticationToken;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;

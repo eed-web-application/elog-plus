@@ -70,7 +70,7 @@ public class EntriesController {
                 )
         );
         PersonDTO creator = null;
-        if (authentication.getCredentials().toString().endsWith(appProperties.getAppEmailPostfix())) {
+        if (authentication.getCredentials().toString().endsWith(appProperties.getAuthenticationTokenDomain())) {
             // create fake person for authentication token
             creator = PersonDTO
                     .builder()
