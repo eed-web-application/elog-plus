@@ -1,22 +1,19 @@
-# Phase 1: Build the Spring application using official Gradle image and Java 17
-FROM gradle:8-jdk19 AS build
+FROM eclipse-temurin:21-jammy
+RUN useradd -rm -d /home/app -s /bin/bash -g root -G sudo -u 1001 app
 
-WORKDIR /opt/app
-# Copy only the Gradle files to leverage Docker layer caching
-COPY . ./
+WORKDIR /home/app
+COPY ./tools/run.sh /home/app
+COPY ./build/libs/elog-plus-backend-*-plain.jar /home/app/app-plain.jar
+COPY ./build/libs/elog-plus-backend-*.jar /home/app/app.jar
+RUN chown app:root /home/app/*.jar \
+    && chmod 755 /home/app/*.jar
 
-# Build the application
-RUN gradle assemble --no-daemon
-# Phase 2: Create the final image with the built artifact
-FROM eclipse-temurin:19-jdk-jammy
+ENV WAIT_VERSION 2.7.2
+ADD https://github.com/ufoscout/docker-compose-wait/releases/download/$WAIT_VERSION/wait /home/app/wait
+RUN chown app:root /home/app/wait \
+    && chmod 755 /home/app/wait
 
-WORKDIR /app
-
-# Copy the built artifact from the previous phase
-COPY --from=build /opt/app/tools/run.sh .
-COPY --from=build /opt/app/build/libs/*.jar ./app.jar
-ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.9.0/wait /app
-RUN chmod a+x /app/wait
-RUN chmod a+x /app/run.sh
-# Set the entrypoint to run the Spring application
-ENTRYPOINT ["./run.sh"]
+# switch to non-root user
+USER app
+EXPOSE 8080
+ENTRYPOINT /home/app/wait && /home/app/run.sh
