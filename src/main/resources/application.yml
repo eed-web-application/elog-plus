@@ -38,19 +38,23 @@ spring:
 edu:
   stanford:
     slac:
-      elog-plus:
-        app-token-jwt-key: ${ELOG_PLUS_APP_TOKEN_JWT}
-        db_admin_uri: ${ELOG_PLUS_ADMIN_MONGODB_URI:mongodb://admin:admin@localhost:27017/?authSource=admin}
-        user-header-name: ${ELOG_PLUS_AUTH_HEADER:x-vouch-idp-accesstoken}
+      elog_plus:
         image-preview-topic: ${ELOG_PLUS_IMAGE_PREVIEW_TOPIC:elog-plus-preview-creation}
-        oauth-server-discover: ${ELOG_PLUS_OIDC_CONFIGURATION_ENDPOINT:https://dex.slac.stanford.edu/.well-known/openid-configuration}
-        root-user-list: ${ELOG_PLUS_ROOT_USERS}
-        root-authentication-token-list-json: ${ELOG_PLUS_ROOT_AUTHENTICATION_TOKEN_JSON}
         storage:
           url: ${ELOG_PLUS_MINIO_URL:http://localhost:9000}
           key: ${ELOG_PLUS_MINIO_KEY:minio}
           secret: ${ELOG_PLUS_MINIO_SECRET:minio123}
           bucket: ${ELOG_PLUS_MINIO_BUCKET_NAME:elog}
+      ad:
+        eed:
+          baselib:
+            app-token-prefix: ${spring.application.name}
+            app-token-jwt-key: ${CWM_APP_TOKEN_JWT_KEY:token-header-key}
+            user-header-name: ${CWM_AUTH_HEADER:x-vouch-idp-accesstoken}
+            oauth-server-discover: ${CWM_OIDC_CONFIGURATION_ENDPOINT:https://dex.slac.stanford.edu/.well-known/openid-configuration}
+            root-user-list: ${CWM_ROOT_USERS}
+            root-authentication-token-list-json: ${CWM_ROOT_AUTHENTICATION_TOKEN_JSON:[]}
+
 
 management:
   endpoints:

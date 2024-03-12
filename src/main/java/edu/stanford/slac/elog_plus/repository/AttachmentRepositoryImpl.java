@@ -1,7 +1,6 @@
 package edu.stanford.slac.elog_plus.repository;
 
 import com.mongodb.client.result.UpdateResult;
-import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.model.Attachment;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -13,7 +12,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
-import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
 
 @Log4j2
 @Repository

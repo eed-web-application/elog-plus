@@ -1,12 +1,10 @@
 package edu.stanford.slac.elog_plus.repository;
 
-import com.mongodb.client.result.UpdateResult;
 import edu.stanford.slac.elog_plus.exception.LogbookNotFound;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import edu.stanford.slac.elog_plus.model.Shift;
 import edu.stanford.slac.elog_plus.model.Tag;
 import lombok.AllArgsConstructor;
-import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -14,12 +12,12 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 
 import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalTime;
 import java.util.*;
 
-import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
+import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
+
 
 @Repository
 @AllArgsConstructor

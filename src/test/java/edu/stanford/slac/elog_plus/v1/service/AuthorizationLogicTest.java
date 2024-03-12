@@ -1,11 +1,11 @@
 package edu.stanford.slac.elog_plus.v1.service;
 
-import edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationTypeDTO;
-import edu.stanford.slac.elog_plus.config.AppProperties;
-import edu.stanford.slac.elog_plus.model.Authorization;
-import edu.stanford.slac.elog_plus.repository.AuthorizationRepository;
-import edu.stanford.slac.elog_plus.service.AuthService;
+import edu.stanford.slac.ad.eed.base_mongodb_lib.repository.AuthorizationRepository;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationDTO;
+import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
+import edu.stanford.slac.ad.eed.baselib.model.Authorization;
+import edu.stanford.slac.ad.eed.baselib.service.AuthService;
+import edu.stanford.slac.elog_plus.config.ELOGAppProperties;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,7 +23,9 @@ import org.springframework.test.context.ActiveProfiles;
 import java.util.List;
 import java.util.Optional;
 
-import static edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationTypeDTO.*;
+import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.*;
+import static edu.stanford.slac.ad.eed.baselib.model.AuthorizationOwnerType.Group;
+import static edu.stanford.slac.ad.eed.baselib.model.AuthorizationOwnerType.User;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
@@ -35,7 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class AuthorizationLogicTest {
     @Autowired
-    AppProperties appProperties;
+    private AppProperties appProperties;
     @Autowired
     private AuthorizationRepository authorizationRepository;
     @Autowired
@@ -69,7 +71,7 @@ public class AuthorizationLogicTest {
                         Authorization.builder()
                                 .authorizationType(Authorization.Type.Read.getValue())
                                 .owner("user1@slac.stanford.edu")
-                                .ownerType(Authorization.OType.User)
+                                .ownerType(User)
                                 .resource("/r1")
                                 .build()
                 )
@@ -80,7 +82,7 @@ public class AuthorizationLogicTest {
                         Authorization.builder()
                                 .authorizationType(Authorization.Type.Write.getValue())
                                 .owner("group-1")
-                                .ownerType(Authorization.OType.Group)
+                                .ownerType(Group)
                                 .resource("/r1")
                                 .build()
                 )
@@ -91,7 +93,7 @@ public class AuthorizationLogicTest {
                         Authorization.builder()
                                 .authorizationType(Authorization.Type.Write.getValue())
                                 .owner("group-1")
-                                .ownerType(Authorization.OType.Group)
+                                .ownerType(Group)
                                 .resource("/r2")
                                 .build()
                 )
@@ -102,7 +104,7 @@ public class AuthorizationLogicTest {
                         Authorization.builder()
                                 .authorizationType(Authorization.Type.Read.getValue())
                                 .owner("group-1")
-                                .ownerType(Authorization.OType.Group)
+                                .ownerType(Group)
                                 .resource("/r3")
                                 .build()
                 )
@@ -113,7 +115,7 @@ public class AuthorizationLogicTest {
                         Authorization.builder()
                                 .authorizationType(Authorization.Type.Admin.getValue())
                                 .owner("group-2")
-                                .ownerType(Authorization.OType.Group)
+                                .ownerType(Group)
                                 .resource("/r3")
                                 .build()
                 )
@@ -122,14 +124,15 @@ public class AuthorizationLogicTest {
         List<AuthorizationDTO> allReadAuthorization = authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
                 "user1@slac.stanford.edu",
                 Read,
-                "/r"
+                "/r",
+                Optional.empty()
         );
 
         // check auth on r1 read|write
         assertThat(allReadAuthorization)
                 .filteredOn(auth -> auth.resource().compareToIgnoreCase("/r1") == 0)
                 .filteredOn(
-                        auth -> auth.authorizationType() == AuthorizationTypeDTO.Write
+                        auth -> auth.authorizationType() == Write
                 )
                 .extracting(AuthorizationDTO::owner)
                 .contains("group-1");
@@ -138,7 +141,7 @@ public class AuthorizationLogicTest {
         assertThat(allReadAuthorization)
                 .filteredOn(auth -> auth.resource().compareToIgnoreCase("/r2") == 0)
                 .filteredOn(
-                        auth -> auth.authorizationType() == AuthorizationTypeDTO.Write
+                        auth -> auth.authorizationType() == Write
                 )
                 .extracting(AuthorizationDTO::owner)
                 .contains("group-1");
@@ -149,7 +152,7 @@ public class AuthorizationLogicTest {
                 .filteredOn(
                         auth ->
                                 auth.authorizationType() == Read ||
-                                        auth.authorizationType() == AuthorizationTypeDTO.Admin
+                                        auth.authorizationType() == Admin
                 )
                 .extracting(AuthorizationDTO::owner)
                 .contains("group-1", "group-2");

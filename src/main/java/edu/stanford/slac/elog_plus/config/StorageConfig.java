@@ -15,11 +15,11 @@ import software.amazon.awssdk.services.s3.model.S3Exception;
 import java.net.URI;
 
 @Configuration
-@EnableConfigurationProperties(AppProperties.class)
+@EnableConfigurationProperties(ELOGAppProperties.class)
 public class StorageConfig {
-    AppProperties appProperties;
+    ELOGAppProperties appProperties;
 
-    public StorageConfig(AppProperties appProperties) {
+    public StorageConfig(ELOGAppProperties appProperties) {
         this.appProperties = appProperties;
     }
 

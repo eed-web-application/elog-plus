@@ -1,14 +1,20 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
-import edu.stanford.slac.elog_plus.api.v1.dto.*;
-import edu.stanford.slac.elog_plus.config.AppProperties;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
+import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
+import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
+import edu.stanford.slac.ad.eed.baselib.model.Authorization;
+import edu.stanford.slac.ad.eed.baselib.service.AuthService;
+import edu.stanford.slac.elog_plus.api.v1.dto.EntryNewDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.EntrySummaryDTO;
+import edu.stanford.slac.elog_plus.config.ELOGAppProperties;
 import edu.stanford.slac.elog_plus.exception.LogbookNotAuthorized;
-import edu.stanford.slac.elog_plus.exception.NotAuthorized;
 import edu.stanford.slac.elog_plus.model.Attachment;
-import edu.stanford.slac.elog_plus.model.Authorization;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
-import edu.stanford.slac.elog_plus.service.AuthService;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import edu.stanford.slac.elog_plus.v1.service.DocumentGenerationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,7 +36,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -89,7 +94,7 @@ public class EntriesControllerAuthorizationTest {
                         List.of(
                                 AuthorizationDTO
                                         .builder()
-                                        .ownerType("User")
+                                        .ownerType(AuthorizationOwnerTypeDTO.User)
                                         .owner("user2@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Read)
                                         .build()
@@ -134,7 +139,7 @@ public class EntriesControllerAuthorizationTest {
                         List.of(
                                 AuthorizationDTO
                                         .builder()
-                                        .ownerType("User")
+                                        .ownerType(AuthorizationOwnerTypeDTO.User)
                                         .owner("user2@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Read)
                                         .build()
@@ -179,13 +184,13 @@ public class EntriesControllerAuthorizationTest {
                         List.of(
                                 AuthorizationDTO
                                         .builder()
-                                        .ownerType("User")
+                                        .ownerType(AuthorizationOwnerTypeDTO.User)
                                         .owner("user2@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Write)
                                         .build(),
                                 AuthorizationDTO
                                         .builder()
-                                        .ownerType("User")
+                                        .ownerType(AuthorizationOwnerTypeDTO.User)
                                         .owner("user3@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Admin)
                                         .build()
@@ -251,7 +256,7 @@ public class EntriesControllerAuthorizationTest {
                         List.of(
                                 AuthorizationDTO
                                         .builder()
-                                        .ownerType("Group")
+                                        .ownerType(AuthorizationOwnerTypeDTO.Group)
                                         .owner("group-2")
                                         .authorizationType(AuthorizationTypeDTO.Write)
                                         .build()
@@ -295,7 +300,7 @@ public class EntriesControllerAuthorizationTest {
                         List.of(
                                 AuthorizationDTO
                                         .builder()
-                                        .ownerType("User")
+                                        .ownerType(AuthorizationOwnerTypeDTO.User)
                                         .owner("user2@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Read)
                                         .build()
@@ -313,7 +318,7 @@ public class EntriesControllerAuthorizationTest {
                         List.of(
                                 AuthorizationDTO
                                         .builder()
-                                        .ownerType("User")
+                                        .ownerType(AuthorizationOwnerTypeDTO.User)
                                         .owner("user3@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Read)
                                         .build()
@@ -379,7 +384,7 @@ public class EntriesControllerAuthorizationTest {
                         List.of(
                                 AuthorizationDTO
                                         .builder()
-                                        .ownerType("User")
+                                        .ownerType(AuthorizationOwnerTypeDTO.User)
                                         .owner("user2@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Read)
                                         .build()
@@ -397,7 +402,7 @@ public class EntriesControllerAuthorizationTest {
                         List.of(
                                 AuthorizationDTO
                                         .builder()
-                                        .ownerType("User")
+                                        .ownerType(AuthorizationOwnerTypeDTO.User)
                                         .owner("user3@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Read)
                                         .build()
@@ -583,7 +588,7 @@ public class EntriesControllerAuthorizationTest {
                         List.of(
                                 AuthorizationDTO
                                         .builder()
-                                        .ownerType("User")
+                                        .ownerType(AuthorizationOwnerTypeDTO.User)
                                         .owner("user2@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Read)
                                         .build()
@@ -601,7 +606,7 @@ public class EntriesControllerAuthorizationTest {
                         List.of(
                                 AuthorizationDTO
                                         .builder()
-                                        .ownerType("User")
+                                        .ownerType(AuthorizationOwnerTypeDTO.User)
                                         .owner("user3@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Read)
                                         .build()
@@ -680,7 +685,7 @@ public class EntriesControllerAuthorizationTest {
                         List.of(
                                 AuthorizationDTO
                                         .builder()
-                                        .ownerType("User")
+                                        .ownerType(AuthorizationOwnerTypeDTO.User)
                                         .owner("user2@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Read)
                                         .build()
@@ -697,7 +702,7 @@ public class EntriesControllerAuthorizationTest {
                         List.of(
                                 AuthorizationDTO
                                         .builder()
-                                        .ownerType("User")
+                                        .ownerType(AuthorizationOwnerTypeDTO.User)
                                         .owner("user3@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Read)
                                         .build()

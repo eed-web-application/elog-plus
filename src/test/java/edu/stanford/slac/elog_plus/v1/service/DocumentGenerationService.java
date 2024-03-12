@@ -12,6 +12,8 @@ import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.util.List;
 
+import static org.apache.pdfbox.pdmodel.font.Standard14Fonts.FontName.HELVETICA;
+
 @Service
 public class DocumentGenerationService {
     private static final float MARGIN = 50;
@@ -33,7 +35,8 @@ public class DocumentGenerationService {
 
         document.addPage(page);
         PDPageContentStream contentStream = new PDPageContentStream(document, page);
-        contentStream.setFont(PDType1Font.HELVETICA, FONT_SIZE);
+        var font = new PDType1Font(HELVETICA);
+        contentStream.setFont(font, FONT_SIZE);
         List<String> paragraphs = faker.lorem().paragraphs(10);
         float yStart = page.getMediaBox().getHeight() - MARGIN;
         float xPosition = MARGIN;
@@ -46,7 +49,7 @@ public class DocumentGenerationService {
             String[] words = paragraph.split(" ");
             for (String word : words) {
                 String text = word + " ";
-                float textWidth = FONT_SIZE * PDType1Font.HELVETICA.getStringWidth(text) / 1000;
+                float textWidth = FONT_SIZE * font.getStringWidth(text) / 1000;
                 xPosition += textWidth;
 
                 if (xPosition + textWidth > page.getMediaBox().getWidth() - MARGIN) {
@@ -61,7 +64,7 @@ public class DocumentGenerationService {
                         page = new PDPage();
                         document.addPage(page);
                         contentStream = new PDPageContentStream(document, page);
-                        contentStream.setFont(PDType1Font.HELVETICA, FONT_SIZE);
+                        contentStream.setFont(font, FONT_SIZE);
                         contentStream.beginText();
                         contentStream.newLineAtOffset(MARGIN, yStart);
 

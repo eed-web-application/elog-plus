@@ -1,14 +1,14 @@
 package edu.stanford.slac.elog_plus.v1.service;
 
-import edu.stanford.slac.elog_plus.api.v1.dto.AuthenticationTokenDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.NewAuthenticationTokenDTO;
-import edu.stanford.slac.elog_plus.config.AppProperties;
-import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
-import edu.stanford.slac.elog_plus.model.AuthenticationToken;
-import edu.stanford.slac.elog_plus.model.Authorization;
-import edu.stanford.slac.elog_plus.repository.AuthenticationTokenRepository;
-import edu.stanford.slac.elog_plus.repository.AuthorizationRepository;
-import edu.stanford.slac.elog_plus.service.AuthService;
+import edu.stanford.slac.ad.eed.base_mongodb_lib.repository.AuthenticationTokenRepository;
+import edu.stanford.slac.ad.eed.base_mongodb_lib.repository.AuthorizationRepository;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.NewAuthenticationTokenDTO;
+import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
+import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
+import edu.stanford.slac.ad.eed.baselib.model.AuthenticationToken;
+import edu.stanford.slac.ad.eed.baselib.model.Authorization;
+import edu.stanford.slac.ad.eed.baselib.service.AuthService;
+import edu.stanford.slac.elog_plus.config.ELOGAppProperties;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -99,7 +99,7 @@ public class AuthorizationServiceRootManagementTest {
                 .extracting(Authorization::getOwner)
                 .contains(
                         "token-root-a@%s".formatted(
-                                appProperties.getApplicationTokenDomain()
+                                appProperties.getAppEmailPostfix()
                         )
                 );
         //check created authentication token
@@ -111,7 +111,7 @@ public class AuthorizationServiceRootManagementTest {
                 .extracting(AuthenticationToken::getEmail)
                 .contains(
                         "token-root-a@%s".formatted(
-                                appProperties.getApplicationTokenDomain()
+                                appProperties.getAppEmailPostfix()
                         )
                 );
     }
@@ -179,7 +179,7 @@ public class AuthorizationServiceRootManagementTest {
                 .extracting(Authorization::getOwner)
                 .contains(
                         "token-root-b@%s".formatted(
-                                appProperties.getApplicationTokenDomain()
+                                appProperties.getAppEmailPostfix()
                         )
                 );
         //check created authentication token
@@ -191,7 +191,7 @@ public class AuthorizationServiceRootManagementTest {
                 .extracting(AuthenticationToken::getEmail)
                 .contains(
                         "token-root-b@%s".formatted(
-                                appProperties.getApplicationTokenDomain()
+                                appProperties.getAppEmailPostfix()
                         )
                 );
     }
@@ -256,10 +256,10 @@ public class AuthorizationServiceRootManagementTest {
                 .extracting(Authorization::getOwner)
                 .contains(
                         "token-root-a@%s".formatted(
-                                appProperties.getApplicationTokenDomain()
+                                appProperties.getAppEmailPostfix()
                         ),
                         "token-root-b@%s".formatted(
-                                appProperties.getApplicationTokenDomain()
+                                appProperties.getAppEmailPostfix()
                         )
                 );
         //check created authentication token
@@ -271,10 +271,10 @@ public class AuthorizationServiceRootManagementTest {
                 .extracting(AuthenticationToken::getEmail)
                 .contains(
                         "token-root-b@%s".formatted(
-                                appProperties.getApplicationTokenDomain()
+                                appProperties.getAppEmailPostfix()
                         ),
                         "token-root-b@%s".formatted(
-                                appProperties.getApplicationTokenDomain()
+                                appProperties.getAppEmailPostfix()
                         )
                 );
 
@@ -332,10 +332,10 @@ public class AuthorizationServiceRootManagementTest {
                 .extracting(Authorization::getOwner)
                 .contains(
                         "token-root-a@%s".formatted(
-                                appProperties.getApplicationTokenDomain()
+                                appProperties.getAppEmailPostfix()
                         ),
                         "token-root-b@%s".formatted(
-                                appProperties.getApplicationTokenDomain()
+                                appProperties.getAppEmailPostfix()
                         )
                 );
         //check created authentication token
@@ -347,10 +347,10 @@ public class AuthorizationServiceRootManagementTest {
                 .extracting(AuthenticationToken::getEmail)
                 .contains(
                         "token-root-b@%s".formatted(
-                                appProperties.getApplicationTokenDomain()
+                                appProperties.getAppEmailPostfix()
                         ),
                         "token-root-b@%s".formatted(
-                                appProperties.getApplicationTokenDomain()
+                                appProperties.getAppEmailPostfix()
                         )
                 );
 

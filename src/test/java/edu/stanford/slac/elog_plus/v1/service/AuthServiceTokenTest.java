@@ -1,15 +1,16 @@
 package edu.stanford.slac.elog_plus.v1.service;
 
-import edu.stanford.slac.elog_plus.api.v1.dto.AuthenticationTokenDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.NewAuthenticationTokenDTO;
-import edu.stanford.slac.elog_plus.config.AppProperties;
+import edu.stanford.slac.ad.eed.base_mongodb_lib.repository.AuthenticationTokenRepository;
+import edu.stanford.slac.ad.eed.base_mongodb_lib.repository.AuthorizationRepository;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthenticationTokenDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.NewAuthenticationTokenDTO;
+import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
+import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
+import edu.stanford.slac.ad.eed.baselib.model.AuthenticationToken;
+import edu.stanford.slac.ad.eed.baselib.model.Authorization;
+import edu.stanford.slac.ad.eed.baselib.model.AuthorizationOwnerType;
+import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.exception.AuthenticationTokenMalformed;
-import edu.stanford.slac.elog_plus.exception.ControllerLogicException;
-import edu.stanford.slac.elog_plus.model.AuthenticationToken;
-import edu.stanford.slac.elog_plus.model.Authorization;
-import edu.stanford.slac.elog_plus.repository.AuthenticationTokenRepository;
-import edu.stanford.slac.elog_plus.repository.AuthorizationRepository;
-import edu.stanford.slac.elog_plus.service.AuthService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -24,13 +25,12 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestExecutionListeners;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-import static edu.stanford.slac.elog_plus.model.Authorization.Type.Read;
+import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Read;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -43,7 +43,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class AuthServiceTokenTest {
     @Autowired
-    AppProperties appProperties;
+    private AppProperties appProperties;
     @Autowired
     private AuthorizationRepository authorizationRepository;
     @SpyBean
@@ -68,7 +68,8 @@ public class AuthServiceTokenTest {
                 () -> authService.addNewAuthenticationToken(
                         NewAuthenticationTokenDTO
                                 .builder()
-                                .build()
+                                .build(),
+                        true
                 )
         );
 
@@ -80,7 +81,8 @@ public class AuthServiceTokenTest {
                         NewAuthenticationTokenDTO
                                 .builder()
                                 .name("is the name")
-                                .build()
+                                .build(),
+                        true
                 )
         );
         assertThat(malformedException.getErrorCode()).isEqualTo(-1);
@@ -94,7 +96,8 @@ public class AuthServiceTokenTest {
                                 .builder()
                                 .name("token-a")
                                 .expiration(LocalDate.of(2023,12,31))
-                                .build()
+                                .build(),
+                        true
                 )
         );
 
@@ -110,7 +113,8 @@ public class AuthServiceTokenTest {
                                 .builder()
                                 .name("token-a")
                                 .expiration(LocalDate.of(2023,12,31))
-                                .build()
+                                .build(),
+                        true
                 )
         );
 
@@ -142,7 +146,8 @@ public class AuthServiceTokenTest {
                                 .builder()
                                 .name("token-a")
                                 .expiration(LocalDate.of(2023,12,31))
-                                .build()
+                                .build(),
+                        true
                 )
         );
         AuthenticationTokenDTO newAuthToken2 = assertDoesNotThrow(
@@ -151,7 +156,8 @@ public class AuthServiceTokenTest {
                                 .builder()
                                 .name("token-b")
                                 .expiration(LocalDate.of(2023,12,31))
-                                .build()
+                                .build(),
+                        true
                 )
         );
         List<AuthenticationTokenDTO> allTokens = assertDoesNotThrow(
@@ -177,7 +183,8 @@ public class AuthServiceTokenTest {
                                 .builder()
                                 .name("token-a")
                                 .expiration(LocalDate.of(2023,12,31))
-                                .build()
+                                .build(),
+                        true
                 )
         );
         // add authorization
@@ -185,10 +192,10 @@ public class AuthServiceTokenTest {
                 () -> authorizationRepository.save(
                         Authorization
                                 .builder()
-                                .authorizationType(Read.getValue())
+                                .authorizationType(Authorization.Type.Read.getValue())
                                 .resource("r1")
                                 .owner(newAuthToken1.email())
-                                .ownerType(Authorization.OType.Application)
+                                .ownerType(AuthorizationOwnerType.Token)
                                 .build()
                 )
         );
@@ -217,7 +224,8 @@ public class AuthServiceTokenTest {
                                 .builder()
                                 .name("token-a")
                                 .expiration(LocalDate.of(2023,12,31))
-                                .build()
+                                .build(),
+                        true
                 )
         );
         // add authorization
@@ -225,10 +233,10 @@ public class AuthServiceTokenTest {
                 () -> authorizationRepository.save(
                         Authorization
                                 .builder()
-                                .authorizationType(Read.getValue())
+                                .authorizationType(Authorization.Type.Read.getValue())
                                 .resource("r1")
                                 .owner(newAuthToken1.email())
-                                .ownerType(Authorization.OType.Application)
+                                .ownerType(AuthorizationOwnerType.Token)
                                 .build()
                 )
         );

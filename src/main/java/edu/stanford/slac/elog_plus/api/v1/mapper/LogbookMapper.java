@@ -1,20 +1,21 @@
 package edu.stanford.slac.elog_plus.api.v1.mapper;
 
+import edu.stanford.slac.ad.eed.base_mongodb_lib.repository.AuthenticationTokenRepository;
+import edu.stanford.slac.ad.eed.base_mongodb_lib.repository.AuthorizationRepository;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthenticationTokenDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.mapper.AuthMapper;
+import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
-import edu.stanford.slac.elog_plus.config.AppProperties;
-import edu.stanford.slac.elog_plus.model.AuthenticationToken;
+import edu.stanford.slac.elog_plus.config.ELOGAppProperties;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
-import edu.stanford.slac.elog_plus.repository.AuthenticationTokenRepository;
-import edu.stanford.slac.elog_plus.repository.AuthorizationRepository;
-import edu.stanford.slac.elog_plus.service.AuthService;
 import org.mapstruct.*;
-import org.mapstruct.factory.Mappers;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 
-import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
+import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 
 @Mapper(
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
@@ -30,6 +31,8 @@ public abstract class LogbookMapper {
     protected AuthMapper authMapper;
     @Autowired
     protected AppProperties appProperties;
+    @Autowired
+    protected ELOGAppProperties elogAppProperties;
 
     public abstract LogbookSummaryDTO fromModelToSummaryDTO(Logbook log);
 
@@ -76,7 +79,7 @@ public abstract class LogbookMapper {
                 () -> authenticationTokenRepository.findAllByEmailEndsWith(
                                 "%s.%s".formatted(
                                         logbook.getName(),
-                                        appProperties.getApplicationTokenDomain()
+                                        appProperties.getAppEmailPostfix()
                                 )
                         )
                         .stream()

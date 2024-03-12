@@ -1,0 +1,11 @@
+ ________ _____      ___     ______
+|_   __  |_   _|   .'   `. .' ___  |
+  | |_ \_| | |    /  .-.  Y .'   \_| .--.
+  |  _| _  | |   _| |   | | |   ____( (`\]
+ _| |__/ |_| |__/ \  `-'  | `.___]  |`'.'.
+|________|________|`.___.' `._____.'[\__) )
+
+${application.title} ${application.version}
+${AnsiColor.BRIGHT_WHITE}
+by Bisegni Claudio
+${AnsiColor.DEFAULT}

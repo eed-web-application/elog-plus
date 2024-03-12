@@ -1,16 +1,25 @@
 package edu.stanford.slac.elog_plus.service;
 
+import edu.stanford.slac.ad.eed.base_mongodb_lib.repository.AuthenticationTokenRepository;
+import edu.stanford.slac.ad.eed.base_mongodb_lib.repository.AuthorizationRepository;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthenticationTokenDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.NewAuthenticationTokenDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.mapper.AuthMapper;
+import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
+import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
+import edu.stanford.slac.ad.eed.baselib.model.AuthenticationToken;
+import edu.stanford.slac.ad.eed.baselib.model.Authorization;
+import edu.stanford.slac.ad.eed.baselib.model.AuthorizationOwnerType;
+import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
-import edu.stanford.slac.elog_plus.api.v1.mapper.AuthMapper;
 import edu.stanford.slac.elog_plus.api.v1.mapper.LogbookMapper;
 import edu.stanford.slac.elog_plus.api.v1.mapper.ShiftMapper;
 import edu.stanford.slac.elog_plus.api.v1.mapper.TagMapper;
-import edu.stanford.slac.elog_plus.auth.JWTHelper;
-import edu.stanford.slac.elog_plus.config.AppProperties;
+import edu.stanford.slac.elog_plus.config.ELOGAppProperties;
 import edu.stanford.slac.elog_plus.exception.*;
-import edu.stanford.slac.elog_plus.model.*;
-import edu.stanford.slac.elog_plus.repository.AuthenticationTokenRepository;
-import edu.stanford.slac.elog_plus.repository.AuthorizationRepository;
+import edu.stanford.slac.elog_plus.model.Logbook;
+import edu.stanford.slac.elog_plus.model.Shift;
+import edu.stanford.slac.elog_plus.model.Tag;
 import edu.stanford.slac.elog_plus.repository.EntryRepository;
 import edu.stanford.slac.elog_plus.repository.LogbookRepository;
 import edu.stanford.slac.elog_plus.utility.StringUtilities;
@@ -27,9 +36,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static edu.stanford.slac.elog_plus.api.v1.mapper.AuthMapper.APP_TOKEN_LOGBOOK_EMAIL_DOMAIN;
-import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
-import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
+import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
+import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 
 @Log4j2
 @Service
@@ -44,7 +52,6 @@ public class LogbookService {
     private final AuthenticationTokenRepository authenticationTokenRepository;
     private final AuthService authService;
     private final AuthMapper authMapper;
-    private final JWTHelper jwtHelper;
     private final AppProperties appProperties;
 
     public List<LogbookDTO> getAllLogbook() {
@@ -209,14 +216,14 @@ public class LogbookService {
                     lbToUpdated.getName(),
                     logbookDTO.authenticationTokens().stream()
                             .map(
-                                    at -> authMapper.toModelToken(at, lbToUpdated.getName())
+                                    at -> authMapper.toModelAuthenticationToken(at, lbToUpdated.getName())
                             ).toList(),
-                    authenticationTokenRepository.findAllByEmailEndsWith("%s.%s".formatted(lbToUpdated.getName(), appProperties.getApplicationTokenDomain())),
+                    authenticationTokenRepository.findAllByEmailEndsWith("%s.%s".formatted(lbToUpdated.getName(), appProperties.getAppEmailPostfix())),
                     -6,
                     "LogbookService:update"
             );
         } else {
-            authService.deleteAllAuthenticationTokenWithEmailEndWith("%s.%s".formatted(lbToUpdated.getName(), appProperties.getApplicationTokenDomain()));
+            authService.deleteAllAuthenticationTokenWithEmailEndWith("%s.%s".formatted(lbToUpdated.getName(), appProperties.getAppEmailPostfix()));
         }
 
         // check and verify authorization
@@ -245,7 +252,13 @@ public class LogbookService {
         );
     }
 
-    private void verifyAuthenticationTokenAndUpdate(String logbookName, List<AuthenticationToken> updatedAuthenticationTokenList, List<AuthenticationToken> actualAuthenticationTokenList, int errorCode, String errorDomain) {
+    private void verifyAuthenticationTokenAndUpdate(
+            String logbookName,
+            List<AuthenticationToken> updatedAuthenticationTokenList,
+            List<AuthenticationToken> actualAuthenticationTokenList,
+            int errorCode,
+            String errorDomain
+    ) {
         //normalize token name
         Set<String> tokenCheck = new HashSet<>();
         for (AuthenticationToken authenticationToken :
@@ -341,8 +354,7 @@ public class LogbookService {
             List<Authorization> actualAuthorizationList,
             int errorCode,
             String errorDomain) {
-        String appTokAuthDomain = APP_TOKEN_LOGBOOK_EMAIL_DOMAIN.formatted(logbookToUpdate.getName(), appProperties.getApplicationTokenDomain());
-        Set<ImmutablePair<String, Authorization.OType>> permissionsCheck = new HashSet<>();
+        Set<ImmutablePair<String, AuthorizationOwnerType>> permissionsCheck = new HashSet<>();
         //normalize tag
         for (Authorization authorization :
                 updatedAuthorizationList) {
@@ -362,7 +374,7 @@ public class LogbookService {
                         .build();
             }
 
-            if (authorization.getOwnerType() == Authorization.OType.Application) {
+            if (authorization.getOwnerType() == AuthorizationOwnerType.Token) {
                 // as owner, we can have or the token name or the token email
                 assertion(
                         AuthenticationTokenNotFound.authTokenNotFoundBuilder()
@@ -1324,7 +1336,7 @@ public class LogbookService {
                 () -> authenticationTokenRepository.findAllByEmailEndsWith(
                                 "%s.%s".formatted(
                                         lb.getName(),
-                                        appProperties.getApplicationTokenDomain()
+                                        appProperties.getAppEmailPostfix()
                                 )
                         )
                         .stream()
@@ -1339,14 +1351,14 @@ public class LogbookService {
                         .errorDomain("LogbookService:addNewAuthenticationToken")
                         .build()
         );
-        AuthenticationToken authTok = authMapper.toModelToken(newAuthenticationTokenDTO, lb.getName());
-        authTok = authTok.toBuilder()
-                .token(
-                        jwtHelper.generateAuthenticationToken(
-                                authTok
-                        )
-                )
-                .build();
+        AuthenticationToken authTok = authMapper.toModelApplicationToken(newAuthenticationTokenDTO);
+//        authTok = authTok.toBuilder()
+//                .token(
+//                        jwtHelper.generateAuthenticationToken(
+//                                authTok
+//                        )
+//                )
+//                .build();
         AuthenticationToken finalAuthTok = authTok;
         wrapCatch(
                 () -> authenticationTokenRepository.save(finalAuthTok),
@@ -1384,7 +1396,7 @@ public class LogbookService {
         return wrapCatch(
                 () -> authenticationTokenRepository.findByNameIsAndEmailEndsWith(
                         name,
-                        "%s.%s".formatted(lb.getName(), appProperties.getApplicationTokenDomain())),
+                        "%s.%s".formatted(lb.getName(), appProperties.getAppEmailPostfix())),
                 -2,
                 "LogbookService:getAuthenticationTokenByName"
         ).map(

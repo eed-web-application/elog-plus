@@ -1,12 +1,12 @@
 package edu.stanford.slac.elog_plus.api.v1.controller;
 
-import edu.stanford.slac.elog_plus.api.v1.dto.ApiResultResponse;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
+import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
+import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.EntrySummaryDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.LogbookSummaryDTO;
-import edu.stanford.slac.elog_plus.exception.NotAuthorized;
 import edu.stanford.slac.elog_plus.model.FileObjectDescription;
 import edu.stanford.slac.elog_plus.service.AttachmentService;
-import edu.stanford.slac.elog_plus.service.AuthService;
 import edu.stanford.slac.elog_plus.service.EntryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -20,9 +20,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-import static edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationTypeDTO.Read;
-import static edu.stanford.slac.elog_plus.api.v1.dto.AuthorizationTypeDTO.Write;
-import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
+import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Read;
+import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Write;
+import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 
 @RestController()
 @RequestMapping("/v1/attachment")

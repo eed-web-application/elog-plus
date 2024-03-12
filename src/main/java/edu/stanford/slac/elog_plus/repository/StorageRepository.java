@@ -1,11 +1,9 @@
 package edu.stanford.slac.elog_plus.repository;
 
-import edu.stanford.slac.elog_plus.api.v1.dto.ObjectListResultDTO;
 import edu.stanford.slac.elog_plus.config.StorageProperties;
 import edu.stanford.slac.elog_plus.model.FileObjectDescription;
 import edu.stanford.slac.elog_plus.model.ObjectListResult;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import org.springframework.stereotype.Repository;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -16,10 +14,10 @@ import software.amazon.awssdk.services.s3.model.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
-import static edu.stanford.slac.elog_plus.exception.Utility.assertion;
-import static edu.stanford.slac.elog_plus.exception.Utility.wrapCatch;
+import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
+import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
+
 
 /**
  * Repository for the management of the storage
