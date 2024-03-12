@@ -22,9 +22,6 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import java.util.List;
 import java.util.Objects;
 
-@Log4j2
 @Configuration
-@EnableMongoAuditing
-@EnableTransactionManagement
 @EnableMongoRepositories(basePackages = "edu.stanford.slac.elog_plus.repository")
 public class ConfigDatabase {}

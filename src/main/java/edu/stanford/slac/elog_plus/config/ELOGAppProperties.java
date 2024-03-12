@@ -8,7 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @Log4j2
 @Getter
 @Setter
-@ConfigurationProperties(prefix = "edu.stanford.slac.elog_plus")
+@ConfigurationProperties(prefix = "edu.stanford.slac.elog-plus")
 public class ELOGAppProperties {
     private String imagePreviewTopic;
     private StorageProperties storage;

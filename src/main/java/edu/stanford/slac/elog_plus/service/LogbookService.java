@@ -5,6 +5,7 @@ import edu.stanford.slac.ad.eed.base_mongodb_lib.repository.AuthorizationReposit
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthenticationTokenDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.NewAuthenticationTokenDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.mapper.AuthMapper;
+import edu.stanford.slac.ad.eed.baselib.auth.JWTHelper;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.model.AuthenticationToken;
@@ -15,7 +16,6 @@ import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.api.v1.mapper.LogbookMapper;
 import edu.stanford.slac.elog_plus.api.v1.mapper.ShiftMapper;
 import edu.stanford.slac.elog_plus.api.v1.mapper.TagMapper;
-import edu.stanford.slac.elog_plus.config.ELOGAppProperties;
 import edu.stanford.slac.elog_plus.exception.*;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import edu.stanford.slac.elog_plus.model.Shift;
@@ -53,6 +53,7 @@ public class LogbookService {
     private final AuthService authService;
     private final AuthMapper authMapper;
     private final AppProperties appProperties;
+    private final JWTHelper jwtHelper;
 
     public List<LogbookDTO> getAllLogbook() {
         return getAllLogbook(Optional.empty());
@@ -1351,14 +1352,14 @@ public class LogbookService {
                         .errorDomain("LogbookService:addNewAuthenticationToken")
                         .build()
         );
-        AuthenticationToken authTok = authMapper.toModelApplicationToken(newAuthenticationTokenDTO);
-//        authTok = authTok.toBuilder()
-//                .token(
-//                        jwtHelper.generateAuthenticationToken(
-//                                authTok
-//                        )
-//                )
-//                .build();
+        AuthenticationToken authTok = authMapper.toModelApplicationToken(newAuthenticationTokenDTO, lb.getName());
+        authTok = authTok.toBuilder()
+                .token(
+                        jwtHelper.generateAuthenticationToken(
+                                authTok
+                        )
+                )
+                .build();
         AuthenticationToken finalAuthTok = authTok;
         wrapCatch(
                 () -> authenticationTokenRepository.save(finalAuthTok),

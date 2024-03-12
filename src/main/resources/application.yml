@@ -9,7 +9,7 @@ server:
 
 spring:
   application:
-    name: 'elog-plus'
+    name: 'elog'
   cache:
     type: hazelcast
   ldap:
@@ -38,7 +38,7 @@ spring:
 edu:
   stanford:
     slac:
-      elog_plus:
+      elog-plus:
         image-preview-topic: ${ELOG_PLUS_IMAGE_PREVIEW_TOPIC:elog-plus-preview-creation}
         storage:
           url: ${ELOG_PLUS_MINIO_URL:http://localhost:9000}
@@ -49,12 +49,13 @@ edu:
         eed:
           baselib:
             app-token-prefix: ${spring.application.name}
-            app-token-jwt-key: ${CWM_APP_TOKEN_JWT_KEY:token-header-key}
-            user-header-name: ${CWM_AUTH_HEADER:x-vouch-idp-accesstoken}
+            app-token-jwt-key: ${ELOG_APP_TOKEN_JWT_KEY:token-header-key}
+            user-header-name: ${ELOG_AUTH_HEADER:x-vouch-idp-accesstoken}
             oauth-server-discover: ${CWM_OIDC_CONFIGURATION_ENDPOINT:https://dex.slac.stanford.edu/.well-known/openid-configuration}
-            root-user-list: ${CWM_ROOT_USERS}
-            root-authentication-token-list-json: ${CWM_ROOT_AUTHENTICATION_TOKEN_JSON:[]}
-
+            root-user-list: ${ELOG_ROOT_USERS}
+            root-authentication-token-list-json: ${ELOG_ROOT_AUTHENTICATION_TOKEN_JSON:[]}
+          mongodb:
+            db_admin_uri: ${ELOG_ADMIN_MONGODB_URI:mongodb://admin:admin@localhost:27017/?authSource=admin}
 
 management:
   endpoints:
@@ -64,9 +65,14 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
-
 # swagger-ui custom path
 springdoc:
+  title: 'ELOG management backend'
+  description: 'ELOG management backend for the Accelerator Division at SLAC National Accelerator Laboratory'
+  contact:
+    name: 'API Support'
+    url: 'https://confluence.slac.stanford.edu/display/EEDWAD/EED+Web+Applications'
+    email: 'bisegni@sac.stanford.edu'
   swagger-ui:
     enabled: false
   api-docs:
