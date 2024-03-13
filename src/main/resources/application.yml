@@ -49,13 +49,13 @@ edu:
         eed:
           baselib:
             app-token-prefix: ${spring.application.name}
-            app-token-jwt-key: ${ELOG_APP_TOKEN_JWT_KEY:token-header-key}
-            user-header-name: ${ELOG_AUTH_HEADER:x-vouch-idp-accesstoken}
-            oauth-server-discover: ${CWM_OIDC_CONFIGURATION_ENDPOINT:https://dex.slac.stanford.edu/.well-known/openid-configuration}
-            root-user-list: ${ELOG_ROOT_USERS}
-            root-authentication-token-list-json: ${ELOG_ROOT_AUTHENTICATION_TOKEN_JSON:[]}
+            app-token-jwt-key: ${ELOG_PLUS_APP_TOKEN_JWT_KEY:token-header-key}
+            user-header-name: ${ELOG_PLUS_AUTH_HEADER:x-vouch-idp-accesstoken}
+            oauth-server-discover: ${ELOG_PLUS_OIDC_CONFIGURATION_ENDPOINT:https://dex.slac.stanford.edu/.well-known/openid-configuration}
+            root-user-list: ${ELOG_PLUS_ROOT_USERS}
+            root-authentication-token-list-json: ${ELOG_PLUS_ROOT_AUTHENTICATION_TOKEN_JSON:[]}
           mongodb:
-            db_admin_uri: ${ELOG_ADMIN_MONGODB_URI:mongodb://admin:admin@localhost:27017/?authSource=admin}
+            db_admin_uri: ${ELOG_PLUS_ADMIN_MONGODB_URI:mongodb://admin:admin@localhost:27017/?authSource=admin}
 
 management:
   endpoints:
