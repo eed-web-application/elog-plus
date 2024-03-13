@@ -16,4 +16,4 @@ RUN chown app:root /home/app/wait \
 # switch to non-root user
 USER app
 EXPOSE 8080
-ENTRYPOINT /home/app/wait && /home/app/run.sh
+ENTRYPOINT /home/app/wait && exec java -jar /home/app/app.jar
