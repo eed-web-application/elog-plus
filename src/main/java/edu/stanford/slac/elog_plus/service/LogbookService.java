@@ -211,24 +211,6 @@ public class LogbookService {
                 "LogbookService:update"
         );
 
-        // check and verify authentication token
-        if (logbookDTO.authenticationTokens() != null) {
-            log.info("Update authentication tokens for logbook {}", lbToUpdated.getName());
-            // update authentication tokens
-            verifyAuthenticationTokenAndUpdate(
-                    lbToUpdated.getName(),
-                    logbookDTO.authenticationTokens().stream()
-                            .map(
-                                    at -> authMapper.toModelAuthenticationToken(at, lbToUpdated.getName())
-                            ).toList(),
-                    authenticationTokenRepository.findAllByEmailEndsWith("%s.%s".formatted(lbToUpdated.getName(), appProperties.getAppEmailPostfix())),
-                    -6,
-                    "LogbookService:update"
-            );
-        } else {
-            authService.deleteAllAuthenticationTokenWithEmailEndWith("%s.%s".formatted(lbToUpdated.getName(), appProperties.getAppEmailPostfix()));
-        }
-
         // check and verify authorization
         if (logbookDTO.authorizations() != null) {
             log.info("Update authorizations for logbook {}", lbToUpdated.getName());
