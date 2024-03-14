@@ -222,7 +222,6 @@ public class LogbookControllerAuthTest {
                 Optional.of(
                         "user1@slac.stanford.edu"
                 ),
-                "new logbook",
                 List.of(
                         NewAuthenticationTokenDTO
                                 .builder()

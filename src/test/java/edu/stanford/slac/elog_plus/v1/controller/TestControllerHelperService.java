@@ -107,7 +107,6 @@ public class TestControllerHelperService {
      */
     public List<String> createTokens(MockMvc mockMvc,
                              Optional<String> userInfo,
-                             String logbookName,
                              List<NewAuthenticationTokenDTO> authenticationTokens) {
         List<AuthenticationTokenDTO> createdTokens = new ArrayList<>();
         for (NewAuthenticationTokenDTO newAuthenticationTokenDTO : authenticationTokens) {
