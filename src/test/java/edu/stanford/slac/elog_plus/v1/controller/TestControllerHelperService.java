@@ -25,10 +25,7 @@ import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequ
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -97,21 +94,47 @@ public class TestControllerHelperService {
                 .isEqualTo(0);
         return newLogbookApiResult;
     }
-
-    public String getTokenEmailForLogbookToken(String tokenName, String logbookName) {
-        return sharedUtilityService.getTokenEmailForLogbookToken(tokenName, logbookName);
+    public String getTokenEmailForApplicationToken(String tokenName) {
+        return sharedUtilityService.getTokenEmailForApplicationToken(tokenName);
     }
-
     public String getTokenEmailForGlobalToken(String tokenName) {
         return sharedUtilityService.getTokenEmailForGlobalToken(tokenName);
+    }
+
+    /**
+     * Create a new token and return the email of the token
+     * @return the email of the token
+     */
+    public List<String> createTokens(MockMvc mockMvc,
+                             Optional<String> userInfo,
+                             List<NewAuthenticationTokenDTO> authenticationTokens) {
+        List<AuthenticationTokenDTO> createdTokens = new ArrayList<>();
+        for (NewAuthenticationTokenDTO newAuthenticationTokenDTO : authenticationTokens) {
+            var newAuthenticationTokenApiResult = assertDoesNotThrow(
+                    () -> createNewAuthenticationToken(
+                            mockMvc,
+                            status().isCreated(),
+                            userInfo,
+                            newAuthenticationTokenDTO
+                    )
+            );
+            assertThat(newAuthenticationTokenApiResult)
+                    .isNotNull()
+                    .extracting(
+                            ApiResultResponse::getErrorCode
+                    )
+                    .isEqualTo(0);
+            createdTokens.add(newAuthenticationTokenApiResult.getPayload());
+        }
+        return createdTokens.stream().map(AuthenticationTokenDTO::email).toList();
     }
 
     public ApiResultResponse<String> getNewLogbookWithNameWithAuthorizationAndAppToken(
             MockMvc mockMvc,
             Optional<String> userInfo,
             String logbookName,
-            List<AuthorizationDTO> authorizations,
-            List<AuthenticationTokenDTO> authenticationTokens) {
+            List<AuthorizationDTO> authorizations) {
+
         var newLogbookApiResult = assertDoesNotThrow(
                 () -> createNewLogbook(
                         mockMvc,
@@ -144,9 +167,6 @@ public class TestControllerHelperService {
                                 .tags(Collections.emptyList())
                                 .authorizations(
                                         authorizations
-                                )
-                                .authenticationTokens(
-                                        authenticationTokens
                                 )
                                 .build()
                 )

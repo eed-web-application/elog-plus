@@ -1,9 +1,6 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthenticationTokenDTO;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationDTO;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.*;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.ad.eed.baselib.model.AuthenticationToken;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
@@ -67,6 +64,24 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
 
     @Test
     public void testGetAllLogbookForAuthType() {
+        var tokensEmail = testControllerHelperService.createTokens(
+                mockMvc,
+                Optional.of(
+                        "user1@slac.stanford.edu"
+                ),
+                List.of(
+                        NewAuthenticationTokenDTO
+                                .builder()
+                                .name("token-a")
+                                .expiration(LocalDate.now().plusDays(1))
+                                .build(),
+                        NewAuthenticationTokenDTO
+                                .builder()
+                                .name("token-b")
+                                .expiration(LocalDate.now().plusDays(1))
+                                .build()
+                )
+        );
         var newLogbookApiResultOne = testControllerHelperService.getNewLogbookWithNameWithAuthorizationAndAppToken(
                 mockMvc,
                 Optional.of(
@@ -76,7 +91,7 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
                 List.of(
                         AuthorizationDTO
                                 .builder()
-                                .owner(testControllerHelperService.getTokenEmailForLogbookToken("token-a", "new logbook"))
+                                .owner(tokensEmail.getFirst())
                                 .ownerType(AuthorizationOwnerTypeDTO.Token)
                                 .authorizationType(
                                         Write
@@ -84,23 +99,11 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
                                 .build(),
                         AuthorizationDTO
                                 .builder()
-                                .owner(testControllerHelperService.getTokenEmailForLogbookToken("token-b", "new logbook"))
+                                .owner(tokensEmail.get(1))
                                 .ownerType(AuthorizationOwnerTypeDTO.Token)
                                 .authorizationType(
                                         Read
                                 )
-                                .build()
-                ),
-                List.of(
-                        AuthenticationTokenDTO
-                                .builder()
-                                .name("token-a")
-                                .expiration(LocalDate.of(2023,12,31))
-                                .build(),
-                        AuthenticationTokenDTO
-                                .builder()
-                                .name("token-b")
-                                .expiration(LocalDate.of(2023,12,31))
                                 .build()
                 )
         );
@@ -113,18 +116,11 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
                 List.of(
                         AuthorizationDTO
                                 .builder()
-                                .owner(testControllerHelperService.getTokenEmailForLogbookToken("token-a", "new logbook two"))
+                                .owner(tokensEmail.getFirst())
                                 .ownerType(AuthorizationOwnerTypeDTO.Token)
                                 .authorizationType(
                                         Write
                                 )
-                                .build()
-                ),
-                List.of(
-                        AuthenticationTokenDTO
-                                .builder()
-                                .name("token-a")
-                                .expiration(LocalDate.of(2023,12,31))
                                 .build()
                 )
         );
@@ -132,7 +128,7 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
                 () -> testControllerHelperService.getAllLogbook(
                         mockMvc,
                         status().isOk(),
-                        Optional.of("token-a@new-logbook.elog.slac.app$"),
+                        Optional.of(tokensEmail.getFirst()),
                         Optional.of(false),
                         Optional.empty()
                 )
@@ -145,17 +141,18 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
                 )
                 .isEqualTo(0);
         assertThat(allLogbookResultTokenA.getPayload())
-                .hasSize(1)
+                .hasSize(2)
                 .extracting(LogbookDTO::id)
                 .contains(
-                        newLogbookApiResultOne.getPayload()
+                        newLogbookApiResultOne.getPayload(),
+                        newLogbookApiResultTwo.getPayload()
                 );
 
         var allLogbookResultTokenB = assertDoesNotThrow(
                 () -> testControllerHelperService.getAllLogbook(
                         mockMvc,
                         status().isOk(),
-                        Optional.of("token-a@new-logbook-two.elog.slac.app$"),
+                        Optional.of(tokensEmail.get(1)),
                         Optional.of(false),
                         Optional.empty()
                 )
@@ -171,7 +168,7 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
                 .hasSize(1)
                 .extracting(LogbookDTO::id)
                 .contains(
-                        newLogbookApiResultTwo.getPayload()
+                        newLogbookApiResultOne.getPayload()
                 );
     }
 

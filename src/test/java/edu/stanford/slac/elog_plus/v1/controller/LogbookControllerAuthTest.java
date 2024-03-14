@@ -1,9 +1,6 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthenticationTokenDTO;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationDTO;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.*;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.ad.eed.baselib.model.AuthenticationToken;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
@@ -220,6 +217,19 @@ public class LogbookControllerAuthTest {
 
     @Test
     public void testGetAllLogbookForAuthTypeUsingApplicationToken() {
+        var tokensEmail = testControllerHelperService.createTokens(
+                mockMvc,
+                Optional.of(
+                        "user1@slac.stanford.edu"
+                ),
+                List.of(
+                        NewAuthenticationTokenDTO
+                                .builder()
+                                .name("token-a")
+                                .expiration(LocalDate.of(2023, 12, 31))
+                                .build()
+                )
+        );
         var newLogbookApiResultOne = testControllerHelperService.getNewLogbookWithNameWithAuthorizationAndAppToken(
                 mockMvc,
                 Optional.of(
@@ -237,18 +247,11 @@ public class LogbookControllerAuthTest {
                                 .build(),
                         AuthorizationDTO
                                 .builder()
-                                .owner(testControllerHelperService.getTokenEmailForLogbookToken("token-a", "new logbook"))
+                                .owner(tokensEmail.getFirst())
                                 .ownerType(AuthorizationOwnerTypeDTO.Token)
                                 .authorizationType(
                                         Read
                                 )
-                                .build()
-                ),
-                List.of(
-                        AuthenticationTokenDTO
-                                .builder()
-                                .name("token-a")
-                                .expiration(LocalDate.of(2023, 12, 31))
                                 .build()
                 )
         );
@@ -298,6 +301,7 @@ public class LogbookControllerAuthTest {
         assertThat(allLogbookResultUser3.getPayload())
                 .hasSize(0);
     }
+
     @Test
     public void getAsReadAuthorizedUser() {
         var newLogbookApiResultOneReader = assertDoesNotThrow(
@@ -316,8 +320,7 @@ public class LogbookControllerAuthTest {
                                                 Read
                                         )
                                         .build()
-                        ),
-                        List.of()
+                        )
                 )
         );
         var newLogbookApiResultTwoWriter = assertDoesNotThrow(
@@ -336,8 +339,7 @@ public class LogbookControllerAuthTest {
                                                 Write
                                         )
                                         .build()
-                        ),
-                        List.of()
+                        )
                 )
         );
         var newLogbookApiResultThreeReader = assertDoesNotThrow(
@@ -356,8 +358,7 @@ public class LogbookControllerAuthTest {
                                                 Read
                                         )
                                         .build()
-                        ),
-                        List.of()
+                        )
                 )
         );
 

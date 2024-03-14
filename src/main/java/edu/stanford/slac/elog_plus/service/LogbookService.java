@@ -211,24 +211,6 @@ public class LogbookService {
                 "LogbookService:update"
         );
 
-        // check and verify authentication token
-        if (logbookDTO.authenticationTokens() != null) {
-            log.info("Update authentication tokens for logbook {}", lbToUpdated.getName());
-            // update authentication tokens
-            verifyAuthenticationTokenAndUpdate(
-                    lbToUpdated.getName(),
-                    logbookDTO.authenticationTokens().stream()
-                            .map(
-                                    at -> authMapper.toModelAuthenticationToken(at, lbToUpdated.getName())
-                            ).toList(),
-                    authenticationTokenRepository.findAllByEmailEndsWith("%s.%s".formatted(lbToUpdated.getName(), appProperties.getAppEmailPostfix())),
-                    -6,
-                    "LogbookService:update"
-            );
-        } else {
-            authService.deleteAllAuthenticationTokenWithEmailEndWith("%s.%s".formatted(lbToUpdated.getName(), appProperties.getAppEmailPostfix()));
-        }
-
         // check and verify authorization
         if (logbookDTO.authorizations() != null) {
             log.info("Update authorizations for logbook {}", lbToUpdated.getName());
@@ -412,6 +394,7 @@ public class LogbookService {
                     )
             );
             if (authorization.getId() == null) {
+
                 // create new
                 Authorization newAuthenticationID =
                         wrapCatch(
@@ -449,19 +432,35 @@ public class LogbookService {
             ).findFirst().orElse(null);
 
             if (updatedAuth != null) {
-                // update
-                Authorization updatedAuthorization = wrapCatch(
-                        () -> authorizationRepository.save(
-                                actualAuthorization.toBuilder()
-                                        .authorizationType(
-                                                updatedAuth.getAuthorizationType()
-                                        )
-                                        .build()
-                        ),
-                        -2,
-                        "LogbookService:verifyAuthorizationAndUpdate"
-                );
-                log.info("Updated authorizations '{}' for logbook '{}'", updatedAuthorization, logbookToUpdate.getName());
+                if(authorizationRepository.existsById(updatedAuth.getId())){
+                    authorizationRepository.findById(updatedAuth.getId()).ifPresent(
+                            a -> {
+                                authorizationRepository.save(
+                                        a.toBuilder()
+                                                .authorizationType(
+                                                        updatedAuth.getAuthorizationType()
+                                                )
+                                                .build()
+                                );
+                            }
+                    );
+                    log.info("Update authorization '{}' for logbook '{}'", updatedAuth.getId(), logbookToUpdate.getName());
+                } else {
+                    // update
+                    String updatedAuthorization = wrapCatch(
+                            () -> authorizationRepository.ensureAuthorization(
+                                    actualAuthorization.toBuilder()
+                                            .authorizationType(
+                                                    updatedAuth.getAuthorizationType()
+                                            )
+                                            .build()
+                            ),
+                            -2,
+                            "LogbookService:verifyAuthorizationAndUpdate"
+                    );
+                    log.info("Created authorization '{}' for logbook '{}'", updatedAuthorization, logbookToUpdate.getName());
+                }
+
             } else {
                 // need to be removed
                 wrapCatch(
