@@ -82,7 +82,7 @@ public class LogbookControllerAuthWithGlobalAuthenticationTokenTest {
         );
         assertThat(tokenResult.getErrorCode()).isEqualTo(0);
         assertThat(tokenResult.getPayload()).extracting(AuthenticationTokenDTO::name).isEqualTo("global-token-a");
-        assertThat(tokenResult.getPayload()).extracting(AuthenticationTokenDTO::email).isEqualTo("global-token-a@%s".formatted(appProperties.getAuthenticationTokenDomain()));
+        assertThat(tokenResult.getPayload()).extracting(AuthenticationTokenDTO::email).isEqualTo("global-token-a@%s".formatted(appProperties.getAppEmailPostfix()));
         assertThat(tokenResult.getPayload()).extracting(AuthenticationTokenDTO::token).isNotNull();
 
         //authorize token to a logbook
