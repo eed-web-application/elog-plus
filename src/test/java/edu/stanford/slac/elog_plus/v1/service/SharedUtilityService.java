@@ -1,5 +1,6 @@
 package edu.stanford.slac.elog_plus.v1.service;
 
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.NewAuthenticationTokenDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.PersonDTO;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
@@ -12,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.Collection;
 
 import static edu.stanford.slac.elog_plus.utility.StringUtilities.logbookNameNormalization;
@@ -28,6 +30,26 @@ public class SharedUtilityService {
     private AuthService authService;
     @Autowired
     private PeopleGroupService peopleGroupService;
+
+    /**
+     * Create a new token and return the email of the token
+     * @param tokenName the name of the token
+     * @return the email of the token
+     */
+    public String createNewToken(String tokenName, LocalDate expiration) {
+        var newAuthenticationToken = assertDoesNotThrow(
+                () -> authService.addNewApplicationAuthenticationToken(
+                        NewAuthenticationTokenDTO
+                                .builder()
+                                .name(tokenName)
+                                .expiration(expiration)
+                                .build(),
+                        false
+                )
+        );
+
+        return newAuthenticationToken.email();
+    }
 
     public String getTestLogbook() {
         return getTestLogbook("new-logbooks");
@@ -46,10 +68,9 @@ public class SharedUtilityService {
         return newLogbookID;
     }
 
-    public String getTokenEmailForLogbookToken(String tokenName, String logbookName) {
-        return "%s@%s.%s".formatted(
+    public String getTokenEmailForApplicationToken(String tokenName) {
+        return "%s@%s".formatted(
                 tokenNameNormalization(tokenName),
-                logbookNameNormalization(logbookName),
                 appProperties.getAppEmailPostfix());
     }
 

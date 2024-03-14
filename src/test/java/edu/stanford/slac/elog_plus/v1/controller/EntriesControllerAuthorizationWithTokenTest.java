@@ -279,6 +279,27 @@ public class EntriesControllerAuthorizationWithTokenTest {
 
     @Test
     public void createNewLogSuccessWithAuthenticationTokenOnLogbook() throws Exception {
+        var tokensEmail = assertDoesNotThrow(
+                () -> testControllerHelperService.createTokens(
+                        mockMvc,
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
+                        "LogbookAuthTest1",
+                        List.of(
+                                NewAuthenticationTokenDTO
+                                        .builder()
+                                        .name("token-a")
+                                        .expiration(LocalDate.of(2023,12,31))
+                                        .build(),
+                                NewAuthenticationTokenDTO
+                                        .builder()
+                                        .name("token-b")
+                                        .expiration(LocalDate.of(2023,12,31))
+                                        .build()
+                        )
+                )
+        );
         var newLogBookResult = assertDoesNotThrow(
                 () -> testControllerHelperService.getNewLogbookWithNameWithAuthorizationAndAppToken(
                         mockMvc,
@@ -291,9 +312,8 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                         .builder()
                                         .ownerType(Token)
                                         .owner(
-                                                testControllerHelperService.getTokenEmailForLogbookToken(
-                                                        "token-a",
-                                                        "LogbookAuthTest1"
+                                                testControllerHelperService.getTokenEmailForGlobalToken(
+                                                        "token-a"
                                                 )
                                         )
                                         .authorizationType(AuthorizationTypeDTO.Write)
@@ -302,24 +322,11 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                         .builder()
                                         .ownerType(Token)
                                         .owner(
-                                                testControllerHelperService.getTokenEmailForLogbookToken(
-                                                        "token-b",
-                                                        "LogbookAuthTest1"
+                                                testControllerHelperService.getTokenEmailForGlobalToken(
+                                                        "token-b"
                                                 )
                                         )
                                         .authorizationType(AuthorizationTypeDTO.Admin)
-                                        .build()
-                        ),
-                        List.of(
-                                AuthenticationTokenDTO
-                                        .builder()
-                                        .name("token-a")
-                                        .expiration(LocalDate.of(2023,12,31))
-                                        .build(),
-                                AuthenticationTokenDTO
-                                        .builder()
-                                        .name("token-b")
-                                        .expiration(LocalDate.of(2023,12,31))
                                         .build()
                         )
                 )
@@ -333,9 +340,8 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                 mockMvc,
                                 status().isCreated(),
                                 Optional.of(
-                                        testControllerHelperService.getTokenEmailForLogbookToken(
-                                                "token-a",
-                                                "LogbookAuthTest1"
+                                        testControllerHelperService.getTokenEmailForGlobalToken(
+                                                "token-a"
                                         )
                                 ),
                                 EntryNewDTO
@@ -360,9 +366,8 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                 mockMvc,
                                 status().isCreated(),
                                 Optional.of(
-                                        testControllerHelperService.getTokenEmailForLogbookToken(
-                                                "token-b",
-                                                "LogbookAuthTest1"
+                                        testControllerHelperService.getTokenEmailForGlobalToken(
+                                                "token-b"
                                         )
                                 ),
                                 EntryNewDTO

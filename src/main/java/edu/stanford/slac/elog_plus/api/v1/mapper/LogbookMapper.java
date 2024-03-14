@@ -38,11 +38,9 @@ public abstract class LogbookMapper {
 
     public abstract LogbookSummaryDTO fromModelToSummaryDTO(LogbookDTO log);
 
-    @Mapping(target = "authenticationTokens", expression = "java(getAuthenticationTokens(logbook))")
     public abstract LogbookDTO fromModel(Logbook logbook);
 
     @Mapping(target = "authorizations", expression = "java(getAuthorizations(logbook.getId(), includeAuthorizations))")
-    @Mapping(target = "authenticationTokens", expression = "java(getAuthenticationTokens(logbook))")
     public abstract LogbookDTO fromModel(Logbook logbook, boolean includeAuthorizations);
 
     public abstract Logbook fromDTO(NewLogbookDTO logbookDTO);
@@ -68,23 +66,6 @@ public abstract class LogbookMapper {
                         .stream()
                         .map(
                                 authMapper::fromModel
-                        ).toList(),
-                -1,
-                "LogbookMapper::getAuthorizations"
-        );
-    }
-
-    public List<AuthenticationTokenDTO> getAuthenticationTokens(Logbook logbook) {
-        return wrapCatch(
-                () -> authenticationTokenRepository.findAllByEmailEndsWith(
-                                "%s.%s".formatted(
-                                        logbook.getName(),
-                                        appProperties.getAppEmailPostfix()
-                                )
-                        )
-                        .stream()
-                        .map(
-                                authMapper::toTokenDTO
                         ).toList(),
                 -1,
                 "LogbookMapper::getAuthorizations"

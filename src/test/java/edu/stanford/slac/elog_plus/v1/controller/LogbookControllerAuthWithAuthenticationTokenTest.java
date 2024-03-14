@@ -1,9 +1,6 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthenticationTokenDTO;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationDTO;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.*;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.ad.eed.baselib.model.AuthenticationToken;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
@@ -67,6 +64,25 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
 
     @Test
     public void testGetAllLogbookForAuthType() {
+        var tokensEmail = testControllerHelperService.createTokens(
+                mockMvc,
+                Optional.of(
+                        "user1@slac.stanford.edu"
+                ),
+                "new logbook",
+                List.of(
+                        NewAuthenticationTokenDTO
+                                .builder()
+                                .name("token-a")
+                                .expiration(LocalDate.of(2023,12,31))
+                                .build(),
+                        NewAuthenticationTokenDTO
+                                .builder()
+                                .name("token-b")
+                                .expiration(LocalDate.of(2023,12,31))
+                                .build()
+                )
+        );
         var newLogbookApiResultOne = testControllerHelperService.getNewLogbookWithNameWithAuthorizationAndAppToken(
                 mockMvc,
                 Optional.of(
@@ -76,7 +92,7 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
                 List.of(
                         AuthorizationDTO
                                 .builder()
-                                .owner(testControllerHelperService.getTokenEmailForLogbookToken("token-a", "new logbook"))
+                                .owner(testControllerHelperService.getTokenEmailForApplicationToken("token-a"))
                                 .ownerType(AuthorizationOwnerTypeDTO.Token)
                                 .authorizationType(
                                         Write
@@ -84,23 +100,11 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
                                 .build(),
                         AuthorizationDTO
                                 .builder()
-                                .owner(testControllerHelperService.getTokenEmailForLogbookToken("token-b", "new logbook"))
+                                .owner(testControllerHelperService.getTokenEmailForApplicationToken("token-b"))
                                 .ownerType(AuthorizationOwnerTypeDTO.Token)
                                 .authorizationType(
                                         Read
                                 )
-                                .build()
-                ),
-                List.of(
-                        AuthenticationTokenDTO
-                                .builder()
-                                .name("token-a")
-                                .expiration(LocalDate.of(2023,12,31))
-                                .build(),
-                        AuthenticationTokenDTO
-                                .builder()
-                                .name("token-b")
-                                .expiration(LocalDate.of(2023,12,31))
                                 .build()
                 )
         );
@@ -113,18 +117,11 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
                 List.of(
                         AuthorizationDTO
                                 .builder()
-                                .owner(testControllerHelperService.getTokenEmailForLogbookToken("token-a", "new logbook two"))
+                                .owner(testControllerHelperService.getTokenEmailForApplicationToken("token-a"))
                                 .ownerType(AuthorizationOwnerTypeDTO.Token)
                                 .authorizationType(
                                         Write
                                 )
-                                .build()
-                ),
-                List.of(
-                        AuthenticationTokenDTO
-                                .builder()
-                                .name("token-a")
-                                .expiration(LocalDate.of(2023,12,31))
                                 .build()
                 )
         );
