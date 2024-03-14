@@ -394,6 +394,7 @@ public class LogbookService {
                     )
             );
             if (authorization.getId() == null) {
+
                 // create new
                 Authorization newAuthenticationID =
                         wrapCatch(
@@ -432,8 +433,8 @@ public class LogbookService {
 
             if (updatedAuth != null) {
                 // update
-                Authorization updatedAuthorization = wrapCatch(
-                        () -> authorizationRepository.save(
+                String updatedAuthorization = wrapCatch(
+                        () -> authorizationRepository.ensureAuthorization(
                                 actualAuthorization.toBuilder()
                                         .authorizationType(
                                                 updatedAuth.getAuthorizationType()
@@ -443,7 +444,7 @@ public class LogbookService {
                         -2,
                         "LogbookService:verifyAuthorizationAndUpdate"
                 );
-                log.info("Updated authorizations '{}' for logbook '{}'", updatedAuthorization, logbookToUpdate.getName());
+                log.info("Updated authorization '{}' for logbook '{}'", updatedAuthorization, logbookToUpdate.getName());
             } else {
                 // need to be removed
                 wrapCatch(
