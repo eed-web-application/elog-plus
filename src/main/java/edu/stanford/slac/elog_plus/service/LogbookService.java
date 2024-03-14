@@ -432,19 +432,35 @@ public class LogbookService {
             ).findFirst().orElse(null);
 
             if (updatedAuth != null) {
-                // update
-                String updatedAuthorization = wrapCatch(
-                        () -> authorizationRepository.ensureAuthorization(
-                                actualAuthorization.toBuilder()
-                                        .authorizationType(
-                                                updatedAuth.getAuthorizationType()
-                                        )
-                                        .build()
-                        ),
-                        -2,
-                        "LogbookService:verifyAuthorizationAndUpdate"
-                );
-                log.info("Updated authorization '{}' for logbook '{}'", updatedAuthorization, logbookToUpdate.getName());
+                if(authorizationRepository.existsById(updatedAuth.getId())){
+                    authorizationRepository.findById(updatedAuth.getId()).ifPresent(
+                            a -> {
+                                authorizationRepository.save(
+                                        a.toBuilder()
+                                                .authorizationType(
+                                                        updatedAuth.getAuthorizationType()
+                                                )
+                                                .build()
+                                );
+                            }
+                    );
+                    log.info("Update authorization '{}' for logbook '{}'", updatedAuth.getId(), logbookToUpdate.getName());
+                } else {
+                    // update
+                    String updatedAuthorization = wrapCatch(
+                            () -> authorizationRepository.ensureAuthorization(
+                                    actualAuthorization.toBuilder()
+                                            .authorizationType(
+                                                    updatedAuth.getAuthorizationType()
+                                            )
+                                            .build()
+                            ),
+                            -2,
+                            "LogbookService:verifyAuthorizationAndUpdate"
+                    );
+                    log.info("Created authorization '{}' for logbook '{}'", updatedAuthorization, logbookToUpdate.getName());
+                }
+
             } else {
                 // need to be removed
                 wrapCatch(
