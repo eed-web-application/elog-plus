@@ -32,7 +32,7 @@ spring:
         spring:
           json:
             trusted:
-              packages: ${ELOG_PLUS_KAFKA_JSON_TRUSTED_PACKAGES:"*"}
+              packages: ${ELOG_PLUS_KAFKA_JSON_TRUSTED_PACKAGES:*}
   servlet:
     multipart:
       enabled: true

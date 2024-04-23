@@ -4,6 +4,7 @@ import edu.stanford.slac.elog_plus.api.v2.dto.ImportEntryDTO;
 import edu.stanford.slac.elog_plus.model.Attachment;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,11 +15,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.*;
+import org.springframework.kafka.listener.CommonErrorHandler;
 import org.springframework.kafka.listener.ContainerProperties;
+import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 
 import java.util.Map;
 
+@Log4j2
 @Configuration
 @RequiredArgsConstructor
 @AutoConfigureBefore(KafkaAutoConfiguration.class)
@@ -27,6 +31,15 @@ public class KafkaConfig {
     private final KafkaProperties kafkaProperties;
     @Value("${edu.stanford.slac.elog-plus.kafka-consumer-concurrency}")
     private int concurrencyLevel = 1;
+
+    @Bean
+    public CommonErrorHandler errorHandler() {
+        return new DefaultErrorHandler(
+                (record, exception) -> {
+                    log.error("Failed to deserialize a message at {}: {}", record.offset(), exception.getMessage());
+                }
+        );
+    }
 
     @Bean
     public ConsumerFactory<String, Attachment> attachmentKafkaListenerConsumerFactory() {
