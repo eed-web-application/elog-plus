@@ -99,6 +99,12 @@ public class ProcessLogImportTest {
             adminClient.deleteTopics(Collections.singletonList(imagePreviewTopic)).all().get();
             adminClient.deleteTopics(Collections.singletonList("%s-retry-2000".formatted(imagePreviewTopic))).all().get();
             adminClient.deleteTopics(Collections.singletonList("%s-retry-4000".formatted(imagePreviewTopic))).all().get();
+
+
+            adminClient.createTopics(List.of(
+                    new org.apache.kafka.clients.admin.NewTopic(importEntryTopic, 1, (short) 1),
+                    new org.apache.kafka.clients.admin.NewTopic(imagePreviewTopic, 1, (short) 1)
+            )).all().get();
         } catch (Exception e) {
             throw new RuntimeException("Failed to recreate Kafka topic", e);
         }
