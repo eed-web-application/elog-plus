@@ -12,6 +12,7 @@ import net.coobird.thumbnailator.tasks.UnsupportedFormatException;
 import org.springframework.http.MediaType;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.annotation.RetryableTopic;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.retry.annotation.Backoff;
@@ -30,10 +31,19 @@ public class ProcessingPreview {
     final private Counter previewProcessedCounter;
     final private Counter previewErrorsCounter;
 
-    @RetryableTopic(attempts = "3", backoff = @Backoff(delay = 2_000, maxDelay = 10_000, multiplier = 2), autoCreateTopics = "false")
-    @KafkaListener(topics = "${edu.stanford.slac.elog-plus.image-preview-topic}")
+    @RetryableTopic(
+            attempts = "3",
+            backoff = @Backoff(delay = 2_000, maxDelay = 10_000, multiplier = 2),
+            autoCreateTopics = "false",
+            kafkaTemplate = "attachmentKafkaTemplate"
+    )
+    @KafkaListener(
+            topics = "${edu.stanford.slac.elog-plus.image-preview-topic}",
+            containerFactory = "attachmentKafkaListenerContainerFactory"
+    )
     public void processPreview(
             Attachment attachment,
+            Acknowledgment acknowledgment,
             @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
             @Header(KafkaHeaders.OFFSET) long offset
     ) throws RuntimeException, IOException {
@@ -69,6 +79,7 @@ public class ProcessingPreview {
 
             attachmentService.setPreviewProcessingState(attachment.getId(), Attachment.PreviewProcessingState.Completed);
             previewProcessedCounter.increment();
+            acknowledgment.acknowledge();
         } catch (UnsupportedFormatException e) {
             attachmentService.setPreviewProcessingState(attachment.getId(), Attachment.PreviewProcessingState.PreviewNotAvailable);
             // in this case we manage this error with the state of image not available

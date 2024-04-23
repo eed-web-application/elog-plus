@@ -7,6 +7,7 @@ import edu.stanford.slac.ad.eed.baselib.auth.JWTHelper;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
+import edu.stanford.slac.elog_plus.api.v2.dto.ImportEntryDTO;
 import edu.stanford.slac.elog_plus.config.ELOGAppProperties;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import edu.stanford.slac.elog_plus.v1.service.SharedUtilityService;
@@ -279,7 +280,7 @@ public class TestControllerHelperService {
                 });
     }
 
-    public ApiResultResponse<String> uploadWholeEntry(
+    public ApiResultResponse<String> importEntryV1(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             EntryImportDTO entryToImport,
@@ -303,6 +304,47 @@ public class TestControllerHelperService {
                 files) {
             multiPartBuilder.file(a);
         }
+        MvcResult result = mockMvc.perform(
+                        multiPartBuilder
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        if (result.getResolvedException() != null) {
+            throw result.getResolvedException();
+        }
+        return new ObjectMapper().readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+    }
+
+    public ApiResultResponse<String> importEntryV2(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            ImportEntryDTO importEntryDTO,
+            MockMultipartFile... files) throws Exception {
+        MockMultipartHttpServletRequestBuilder multiPartBuilder = multipart("/v2/import");
+        if (importEntryDTO != null) {
+            MockPart p = new MockPart(
+                    "entry",
+                    new ObjectMapper().writeValueAsString(importEntryDTO).getBytes(StandardCharsets.UTF_8)
+            );
+            p.getHeaders().add(
+                    "Content-Type",
+                    MediaType.APPLICATION_JSON_VALUE
+            );
+            multiPartBuilder.part(
+                    p
+            );
+        }
+
+        for (MockMultipartFile a :
+                files) {
+            multiPartBuilder.file(a);
+        }
+        userInfo.ifPresent(login -> multiPartBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
+
         MvcResult result = mockMvc.perform(
                         multiPartBuilder
                 )

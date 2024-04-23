@@ -29,7 +29,7 @@ public class AttachmentService {
     final private ELOGAppProperties appProperties;
     final private StorageRepository storageRepository;
     final private AttachmentRepository attachmentRepository;
-    final private KafkaTemplate<String, Attachment> attachmentProducer;
+    final private KafkaTemplate<String, Attachment> attachmentKafkaTemplate;
     final private Counter previewSubmittedCounter;
 
     /**
@@ -71,7 +71,7 @@ public class AttachmentService {
         }
 
         if (createPreview) {
-            attachmentProducer.send(appProperties.getImagePreviewTopic(), att);
+            attachmentKafkaTemplate.send(appProperties.getImagePreviewTopic(), att);
             previewSubmittedCounter.increment();
         }
         log.info("New attachment created with id {}", newAttachmentID.getId());

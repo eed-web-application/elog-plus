@@ -1,5 +1,6 @@
 package edu.stanford.slac.elog_plus.config;
 
+import lombok.AllArgsConstructor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,12 +17,9 @@ import java.net.URI;
 
 @Configuration
 @EnableConfigurationProperties(ELOGAppProperties.class)
+@AllArgsConstructor
 public class StorageConfig {
-    ELOGAppProperties appProperties;
-
-    public StorageConfig(ELOGAppProperties appProperties) {
-        this.appProperties = appProperties;
-    }
+    private final ELOGAppProperties elogAppProperties;
 
     @Bean
     public S3Client s3Client() {
@@ -31,23 +29,23 @@ public class StorageConfig {
                 .credentialsProvider(
                         StaticCredentialsProvider.create(
                                 AwsBasicCredentials.create(
-                                        appProperties.getStorage().getKey(),
-                                        appProperties.getStorage().getSecret()
+                                        elogAppProperties.getStorage().getKey(),
+                                        elogAppProperties.getStorage().getSecret()
                                 )
                         )
                 )
                 .serviceConfiguration(S3Configuration.builder()
                         .pathStyleAccessEnabled(true)
                         .build())
-                .endpointOverride(URI.create(appProperties.getStorage().getUrl()))
+                .endpointOverride(URI.create(elogAppProperties.getStorage().getUrl()))
                 .build();
         if (!doesBucketExist(
                 s3,
-                appProperties.getStorage().getBucket())) {
+                elogAppProperties.getStorage().getBucket())) {
             s3.createBucket(
                     CreateBucketRequest
                             .builder()
-                            .bucket(appProperties.getStorage().getBucket())
+                            .bucket(elogAppProperties.getStorage().getBucket())
                             .build()
             );
         }
@@ -70,6 +68,6 @@ public class StorageConfig {
 
     @Bean()
     public StorageProperties objectStorageProperties() {
-        return appProperties.getStorage();
+        return elogAppProperties.getStorage();
     }
 }

@@ -170,8 +170,9 @@ public class ImportService {
     }
 
     /**
-     * @param logbooks
-     * @return
+     * Get the logbooks ids by names
+     * @param logbooks the logbooks names
+     * @return the list of logbooks ids
      */
     public List<String> getLogbooksIdsByNames(List<String> logbooks) {
         List<String> logBooksId = new ArrayList<>();

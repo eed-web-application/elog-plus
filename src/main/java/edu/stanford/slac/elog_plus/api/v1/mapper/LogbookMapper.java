@@ -51,6 +51,8 @@ public abstract class LogbookMapper {
 
     public abstract Entry fromDTO(EntryNewDTO entryNewDTO, String firstName, String lastName, String userName);
 
+    public abstract UpdateLogbookDTO toUpdateDTO(LogbookDTO logbook);
+
     /**
      * Return all the authorizations for a logbook
      *
