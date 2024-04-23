@@ -18,6 +18,7 @@ import org.springframework.kafka.core.*;
 import org.springframework.kafka.listener.CommonErrorHandler;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 
 import java.util.Map;
@@ -47,7 +48,10 @@ public class KafkaConfig {
 
         // Calculate max poll records based on concurrency level
         props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 2 * concurrencyLevel);
-
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
+        props.put(ErrorHandlingDeserializer.KEY_DESERIALIZER_CLASS, StringDeserializer.class.getName());  // Replace JsonDeserializer with your key deserializer if different
+        props.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class.getName());
         DefaultKafkaConsumerFactory<String, Attachment> cf = new DefaultKafkaConsumerFactory<>(
                 props,
                 new StringDeserializer(),
@@ -63,6 +67,10 @@ public class KafkaConfig {
 
         // Calculate max poll records based on concurrency level
         props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 2 * concurrencyLevel);
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
+        props.put(ErrorHandlingDeserializer.KEY_DESERIALIZER_CLASS, StringDeserializer.class.getName());  // Replace JsonDeserializer with your key deserializer if different
+        props.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class.getName());
         DefaultKafkaConsumerFactory<String, ImportEntryDTO> cf = new DefaultKafkaConsumerFactory<>(
                 props,
                 new StringDeserializer(),
