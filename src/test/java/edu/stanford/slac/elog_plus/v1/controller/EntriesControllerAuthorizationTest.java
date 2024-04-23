@@ -500,6 +500,7 @@ public class EntriesControllerAuthorizationTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.of(List.of(newLogBookResult1.getPayload())),
+                        Optional.empty(),
                         Optional.empty()
                 )
         );
@@ -527,6 +528,7 @@ public class EntriesControllerAuthorizationTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.of(10),
+                        Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
@@ -562,6 +564,7 @@ public class EntriesControllerAuthorizationTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.of(List.of(newLogBookResult2.getPayload())),
+                        Optional.empty(),
                         Optional.empty()
                 )
         );
@@ -633,6 +636,7 @@ public class EntriesControllerAuthorizationTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.of(List.of(newLogBookResult2.getPayload())),
+                        Optional.empty(),
                         Optional.empty()
                 )
         );
@@ -658,6 +662,7 @@ public class EntriesControllerAuthorizationTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.of(List.of(newLogBookResult1.getPayload())),
+                        Optional.empty(),
                         Optional.empty()
                 )
         );
@@ -760,6 +765,7 @@ public class EntriesControllerAuthorizationTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.of(List.of(logbookA.getPayload(), logbookB.getPayload())),
+                        Optional.empty(),
                         Optional.empty()
                 )
         );
@@ -782,6 +788,7 @@ public class EntriesControllerAuthorizationTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.of(List.of(logbookA.getPayload())),
+                        Optional.empty(),
                         Optional.empty()
                 )
         );
@@ -803,6 +810,7 @@ public class EntriesControllerAuthorizationTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.of(entry_size),
+                        Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
@@ -833,6 +841,7 @@ public class EntriesControllerAuthorizationTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.of(List.of(logbookB.getPayload())),
+                        Optional.empty(),
                         Optional.empty()
                 )
         );
@@ -854,6 +863,7 @@ public class EntriesControllerAuthorizationTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.of(entry_size),
+                        Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),

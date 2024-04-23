@@ -14,6 +14,7 @@ import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import edu.stanford.slac.elog_plus.service.EntryService;
 import edu.stanford.slac.elog_plus.service.LogbookService;
+import edu.stanford.slac.elog_plus.v1.controller.TestControllerHelperService;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,15 +33,19 @@ import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
-import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureMockMvc
 @SpringBootTest()
@@ -62,6 +67,10 @@ public class ProcessLogImportTest {
     private LogbookService logbookService;
     @Autowired
     private EntryService entryService;
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private TestControllerHelperService testControllerHelperService;
     @Autowired
     private KafkaTemplate<String, ImportEntryDTO> importEntryDTOKafkaTemplate;
     @Value("${edu.stanford.slac.elog-plus.import-entry-topic}")
@@ -108,6 +117,7 @@ public class ProcessLogImportTest {
                                 .logbooks(List.of("new-logbook"))
                                 .title(faker.book().title())
                                 .text(faker.lorem().paragraph())
+                                .originId("my-original-id")
                                 .build()
                 )
                 .build();
@@ -126,16 +136,46 @@ public class ProcessLogImportTest {
                 .atMost(30, SECONDS)
                 .pollDelay(2, SECONDS)
                 .until(() -> {
-                    var foundEntries = entryService.searchAll(
-                            QueryWithAnchorDTO.builder().limit(1).build()
+                    var foundEntries = assertDoesNotThrow(
+                            ()->testControllerHelperService.submitSearchByGetWithAnchor(
+                                    mockMvc,
+                                    status().isOk(),
+                                    Optional.of("user2@slac.stanford.edu"),
+                                    Optional.empty(),
+                                    Optional.empty(),
+                                    Optional.empty(),
+                                    Optional.empty(),
+                                    Optional.of(10),
+                                    Optional.empty(),
+                                    Optional.empty(),
+                                    Optional.empty(),
+                                    Optional.empty(),
+                                    Optional.empty(),
+                                    Optional.of("my-original-id")
+                            )
                     );
-                    return foundEntries.size() == 1;
+                    return foundEntries.getErrorCode() == 0 && !foundEntries.getPayload().isEmpty();
                 });
 
-        var foundEntries = entryService.searchAll(
-                QueryWithAnchorDTO.builder().limit(1).build()
+        var foundEntries = assertDoesNotThrow(
+                ()->testControllerHelperService.submitSearchByGetWithAnchor(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user2@slac.stanford.edu"),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(10),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of("my-original-id")
+                )
         );
-        assertThat(foundEntries.size()).isEqualTo(1);
-        assertThat(foundEntries.get(0).title()).isEqualTo(dto.entry().title());
+        assertThat(foundEntries.getErrorCode()).isEqualTo(0);
+        assertThat(foundEntries.getPayload().get(0).title()).isEqualTo(dto.entry().title());
     }
 }

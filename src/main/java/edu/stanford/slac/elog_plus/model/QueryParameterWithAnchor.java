@@ -34,4 +34,5 @@ public class QueryParameterWithAnchor {
     private Boolean hideSummaries = false;
     @Builder.Default
     private Boolean requireAllTags = false;
+    private String originId;
 }

@@ -589,7 +589,8 @@ public class TestControllerHelperService {
             Optional<List<String>> tags,
             Optional<Boolean> requireAllTags,
             Optional<List<String>> logBook,
-            Optional<Boolean> sortByLogDate) throws Exception {
+            Optional<Boolean> sortByLogDate,
+            Optional<String> originId) throws Exception {
 
         MockHttpServletRequestBuilder getBuilder =
                 get("/v1/entries")
@@ -613,6 +614,7 @@ public class TestControllerHelperService {
             getBuilder.param("logbooks", lbArray);
         });
         userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
+        originId.ifPresent(id -> getBuilder.param("originId", id));
         MvcResult result = mockMvc.perform(
                         getBuilder
                 )

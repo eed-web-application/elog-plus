@@ -61,6 +61,14 @@ public class EntryRepositoryImpl implements EntryRepositoryCustom {
             );
         }
 
+        if (queryWithAnchor.getOriginId() != null) {
+            allCriteria.add(
+                    Criteria.where("originId").is(
+                            queryWithAnchor.getOriginId()
+                    )
+            );
+        }
+
         if (!queryWithAnchor.getTags().isEmpty()) {
             allCriteria.add(
                     queryWithAnchor.getRequireAllTags()?
