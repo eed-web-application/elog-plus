@@ -265,6 +265,7 @@ public class EntriesControllerTest {
                 Optional.empty(),
                 Optional.empty(),
                 Optional.empty(),
+                Optional.empty(),
                 Optional.empty()
         );
         AssertionsForClassTypes.assertThat(queryResult.getPayload().size()).isEqualTo(1);
@@ -394,6 +395,7 @@ public class EntriesControllerTest {
                 Optional.empty(),
                 Optional.empty(),
                 Optional.of(10),
+                Optional.empty(),
                 Optional.empty(),
                 Optional.empty(),
                 Optional.empty(),
@@ -849,6 +851,7 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
+                        Optional.empty(),
                         Optional.empty()
                 )
         );
@@ -882,6 +885,7 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.of(10),
+                        Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
@@ -923,6 +927,7 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
+                        Optional.empty(),
                         Optional.empty()
                 )
         );
@@ -945,6 +950,7 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.of(10),
                         Optional.of(10),
+                        Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
@@ -1036,6 +1042,7 @@ public class EntriesControllerTest {
                         Optional.of(10),
                         Optional.empty(),
                         Optional.of(List.of(tagIds[99], tagIds[49], tagIds[0])),
+                        Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty()
@@ -1138,6 +1145,7 @@ public class EntriesControllerTest {
                         Optional.of(List.of(newTagIDA.getPayload(), newTagIDB.getPayload())),
                         Optional.of(true),
                         Optional.empty(),
+                        Optional.empty(),
                         Optional.empty()
                 )
         );
@@ -1160,6 +1168,7 @@ public class EntriesControllerTest {
                         Optional.of(10),
                         Optional.empty(),
                         Optional.of(List.of(newTagIDA.getPayload(), newTagIDB.getPayload())),
+                        Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty()
@@ -1209,6 +1218,7 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.of(10),
                         Optional.of("index=0"),
+                        Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
@@ -1403,7 +1413,8 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
-                        Optional.of(true)
+                        Optional.of(true),
+                        Optional.empty()
                 )
         );
         AssertionsForInterfaceTypes.assertThat(firstPageResult.getErrorCode()).isEqualTo(0);
@@ -1440,7 +1451,8 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
-                        Optional.of(true)
+                        Optional.of(true),
+                        Optional.empty()
                 )
         );
         AssertionsForInterfaceTypes.assertThat(nextPageResult.getErrorCode()).isEqualTo(0);
@@ -1477,7 +1489,8 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
-                        Optional.of(true)
+                        Optional.of(true),
+                        Optional.empty()
                 )
         );
         AssertionsForInterfaceTypes.assertThat(prevPageByPinResult.getErrorCode()).isEqualTo(0);
@@ -1503,7 +1516,8 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
-                        Optional.of(true)
+                        Optional.of(true),
+                        Optional.empty()
                 )
         );
         AssertionsForInterfaceTypes.assertThat(prevAndNextPageByPinResult.getErrorCode()).isEqualTo(0);
@@ -1561,6 +1575,7 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
+                        Optional.empty(),
                         Optional.empty()
                 )
         );
@@ -1594,6 +1609,7 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.of(10),
+                        Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
@@ -1635,6 +1651,7 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
+                        Optional.empty(),
                         Optional.empty()
                 )
         );
@@ -1657,6 +1674,7 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.of(10),
                         Optional.of(10),
+                        Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
@@ -1720,6 +1738,7 @@ public class EntriesControllerTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
+                        Optional.empty(),
                         Optional.empty()
                 )
         );
@@ -1744,6 +1763,7 @@ public class EntriesControllerTest {
                         Optional.of(now.minusDays(5)),
                         Optional.empty(),
                         Optional.of(20),
+                        Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
@@ -1808,6 +1828,7 @@ public class EntriesControllerTest {
                             Optional.of(now.minusDays(1)),
                             Optional.empty(),
                             Optional.of(10),
+                            Optional.empty(),
                             Optional.empty(),
                             Optional.empty(),
                             Optional.empty(),

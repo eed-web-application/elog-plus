@@ -11,5 +11,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "edu.stanford.slac.elog-plus")
 public class ELOGAppProperties {
     private String imagePreviewTopic;
+    private String importEntryTopic;
     private StorageProperties storage;
 }

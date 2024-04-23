@@ -46,7 +46,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles({"test"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-public class ImportControllerTest {
+public class ImportControllerV2Test {
     @Autowired
     private MockMvc mockMvc;
 
@@ -84,7 +84,7 @@ public class ImportControllerTest {
     public void uploadEntryFailsWithNoEntry() {
         MissingServletRequestPartException exception = assertThrows(
                 MissingServletRequestPartException.class,
-                () -> testControllerHelperService.uploadWholeEntry(
+                () -> testControllerHelperService.importEntryV1(
                         mockMvc, status().is4xxClientError(),
                         null,
                         new MockMultipartFile[]{}
@@ -105,7 +105,7 @@ public class ImportControllerTest {
                 .build();
 
         ApiResultResponse<String> uploadResult = assertDoesNotThrow(
-                () -> testControllerHelperService.uploadWholeEntry(mockMvc, status().isCreated(), dto, new MockMultipartFile[]{})
+                () -> testControllerHelperService.importEntryV1(mockMvc, status().isCreated(), dto, new MockMultipartFile[]{})
         );
 
         assertThat(uploadResult.getErrorCode()).isEqualTo(0);
@@ -153,7 +153,7 @@ public class ImportControllerTest {
             InputStream isPng = documentGenerationService.getTestPng();
             InputStream isJpg = documentGenerationService.getTestJpeg();
             ApiResultResponse<String> uploadResult = assertDoesNotThrow(
-                    () -> testControllerHelperService.uploadWholeEntry(
+                    () -> testControllerHelperService.importEntryV1(
                             mockMvc,
                             status().isCreated(),
                             dto,
@@ -192,7 +192,7 @@ public class ImportControllerTest {
 
         ControllerLogicException alreadyFound = assertThrows(
                 ControllerLogicException.class,
-                () -> testControllerHelperService.uploadWholeEntry(
+                () -> testControllerHelperService.importEntryV1(
                         mockMvc,
                         status().is5xxServerError(),
                         EntryImportDTO

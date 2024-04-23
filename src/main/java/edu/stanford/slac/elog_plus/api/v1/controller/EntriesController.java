@@ -341,6 +341,8 @@ public class EntriesController {
             @RequestParam(value = "hideSummaries", defaultValue = "false") Optional<Boolean> hideSummaries,
             @Parameter(name = "requireAllTags", description = "Require that all entries found includes all the tags")
             @RequestParam(value = "requireAllTags", defaultValue = "false") Optional<Boolean> requireAllTags,
+            @Parameter(name = "originId", description = "Is the origin id of the source system record identification")
+            @RequestParam(value = "originId") Optional<String> originId,
             Authentication authentication
     ) {
         List<String> authorizeLogbooks = null;
@@ -407,6 +409,7 @@ public class EntriesController {
                                 .sortByLogDate(sortByLogDate.orElse(false))
                                 .hideSummaries(hideSummaries.orElse(false))
                                 .requireAllTags(requireAllTags.orElse(false))
+                                .originId(originId.orElse(null))
                                 .build()
                 )
         );

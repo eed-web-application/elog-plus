@@ -42,5 +42,7 @@ public record QueryWithAnchorDTO(
         @Schema(description = "Hide summaries from the query results")
         Boolean hideSummaries,
         @Schema(description = "Requires that all the found entry contains all the tags")
-        Boolean requireAllTags
+        Boolean requireAllTags,
+        @Schema(description = "Is the id of the origin entry (used for the supersede functionality)")
+        String originId
         ) {}

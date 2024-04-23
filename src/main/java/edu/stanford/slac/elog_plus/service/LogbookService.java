@@ -2,8 +2,7 @@ package edu.stanford.slac.elog_plus.service;
 
 import edu.stanford.slac.ad.eed.base_mongodb_lib.repository.AuthenticationTokenRepository;
 import edu.stanford.slac.ad.eed.base_mongodb_lib.repository.AuthorizationRepository;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthenticationTokenDTO;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.NewAuthenticationTokenDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.*;
 import edu.stanford.slac.ad.eed.baselib.api.v1.mapper.AuthMapper;
 import edu.stanford.slac.ad.eed.baselib.auth.JWTHelper;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
@@ -1404,5 +1403,63 @@ public class LogbookService {
         ).map(
                 authMapper::toTokenDTO
         );
+    }
+
+    /**
+     * Ensure that a list of user hase the authorization on a list of logbooks
+     *
+     * @param logbookNames the list of logbooks names
+     * @param userIds  the list of user ids
+     */
+    @Transactional
+    public void ensureAuthorizationOnLogbook(List<String> logbookNames, List<String> userIds, AuthorizationTypeDTO authorizationType) {
+        for (String logbookName :
+                logbookNames) {
+            var fullLogbook = getLogbookByName(logbookName);
+            List<AuthorizationDTO> newAuth = new ArrayList<>();
+            for (String userId :
+                    userIds) {
+                String logbookId = fullLogbook.id();
+                if(fullLogbook.authorizations()==null) {
+                    // ensure authorization lists
+                    fullLogbook = fullLogbook.toBuilder().authorizations(new ArrayList<>()).build();
+                }
+                // check if the user has a authorization compatible with the authorization type
+                fullLogbook.authorizations().stream().filter(
+                        a -> a.owner().compareToIgnoreCase(userId) == 0
+                ).filter(
+                        a -> a.authorizationType().compareTo(authorizationType) == 0
+                ).findAny().ifPresentOrElse(
+                        (a) -> {
+                            log.info("User '{}' already has the authorization '{}' on logbook '{}'", userId, authorizationType, logbookName);
+                        },
+                        () -> {
+                            // create the authorization
+                            newAuth .add(
+                                    AuthorizationDTO.builder()
+                                    .owner(userId)
+                                    .ownerType(AuthorizationOwnerTypeDTO.User)
+                                    .authorizationType(authorizationType)
+                                    .resource(String.format("/logbook/%s", logbookId))
+                                    .build()
+                            );
+                        }
+                );
+            }
+
+            // update the logbook
+            if (!newAuth.isEmpty()) {
+                fullLogbook.authorizations().addAll(newAuth);
+                LogbookDTO finalFullLogbook = fullLogbook;
+                wrapCatch(
+                        () -> update(
+                                finalFullLogbook.id(),
+                                logbookMapper.toUpdateDTO(finalFullLogbook)
+                        ),
+                        -1,
+                        "LogbookService:ensureAuthorizationOnLogbook"
+                );
+            }
+        }
     }
 }

@@ -12,6 +12,7 @@ import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import edu.stanford.slac.elog_plus.service.AttachmentService;
 import edu.stanford.slac.elog_plus.v1.service.DocumentGenerationService;
+import org.apache.kafka.clients.admin.AdminClient;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,12 +20,14 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.MediaType;
+import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
@@ -32,8 +35,10 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -60,12 +65,14 @@ public class AttachmentControllerTest {
     private AuthService authService;
     @Autowired
     private TestControllerHelperService testControllerHelperService;
-
     @Autowired
-    AttachmentService attachmentService;
-
+    private AttachmentService attachmentService;
     @Autowired
-    DocumentGenerationService documentGenerationService;
+    private DocumentGenerationService documentGenerationService;
+    @Value("${edu.stanford.slac.elog-plus.image-preview-topic}")
+    private String imagePreviewTopic;
+    @Autowired
+    private KafkaAdmin kafkaAdmin;
 
     @BeforeEach
     public void preTest() {
@@ -77,6 +84,27 @@ public class AttachmentControllerTest {
         appProperties.getRootUserList().clear();
         appProperties.getRootUserList().add("user1@slac.stanford.edu");
         authService.updateRootUser();
+        try (AdminClient adminClient = AdminClient.create(kafkaAdmin.getConfigurationProperties())) {
+            Set<String> existingTopics = adminClient.listTopics().names().get();
+            List<String> topicsToDelete = List.of(
+                    imagePreviewTopic,
+                    String.format("%s-retry-2000", imagePreviewTopic),
+                    String.format("%s-retry-4000", imagePreviewTopic)
+            );
+
+            // Delete topics that actually exist
+            topicsToDelete.stream()
+                    .filter(existingTopics::contains)
+                    .forEach(topic -> {
+                        try {
+                            adminClient.deleteTopics(Collections.singletonList(topic)).all().get();
+                        } catch (Exception e) {
+                            System.err.println("Failed to delete topic " + topic + ": " + e.getMessage());
+                        }
+                    });
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to recreate Kafka topic", e);
+        }
     }
 
     @Test
