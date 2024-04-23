@@ -7,7 +7,6 @@ import edu.stanford.slac.ad.eed.baselib.model.AuthenticationToken;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.EntryImportDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.QueryWithAnchorDTO;
 import edu.stanford.slac.elog_plus.api.v2.dto.ImportEntryDTO;
 import edu.stanford.slac.elog_plus.model.Attachment;
 import edu.stanford.slac.elog_plus.model.Entry;
@@ -34,12 +33,11 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 
-import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -92,19 +90,26 @@ public class ProcessLogImportTest {
         authService.updateRootUser();
 
         try (AdminClient adminClient = AdminClient.create(kafkaAdmin.getConfigurationProperties())) {
-            // Delete the topic
-            adminClient.deleteTopics(Collections.singletonList(importEntryTopic)).all().get();
-            adminClient.deleteTopics(Collections.singletonList("%s-retry-2000".formatted(importEntryTopic))).all().get();
-            adminClient.deleteTopics(Collections.singletonList("%s-retry-4000".formatted(importEntryTopic))).all().get();
-            adminClient.deleteTopics(Collections.singletonList(imagePreviewTopic)).all().get();
-            adminClient.deleteTopics(Collections.singletonList("%s-retry-2000".formatted(imagePreviewTopic))).all().get();
-            adminClient.deleteTopics(Collections.singletonList("%s-retry-4000".formatted(imagePreviewTopic))).all().get();
+            Set<String> existingTopics = adminClient.listTopics().names().get();
+            List<String> topicsToDelete = List.of(
+                    importEntryTopic,
+                    String.format("%s-retry-2000", importEntryTopic),
+                    String.format("%s-retry-4000", importEntryTopic),
+                    imagePreviewTopic,
+                    String.format("%s-retry-2000", imagePreviewTopic),
+                    String.format("%s-retry-4000", imagePreviewTopic)
+            );
 
-
-            adminClient.createTopics(List.of(
-                    new org.apache.kafka.clients.admin.NewTopic(importEntryTopic, 1, (short) 1),
-                    new org.apache.kafka.clients.admin.NewTopic(imagePreviewTopic, 1, (short) 1)
-            )).all().get();
+            // Delete topics that actually exist
+            topicsToDelete.stream()
+                    .filter(existingTopics::contains)
+                    .forEach(topic -> {
+                        try {
+                            adminClient.deleteTopics(Collections.singletonList(topic)).all().get();
+                        } catch (Exception e) {
+                            System.err.println("Failed to delete topic " + topic + ": " + e.getMessage());
+                        }
+                    });
         } catch (Exception e) {
             throw new RuntimeException("Failed to recreate Kafka topic", e);
         }
@@ -127,7 +132,7 @@ public class ProcessLogImportTest {
                                 .build()
                 )
                 .build();
-        ProducerRecord<String, ImportEntryDTO> message = new ProducerRecord(importEntryTopic, "key", dto);
+        ProducerRecord<String, ImportEntryDTO> message = new ProducerRecord<>(importEntryTopic, "key", dto);
         message.headers().add("Authorization", jwtHelper.generateJwt("user1@slac.stanford.edu").getBytes());
 
         var sendData = importEntryDTOKafkaTemplate.send(message);
@@ -182,6 +187,6 @@ public class ProcessLogImportTest {
                 )
         );
         assertThat(foundEntries.getErrorCode()).isEqualTo(0);
-        assertThat(foundEntries.getPayload().get(0).title()).isEqualTo(dto.entry().title());
+        assertThat(foundEntries.getPayload().getFirst().title()).isEqualTo(dto.entry().title());
     }
 }
