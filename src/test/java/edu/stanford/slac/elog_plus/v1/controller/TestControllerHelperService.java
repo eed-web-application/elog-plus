@@ -265,7 +265,11 @@ public class TestControllerHelperService {
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON);
 
-        userInfo.ifPresent(login -> postBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
+//        if(userInfo.isPresent() && userInfo.get().toLowerCase().compareTo("service")==0) {
+//            postBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateServiceToken());
+//        } else {
+            userInfo.ifPresent(login -> postBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
+//        }
 
         MvcResult result = mockMvc.perform(postBuilder)
                 .andExpect(resultMatcher)
