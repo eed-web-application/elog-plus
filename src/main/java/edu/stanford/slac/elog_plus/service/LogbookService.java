@@ -24,6 +24,7 @@ import edu.stanford.slac.elog_plus.model.Tag;
 import edu.stanford.slac.elog_plus.repository.EntryRepository;
 import edu.stanford.slac.elog_plus.repository.LogbookRepository;
 import edu.stanford.slac.elog_plus.utility.StringUtilities;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -702,9 +703,9 @@ public class LogbookService {
      * @param logbookName the name of the logbooks
      * @return the full logbooks
      */
-    public LogbookDTO getLogbookByName(String logbookName) {
+    public LogbookDTO getLogbookByName(@NotNull String logbookName) {
         Optional<Logbook> lb = wrapCatch(
-                () -> logbookRepository.findByName(logbookName),
+                () -> logbookRepository.findByName(logbookName.toLowerCase()),
                 -1,
                 "LogbookService:getLogbookByName"
         );
@@ -725,10 +726,10 @@ public class LogbookService {
      * @param logbookName the name of the logbooks to check
      * @return true if the logbooks exists
      */
-    public Boolean existByName(String logbookName) {
+    public Boolean existByName(@NotNull String logbookName) {
         return wrapCatch(
                 () -> logbookRepository.existsByName(
-                        logbookName
+                        logbookName.toLowerCase()
                 ),
                 -1,
                 "LogbookService::existByName");
