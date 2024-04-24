@@ -18,6 +18,8 @@ import org.springframework.kafka.core.*;
 import org.springframework.kafka.listener.CommonErrorHandler;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.kafka.listener.KafkaListenerErrorHandler;
+import org.springframework.kafka.support.serializer.DeserializationException;
 import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 
@@ -34,10 +36,13 @@ public class KafkaConfig {
     private int concurrencyLevel = 1;
 
     @Bean
-    public CommonErrorHandler errorHandler() {
+    public DefaultErrorHandler errorHandler() {
         return new DefaultErrorHandler(
-                (record, exception) -> {
-                    log.error("Failed to deserialize a message at {}: {}", record.offset(), exception.getMessage());
+                (consumerRecord, exception) -> {
+                    if (exception.getCause() instanceof DeserializationException) {
+                        System.err.println("Deserialization error for record: " + consumerRecord);
+                        System.err.println("Exception message: " + exception.getMessage());
+                    }
                 }
         );
     }
@@ -55,7 +60,7 @@ public class KafkaConfig {
         DefaultKafkaConsumerFactory<String, Attachment> cf = new DefaultKafkaConsumerFactory<>(
                 props,
                 new StringDeserializer(),
-                new JsonDeserializer<>(Attachment.class)
+                new JsonDeserializer<>(Attachment.class, false)
         );
         cf.addListener(new MicrometerConsumerListener<>(meterRegistry));
         return cf;
@@ -74,7 +79,7 @@ public class KafkaConfig {
         DefaultKafkaConsumerFactory<String, ImportEntryDTO> cf = new DefaultKafkaConsumerFactory<>(
                 props,
                 new StringDeserializer(),
-                new JsonDeserializer<>(ImportEntryDTO.class)
+                new JsonDeserializer<>(ImportEntryDTO.class, false)
         );
         cf.addListener(new MicrometerConsumerListener<>(meterRegistry));
         return cf;
