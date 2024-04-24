@@ -85,6 +85,7 @@ public class EntriesControllerTest {
         mongoTemplate.remove(new Query(), Authorization.class);
         appProperties.getRootUserList().clear();
         appProperties.getRootUserList().add("user1@slac.stanford.edu");
+        appProperties.getRootUserList().add(appProperties.getInternalServiceTokenEmail());
         authService.updateRootUser();
     }
 
@@ -111,6 +112,39 @@ public class EntriesControllerTest {
 
         AssertionsForClassTypes.assertThat(newLogID).isNotNull();
         AssertionsForClassTypes.assertThat(newLogID.getErrorCode()).isEqualTo(0);
+    }
+
+    @Test
+    public void createNewLogUsingServiceJWT() throws Exception {
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc, appProperties.getInternalServiceTokenEmail());
+        ApiResultResponse<String> newLogID =
+                assertDoesNotThrow(
+                        () ->
+                                testControllerHelperService.createNewLog(
+                                        mockMvc,
+                                        status().isCreated(),
+                                        Optional.of(
+                                                appProperties.getInternalServiceTokenEmail()
+                                        ),
+                                        EntryNewDTO
+                                                .builder()
+                                                .logbooks(List.of(newLogBookResult.getPayload().id()))
+                                                .text("This is a log for test")
+                                                .title("A very wonderful log")
+                                                .build()
+                                )
+                );
+
+        AssertionsForClassTypes.assertThat(newLogID).isNotNull();
+        AssertionsForClassTypes.assertThat(newLogID.getErrorCode()).isEqualTo(0);
+
+        var fullLog = testControllerHelperService.getFullLog(
+                mockMvc,
+                Optional.of(appProperties.getInternalServiceTokenEmail()),
+                newLogID.getPayload()
+        );
+        AssertionsForClassTypes.assertThat(fullLog).isNotNull();
+        AssertionsForClassTypes.assertThat(fullLog.getErrorCode()).isEqualTo(0);
     }
 
     @Test
