@@ -44,7 +44,8 @@ public class ProcessLogImport {
             attempts = "3",
             backoff = @Backoff(delay = 2_000, maxDelay = 10_000, multiplier = 2),
             autoCreateTopics = "false",
-            kafkaTemplate = "importEntryDTOKafkaTemplate")
+            kafkaTemplate = "importEntryDTOKafkaTemplate"
+    )
     @KafkaListener(
             topics = "${edu.stanford.slac.elog-plus.import-entry-topic}",
             containerFactory = "importEntryKafkaListenerContainerFactory"
