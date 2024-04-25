@@ -94,8 +94,14 @@ public class ProcessLogImport {
                     .stream()
                     .filter(logbookName -> !logbookService.existByName(logbookName))
                     .toList();
+
             assertion(
-                    ControllerLogicException.builder().build(),
+                    ControllerLogicException
+                            .builder()
+                            .errorCode(-1)
+                            .errorMessage("User not autowired to create logbooks")
+                            .errorDomain("ProcessLogImport::processImport")
+                            .build(),
                     () -> any(
                             // or the logbook is empty
                             notFoundLogbook::isEmpty,
