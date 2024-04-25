@@ -1413,7 +1413,17 @@ public class LogbookService {
      * @param userIds  the list of user ids
      */
     @Transactional
-    public void ensureAuthorizationOnLogbook(List<String> logbookNames, List<String> userIds, AuthorizationTypeDTO authorizationType) {
+    public void ensureAuthorizationOnLogbook(
+            List<String> logbookNames,
+            List<String> userIds,
+            AuthorizationTypeDTO authorizationType
+    ) {
+        // remove logbooks duplicates
+        logbookNames = logbookNames.stream().distinct().collect(Collectors.toList());
+        // remove duplicates
+        userIds = userIds.stream().distinct().collect(Collectors.toList());
+
+        // apply the authorization on the logbooks
         for (String logbookName :
                 logbookNames) {
             var fullLogbook = getLogbookByName(logbookName);
