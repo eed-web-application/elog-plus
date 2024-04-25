@@ -150,11 +150,11 @@ public class ProcessLogImport {
             log.info("[import {}] new entry created with id {}", importEntryDTO.entry().title(), newEntryId);
             // Manually acknowledge the message only if processing is successful
             acknowledgment.acknowledge();
-        } catch (Exception e) {
+        } catch (ControllerLogicException e) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             e.printStackTrace(pw);
-            log.error("Error processing message {}", sw.toString());
+            log.error("Error processing message {} with stacktrace {}", e.getMessage(), sw.toString());
         }
     }
 }
