@@ -24,6 +24,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,6 +63,11 @@ public class ProcessLogImport {
                 log.info("Authorization header present message will not be processed {}", headers);
                 acknowledgment.acknowledge();
             }
+            if (importEntryDTO.entry() == null) {
+                log.error("[import] Received message without entry to import");
+                acknowledgment.acknowledge();
+                return;
+            }
             List<FileObjectDescription> attachmentList = new ArrayList<>();
             // create authentication token validating the user token
             Authentication authentication = authenticationManager.authenticate(
@@ -77,6 +84,11 @@ public class ProcessLogImport {
 
             // ensure the logbooks
             log.info("[import {}] ensure logbooks", importEntryDTO.entry().title());
+            if (importEntryDTO.entry().logbooks() == null) {
+                log.error("[import {}] Logbooks are mandatory", importEntryDTO.entry().title());
+                acknowledgment.acknowledge();
+                return;
+            }
             boolean isRoot = authService.checkForRoot(authentication);
             List<String> notFoundLogbook = importEntryDTO.entry().logbooks()
                     .stream()
@@ -133,7 +145,10 @@ public class ProcessLogImport {
             // Manually acknowledge the message only if processing is successful
             acknowledgment.acknowledge();
         } catch (Exception e) {
-            log.error("Error processing message", e);
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            log.error("Error processing message {}", sw.toString());
         }
     }
 }
