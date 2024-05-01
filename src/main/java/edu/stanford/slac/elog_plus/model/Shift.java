@@ -42,11 +42,12 @@ public class Shift {
             Matcher m = pattern.matcher(from);
             assertion(
                     () -> m.matches() && m.groupCount() == 2,
-                    ControllerLogicException.of(
-                            -1,
-                            "The shift 'from' field need to be a time in the range 00:01-23:59",
-                            "Shift"
-                    )
+                    ControllerLogicException
+                            .builder()
+                            .errorCode(-1)
+                            .errorMessage("The shift 'from' field need to be a time in the range 00:01-23:59")
+                            .errorDomain("Shift")
+                            .build()
             );
             fromTime = DateUtilities.fromUTCString(
                     String.format("%s:%s",
@@ -63,11 +64,12 @@ public class Shift {
             Matcher m = pattern.matcher(to);
             assertion(
                     () -> m.matches() && m.groupCount() == 2,
-                    ControllerLogicException.of(
-                            -1,
-                            "The shift 'to' field need to be a time in the range 00:01-23:59",
-                            String.format("Shift %s", name)
-                    )
+                    ControllerLogicException
+                            .builder()
+                            .errorCode(-1)
+                            .errorMessage("The shift 'to' field need to be a time in the range 00:01-23:59")
+                            .errorDomain(String.format("Shift %s", name))
+                            .build()
             );
             toTime = DateUtilities.fromUTCString(
                     String.format("%s:%s",

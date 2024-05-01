@@ -33,18 +33,20 @@ public class EntryRepositoryImpl implements EntryRepositoryCustom {
     @Override
     public List<Entry> searchAll(QueryParameterWithAnchor queryWithAnchor) {
         if (queryWithAnchor.getContextSize() != null && queryWithAnchor.getLimit() == null) {
-            throw ControllerLogicException.of(
-                    -1,
-                    "logs before count cannot be used without an anchor id",
-                    "LogRepositoryImpl::searchUsingAnchor"
-            );
+            throw ControllerLogicException
+                    .builder()
+                    .errorCode(-1)
+                    .errorMessage("logs before count cannot be used without an anchor id")
+                    .errorDomain("LogRepositoryImpl::searchUsingAnchor")
+                    .build();
         }
         if (queryWithAnchor.getLimit() == null) {
-            throw ControllerLogicException.of(
-                    -2,
-                    "the logs after count is mandatory",
-                    "LogRepositoryImpl::searchUsingAnchor"
-            );
+            throw ControllerLogicException
+                    .builder()
+                    .errorCode(-2)
+                    .errorMessage("the logs after count is mandatory")
+                    .errorDomain("LogRepositoryImpl::searchUsingAnchor")
+                    .build();
         }
 
         Entry anchorEntry = null;
