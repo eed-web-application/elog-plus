@@ -71,11 +71,12 @@ public class ImportController {
                                     )
                                     .build();
                         } catch (IOException e) {
-                            throw ControllerLogicException.of(
-                                    -1,
-                                    e.getMessage(),
-                                    "ImportController:uploadEntryAndAttachment"
-                            );
+                            throw ControllerLogicException
+                                    .builder()
+                                    .errorCode(-1)
+                                    .errorMessage(e.getMessage())
+                                    .errorDomain("ImportController:uploadEntryAndAttachment")
+                                    .build();
                         }
                     }
             ).collect(Collectors.toList());

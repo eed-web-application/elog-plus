@@ -533,11 +533,12 @@ public class LogbookService {
 
             assertion(
                     () -> summariesForTagName == 0,
-                    ControllerLogicException.of(
-                            -2,
-                            String.format("The tag with the id '%s' cannot be deleted because has associated summaries", t.getId()),
-                            "LogbookService:verifyTagAndUpdate"
-                    )
+                    ControllerLogicException
+                            .builder()
+                            .errorCode(-2)
+                            .errorMessage(String.format("The tag with the id '%s' cannot be deleted because has associated summaries", t.getId()))
+                            .errorDomain("LogbookService:verifyTagAndUpdate")
+                            .build()
             );
         }
 
@@ -604,11 +605,12 @@ public class LogbookService {
 
             assertion(
                     () -> summariesForShift == 0,
-                    ControllerLogicException.of(
-                            -2,
-                            String.format("The shift with the id '%s' cannot be deleted because has associated summaries", s.getId()),
-                            "LogbookService:verifyShiftAndUpdate"
-                    )
+                    ControllerLogicException
+                            .builder()
+                            .errorCode(-2)
+                            .errorMessage(String.format("The shift with the id '%s' cannot be deleted because has associated summaries", s.getId()))
+                            .errorDomain("LogbookService:verifyShiftAndUpdate")
+                            .build()
             );
         }
 
@@ -1134,33 +1136,36 @@ public class LogbookService {
                                             newShift.getToTime().equals(savedShift.getToTime())
                             )
             ) {
-                throw ControllerLogicException.of(
-                        errorCode,
-                        String.format("New shift 'from' field overlap with the shift %s", savedShift.getName()),
-                        errorDomain
-                );
+                throw ControllerLogicException
+                        .builder()
+                        .errorCode(errorCode)
+                        .errorMessage(String.format("New shift 'from' field overlap with the shift %s", savedShift.getName()))
+                        .errorDomain(errorDomain)
+                        .build();
             }
 
             if (
                     newShift.getFromTime().isBefore(savedShift.getToTime()) &&
                             newShift.getFromTime().isAfter(savedShift.getFromTime())
             ) {
-                throw ControllerLogicException.of(
-                        errorCode,
-                        String.format("New shift 'from' field overlap with the shift %s", savedShift.getName()),
-                        errorDomain
-                );
+                throw ControllerLogicException
+                        .builder()
+                        .errorCode(errorCode)
+                        .errorMessage(String.format("New shift 'from' field overlap with the shift %s", savedShift.getName()))
+                        .errorDomain(errorDomain)
+                        .build();
             }
 
             if (
                     newShift.getToTime().isBefore(savedShift.getToTime()) &&
                             newShift.getToTime().isAfter(savedShift.getFromTime())
             ) {
-                throw ControllerLogicException.of(
-                        errorCode,
-                        String.format("New shift 'to' field overlap with the shif %s", savedShift.getName()),
-                        errorDomain
-                );
+                throw ControllerLogicException
+                        .builder()
+                        .errorCode(errorCode)
+                        .errorMessage(String.format("New shift 'to' field overlap with the shif %s", savedShift.getName()))
+                        .errorDomain(errorDomain)
+                        .build();
             }
         }
     }
@@ -1176,68 +1181,75 @@ public class LogbookService {
 
         assertion(
                 () -> shiftToAdd != null,
-                ControllerLogicException.of(
-                        errorCode,
-                        "The shift cannot be null",
-                        errorDomain
-                )
+                ControllerLogicException
+                        .builder()
+                        .errorCode(errorCode)
+                        .errorMessage("The shift cannot be null")
+                        .errorDomain(errorDomain)
+                        .build()
         );
 
         // check 'name'
         assertion(
                 () -> shiftToAdd.getName() != null && !shiftToAdd.getName().isEmpty(),
-                ControllerLogicException.of(
-                        errorCode,
-                        "The shift 'name' is mandatory",
-                        errorDomain
-                )
+                ControllerLogicException
+                        .builder()
+                        .errorCode(errorCode)
+                        .errorMessage("The shift 'name' is mandatory")
+                        .errorDomain(errorDomain)
+                        .build()
         );
 
         //check 'from' field
         assertion(
                 () -> shiftToAdd.getFrom() != null && !shiftToAdd.getFrom().isEmpty(),
-                ControllerLogicException.of(
-                        errorCode,
-                        "The shift 'from' field is mandatory",
-                        errorDomain
-                )
+                ControllerLogicException
+                        .builder()
+                        .errorCode(errorCode)
+                        .errorMessage("The shift 'from' field is mandatory")
+                        .errorDomain(errorDomain)
+                        .build()
         );
         Matcher fromMatcher = pattern.matcher(shiftToAdd.getFrom());
         assertion(
                 () -> fromMatcher.matches() && fromMatcher.groupCount() == 2,
-                ControllerLogicException.of(
-                        errorCode,
-                        "The shift 'from' field need to be a time in the range 00:01-23:59",
-                        errorDomain
-                )
+                ControllerLogicException
+                        .builder()
+                        .errorCode(errorCode)
+                        .errorMessage("The shift 'from' field need to be a time in the range 00:01-23:59")
+                        .errorDomain(errorDomain)
+                        .build()
         );
 
         //check 'to' field
         assertion(
                 () -> shiftToAdd.getTo() != null && !shiftToAdd.getTo().isEmpty(),
-                ControllerLogicException.of(
-                        errorCode,
-                        "The shift 'to' field is mandatory",
-                        errorDomain
-                )
+                ControllerLogicException
+                        .builder()
+                        .errorCode(errorCode)
+                        .errorMessage("The shift 'to' field is mandatory")
+                        .errorDomain(errorDomain)
+                        .build()
         );
         Matcher toMatcher = pattern.matcher(shiftToAdd.getTo());
         assertion(
                 () -> toMatcher.matches() && toMatcher.groupCount() == 2,
-                ControllerLogicException.of(
-                        errorCode,
-                        "The shift 'to' field need to be a time in the range 00:01-23:59",
-                        errorDomain
-                )
+                ControllerLogicException
+                        .builder()
+                        .errorCode(errorCode)
+                        .errorMessage("The shift 'to' field need to be a time in the range 00:01-23:59")
+                        .errorDomain(errorDomain)
+                        .build()
         );
 
         assertion(
                 () -> shiftToAdd.getFromTime().isBefore(shiftToAdd.getToTime()),
-                ControllerLogicException.of(
-                        errorCode,
-                        "The shift 'from' time should be before 'to' time",
-                        errorDomain
-                )
+                ControllerLogicException
+                        .builder()
+                        .errorCode(errorCode)
+                        .errorMessage("The shift 'from' time should be before 'to' time")
+                        .errorDomain(errorDomain)
+                        .build()
         );
         shiftToAdd.setFromMinutesSinceMidnight(
                 shiftToAdd.getFromTime().getHour() * 60 + shiftToAdd.getFromTime().getMinute()
