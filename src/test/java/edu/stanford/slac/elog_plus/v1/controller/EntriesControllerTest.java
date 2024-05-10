@@ -2021,12 +2021,10 @@ public class EntriesControllerTest {
         AssertionsForClassTypes.assertThat(newLogID2.getErrorCode()).isEqualTo(0);
 
         // create entry that reference the two above
-        String ref_one = "<href=\"http://localhost/%s\">".formatted(newLogID1);
-        String ref_two = "<href=\"http://localhost/%s\">".formatted(newLogID1);
         String text = """
                 This is the text of the referencer
-                <a href="http://localhost/%s">
-                <a href="http://localhost/%s">
+                <a href="http://localhost/elog/entry/%s">
+                <a href="http://localhost/elog/entry/%s">
                 """.formatted(newLogID1.getPayload(), newLogID2.getPayload());
         ApiResultResponse<String> newLogIDReferencer =
                 assertDoesNotThrow(

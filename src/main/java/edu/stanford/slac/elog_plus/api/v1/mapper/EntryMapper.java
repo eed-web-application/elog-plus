@@ -24,7 +24,7 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
         componentModel = "spring"
 )
 public abstract class EntryMapper {
-    static Pattern pattern = Pattern.compile("<a\\s+(?:[^>]*?\\\\s+)?href=([\"'])(https?://[^/]+/([^/\"']+))");
+    static Pattern referencePattern = Pattern.compile("href=\"https?://[^/]+/elog/entry/([a-f\\d]{24})\"");
     @Autowired
     private EntryRepository entryRepository;
     @Autowired
@@ -93,19 +93,29 @@ public abstract class EntryMapper {
         );
     }
 
+    /**
+     * Create a list of references from the text
+     *
+     * @param text the text to parse
+     * @return a list of references
+     */
     @Named("createReferences")
     public List<String> createReferences(String text) {
         List<String> result = new ArrayList<>();
         if (text == null || text.isEmpty()) return result;
-        Matcher matcher = pattern.matcher(text);
+        Matcher matcher = referencePattern.matcher(text);
         while (matcher.find()) {
-            if (matcher.groupCount() >= 3) {
-                result.add(matcher.group(3));
-            }
+            result.add(matcher.group(1));
         }
         return result;
     }
 
+    /**
+     * Map a list of attachment id to a list of attachment
+     *
+     * @param attachments the list of attachment id
+     * @return the list of attachment
+     */
     public List<AttachmentDTO> map(List<String> attachments) {
         if (attachments == null) {
             return null;
@@ -119,6 +129,12 @@ public abstract class EntryMapper {
         return list;
     }
 
+    /**
+     * Map a list of logbook id to a list of logbook summary
+     *
+     * @param logbookIds the list of logbook id
+     * @return the list of logbook summary
+     */
     @Named("mapToLogbookSummary")
     public List<LogbookSummaryDTO> mapToLogbookSummary(List<String> logbookIds) {
         if (logbookIds == null) {
@@ -135,6 +151,12 @@ public abstract class EntryMapper {
         return list;
     }
 
+    /**
+     * Map a list of tag id to a list of tag
+     *
+     * @param tags the list of tag id
+     * @return the list of tag
+     */
     public List<TagDTO> fromTagId(List<String> tags) {
         if (tags == null) {
             return null;
