@@ -1798,7 +1798,7 @@ public class EntryServiceTest {
                                 .builder()
                                 .logbooks(List.of(logbook.id()))
                                 .title("New entry")
-                                .text("This is a text with reference in a link <a href=\"http://test.com/%s\">Reference link</a>".formatted(referencedEntryId))
+                                .text("This is a text with reference in a link <a href=\"http://test.com/entry/%s\">Reference link</a>".formatted(referencedEntryId))
                                 .build(),
                         sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                 )
@@ -1845,7 +1845,7 @@ public class EntryServiceTest {
                                 .builder()
                                 .logbooks(List.of(logbook.id()))
                                 .title("New entry")
-                                .text("This is a text with reference in a link <a href=\"http://test.com/%s\">Reference link</a>".formatted("bad-id"))
+                                .text("This is a text with reference in a link <a href=\"http://test.com/entry/%s\">Reference link</a>".formatted("bad-id"))
                                 .build(),
                         sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                 )
@@ -1888,7 +1888,7 @@ public class EntryServiceTest {
                                 .builder()
                                 .logbooks(List.of(logbook.id()))
                                 .title("New entry")
-                                .text("This is a text with reference in a link <a href=\"http://test.com/%s\">Reference link</a>".formatted(referencedEntryId))
+                                .text("This is a text with reference in a link <a href=\"http://test.com/entry/%s\">Reference link</a>".formatted(referencedEntryId))
                                 .build(),
                         sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                 )
@@ -1904,7 +1904,7 @@ public class EntryServiceTest {
                                 .builder()
                                 .logbooks(List.of(logbook.id()))
                                 .title("New entry that supersede the referencer one")
-                                .text("This is a text with reference in a link <a href=\"http://test.com/%s\" data-references-entry=\"%s\">Reference link</a>".formatted(referencedEntryId, referencedEntryId))
+                                .text("This is a text with reference in a link <a href=\"http://test.com/entry/%s\" data-references-entry=\"%s\">Reference link</a>".formatted(referencedEntryId, referencedEntryId))
                                 .build()
                 )
         );

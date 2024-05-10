@@ -61,8 +61,8 @@ public class MapperTest {
                         .builder()
                         .text(
                                 """
-                                <a href="http://test.com/uuid-reference1">
-                                <a href="http://test.com/uuid-reference2">
+                                <a href="http://test.com/entry/uuid-reference1">
+                                <a href="http://test.com/entry/uuid-reference2">
                                 """
                         )
                         .build(),
