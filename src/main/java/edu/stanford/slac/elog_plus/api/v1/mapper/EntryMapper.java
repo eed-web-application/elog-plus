@@ -24,7 +24,7 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
         componentModel = "spring"
 )
 public abstract class EntryMapper {
-    static Pattern referencePattern = Pattern.compile("href=\"https?://[^/]+\\.[a-z]+(:[0-9]+)?/entry/([\\w-]+)\"");
+    static Pattern referencePattern = Pattern.compile("href=\"(http|https)://[^/]+(?:/[^/]+)*/entry/([\\w-]+)\"");
     @Autowired
     private EntryRepository entryRepository;
     @Autowired
