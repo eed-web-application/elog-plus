@@ -367,7 +367,7 @@ public class LogbookService {
                                 .errorDomain(errorDomain)
                                 .tokenName(authorization.getOwner())
                                 .build(),
-                        ()->authService.existsAuthenticationTokenByEmail(authorization.getOwner())
+                        () -> authService.existsAuthenticationTokenByEmail(authorization.getOwner())
                 );
             }
 
@@ -432,7 +432,7 @@ public class LogbookService {
             ).findFirst().orElse(null);
 
             if (updatedAuth != null) {
-                if(authorizationRepository.existsById(updatedAuth.getId())){
+                if (authorizationRepository.existsById(updatedAuth.getId())) {
                     authorizationRepository.findById(updatedAuth.getId()).ifPresent(
                             a -> {
                                 authorizationRepository.save(
@@ -1422,7 +1422,7 @@ public class LogbookService {
      * Ensure that a list of user hase the authorization on a list of logbooks
      *
      * @param logbookNames the list of logbooks names
-     * @param userIds  the list of user ids
+     * @param userIds      the list of user ids
      */
     @Transactional
     public void ensureAuthorizationOnLogbook(
@@ -1443,7 +1443,7 @@ public class LogbookService {
             for (String userId :
                     userIds) {
                 String logbookId = fullLogbook.id();
-                if(fullLogbook.authorizations()==null) {
+                if (fullLogbook.authorizations() == null) {
                     // ensure authorization lists
                     fullLogbook = fullLogbook.toBuilder().authorizations(new ArrayList<>()).build();
                 }
@@ -1458,13 +1458,13 @@ public class LogbookService {
                         },
                         () -> {
                             // create the authorization
-                            newAuth .add(
+                            newAuth.add(
                                     AuthorizationDTO.builder()
-                                    .owner(userId)
-                                    .ownerType(AuthorizationOwnerTypeDTO.User)
-                                    .authorizationType(authorizationType)
-                                    .resource(String.format("/logbook/%s", logbookId))
-                                    .build()
+                                            .owner(userId)
+                                            .ownerType(AuthorizationOwnerTypeDTO.User)
+                                            .authorizationType(authorizationType)
+                                            .resource(String.format("/logbook/%s", logbookId))
+                                            .build()
                             );
                         }
                 );
@@ -1484,5 +1484,80 @@ public class LogbookService {
                 );
             }
         }
+    }
+
+    /**
+     * Update the logbook
+     * update the authorization on multiple logbooks
+     *
+     * @param authorizations the list of authorizations to apply
+     */
+    @Transactional
+    public void updateAuthorizations(List<LogbookUserAuthorization> authorizations) {
+        Map<AuthorizationTypeDTO, Integer> priorities = Map.of(
+                AuthorizationTypeDTO.Admin, 1,
+                AuthorizationTypeDTO.Write, 2,
+                AuthorizationTypeDTO.Read, 3
+        );
+
+        // aggregate authorization for logbook creating AuthorizationDTO list for each one
+        Map<String, List<AuthorizationDTO>> authByLogbook = new HashMap<>();
+        for (LogbookUserAuthorization auth :
+                authorizations) {
+            if (!authByLogbook.containsKey(auth.logbookId())) {
+                authByLogbook.put(auth.logbookId(), new ArrayList<>());
+            }
+            authByLogbook.get(auth.logbookId()).add(
+                    AuthorizationDTO.builder()
+                            .owner(auth.userId())
+                            .ownerType(AuthorizationOwnerTypeDTO.User)
+                            .authorizationType(auth.authorizationType())
+                            .resource("/logbook/%s".formatted(auth.logbookId()))
+                            .build()
+            );
+        }
+
+        // Transform the entries in authByLogbook
+        Map<String, List<AuthorizationDTO>> highestAuthPerUserPerLogbook = authByLogbook
+                .entrySet()
+                .stream()
+                .collect(
+                        Collectors.toMap(
+                                Map.Entry::getKey, // Corrected method to access key
+                                entry -> entry.getValue().stream()
+                                        .collect(
+                                                Collectors.groupingBy(
+                                                        AuthorizationDTO::owner, // Assume getOwner() method returns userId
+                                                        Collectors.reducing(
+                                                                (auth1, auth2) -> {
+                                                                    // Select the highest authorization based on priority
+                                                                    return priorities.get(auth1.authorizationType()) > priorities.get(auth2.authorizationType()) ? auth1 : auth2;
+                                                                }
+                                                        )
+                                                ))
+                                        .values() // Collection of Optional<AuthorizationDTO>
+                                        .stream()
+                                        .map(Optional::get) // Extract from Optional, ensure no null values
+                                        .collect(Collectors.toList()) // Collect into List
+                        )
+                );
+
+        highestAuthPerUserPerLogbook.forEach(
+                (logbookId, authList) -> {
+                    // clear all authorization for the logbook
+                    authService.deleteAuthorizationForResource("/logbook/%s".formatted(logbookId));
+
+                    authList.forEach(
+                            auth -> {
+                                // create the authorization
+                                wrapCatch(
+                                        () -> authService.ensureAuthorization(auth),
+                                        -1,
+                                        "LogbookService:updateAuthorizations"
+                                );
+                            }
+                    );
+                }
+        );
     }
 }
