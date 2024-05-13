@@ -396,4 +396,8 @@ public class LogbookControllerAuthTest {
                         newLogbookApiResultTwoWriter.getPayload()
                 );
     }
+
+    @Test
+    public void testNewAuthorizationLogbookApiToSetUserAuth() {
+    }
 }

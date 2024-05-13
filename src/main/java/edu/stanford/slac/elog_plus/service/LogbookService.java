@@ -1487,13 +1487,13 @@ public class LogbookService {
     }
 
     /**
-     * Update the logbook
-     * update the authorization on multiple logbooks
+     * Apply the logbook
+     * Apply the authorization on multiple logbooks
      *
      * @param authorizations the list of authorizations to apply
      */
     @Transactional
-    public void updateAuthorizations(List<LogbookUserAuthorization> authorizations) {
+    public void applyUserAuthorizations(List<LogbookUserAuthorizationDTO> authorizations) {
         Map<AuthorizationTypeDTO, Integer> priorities = Map.of(
                 AuthorizationTypeDTO.Admin, 1,
                 AuthorizationTypeDTO.Write, 2,
@@ -1502,7 +1502,7 @@ public class LogbookService {
 
         // aggregate authorization for logbook creating AuthorizationDTO list for each one
         Map<String, List<AuthorizationDTO>> authByLogbook = new HashMap<>();
-        for (LogbookUserAuthorization auth :
+        for (LogbookUserAuthorizationDTO auth :
                 authorizations) {
             if (!authByLogbook.containsKey(auth.logbookId())) {
                 authByLogbook.put(auth.logbookId(), new ArrayList<>());
@@ -1516,6 +1516,242 @@ public class LogbookService {
                             .build()
             );
         }
+
+        // Transform the entries in authByLogbook
+        applyDistinctAuthorization(authByLogbook);
+    }
+
+    /**
+     * Apply the authorization
+     * @param userId the user id
+     * @param authorizations the list of authorizations to apply
+     */
+    @Transactional
+    public void applyUserAuthorizations(String userId, List<LogbookAuthorizationDTO> authorizations) {
+        // aggregate authorization for logbook creating AuthorizationDTO list for each one
+        Map<String, List<AuthorizationDTO>> authByLogbook = new HashMap<>();
+        for (LogbookAuthorizationDTO auth :
+                authorizations) {
+            if (!authByLogbook.containsKey(auth.logbookId())) {
+                authByLogbook.put(auth.logbookId(), new ArrayList<>());
+            }
+            authByLogbook.get(auth.logbookId()).add(
+                    AuthorizationDTO.builder()
+                            .owner(userId)
+                            .ownerType(AuthorizationOwnerTypeDTO.User)
+                            .authorizationType(auth.authorizationType())
+                            .resource("/logbook/%s".formatted(auth.logbookId()))
+                            .build()
+            );
+        }
+
+        // delete and apply new authorization for user
+        for (String logbookId :
+                authByLogbook.keySet()) {
+            // remove all authorization for that user on the logbook
+            wrapCatch(
+                    () -> {
+                        authService.deleteAuthorizationForResourcePrefix(
+                                "/logbook/%s".formatted(logbookId),
+                                userId,
+                                AuthorizationOwnerTypeDTO.User
+                        );
+                        return null;
+                    },
+                    -1,
+                    "LogbookService:applyUserAuthorizations"
+            );
+
+            authByLogbook.get(logbookId).forEach(
+                    auth -> {
+                        // create the new authorization
+                        wrapCatch(
+                                () -> authService.ensureAuthorization(auth),
+                                -2,
+                                "LogbookService:applyUserAuthorizations"
+                        );
+                    }
+            );
+
+        }
+    }
+
+    /**
+     * Apply the logbook
+     * Apply the authorization on multiple logbooks
+     *
+     * @param authorizations the list of authorizations to apply
+     */
+    @Transactional
+    public void applyGroupAuthorizations(List<LogbookGroupAuthorizationDTO> authorizations) {
+        // aggregate authorization for logbook creating AuthorizationDTO list for each one
+        Map<String, List<AuthorizationDTO>> authByLogbook = new HashMap<>();
+        for (LogbookGroupAuthorizationDTO auth :
+                authorizations) {
+            if (!authByLogbook.containsKey(auth.logbookId())) {
+                authByLogbook.put(auth.logbookId(), new ArrayList<>());
+            }
+            authByLogbook.get(auth.logbookId()).add(
+                    AuthorizationDTO.builder()
+                            .owner(auth.groupId())
+                            .ownerType(AuthorizationOwnerTypeDTO.Group)
+                            .authorizationType(auth.authorizationType())
+                            .resource("/logbook/%s".formatted(auth.logbookId()))
+                            .build()
+            );
+        }
+
+        applyDistinctAuthorization(authByLogbook);
+    }
+
+    /**
+     * Apply the authorization
+     * @param groupId the user id
+     * @param authorizations the list of authorizations to apply
+     */
+    @Transactional
+    public void applyGroupAuthorizations(String groupId, List<LogbookAuthorizationDTO> authorizations) {
+        // aggregate authorization for logbook creating AuthorizationDTO list for each one
+        Map<String, List<AuthorizationDTO>> authByLogbook = new HashMap<>();
+        for (LogbookAuthorizationDTO auth :
+                authorizations) {
+            if (!authByLogbook.containsKey(auth.logbookId())) {
+                authByLogbook.put(auth.logbookId(), new ArrayList<>());
+            }
+            authByLogbook.get(auth.logbookId()).add(
+                    AuthorizationDTO.builder()
+                            .owner(groupId)
+                            .ownerType(AuthorizationOwnerTypeDTO.Group)
+                            .authorizationType(auth.authorizationType())
+                            .resource("/logbook/%s".formatted(auth.logbookId()))
+                            .build()
+            );
+        }
+
+        // delete and apply new authorization for user
+        for (String logbookId :
+                authByLogbook.keySet()) {
+            // remove all authorization for that user on the logbook
+            wrapCatch(
+                    () -> {
+                        authService.deleteAuthorizationForResourcePrefix(
+                                "/logbook/%s".formatted(logbookId),
+                                groupId,
+                                AuthorizationOwnerTypeDTO.Group
+                        );
+                        return null;
+                    },
+                    -1,
+                    "LogbookService:applyGroupAuthorizations"
+            );
+
+            authByLogbook.get(logbookId).forEach(
+                    auth -> {
+                        // create the new authorization
+                        wrapCatch(
+                                () -> authService.ensureAuthorization(auth),
+                                -2,
+                                "LogbookService:applyGroupAuthorizations"
+                        );
+                    }
+            );
+
+        }
+    }
+
+    /**
+     * Delete the authorization for the logbook
+     *
+     * @param logbookId the logbook id
+     */
+    public void deleteUsersLogbookAuthorization(String logbookId) {
+        wrapCatch(
+                () -> {
+                    authService.deleteAuthorizationForResourcePrefix(
+                            "/logbook/%s".formatted(logbookId),
+                            AuthorizationOwnerTypeDTO.User
+                    );
+                    return null;
+                },
+                -1,
+                "LogbookService:deleteLogbookAuthorization"
+        );
+    }
+
+    /**
+     * Delete the authorization for the logbook
+     *
+     * @param logbookId the logbook id
+     */
+    public void deleteGroupsLogbookAuthorization(String logbookId) {
+        wrapCatch(
+                () -> {
+                    authService.deleteAuthorizationForResourcePrefix(
+                            "/logbook/%s".formatted(logbookId),
+                            AuthorizationOwnerTypeDTO.Group
+                    );
+                    return null;
+                },
+                -1,
+                "LogbookService:deleteLogbookAuthorization"
+        );
+    }
+
+    /**
+     * Delete the authorization for the logbook and an user
+     *
+     * @param logbookId the logbook id
+     * @param userId the user id
+     */
+    public void deleteLogbookUsersAuthorization(String logbookId, String userId) {
+        wrapCatch(
+                () -> {
+                    authService.deleteAuthorizationForResourcePrefix(
+                            "/logbook/%s".formatted(logbookId),
+                            userId,
+                            AuthorizationOwnerTypeDTO.User
+                    );
+                    return null;
+                },
+                -1,
+                "LogbookService:deleteLogbookAuthorization"
+        );
+    }
+
+    /**
+     * Delete the authorization for the logbook
+     *
+     * @param logbookId the logbook id
+     * @param groupId the group id
+     */
+    public void deleteLogbookGroupAuthorization(String logbookId, String groupId) {
+        wrapCatch(
+                () -> {
+                    authService.deleteAuthorizationForResourcePrefix(
+                            "/logbook/%s".formatted(logbookId),
+                            groupId,
+                            AuthorizationOwnerTypeDTO.Group
+                    );
+                    return null;
+                },
+                -1,
+                "LogbookService:deleteLogbookAuthorization"
+        );
+    }
+
+    /**
+     * Apply the authorization
+     * will remove all the authorization for the logbook and then apply the new one and only the highest
+     * authorization for each user will be considered
+     *
+     * @param authByLogbook the list of authorizations to apply for each logbook (the key)
+     */
+    private void applyDistinctAuthorization(Map<String, List<AuthorizationDTO>> authByLogbook) {
+        Map<AuthorizationTypeDTO, Integer> priorities = Map.of(
+                AuthorizationTypeDTO.Admin, 1,
+                AuthorizationTypeDTO.Write, 2,
+                AuthorizationTypeDTO.Read, 3
+        );
 
         // Transform the entries in authByLogbook
         Map<String, List<AuthorizationDTO>> highestAuthPerUserPerLogbook = authByLogbook

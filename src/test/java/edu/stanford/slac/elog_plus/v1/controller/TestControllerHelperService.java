@@ -8,7 +8,6 @@ import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.api.v2.dto.ImportEntryDTO;
-import edu.stanford.slac.elog_plus.config.ELOGAppProperties;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import edu.stanford.slac.elog_plus.v1.service.SharedUtilityService;
 import org.assertj.core.api.Assertions;
@@ -39,11 +38,14 @@ public class TestControllerHelperService {
     private final AppProperties appProperties;
     private final LogbookService logbookService;
     private final SharedUtilityService sharedUtilityService;
-    public TestControllerHelperService(JWTHelper jwtHelper, AppProperties appProperties, LogbookService logbookService, SharedUtilityService sharedUtilityService) {
+    private final ObjectMapper objectMapper;
+
+    public TestControllerHelperService(JWTHelper jwtHelper, AppProperties appProperties, LogbookService logbookService, SharedUtilityService sharedUtilityService, ObjectMapper objectMapper) {
         this.jwtHelper = jwtHelper;
         this.appProperties = appProperties;
         this.logbookService = logbookService;
         this.sharedUtilityService = sharedUtilityService;
+        this.objectMapper = objectMapper;
     }
 
     public ApiResultResponse<String> getNewLogbookWithNameWithAuthorization(
@@ -95,20 +97,23 @@ public class TestControllerHelperService {
                 .isEqualTo(0);
         return newLogbookApiResult;
     }
+
     public String getTokenEmailForApplicationToken(String tokenName) {
         return sharedUtilityService.getTokenEmailForApplicationToken(tokenName);
     }
+
     public String getTokenEmailForGlobalToken(String tokenName) {
         return sharedUtilityService.getTokenEmailForGlobalToken(tokenName);
     }
 
     /**
      * Create a new token and return the email of the token
+     *
      * @return the email of the token
      */
     public List<String> createTokens(MockMvc mockMvc,
-                             Optional<String> userInfo,
-                             List<NewAuthenticationTokenDTO> authenticationTokens) {
+                                     Optional<String> userInfo,
+                                     List<NewAuthenticationTokenDTO> authenticationTokens) {
         List<AuthenticationTokenDTO> createdTokens = new ArrayList<>();
         for (NewAuthenticationTokenDTO newAuthenticationTokenDTO : authenticationTokens) {
             var newAuthenticationTokenApiResult = assertDoesNotThrow(
@@ -182,7 +187,7 @@ public class TestControllerHelperService {
     }
 
     public Optional<AuthenticationTokenDTO> getAuthenticationTokenByLogbookIdAndTokenName(String logbookId, String tokenName) {
-        return assertDoesNotThrow(()-> logbookService.getAuthenticationTokenByName(logbookId, tokenName));
+        return assertDoesNotThrow(() -> logbookService.getAuthenticationTokenByName(logbookId, tokenName));
     }
 
     public ApiResultResponse<String> newAttachment(
@@ -190,7 +195,7 @@ public class TestControllerHelperService {
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
             MockMultipartFile file) throws Exception {
-        var requestBuilder =   multipart("/v1/attachment").file(file);
+        var requestBuilder = multipart("/v1/attachment").file(file);
         userInfo.ifPresent(login -> requestBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
         MvcResult result_upload = mockMvc.perform(
                         requestBuilder
@@ -213,7 +218,7 @@ public class TestControllerHelperService {
             Optional<String> userInfo,
             String attachmentID,
             String mediaType) throws Exception {
-        var requestBuilder =  get("/v1/attachment/{id}/download", attachmentID)
+        var requestBuilder = get("/v1/attachment/{id}/download", attachmentID)
                 .contentType(mediaType);
         userInfo.ifPresent(login -> requestBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
         MvcResult result = mockMvc.perform(
@@ -235,7 +240,7 @@ public class TestControllerHelperService {
             Optional<String> userInfo,
             String attachmentID,
             String mediaType) throws Exception {
-        var requestBuilder =  get("/v1/attachment/{id}/preview.jpg", attachmentID)
+        var requestBuilder = get("/v1/attachment/{id}/preview.jpg", attachmentID)
                 .contentType(mediaType);
         userInfo.ifPresent(login -> requestBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
         MvcResult result = mockMvc.perform(
@@ -268,7 +273,7 @@ public class TestControllerHelperService {
 //        if(userInfo.isPresent() && userInfo.get().toLowerCase().compareTo("service")==0) {
 //            postBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateServiceToken());
 //        } else {
-            userInfo.ifPresent(login -> postBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
+        userInfo.ifPresent(login -> postBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
 //        }
 
         MvcResult result = mockMvc.perform(postBuilder)
@@ -678,7 +683,7 @@ public class TestControllerHelperService {
                         .accept(MediaType.APPLICATION_JSON);
         userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
         includeAuthorizations.ifPresent(b -> getBuilder.param("includeAuthorizations", String.valueOf(b)));
-        filterForAuthorizationTypes.ifPresent(authType-> getBuilder.param("filterForAuthorizationTypes", authType));
+        filterForAuthorizationTypes.ifPresent(authType -> getBuilder.param("filterForAuthorizationTypes", authType));
         MvcResult result = mockMvc.perform(
                         getBuilder
                 )
@@ -712,10 +717,11 @@ public class TestControllerHelperService {
 
     /**
      * Get logbook by id
-     * @param mockMvc  MockMvc
-     * @param resultMatcher ResultMatcher
-     * @param userInfo Optional<String>
-     * @param logbookID String
+     *
+     * @param mockMvc               MockMvc
+     * @param resultMatcher         ResultMatcher
+     * @param userInfo              Optional<String>
+     * @param logbookID             String
      * @param includeAuthorizations Optional<Boolean>
      * @return ApiResultResponse<LogbookDTO>
      * @throws Exception Exception
@@ -886,6 +892,145 @@ public class TestControllerHelperService {
                 result.getResponse().getContentAsString(),
                 new TypeReference<>() {
                 });
+    }
+
+    /**
+     * Update logbook
+     * @param mockMvc MockMvc
+     * @param resultMatcher ResultMatcher
+     * @param userInfo optional user information
+     * @param logbookUserAuthorizationDTO LogbookUserAuthorizationDTO
+     * @return ApiResultResponse<Boolean>
+     * @throws Exception Exception
+     */
+    public ApiResultResponse<Boolean> applyLogbookUserAuthorization(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            LogbookUserAuthorizationDTO logbookUserAuthorizationDTO) throws Exception {
+        MockHttpServletRequestBuilder requestBuilder =
+                post("/v1/auth/logbook/user")
+                        .content(
+                                objectMapper.writeValueAsString(logbookUserAuthorizationDTO)
+                        )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON);
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    public ApiResultResponse<Boolean> applyLogbookUserAuthorization(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String userId,
+            LogbookAuthorizationDTO logbookAuthorization) throws Exception {
+        MockHttpServletRequestBuilder requestBuilder =
+                post("/v1/auth/logbook/user/{userId}", userId)
+                        .content(
+                                objectMapper.writeValueAsString(logbookAuthorization)
+                        )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON);
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    public ApiResultResponse<Boolean> deleteLogbookUsersAuthorization(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String logbookId,
+            LogbookAuthorizationDTO logbookAuthorization) throws Exception {
+        MockHttpServletRequestBuilder requestBuilder =
+                delete("/v1/auth/logbook/{logbookId}/user", logbookId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON);
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    public ApiResultResponse<Boolean> applyLogbookGroupAuthorization(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            LogbookUserAuthorizationDTO logbookUserAuthorizationDTO) throws Exception {
+        MockHttpServletRequestBuilder requestBuilder =
+                post("/v1/auth/logbook/group")
+                        .content(
+                                objectMapper.writeValueAsString(logbookUserAuthorizationDTO)
+                        )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON);
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    public ApiResultResponse<Boolean> applyLogbookGroupAuthorization(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String groupId,
+            LogbookAuthorizationDTO logbookAuthorization) throws Exception {
+        MockHttpServletRequestBuilder requestBuilder =
+                post("/v1/auth/logbook/group/{groupId}", groupId)
+                        .content(
+                                objectMapper.writeValueAsString(logbookAuthorization)
+                        )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON);
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    public ApiResultResponse<Boolean> deleteLogbookGroupAuthorization(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String logbookId,
+            LogbookAuthorizationDTO logbookAuthorization) throws Exception {
+        MockHttpServletRequestBuilder requestBuilder =
+                delete("/v1/auth/logbook/{logbookId}/group", logbookId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON);
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
     }
 
     public ApiResultResponse<String> findSummaryIdByShiftNameAndDate(
@@ -1069,6 +1214,7 @@ public class TestControllerHelperService {
     public ApiResultResponse<LogbookDTO> getTestLogbook(MockMvc mockMvc) {
         return getTestLogbook(mockMvc, "user1@slac.stanford.edu");
     }
+
     public ApiResultResponse<LogbookDTO> getTestLogbook(MockMvc mockMvc, String whitUserEmail) {
         ApiResultResponse<String> logbookCreationResult = assertDoesNotThrow(
                 () -> createNewLogbook(
@@ -1094,5 +1240,23 @@ public class TestControllerHelperService {
                         logbookCreationResult.getPayload()
                 )
         );
+    }
+
+    public <T> ApiResultResponse<T> executeHttpRequest(
+            TypeReference<ApiResultResponse<T>> typeRef,
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            MockHttpServletRequestBuilder requestBuilder) throws Exception {
+        userInfo.ifPresent(login -> requestBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
+
+        MvcResult result = mockMvc.perform(requestBuilder)
+                .andExpect(resultMatcher)
+                .andReturn();
+
+        if (result.getResolvedException() != null) {
+            throw result.getResolvedException();
+        }
+        return objectMapper.readValue(result.getResponse().getContentAsString(), typeRef);
     }
 }

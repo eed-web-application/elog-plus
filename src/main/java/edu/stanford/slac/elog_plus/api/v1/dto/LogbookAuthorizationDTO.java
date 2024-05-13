@@ -9,10 +9,9 @@ import lombok.Builder;
 @Builder(toBuilder = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@Schema(description = "Identify the single authorization for and user on a logbook")
-public record LogbookUserAuthorization(
+@Schema(description = "Identify the single authorization for a logbook")
+public record LogbookAuthorizationDTO(
         String logbookId,
-        String userId,
         AuthorizationTypeDTO authorizationType
 ){
 }
