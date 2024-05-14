@@ -27,16 +27,54 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 
 @Log4j2
 @RestController()
-@RequestMapping("/v1/auth")
+@RequestMapping("/v1/logbook")
 @AllArgsConstructor
 @Schema(description = "Set of api for user/group management on logbook")
-public class AuthorizationController {
+public class LogbookAuthorizationController {
     private final RequestBodyService requestBodyBuilder;
     AuthService authService;
     LogbookService logbookService;
 
+    @GetMapping(
+            path = "/auth",
+            consumes = {MediaType.APPLICATION_JSON_VALUE},
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+
+    )
+    @Operation(description = "Manage authorization for logbook user authorization")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResultResponse<List<LogbookAuthorizationDTO>> getUserAuthorizationOnLogbooks
+            (
+                    Authentication authentication
+            ) {
+
+        return ApiResultResponse.of(
+               logbookService.getAllUserAuthorizations(authentication)
+        );
+    }
+
+
+    @GetMapping(
+            path = "/{logbookId}/auth",
+            consumes = {MediaType.APPLICATION_JSON_VALUE},
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+
+    )
+    @Operation(description = "Manage authorization for logbook user authorization")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResultResponse<List<LogbookAuthorizationDTO>> getUserAuthorizationOnLogbooks
+            (
+                    @PathVariable @NotNull String logbookId,
+                    Authentication authentication
+            ) {
+
+        return ApiResultResponse.of(
+                logbookService.getAllUserAuthorizations(authentication, logbookId)
+        );
+    }
+
     @PostMapping(
-            path = "/logbook/user",
+            path = "/auth/user",
             consumes = {MediaType.APPLICATION_JSON_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE}
 
@@ -78,7 +116,7 @@ public class AuthorizationController {
     }
 
     @PostMapping(
-            path = "/logbook/user/{userId}",
+            path = "/auth/user/{userId}",
             consumes = {MediaType.APPLICATION_JSON_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE}
 
@@ -121,7 +159,7 @@ public class AuthorizationController {
     }
 
     @DeleteMapping(
-            path = "/logbook/{logbookId}/user",
+            path = "/{logbookId}/auth/user",
             consumes = {MediaType.APPLICATION_JSON_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE}
 
@@ -157,7 +195,7 @@ public class AuthorizationController {
     }
 
     @PostMapping(
-            path = "/logbook/group",
+            path = "/auth/group",
             consumes = {MediaType.APPLICATION_JSON_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE}
 
@@ -199,7 +237,7 @@ public class AuthorizationController {
     }
 
     @PostMapping(
-            path = "/logbook/group/{groupId}",
+            path = "/auth/group/{groupId}",
             consumes = {MediaType.APPLICATION_JSON_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE}
 
@@ -242,7 +280,7 @@ public class AuthorizationController {
     }
 
     @DeleteMapping(
-            path = "/logbook/{logbookId}/group",
+            path = "/{logbookId}/auth/group",
             consumes = {MediaType.APPLICATION_JSON_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE}
 

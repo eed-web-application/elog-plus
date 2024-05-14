@@ -28,6 +28,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -1518,7 +1519,7 @@ public class LogbookService {
         }
 
         // Transform the entries in authByLogbook
-        applyDistinctAuthorization(authByLogbook);
+        applyDistinctAuthorization(authByLogbook, AuthorizationOwnerTypeDTO.Group);
     }
 
     /**
@@ -1601,7 +1602,7 @@ public class LogbookService {
             );
         }
 
-        applyDistinctAuthorization(authByLogbook);
+        applyDistinctAuthorization(authByLogbook, AuthorizationOwnerTypeDTO.Group);
     }
 
     /**
@@ -1746,7 +1747,7 @@ public class LogbookService {
      *
      * @param authByLogbook the list of authorizations to apply for each logbook (the key)
      */
-    private void applyDistinctAuthorization(Map<String, List<AuthorizationDTO>> authByLogbook) {
+    private void applyDistinctAuthorization(Map<String, List<AuthorizationDTO>> authByLogbook, AuthorizationOwnerTypeDTO ownerType) {
         Map<AuthorizationTypeDTO, Integer> priorities = Map.of(
                 AuthorizationTypeDTO.Admin, 1,
                 AuthorizationTypeDTO.Write, 2,
@@ -1767,7 +1768,7 @@ public class LogbookService {
                                                         Collectors.reducing(
                                                                 (auth1, auth2) -> {
                                                                     // Select the highest authorization based on priority
-                                                                    return priorities.get(auth1.authorizationType()) > priorities.get(auth2.authorizationType()) ? auth1 : auth2;
+                                                                    return priorities.get(auth1.authorizationType()) > priorities.get(auth2.authorizationType()) ? auth2 : auth1;
                                                                 }
                                                         )
                                                 ))
@@ -1781,7 +1782,7 @@ public class LogbookService {
         highestAuthPerUserPerLogbook.forEach(
                 (logbookId, authList) -> {
                     // clear all authorization for the logbook
-                    authService.deleteAuthorizationForResource("/logbook/%s".formatted(logbookId));
+                    authService.deleteAuthorizationForResourcePrefix("/logbook/%s".formatted(logbookId), ownerType);
 
                     authList.forEach(
                             auth -> {
@@ -1795,5 +1796,47 @@ public class LogbookService {
                     );
                 }
         );
+    }
+
+    /**
+     * Return all the authorization for the user
+     *
+     * @param authentication the user authentication
+     * @return the list of authorization
+     */
+    public List<LogbookAuthorizationDTO> getAllUserAuthorizations(Authentication authentication) {
+        List<AuthorizationDTO> allMajorAuthorizationOnAllResource = authService.getAllAuthenticationForOwner(authentication.getCredentials().toString(), AuthorizationOwnerTypeDTO.User, Optional.of(true));
+        return allMajorAuthorizationOnAllResource.stream()
+                .filter(
+                        a -> a.resource().startsWith("/logbook/")
+                ).map(
+                        a -> LogbookAuthorizationDTO.builder()
+                                .logbookId(a.resource().substring(9))
+                                .authorizationType(a.authorizationType())
+                                .build()
+                ).toList();
+    }
+
+    /**
+     * Return all the authorization for the user on a specific logbook
+     *
+     * @param authentication the user authentication
+     * @param logbookId the logbook id
+     * @return the list of authorization
+     */
+    public List<LogbookAuthorizationDTO> getAllUserAuthorizations(Authentication authentication, String logbookId) {
+        List<AuthorizationDTO> allMajorAuthorizationOnAllResource = authService.getAllAuthenticationForOwner(
+                authentication.getCredentials().toString(),
+                AuthorizationOwnerTypeDTO.User,
+                "/logbook/%s".formatted(logbookId),
+                Optional.of(true)
+        );
+        return allMajorAuthorizationOnAllResource.stream()
+                .map(
+                        a -> LogbookAuthorizationDTO.builder()
+                                .logbookId(a.resource().substring(9))
+                                .authorizationType(a.authorizationType())
+                                .build()
+                ).toList();
     }
 }
