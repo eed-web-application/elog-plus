@@ -2,9 +2,7 @@ package edu.stanford.slac.elog_plus.service.authorization;
 
 import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
-import edu.stanford.slac.elog_plus.api.v1.dto.NewTagDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.ShiftDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.UpdateLogbookDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -16,6 +14,9 @@ import java.util.List;
 import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.*;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 
+/**
+ * Service that handle the authorization for the logbook
+ */
 @Service
 @AllArgsConstructor
 public class LogbookAuthorizationService {
@@ -23,9 +24,10 @@ public class LogbookAuthorizationService {
 
     /**
      * Check for read authorization
-     * @param authentication
-     * @param logbookId
-     * @return
+     *
+     * @param authentication the authentication object
+     * @param logbookId      the logbook id
+     * @return true if the user is authorized, false otherwise
      */
     public boolean authorizedReadOnLogbook(
             Authentication authentication,
@@ -49,11 +51,12 @@ public class LogbookAuthorizationService {
     }
 
     /**
+     * Check for create authorization
      *
-     * @param authentication
-     * @param logbookId
-     * @param updateLogbookDTO
-     * @return
+     * @param authentication   the authentication object
+     * @param logbookId        the logbook id
+     * @param updateLogbookDTO the update logbook dto
+     * @return true if the user is authorized, false otherwise
      */
     public boolean authorizedUpdateOnLogbook(
             Authentication authentication,
@@ -78,11 +81,19 @@ public class LogbookAuthorizationService {
         return true;
     }
 
+    /**
+     * Check for create new tag authorization
+     *
+     * @param authentication the authentication object
+     * @param logbookId      the logbook id
+     * @param newTagDTO      the new tag dto
+     * @return true if the user is authorized, false otherwise
+     */
     public boolean authorizedOnCreateNewTag(
             Authentication authentication,
             String logbookId,
             NewTagDTO newTagDTO
-    ){
+    ) {
         assertion(
                 NotAuthorized
                         .notAuthorizedBuilder()
@@ -99,10 +110,17 @@ public class LogbookAuthorizationService {
         return true;
     }
 
+    /**
+     * Check for read authorization
+     *
+     * @param authentication the authentication object
+     * @param logbookId      the logbook id
+     * @return true if the user is authorized, false otherwise
+     */
     public boolean authorizedOnGetAllTag(
             Authentication authentication,
             String logbookId
-    ){
+    ) {
         assertion(
                 NotAuthorized
                         .notAuthorizedBuilder()
@@ -123,7 +141,7 @@ public class LogbookAuthorizationService {
             Authentication authentication,
             @NotNull String logbookId,
             @Valid List<ShiftDTO> shiftReplacement
-    ){
+    ) {
 // check authenticated
         assertion(
                 NotAuthorized
@@ -132,6 +150,143 @@ public class LogbookAuthorizationService {
                         .errorDomain("LogbookAuthorizationService::authorizedOnReplaceShift")
                         .build(),
                 // and can write or administer the logbook
+                () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
+                        authentication,
+                        Admin,
+                        "/logbook/%s".formatted(logbookId)
+                )
+        );
+        return true;
+    }
+
+    public boolean applyUserAuthorization(Authentication authentication, @Valid List<LogbookUserAuthorizationDTO> authorizations) {
+        // extract all logbook id fo check authorizations
+        List<String> managedLogbookIds = authorizations.stream().map(LogbookUserAuthorizationDTO::logbookId).distinct().toList();
+        // check authenticated
+        assertion(
+                NotAuthorized
+                        .notAuthorizedBuilder()
+                        .errorCode(-1)
+                        .errorDomain("LogbookAuthorizationService::applyUserAuthorization")
+                        .build(),
+                // can at least write the logbook which the entry belong
+                () -> managedLogbookIds
+                        .stream()
+                        .allMatch
+                                (
+                                        logbookId -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
+                                                authentication,
+                                                Admin,
+                                                "/logbook/%s".formatted(logbookId)
+                                        )
+                                )
+        );
+        return true;
+    }
+
+    public boolean applyUserAuthorization(Authentication authentication, @NotNull String userId, @Valid List<LogbookAuthorizationDTO> authorizations) {
+        // extract all logbook id fo check authorizations
+        List<String> managedLogbookIds = authorizations.stream().map(LogbookAuthorizationDTO::logbookId).distinct().toList();
+        // check authenticated
+        assertion(
+                NotAuthorized
+                        .notAuthorizedBuilder()
+                        .errorCode(-1)
+                        .errorDomain("LogbookAuthorizationService::applyUserAuthorization")
+                        .build(),
+                // can at least write the logbook which the entry belong
+                () -> managedLogbookIds
+                        .stream()
+                        .allMatch
+                                (
+                                        logbookId -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
+                                                authentication,
+                                                Admin,
+                                                "/logbook/%s".formatted(logbookId)
+                                        )
+                                )
+        );
+        return true;
+    }
+
+    public boolean deleteUserAuthorization(Authentication authentication, @NotNull String logbookId) {
+        // check authenticated
+        assertion(
+                NotAuthorized
+                        .notAuthorizedBuilder()
+                        .errorCode(-1)
+                        .errorDomain("LogbookAuthorizationService::deleteUserAuthorization")
+                        .build(),
+                // can at least write the logbook which the entry belong
+                () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
+                        authentication,
+                        Admin,
+                        "/logbook/%s".formatted(logbookId)
+                )
+
+        );
+        return true;
+    }
+
+    public boolean applyGroupAuthorization(Authentication authentication, @Valid List<LogbookGroupAuthorizationDTO> authorizations){
+        // extract all logbook id fo check authorizations
+        List<String> managedLogbookIds = authorizations.stream().map(LogbookGroupAuthorizationDTO::logbookId).distinct().toList();
+        // check authenticated
+        assertion(
+                NotAuthorized
+                        .notAuthorizedBuilder()
+                        .errorCode(-1)
+                        .errorDomain("LogbookAuthorizationService::applyGroupAuthorization")
+                        .build(),
+                // can at least write the logbook which the entry belong
+                () -> managedLogbookIds
+                        .stream()
+                        .allMatch
+                                (
+                                        logbookId -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
+                                                authentication,
+                                                Admin,
+                                                "/logbook/%s".formatted(logbookId)
+                                        )
+                                )
+        );
+        return true;
+    }
+
+    public boolean applyGroupAuthorization(Authentication authentication, @NotNull String groupId, @Valid List<LogbookAuthorizationDTO> authorizations){
+        // extract all logbook id fo check authorizations
+        List<String> managedLogbookIds = authorizations.stream().map(LogbookAuthorizationDTO::logbookId).distinct().toList();
+        // check authenticated
+        assertion(
+                NotAuthorized
+                        .notAuthorizedBuilder()
+                        .errorCode(-1)
+                        .errorDomain("LogbookAuthorizationService::applyGroupAuthorization")
+                        .build(),
+                // can at least write the logbook which the entry belong
+                () -> managedLogbookIds
+                        .stream()
+                        .allMatch
+                                (
+                                        logbookId -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
+                                                authentication,
+                                                Admin,
+                                                "/logbook/%s".formatted(logbookId)
+                                        )
+                                )
+        );
+        return true;
+    }
+
+    public boolean deleteGroupAuthorization(Authentication authentication, @NotNull String logbookId){
+        // check authenticated
+        assertion(
+                NotAuthorized
+                        .notAuthorizedBuilder()
+                        .errorCode(-1)
+                        .errorDomain("LogbookAuthorizationService::deleteGroupAuthorization")
+                        .build(),
+                // can at least write the logbook which the entry belong
                 () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                         authentication,
                         Admin,

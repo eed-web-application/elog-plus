@@ -9,6 +9,9 @@ import org.springframework.stereotype.Service;
 
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 
+/**
+ * Base authorization service
+ */
 @Service
 @AllArgsConstructor
 public class BaseAuthorizationService {
