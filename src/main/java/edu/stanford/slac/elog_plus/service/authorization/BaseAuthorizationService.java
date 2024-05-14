@@ -46,7 +46,7 @@ public class BaseAuthorizationService {
                         .errorDomain("BaseAuthorizationService::checkForRoot")
                         .build(),
                 // should be authenticated
-                () -> authService.checkAuthentication(authentication)
+                () -> authService.checkForRoot(authentication)
         );
         return true;
     }
