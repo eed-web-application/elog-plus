@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,20 +37,12 @@ public class TagsController {
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(description = "Return all tags that belong to logbook identified by a list of ids")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
     public ApiResultResponse<List<TagDTO>> getAllTags(
             @Parameter(name = "logbooks", description = "The logbooks for filter the tags")
             @RequestParam("logbooks") Optional<List<String>> logbooks,
             Authentication authentication
     ) {
-        // check if the user is authenticated
-        assertion(
-                NotAuthorized.notAuthorizedBuilder()
-                        .errorCode(-1)
-                        .errorDomain("TagsController::getAllTags")
-                        .build(),
-                ()->authService.checkAuthentication(authentication)
-        );
-
         // filter all readable
         List<LogbookDTO> allReadableLogbook = logbookService.getAllLogbook().stream()
                 .filter(
