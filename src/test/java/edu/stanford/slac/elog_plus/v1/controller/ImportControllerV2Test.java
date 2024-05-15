@@ -86,6 +86,9 @@ public class ImportControllerV2Test {
                 MissingServletRequestPartException.class,
                 () -> testControllerHelperService.importEntryV1(
                         mockMvc, status().is4xxClientError(),
+                        Optional.of(
+                                "user3@slac.stanford.edu"
+                        ),
                         null,
                         new MockMultipartFile[]{}
                 )
@@ -105,7 +108,14 @@ public class ImportControllerV2Test {
                 .build();
 
         ApiResultResponse<String> uploadResult = assertDoesNotThrow(
-                () -> testControllerHelperService.importEntryV1(mockMvc, status().isCreated(), dto, new MockMultipartFile[]{})
+                () -> testControllerHelperService.importEntryV1(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of(
+                                "user3@slac.stanford.edu"
+                        ),
+                        dto,
+                        new MockMultipartFile[]{})
         );
 
         assertThat(uploadResult.getErrorCode()).isEqualTo(0);
@@ -156,6 +166,9 @@ public class ImportControllerV2Test {
                     () -> testControllerHelperService.importEntryV1(
                             mockMvc,
                             status().isCreated(),
+                            Optional.of(
+                                    "user3@slac.stanford.edu"
+                            ),
                             dto,
                             new MockMultipartFile(
                                     "files",
@@ -195,6 +208,9 @@ public class ImportControllerV2Test {
                 () -> testControllerHelperService.importEntryV1(
                         mockMvc,
                         status().is5xxServerError(),
+                        Optional.of(
+                                "user3@slac.stanford.edu"
+                        ),
                         EntryImportDTO
                                 .builder()
                                 .originId("origin-id")

@@ -292,9 +292,11 @@ public class TestControllerHelperService {
     public ApiResultResponse<String> importEntryV1(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
+            Optional<String> userInfo,
             EntryImportDTO entryToImport,
             MockMultipartFile... files) throws Exception {
         MockMultipartHttpServletRequestBuilder multiPartBuilder = multipart("/v1/import");
+        userInfo.ifPresent(login -> multiPartBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
         if (entryToImport != null) {
             MockPart p = new MockPart(
                     "entry",

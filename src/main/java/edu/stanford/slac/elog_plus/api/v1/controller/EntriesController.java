@@ -178,6 +178,7 @@ public class EntriesController {
     @PostAuthorize("@entryAuthorizationService.applyFilterAuthorizationOnEntrySummaryDTOList(returnObject, authentication, #authorizationCache)")
     public ApiResultResponse<List<EntrySummaryDTO>> getAllReferences(
             Authentication authentication,
+            AuthorizationCache authorizationCache,
             @Parameter(description = "Is the id of the entry for which we want to load all the reference to")
             @PathVariable String entryId
     ) {
