@@ -17,6 +17,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -39,13 +40,13 @@ public class ImportController {
     AuthService authService;
     ImportService importService;
     LogbookService logbookService;
-
-    @Operation(description = "Upload data for import an entry")
-    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(
             consumes = {MediaType.MULTIPART_FORM_DATA_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(description = "Upload data for import an entry")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
     public ApiResultResponse<String> uploadEntryAndAttachment(
             Authentication authentication,
             @Parameter(schema = @Schema(type = "string", implementation = EntryImportDTO.class))

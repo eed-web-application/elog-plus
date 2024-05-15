@@ -1965,6 +1965,7 @@ public class EntriesControllerTest {
                         testControllerHelperService.findSummaryIdByShiftNameAndDate(
                                 mockMvc,
                                 status().isOk(),
+                                Optional.of("user1@slac.stanford.edu"),
                                 finalNewLogBookResult1.getPayload().shifts().get(0).id(),
                                 LocalDate.now()
                         )

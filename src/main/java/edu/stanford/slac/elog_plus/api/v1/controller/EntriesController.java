@@ -3,19 +3,25 @@ package edu.stanford.slac.elog_plus.api.v1.controller;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.PersonDTO;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
-import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService;
-import edu.stanford.slac.elog_plus.api.v1.dto.*;
-import edu.stanford.slac.elog_plus.exception.LogbookNotAuthorized;
+import edu.stanford.slac.elog_plus.api.v1.dto.EntryDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.EntryNewDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.EntrySummaryDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.QueryWithAnchorDTO;
 import edu.stanford.slac.elog_plus.service.EntryService;
 import edu.stanford.slac.elog_plus.service.LogbookService;
+import edu.stanford.slac.elog_plus.service.authorization.AuthorizationCache;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,11 +30,8 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Read;
-import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Write;
-import static edu.stanford.slac.ad.eed.baselib.exception.Utility.*;
 
 @RestController()
 @RequestMapping("/v1/entries")
@@ -42,33 +45,14 @@ public class EntriesController {
     final private LogbookService logbookService;
 
     @PostMapping(produces = {MediaType.APPLICATION_JSON_VALUE})
-    @Operation(description = "Perform the query on all log entries")
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(description = "Create a new entry")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @entryAuthorizationService.canCreateNewEntry(#authentication, #newEntry)")
     public ApiResultResponse<String> newEntry(
-            @RequestBody EntryNewDTO newEntry,
-            Authentication authentication) {
-        // check authenticated
-        assertion(
-                NotAuthorized
-                        .notAuthorizedBuilder()
-                        .errorCode(-1)
-                        .errorDomain("LogbooksController::newEntry")
-                        .build(),
-                // needs be authenticated
-                () -> authService.checkAuthentication(authentication),
-                // and can at least write the logbook which the entry belong
-                () -> all(
-                        newEntry.logbooks().stream()
-                                .map(
-                                        logbookId -> (Supplier<Boolean>) () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                                                authentication,
-                                                Write,
-                                                "/logbook/%s".formatted(logbookId)
-                                        )
-                                )
-                                .toList()
-                )
-        );
+            Authentication authentication,
+            @Parameter(description = "The new entry to create", required = true)
+            @RequestBody @Valid EntryNewDTO newEntry
+    ) {
         PersonDTO creator = null;
         if (authentication.getCredentials().toString().endsWith(appProperties.getAuthenticationTokenDomain())) {
             // create fake person for authentication token
@@ -89,81 +73,39 @@ public class EntriesController {
     }
 
     @PostMapping(
-            path = "/{id}/supersede",
+            path = "/{entryId}/supersede",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @Operation(description = "Create a new supersede for the log identified by the id")
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(description = "Create a new supersede for the log identified by the id")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @entryAuthorizationService.canCreateSupersede(#authentication, #entryId, #newSupersedeEntry)")
     public ApiResultResponse<String> newSupersede(
-            @PathVariable String id,
-            @RequestBody EntryNewDTO newSupersedeEntry,
-            Authentication authentication) {
-        // check authenticated
-        assertion(
-                NotAuthorized
-                        .notAuthorizedBuilder()
-                        .errorCode(-1)
-                        .errorDomain("LogbooksController::newSupersede")
-                        .build(),
-
-                // needs be authenticated
-                () -> authService.checkAuthentication(authentication),
-                // and can at least write
-                () -> all(
-                        // write
-                        newSupersedeEntry.logbooks().stream()
-                                .map(
-                                        logbookId -> (Supplier<Boolean>) () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                                                authentication,
-                                                Write,
-                                                "/logbook/%s".formatted(logbookId)
-                                        )
-                                )
-                                .toList()
-                )
-        );
+            Authentication authentication,
+            @Parameter(description = "Is the id of the entry that will be superseded", required = true)
+            @PathVariable @NotNull String entryId,
+            @Parameter(description = "Is the new entry that will supersede the entry identified by the entryId", required = true)
+            @RequestBody @Valid EntryNewDTO newSupersedeEntry) {
         return ApiResultResponse.of(
-                entryService.createNewSupersede(id, newSupersedeEntry)
+                entryService.createNewSupersede(entryId, newSupersedeEntry)
         );
     }
 
     @PostMapping(
-            path = "/{id}/follow-ups",
+            path = "/{entryId}/follow-ups",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @Operation(description = "Create a new follow-up log for the the log identified by the id")
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(description = "Create a new follow-up log for the the log identified by the id")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @entryAuthorizationService.canCreateNewFollowUp(#authentication, #entryId, #newFollowUpEntry)")
     public ApiResultResponse<String> newFollowUp(
-            @PathVariable String id,
-            @RequestBody EntryNewDTO newFollowUpEntry,
-            Authentication authentication) {
-        // check authenticated
-        assertion(
-                NotAuthorized
-                        .notAuthorizedBuilder()
-                        .errorCode(-1)
-                        .errorDomain("LogbooksController::newFollowUp")
-                        .build(),
-
-                // needs be authenticated
-                () -> authService.checkAuthentication(authentication),
-                // or can at least write the logbook which the entry belong
-                () -> all(
-                        // write
-                        newFollowUpEntry.logbooks().stream()
-                                .map(
-                                        logbookId -> (Supplier<Boolean>) () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                                                authentication,
-                                                Write,
-                                                "/logbook/%s".formatted(logbookId)
-                                        )
-                                )
-                                .toList()
-                )
-        );
+            Authentication authentication,
+            @Parameter(description = "Is the id of the entry that will be followed-up", required = true)
+            @PathVariable @NotNull String entryId,
+            @Parameter(description = "Is the new entry that will follow-up the entry identified by the entryId", required = true)
+            @RequestBody @Valid EntryNewDTO newFollowUpEntry) {
         return ApiResultResponse.of(
                 entryService.createNewFollowUp(
-                        id,
+                        entryId,
                         newFollowUpEntry,
                         peopleGroupService.findPerson(authentication)
                 )
@@ -171,41 +113,37 @@ public class EntriesController {
     }
 
     @GetMapping(
-            path = "/{id}/follow-ups",
+            path = "/{entryId}/follow-ups",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @Operation(description = "Return all the follow-up logs for a specific entry identified by the id")
     @ResponseStatus(HttpStatus.OK)
+    @Operation(description = "Return all the follow-up logs for a specific entry identified by the id")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @entryAuthorizationService.canGetAllFollowUps(#authentication, #entryId)")
     public ApiResultResponse<List<EntrySummaryDTO>> getAllFollowUp(
-            @PathVariable String id,
-            Authentication authentication) {
-        // check for authorizations
-        assertion(
-                () -> authService.checkAuthentication(authentication),
-                NotAuthorized
-                        .notAuthorizedBuilder()
-                        .errorCode(-1)
-                        .errorDomain("LogbooksController::getAllFollowUp")
-                        .build()
-        );
-        final boolean userIsRoot = authService.checkForRoot(authentication);
+            Authentication authentication,
+            @PathVariable @NotNull String entryId) {
         // fetch all follow up
         return ApiResultResponse.of(
                 filterEntrySummaryByAuthentication(
-                        entryService.getAllFollowUpForALog(id),
+                        entryService.getAllFollowUpForALog(entryId),
                         authentication
                 )
         );
     }
 
     @GetMapping(
-            path = "/{id}",
+            path = "/{entryId}",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @Operation(description = "Return the full log information")
     @ResponseStatus(HttpStatus.OK)
+    @Operation(description = "Return the full entry log information")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @entryAuthorizationService.canGetFullEntry(#authentication, #entryId, #authorizationCache)")
+    @PostAuthorize("@entryAuthorizationService.applyFilterAuthorizationEntryDTO(returnObject, authentication, #authorizationCache)")
     public ApiResultResponse<EntryDTO> getFull(
-            @PathVariable String id,
+            Authentication authentication,
+            AuthorizationCache authorizationCache,
+            @Parameter(description = "Is the id of the entry for which we want to load all the information")
+            @PathVariable String entryId,
             @Parameter(name = "includeFollowUps", description = "If true the API return all the entries that are follow-up of this one")
             @RequestParam("includeFollowUps") Optional<Boolean> includeFollowUps,
             @Parameter(name = "includeFollowingUps", description = "If true the API return all the entries that are follow-up of this one")
@@ -215,39 +153,10 @@ public class EntriesController {
             @Parameter(name = "includeReferenceBy", description = "If true the API return all the entries that are referenced by this one")
             @RequestParam("includeReferences") Optional<Boolean> includeReferences,
             @Parameter(name = "includeReferencedBy", description = "If true the API return all the entries that are referenced byt this one")
-            @RequestParam("includeReferencedBy") Optional<Boolean> includeReferencedBy,
-            Authentication authentication
+            @RequestParam("includeReferencedBy") Optional<Boolean> includeReferencedBy
     ) {
-        List<String> lbForTheEntry = entryService.getLogbooksForAnEntryId(id);
-        // filter the unauthorized logbook id
-        List<String> authorizedEntryLogbook = lbForTheEntry.stream().filter(
-                lbId -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                        authentication,
-                        Read,
-                        "/logbook/%s".formatted(lbId)
-                )
-        ).toList();
-
-        // check among all others authorizations
-        assertion(
-                NotAuthorized
-                        .notAuthorizedBuilder()
-                        .errorCode(-1)
-                        .errorDomain("LogbooksController::getFull")
-                        .build(),
-                // is authenticated
-                () -> authService.checkAuthentication(authentication),
-                //and
-                () -> any(
-                        // or is administrator
-                        () -> authService.checkForRoot(authentication),
-                        // or is authorized at least in on e logbook to read
-                        () -> !authorizedEntryLogbook.isEmpty()
-                )
-        );
-
         EntryDTO foundEntry = entryService.getFullEntry(
-                id,
+                entryId,
                 includeFollowUps,
                 includeFollowingUps,
                 includeHistory,
@@ -255,57 +164,25 @@ public class EntriesController {
                 includeReferencedBy
         );
 
-        //we have to filter out the logbook not authorized
-        List<LogbookSummaryDTO> authorizedLogbookSummary = foundEntry.logbooks()
-                .stream()
-                .filter(
-                        lb -> authorizedEntryLogbook.contains(lb.id())
-                ).toList();
         // return entry with authorized only logbook summary
-        return ApiResultResponse.of(
-                foundEntry.toBuilder()
-                        .logbooks(
-                                authorizedLogbookSummary
-                        )
-                        .build()
-        );
+        return ApiResultResponse.of(foundEntry);
     }
 
     @GetMapping(
-            path = "/{id}/references",
+            path = "/{entryId}/references",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @Operation(description = "Return the full log information")
     @ResponseStatus(HttpStatus.OK)
-    public ApiResultResponse<List<EntrySummaryDTO>> getAllTheReferences(
-            @Parameter(description = "Is the id of the entry for wich we want to load all the reference to")
-            @PathVariable String id,
-            Authentication authentication) {
-        //filter all readable logbook wich the entry belongs
-        final List<String> authorizedEntryLogbook = entryService.getLogbooksForAnEntryId(id)
-                .stream()
-                .filter(
-                        lbId -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                                authentication,
-                                Read,
-                                "/logbook/%s".formatted(lbId)
-                        )
-                ).toList();
-
-        // check authorization on
-        assertion(
-                NotAuthorized.notAuthorizedBuilder()
-                        .errorCode(-1)
-                        .errorDomain("EntriesController::getAllTheReferences")
-                        .build(),
-                // need to be authenticated
-                () -> authService.checkAuthentication(authentication),
-                // ca read from at least one logbook
-                () -> !authorizedEntryLogbook.isEmpty()
-        );
+    @Operation(description = "Return all the references for a specific entry identified by the id")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @entryAuthorizationService.canGetAllReferences(#authentication, #entryId, #authorizationCache)")
+    @PostAuthorize("@entryAuthorizationService.applyFilterAuthorizationOnEntrySummaryDTOList(returnObject, authentication, #authorizationCache)")
+    public ApiResultResponse<List<EntrySummaryDTO>> getAllReferences(
+            Authentication authentication,
+            @Parameter(description = "Is the id of the entry for which we want to load all the reference to")
+            @PathVariable String entryId) {
         return ApiResultResponse.of(
                 filterEntrySummaryByAuthentication(
-                        entryService.getReferencesByEntryID(id),
+                        entryService.getReferencesByEntryID(entryId),
                         authentication
                 )
         );
@@ -318,7 +195,11 @@ public class EntriesController {
             description = "Perform the query on all log data"
     )
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @entryAuthorizationService.canSearchEntry(#authentication, #logBooks, #authorizationCache)")
+    @PostAuthorize("@entryAuthorizationService.applyFilterAuthorizationOnEntrySummaryDTOList(returnObject, authentication, #authorizationCache)")
     public ApiResultResponse<List<EntrySummaryDTO>> search(
+            Authentication authentication,
+            AuthorizationCache authorizationCache,
             @Parameter(name = "anchorId", description = "Is the id of an entry from where start the search")
             @RequestParam("anchorId") Optional<String> anchorId,
             @Parameter(name = "startDate", description = "Only include entries after this date. Defaults to current time.")
@@ -334,7 +215,7 @@ public class EntriesController {
             @Parameter(name = "tags", description = "Only include entries that use one of these tags")
             @RequestParam("tags") Optional<List<String>> tags,
             @Parameter(name = "logbooks", description = "Only include entries that belong to one of these logbooks")
-            @RequestParam("logbooks") Optional<List<String>> logBook,
+            @RequestParam("logbooks") Optional<List<String>> logBooks,
             @Parameter(name = "sortByLogDate", description = "Sort entries by log date instead event date")
             @RequestParam(value = "sortByLogDate", defaultValue = "false") Optional<Boolean> sortByLogDate,
             @Parameter(name = "hideSummaries", description = "Hide the summaries from the search(default is false)")
@@ -342,58 +223,8 @@ public class EntriesController {
             @Parameter(name = "requireAllTags", description = "Require that all entries found includes all the tags")
             @RequestParam(value = "requireAllTags", defaultValue = "false") Optional<Boolean> requireAllTags,
             @Parameter(name = "originId", description = "Is the origin id of the source system record identification")
-            @RequestParam(value = "originId") Optional<String> originId,
-            Authentication authentication
+            @RequestParam(value = "originId") Optional<String> originId
     ) {
-        List<String> authorizeLogbooks = null;
-        // check authorization on
-        assertion(
-                NotAuthorized.notAuthorizedBuilder()
-                        .errorCode(-1)
-                        .errorDomain("EntriesController::search")
-                        .build(),
-                // need to be authenticated
-                () -> authService.checkAuthentication(authentication)
-        );
-
-        if(!authService.checkForRoot(authentication)) {
-            // if user is not root whe t check for specific authorization
-            authorizeLogbooks = authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
-                            authentication.getCredentials().toString(),
-                            Read,
-                            "/logbook/",
-                    Optional.empty()
-                    ).stream().map(
-                            auth -> auth.resource().substring(
-                                    auth.resource().lastIndexOf("/") + 1
-                            )
-                    )
-                    .toList();
-
-            if (logBook.isPresent() && !logBook.get().isEmpty()) {
-                // filter out logbook id that are not authorized for the
-                // current user
-                List<String> finalAuthorizeLogbooks = authorizeLogbooks;
-                logBook.get().forEach(
-                        lId -> {
-                            if(!finalAuthorizeLogbooks.contains(lId)) {
-                                // notify the error on logbook authorization
-                                var logbook = logbookService.getLogbook(lId);
-                                throw LogbookNotAuthorized.logbookAuthorizedBuilder()
-                                        .errorCode(-1)
-                                        .logbookName(logbook.name())
-                                        .errorDomain("EntriesController::search")
-                                        .build();
-                            }
-
-                        }
-                );
-            }
-        } else {
-            // if user is root we can use all logbook
-            authorizeLogbooks = logBook.orElse(Collections.emptyList());
-        }
-
         return ApiResultResponse.of(
                 entryService.searchAll(
                         QueryWithAnchorDTO
@@ -405,7 +236,8 @@ public class EntriesController {
                                 .limit(limit.orElse(0))
                                 .search(search.orElse(null))
                                 .tags(tags.orElse(Collections.emptyList()))
-                                .logbooks(authorizeLogbooks)
+                                // cache is filled by the pre-authorized method @entryAuthorizationService::canSearchEntry
+                                .logbooks(authorizationCache.getAuthorizedLogbookId())
                                 .sortByLogDate(sortByLogDate.orElse(false))
                                 .hideSummaries(hideSummaries.orElse(false))
                                 .requireAllTags(requireAllTags.orElse(false))
@@ -420,11 +252,15 @@ public class EntriesController {
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(
-            description = "Perform the query on all log data"
+            description = "Find the summary id for a specific shift and date"
     )
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
     public ApiResultResponse<String> findSummaryForShiftAndDate(
+            Authentication authentication,
+            @Parameter(name = "shiftId", description = "Is the id of the shift for which we want to find the summary")
             @PathVariable String shiftId,
+            @Parameter(name = "date", description = "Is the date for which we want to find the summary")
             @PathVariable LocalDate date
     ) {
         return ApiResultResponse.of(
