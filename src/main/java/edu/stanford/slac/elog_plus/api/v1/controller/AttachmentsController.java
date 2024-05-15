@@ -9,11 +9,14 @@ import edu.stanford.slac.elog_plus.model.FileObjectDescription;
 import edu.stanford.slac.elog_plus.service.AttachmentService;
 import edu.stanford.slac.elog_plus.service.EntryService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -37,14 +40,15 @@ public class AttachmentsController {
             consumes = {"multipart/form-data"},
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @Operation(summary = "Create a new attachment")
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Create a new attachment")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @attachmentAuthorizationService.canCreateAttachment(#authentication)")
     public ApiResultResponse<String> newAttachment(
-            @RequestParam("uploadFile") MultipartFile uploadFile,
-            Authentication authentication
+            Authentication authentication,
+            @Parameter(name = "uploadFile", description = "The file to upload", required = true)
+            @RequestParam("uploadFile") MultipartFile uploadFile
     ) throws Exception {
         // check if the user is authenticated
-
         FileObjectDescription desc = FileObjectDescription
                 .builder()
                 .fileName(
@@ -57,46 +61,29 @@ public class AttachmentsController {
                         uploadFile.getInputStream()
                 )
                 .build();
-
-        // check the authorization
-        assertion(
-                NotAuthorized.notAuthorizedBuilder()
-                        .errorCode(-1)
-                        .errorDomain("AttachmentsController::newAttachment")
-                        .build(),
-                // should be authenticated
-                () -> authService.checkAuthentication(authentication),
-                // should be able to write on some logbook
-                () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                        authentication,
-                        Write,
-                        "/"
-                )
-        );
         return ApiResultResponse.of(
                 attachmentService.createAttachment(desc, true)
         );
     }
 
     @GetMapping(
-            path = "/{id}/download"
+            path = "/{attachmentId}/download"
             //produces = {MediaType.APPLICATION_OCTET_STREAM_VALUE}
     )
     @Operation(summary = "Load an attachment using an unique attachment id")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @attachmentAuthorizationService.canRead(#authentication, #attachmentId)")
     public ResponseEntity<Resource> download(
-            @PathVariable String id,
-            Authentication authentication
+            Authentication authentication,
+            @Parameter(name = "attachmentId", description = "The unique id of the attachment", required = true)
+            @PathVariable @NotNull String attachmentId
     ) throws Exception {
-        checkAuthorizedOnAttachment(id, authentication);
-        FileObjectDescription desc = attachmentService.getAttachmentContent(id);
+        FileObjectDescription desc = attachmentService.getAttachmentContent(attachmentId);
         InputStreamResource resource = new InputStreamResource(desc.getIs());
         MediaType mediaType = MediaType.valueOf(desc.getContentType());
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(mediaType);
         ContentDisposition disposition = ContentDisposition
-                // 3.2
-                .inline() // or .attachment()
-                // 3.1
+                .inline()
                 .filename(desc.getFileName())
                 .build();
         headers.setContentDisposition(disposition);
@@ -104,61 +91,26 @@ public class AttachmentsController {
     }
 
     @GetMapping(
-            path = "/{id}/preview.jpg"
+            path = "/{attachmentId}/preview.jpg"
             //produces = {MediaType.APPLICATION_OCTET_STREAM_VALUE}
     )
-    @Operation(summary = "Load an attachment using an unique attachment id")
+    @Operation(summary = "Load an attachment preview using an unique attachment id")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @attachmentAuthorizationService.canRead(#authentication, #attachmentId)")
     public ResponseEntity<Resource> downloadPreview(
-            @PathVariable String id,
-            Authentication authentication
+            Authentication authentication,
+            @Parameter(name = "attachmentId", description = "The unique id of the attachment", required = true)
+            @PathVariable String attachmentId
     ) throws Exception {
-        checkAuthorizedOnAttachment(id, authentication);
-        FileObjectDescription desc = attachmentService.getPreviewContent(id);
+        FileObjectDescription desc = attachmentService.getPreviewContent(attachmentId);
         InputStreamResource resource = new InputStreamResource(desc.getIs());
         MediaType mediaType = MediaType.valueOf(desc.getContentType());
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(mediaType);
         ContentDisposition disposition = ContentDisposition
-                // 3.2
-                .inline() // or .attachment()
-                // 3.1
+                .inline()
                 .filename(desc.getFileName())
                 .build();
         headers.setContentDisposition(disposition);
         return new ResponseEntity<>(resource, headers, HttpStatus.OK);
-    }
-
-    private void checkAuthorizedOnAttachment(String attachmentId, Authentication authentication) {
-        // fetch all the entries that are parent of the attachment and filter all those are readable by the user
-        List<EntrySummaryDTO> entryThatOwnTheAttachment = entryService.getEntriesThatOwnTheAttachment(attachmentId)
-                .stream()
-                .map(
-                        summary -> {
-                            List<LogbookSummaryDTO> filteredLogbook = summary.logbooks().stream()
-                                    .filter(
-                                            lbSummary -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                                                    authentication,
-                                                    Read,
-                                                    "/logbook/%s".formatted(lbSummary.id())
-                                            )
-                                    ).toList();
-                            return summary.toBuilder()
-                                    .logbooks(
-                                            filteredLogbook
-                                    ).build();
-                        }
-                )
-                .filter(
-                        summary -> !summary.logbooks().isEmpty()
-                )
-                .toList();
-        assertion(
-                NotAuthorized.notAuthorizedBuilder()
-                        .errorCode(-1)
-                        .errorDomain("")
-                        .build(),
-                ()->authService.checkAuthentication(authentication),
-                () -> !entryThatOwnTheAttachment.isEmpty()
-        );
     }
 }

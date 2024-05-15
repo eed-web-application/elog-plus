@@ -121,12 +121,13 @@ public class EntriesController {
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @entryAuthorizationService.canGetAllFollowUps(#authentication, #entryId)")
     public ApiResultResponse<List<EntrySummaryDTO>> getAllFollowUp(
             Authentication authentication,
+            @Parameter(description = "Is the id of the entry for which we want to load all the follow-up")
             @PathVariable @NotNull String entryId) {
         // fetch all follow up
         return ApiResultResponse.of(
                 filterEntrySummaryByAuthentication(
-                        entryService.getAllFollowUpForALog(entryId),
-                        authentication
+                        authentication,
+                        entryService.getAllFollowUpForALog(entryId)
                 )
         );
     }
@@ -163,7 +164,6 @@ public class EntriesController {
                 includeReferences,
                 includeReferencedBy
         );
-
         // return entry with authorized only logbook summary
         return ApiResultResponse.of(foundEntry);
     }
@@ -179,11 +179,12 @@ public class EntriesController {
     public ApiResultResponse<List<EntrySummaryDTO>> getAllReferences(
             Authentication authentication,
             @Parameter(description = "Is the id of the entry for which we want to load all the reference to")
-            @PathVariable String entryId) {
+            @PathVariable String entryId
+    ) {
         return ApiResultResponse.of(
                 filterEntrySummaryByAuthentication(
-                        entryService.getReferencesByEntryID(entryId),
-                        authentication
+                        authentication,
+                        entryService.getReferencesByEntryID(entryId)
                 )
         );
     }
@@ -191,10 +192,8 @@ public class EntriesController {
     @GetMapping(
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @Operation(
-            description = "Perform the query on all log data"
-    )
     @ResponseStatus(HttpStatus.OK)
+    @Operation(description = "Perform the query on all log data")
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @entryAuthorizationService.canSearchEntry(#authentication, #logBooks, #authorizationCache)")
     @PostAuthorize("@entryAuthorizationService.applyFilterAuthorizationOnEntrySummaryDTOList(returnObject, authentication, #authorizationCache)")
     public ApiResultResponse<List<EntrySummaryDTO>> search(
@@ -251,10 +250,8 @@ public class EntriesController {
             path = "/{shiftId}/summaries/{date}",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @Operation(
-            description = "Find the summary id for a specific shift and date"
-    )
     @ResponseStatus(HttpStatus.OK)
+    @Operation(description = "Find the summary id for a specific shift and date")
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
     public ApiResultResponse<String> findSummaryForShiftAndDate(
             Authentication authentication,
@@ -271,7 +268,17 @@ public class EntriesController {
         );
     }
 
-    private List<EntrySummaryDTO> filterEntrySummaryByAuthentication(List<EntrySummaryDTO> summaries, Authentication authentication) {
+    /**
+     * Filter the entry summary by the authentication
+     *
+     * @param authentication the authentication to use for the filter
+     * @param summaries       the list of entry summary to filter
+     * @return the list of entry summary that are authorized for the authentication
+     */
+    private List<EntrySummaryDTO> filterEntrySummaryByAuthentication(
+            Authentication authentication,
+            List<EntrySummaryDTO> summaries
+    ) {
         return summaries
                 .stream()
                 .map(
