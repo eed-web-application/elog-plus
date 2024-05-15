@@ -42,7 +42,7 @@ public class AttachmentsController {
     )
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a new attachment")
-    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @attachmentAuthorizationService.canCreateAttachment(#authentication)")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @attachmentAuthorizationService.canCreate(#authentication)")
     public ApiResultResponse<String> newAttachment(
             Authentication authentication,
             @Parameter(name = "uploadFile", description = "The file to upload", required = true)

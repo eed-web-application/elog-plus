@@ -46,6 +46,12 @@ public class AttachmentAuthorizationService {
         return true;
     }
 
+    /**
+     * Check if the user can read an attachment
+     *
+     * check if the user has authorization to read on logbook where each entry that own the attachment belongs
+     * @return true if the user can read an attachment
+     */
     public boolean canRead(String attachmentId, Authentication authentication) {
         // fetch all the entries that are parent of the attachment and filter all those are readable by the user
         List<EntrySummaryDTO> entryThatOwnTheAttachment = entryService.getEntriesThatOwnTheAttachment(attachmentId)
@@ -75,7 +81,6 @@ public class AttachmentAuthorizationService {
                         .errorCode(-1)
                         .errorDomain("")
                         .build(),
-                ()->authService.checkAuthentication(authentication),
                 () -> !entryThatOwnTheAttachment.isEmpty()
         );
         return true;
