@@ -292,9 +292,11 @@ public class TestControllerHelperService {
     public ApiResultResponse<String> importEntryV1(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
+            Optional<String> userInfo,
             EntryImportDTO entryToImport,
             MockMultipartFile... files) throws Exception {
         MockMultipartHttpServletRequestBuilder multiPartBuilder = multipart("/v1/import");
+        userInfo.ifPresent(login -> multiPartBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
         if (entryToImport != null) {
             MockPart p = new MockPart(
                     "entry",
@@ -1088,10 +1090,11 @@ public class TestControllerHelperService {
     public ApiResultResponse<String> findSummaryIdByShiftNameAndDate(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
+            Optional<String> userInfo,
             String shiftId,
             LocalDate date
     ) throws Exception {
-        MockHttpServletRequestBuilder putRequest =
+        MockHttpServletRequestBuilder requestBuilder =
                 get(
                         "/v1/entries/{shiftId}/summaries/{date}",
                         shiftId,
@@ -1099,19 +1102,14 @@ public class TestControllerHelperService {
                 )
                         .accept(MediaType.APPLICATION_JSON);
 
-        MvcResult result = mockMvc.perform(
-                        putRequest
-                )
-                .andExpect(resultMatcher)
-                .andReturn();
-        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
-        if (someException.isPresent()) {
-            throw someException.get();
-        }
-        return new ObjectMapper().readValue(
-                result.getResponse().getContentAsString(),
+        return executeHttpRequest(
                 new TypeReference<>() {
-                });
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
     }
 
 

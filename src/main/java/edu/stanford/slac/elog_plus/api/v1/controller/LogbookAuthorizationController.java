@@ -17,6 +17,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springdoc.core.service.RequestBodyService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -41,15 +42,12 @@ public class LogbookAuthorizationController {
             produces = {MediaType.APPLICATION_JSON_VALUE}
 
     )
-    @Operation(description = "Manage authorization for logbook user authorization")
     @ResponseStatus(HttpStatus.OK)
-    public ApiResultResponse<List<LogbookAuthorizationDTO>> getUserAuthorizationOnLogbooks
-            (
-                    Authentication authentication
-            ) {
-
+    @Operation(description = "Manage authorization for logbook user authorization")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
+    public ApiResultResponse<List<LogbookAuthorizationDTO>> getUserAuthorizationOnLogbooks(Authentication authentication) {
         return ApiResultResponse.of(
-               logbookService.getAllUserAuthorizations(authentication)
+                logbookService.getAllUserAuthorizations(authentication)
         );
     }
 
@@ -60,14 +58,13 @@ public class LogbookAuthorizationController {
             produces = {MediaType.APPLICATION_JSON_VALUE}
 
     )
-    @Operation(description = "Manage authorization for logbook user authorization")
     @ResponseStatus(HttpStatus.OK)
-    public ApiResultResponse<List<LogbookAuthorizationDTO>> getUserAuthorizationOnLogbooks
-            (
-                    @PathVariable @NotNull String logbookId,
-                    Authentication authentication
-            ) {
-
+    @Operation(description = "Manage authorization for logbook user authorization")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
+    public ApiResultResponse<List<LogbookAuthorizationDTO>> getUserAuthorizationOnLogbooks(
+            Authentication authentication,
+            @PathVariable @NotNull String logbookId
+    ) {
         return ApiResultResponse.of(
                 logbookService.getAllUserAuthorizations(authentication, logbookId)
         );
@@ -79,37 +76,16 @@ public class LogbookAuthorizationController {
             produces = {MediaType.APPLICATION_JSON_VALUE}
 
     )
-    @Operation(description = "Manage authorization for logbook user authorization")
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(description = "Manage authorization for logbook user authorization")
+    @PreAuthorize(
+            "@baseAuthorizationService.checkAuthenticated(#authentication) and @logbookAuthorizationService.applyUserAuthorization(#authentication, #authorizations)"
+    )
     public ApiResultResponse<Boolean> applyUsersAuthorizationOnLogbook
             (
                     Authentication authentication,
                     @RequestBody @Valid List<LogbookUserAuthorizationDTO> authorizations
             ) {
-        // extract all logbook id fo check authorizations
-        List<String> managedLogbookIds = authorizations.stream().map(LogbookUserAuthorizationDTO::logbookId).distinct().toList();
-        // check authenticated
-        assertion(
-                NotAuthorized
-                        .notAuthorizedBuilder()
-                        .errorCode(-1)
-                        .errorDomain("LogbooksController::updateUsersAuthorizationOnLogbook")
-                        .build(),
-                // needs be authenticated
-                () -> authService.checkAuthentication(authentication),
-                // and can at least write the logbook which the entry belong
-                () -> managedLogbookIds
-                        .stream()
-                        .allMatch
-                                (
-                                        logbookId -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                                                authentication,
-                                                Admin,
-                                                "/logbook/%s".formatted(logbookId)
-                                        )
-                                )
-        );
-
         // user can update the authorizations
         logbookService.applyUserAuthorizations(authorizations);
         return ApiResultResponse.of(true);
@@ -121,38 +97,17 @@ public class LogbookAuthorizationController {
             produces = {MediaType.APPLICATION_JSON_VALUE}
 
     )
-    @Operation(description = "Manage authorization for logbook user authorization")
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(description = "Manage authorization for logbook user authorization")
+    @PreAuthorize(
+            "@baseAuthorizationService.checkAuthenticated(#authentication) and  @logbookAuthorizationService.applyUserAuthorization(#authentication, #userId, #authorizations)"
+    )
     public ApiResultResponse<Boolean> applyUsersAuthorizationOnLogbook
             (
                     Authentication authentication,
                     @PathVariable @NotEmpty String userId,
                     @RequestBody @Valid List<LogbookAuthorizationDTO> authorizations
             ) {
-        // extract all logbook id fo check authorizations
-        List<String> managedLogbookIds = authorizations.stream().map(LogbookAuthorizationDTO::logbookId).distinct().toList();
-        // check authenticated
-        assertion(
-                NotAuthorized
-                        .notAuthorizedBuilder()
-                        .errorCode(-1)
-                        .errorDomain("LogbooksController::updateUsersAuthorizationOnLogbook")
-                        .build(),
-                // needs be authenticated
-                () -> authService.checkAuthentication(authentication),
-                // and can at least write the logbook which the entry belong
-                () -> managedLogbookIds
-                        .stream()
-                        .allMatch
-                                (
-                                        logbookId -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                                                authentication,
-                                                Admin,
-                                                "/logbook/%s".formatted(logbookId)
-                                        )
-                                )
-        );
-
         // user can update the authorizations
         logbookService.applyUserAuthorizations(userId, authorizations);
         return ApiResultResponse.of(true);
@@ -164,31 +119,16 @@ public class LogbookAuthorizationController {
             produces = {MediaType.APPLICATION_JSON_VALUE}
 
     )
-    @Operation(description = "Manage authorization for logbook user authorization")
     @ResponseStatus(HttpStatus.OK)
+    @Operation(description = "Manage authorization for logbook user authorization")
+    @PreAuthorize(
+            "@baseAuthorizationService.checkAuthenticated(#authentication) and @logbookAuthorizationService.deleteUserAuthorization(#authentication, #logbookId)"
+    )
     public ApiResultResponse<Boolean> deleteUsersAuthorizationOnLogbook
             (
                     Authentication authentication,
                     @PathVariable @NotNull String logbookId
             ) {
-        // check authenticated
-        assertion(
-                NotAuthorized
-                        .notAuthorizedBuilder()
-                        .errorCode(-1)
-                        .errorDomain("LogbooksController::updateUsersAuthorizationOnLogbook")
-                        .build(),
-                // needs be authenticated
-                () -> authService.checkAuthentication(authentication),
-                // and can at least write the logbook which the entry belong
-                () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                        authentication,
-                        Admin,
-                        "/logbook/%s".formatted(logbookId)
-                )
-
-        );
-
         // user can update the authorizations
         logbookService.deleteUsersLogbookAuthorization(logbookId);
         return ApiResultResponse.of(true);
@@ -198,39 +138,17 @@ public class LogbookAuthorizationController {
             path = "/auth/group",
             consumes = {MediaType.APPLICATION_JSON_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE}
-
     )
-    @Operation(description = "Manage authorization for logbook user authorization")
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(description = "Manage authorization for logbook group authorization")
+    @PreAuthorize(
+            "@baseAuthorizationService.checkAuthenticated(#authentication) and @logbookAuthorizationService.applyGroupAuthorization(#authentication, #authorizations)"
+    )
     public ApiResultResponse<Boolean> applyGroupAuthorizationOnLogbook
             (
                     Authentication authentication,
                     @RequestBody @Valid List<LogbookGroupAuthorizationDTO> authorizations
             ) {
-        // extract all logbook id fo check authorizations
-        List<String> managedLogbookIds = authorizations.stream().map(LogbookGroupAuthorizationDTO::logbookId).distinct().toList();
-        // check authenticated
-        assertion(
-                NotAuthorized
-                        .notAuthorizedBuilder()
-                        .errorCode(-1)
-                        .errorDomain("LogbooksController::updateUsersAuthorizationOnLogbook")
-                        .build(),
-                // needs be authenticated
-                () -> authService.checkAuthentication(authentication),
-                // and can at least write the logbook which the entry belong
-                () -> managedLogbookIds
-                        .stream()
-                        .allMatch
-                                (
-                                        logbookId -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                                                authentication,
-                                                Admin,
-                                                "/logbook/%s".formatted(logbookId)
-                                        )
-                                )
-        );
-
         // user can update the authorizations
         logbookService.applyGroupAuthorizations(authorizations);
         return ApiResultResponse.of(true);
@@ -242,38 +160,17 @@ public class LogbookAuthorizationController {
             produces = {MediaType.APPLICATION_JSON_VALUE}
 
     )
-    @Operation(description = "Manage authorization for logbook user authorization")
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(description = "Manage authorization for logbook group authorization")
+    @PreAuthorize(
+            "@baseAuthorizationService.checkAuthenticated(#authentication) and @logbookAuthorizationService.applyGroupAuthorization(#authentication, #groupId, #authorizations)"
+    )
     public ApiResultResponse<Boolean> applyGroupAuthorizationOnLogbook
             (
                     Authentication authentication,
                     @PathVariable @NotNull String groupId,
                     @RequestBody @Valid List<LogbookAuthorizationDTO> authorizations
             ) {
-        // extract all logbook id fo check authorizations
-        List<String> managedLogbookIds = authorizations.stream().map(LogbookAuthorizationDTO::logbookId).distinct().toList();
-        // check authenticated
-        assertion(
-                NotAuthorized
-                        .notAuthorizedBuilder()
-                        .errorCode(-1)
-                        .errorDomain("LogbooksController::updateUsersAuthorizationOnLogbook")
-                        .build(),
-                // needs be authenticated
-                () -> authService.checkAuthentication(authentication),
-                // and can at least write the logbook which the entry belong
-                () -> managedLogbookIds
-                        .stream()
-                        .allMatch
-                                (
-                                        logbookId -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                                                authentication,
-                                                Admin,
-                                                "/logbook/%s".formatted(logbookId)
-                                        )
-                                )
-        );
-
         // user can update the authorizations
         logbookService.applyGroupAuthorizations(groupId, authorizations);
         return ApiResultResponse.of(true);
@@ -285,31 +182,16 @@ public class LogbookAuthorizationController {
             produces = {MediaType.APPLICATION_JSON_VALUE}
 
     )
-    @Operation(description = "Manage authorization for logbook user authorization")
     @ResponseStatus(HttpStatus.OK)
+    @Operation(description = "Manage authorization for logbook user authorization")
+    @PreAuthorize(
+            "@baseAuthorizationService.checkAuthenticated(#authentication) and @logbookAuthorizationService.deleteGroupAuthorization(#authentication, #logbookId)"
+    )
     public ApiResultResponse<Boolean> deleteGroupAuthorizationOnLogbook
             (
                     Authentication authentication,
                     @PathVariable @NotNull String logbookId
             ) {
-        // check authenticated
-        assertion(
-                NotAuthorized
-                        .notAuthorizedBuilder()
-                        .errorCode(-1)
-                        .errorDomain("LogbooksController::updateUsersAuthorizationOnLogbook")
-                        .build(),
-                // needs be authenticated
-                () -> authService.checkAuthentication(authentication),
-                // and can at least write the logbook which the entry belong
-                () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                        authentication,
-                        Admin,
-                        "/logbook/%s".formatted(logbookId)
-                )
-
-        );
-
         // user can update the authorizations
         logbookService.deleteGroupsLogbookAuthorization(logbookId);
         return ApiResultResponse.of(true);
