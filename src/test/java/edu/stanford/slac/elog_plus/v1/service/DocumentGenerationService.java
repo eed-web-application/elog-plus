@@ -5,6 +5,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -36,7 +37,7 @@ public class DocumentGenerationService {
 
         try (PDPageContentStream contents = new PDPageContentStream(doc, page)) {
             contents.beginText();
-            contents.setFont(PDType1Font.HELVETICA, 14);
+            contents.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 14);
             contents.newLineAtOffset(100, 700);
 
             for (String paragraph : paragraphs) {
