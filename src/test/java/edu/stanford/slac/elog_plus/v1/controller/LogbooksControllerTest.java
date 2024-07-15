@@ -1,7 +1,6 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
@@ -9,7 +8,6 @@ import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
-import edu.stanford.slac.elog_plus.config.ELOGAppProperties;
 import edu.stanford.slac.elog_plus.exception.LogbookAlreadyExists;
 import edu.stanford.slac.elog_plus.exception.TagAlreadyExists;
 import edu.stanford.slac.elog_plus.model.Entry;
@@ -709,7 +707,7 @@ public class LogbooksControllerTest {
                                 .shifts(emptyList())
                                 .authorizations(
                                         List.of(
-                                                AuthorizationDTO
+                                                LogbookOwnerAuthorizationDTO
                                                         .builder()
                                                         .authorizationType(AuthorizationTypeDTO.Write)
                                                         .owner("user2@slac.stanford.edu")
@@ -738,7 +736,7 @@ public class LogbooksControllerTest {
         assertThat(fullLogbook.getPayload().name()).isEqualTo("updated-name");
         assertThat(fullLogbook.getPayload().authorizations())
                 .hasSize(1)
-                .extracting(AuthorizationDTO::owner)
+                .extracting(LogbookOwnerAuthorizationDTO::owner)
                 .contains("user2@slac.stanford.edu");
 
         // try to remove auth

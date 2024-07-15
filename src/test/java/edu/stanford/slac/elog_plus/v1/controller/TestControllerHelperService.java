@@ -52,7 +52,7 @@ public class TestControllerHelperService {
             MockMvc mockMvc,
             Optional<String> userInfo,
             String logbookName,
-            List<AuthorizationDTO> authorizations) {
+            List<LogbookOwnerAuthorizationDTO> authorizations) {
         var newLogbookApiResult = assertDoesNotThrow(
                 () -> createNewLogbook(
                         mockMvc,
@@ -139,7 +139,7 @@ public class TestControllerHelperService {
             MockMvc mockMvc,
             Optional<String> userInfo,
             String logbookName,
-            List<AuthorizationDTO> authorizations) {
+            List<LogbookOwnerAuthorizationDTO> authorizations) {
 
         var newLogbookApiResult = assertDoesNotThrow(
                 () -> createNewLogbook(
@@ -981,19 +981,22 @@ public class TestControllerHelperService {
         );
     }
 
-    public ApiResultResponse<Boolean> applyLogbookUserAuthorizations(
+    public ApiResultResponse<List<UserDetailsDTO>> authorizationControllerFindAllUsers(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
-            String userId,
-            List<LogbookAuthorizationDTO>  logbookAuthorization) throws Exception {
+            Optional<Integer> limit,
+            Optional<Integer> context,
+            Optional<String> anchor,
+            Optional<String> searchFilter) throws Exception {
         MockHttpServletRequestBuilder requestBuilder =
-                post("/v1/logbook/auth/user/{userId}", userId)
-                        .content(
-                                objectMapper.writeValueAsString(logbookAuthorization)
-                        )
+                get("/v1/user")
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON);
+        searchFilter.ifPresent(filter -> requestBuilder.param("searchFilter", filter));
+        limit.ifPresent(l -> requestBuilder.param("limit", String.valueOf(l)));
+        context.ifPresent(c -> requestBuilder.param("context", String.valueOf(c)));
+        anchor.ifPresent(a -> requestBuilder.param("anchor", a));
         return executeHttpRequest(
                 new TypeReference<>() {
                 },

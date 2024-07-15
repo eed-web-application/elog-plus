@@ -1,7 +1,5 @@
 package edu.stanford.slac.elog_plus.v1.service;
 
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthenticationTokenDTO;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationDTO;
 import edu.stanford.slac.ad.eed.baselib.exception.AuthenticationTokenNotFound;
 import edu.stanford.slac.ad.eed.baselib.model.AuthenticationToken;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
@@ -85,7 +83,7 @@ public class LogbookServiceAuthorizationTest {
                                 )
                                 .authorizations(
                                         List.of(
-                                                AuthorizationDTO
+                                                LogbookOwnerAuthorizationDTO
                                                         .builder()
                                                         .authorizationType(Read)
                                                         .build()
@@ -112,7 +110,7 @@ public class LogbookServiceAuthorizationTest {
                                 )
                                 .authorizations(
                                         List.of(
-                                                AuthorizationDTO
+                                                LogbookOwnerAuthorizationDTO
                                                         .builder()
                                                         .owner("user1@slac.stanford.edu")
                                                         .authorizationType(Read)
@@ -151,13 +149,13 @@ public class LogbookServiceAuthorizationTest {
                                 )
                                 .authorizations(
                                         List.of(
-                                                AuthorizationDTO
+                                                LogbookOwnerAuthorizationDTO
                                                         .builder()
                                                         .authorizationType(Read)
                                                         .ownerType(User)
                                                         .owner("user1@slac.stanford.edu")
                                                         .build(),
-                                                AuthorizationDTO
+                                                LogbookOwnerAuthorizationDTO
                                                         .builder()
                                                         .authorizationType(Write)
                                                         .ownerType(User)
@@ -196,7 +194,7 @@ public class LogbookServiceAuthorizationTest {
                                 )
                                 .authorizations(
                                         List.of(
-                                                AuthorizationDTO
+                                                LogbookOwnerAuthorizationDTO
                                                         .builder()
                                                         .authorizationType(Write)
                                                         .owner("user2@slac.stanford.edu")
@@ -242,19 +240,19 @@ public class LogbookServiceAuthorizationTest {
                                 )
                                 .authorizations(
                                         List.of(
-                                                AuthorizationDTO
+                                                LogbookOwnerAuthorizationDTO
                                                         .builder()
                                                         .authorizationType(Read)
                                                         .owner("user2@slac.stanford.edu")
                                                         .ownerType(User)
                                                         .build(),
-                                                AuthorizationDTO
+                                                LogbookOwnerAuthorizationDTO
                                                         .builder()
                                                         .authorizationType(Read)
                                                         .owner("userTODelete@slac.stanford.edu")
                                                         .ownerType(User)
                                                         .build(),
-                                                AuthorizationDTO
+                                                LogbookOwnerAuthorizationDTO
                                                         .builder()
                                                         .authorizationType(Read)
                                                         .owner("user3@slac.stanford.edu")
@@ -309,7 +307,7 @@ public class LogbookServiceAuthorizationTest {
         assertThat(logbook2).isNotNull();
         assertThat(logbook2.authorizations()).isNotNull()
                 .hasSize(2)
-                .extracting(AuthorizationDTO::owner)
+                .extracting(LogbookOwnerAuthorizationDTO::owner)
                 .contains("user2@slac.stanford.edu", "user3@slac.stanford.edu");
     }
 
@@ -337,19 +335,19 @@ public class LogbookServiceAuthorizationTest {
                                 )
                                 .authorizations(
                                         List.of(
-                                                AuthorizationDTO
+                                                LogbookOwnerAuthorizationDTO
                                                         .builder()
                                                         .authorizationType(Read)
                                                         .owner("user2@slac.stanford.edu")
                                                         .ownerType(User)
                                                         .build(),
-                                                AuthorizationDTO
+                                                LogbookOwnerAuthorizationDTO
                                                         .builder()
                                                         .authorizationType(Read)
                                                         .owner("userTOUpdate@slac.stanford.edu")
                                                         .ownerType(User)
                                                         .build(),
-                                                AuthorizationDTO
+                                                LogbookOwnerAuthorizationDTO
                                                         .builder()
                                                         .authorizationType(Read)
                                                         .owner("user3@slac.stanford.edu")
@@ -370,7 +368,7 @@ public class LogbookServiceAuthorizationTest {
         assertThat(logbook).isNotNull();
         assertThat(logbook.authorizations()).isNotNull()
                 .hasSize(3)
-                .extracting(AuthorizationDTO::authorizationType)
+                .extracting(LogbookOwnerAuthorizationDTO::authorizationType)
                 .contains(
                         Read,
                         Read,
@@ -415,7 +413,7 @@ public class LogbookServiceAuthorizationTest {
         assertThat(logbook2).isNotNull();
         assertThat(logbook2.authorizations()).isNotNull()
                 .hasSize(3)
-                .extracting(AuthorizationDTO::authorizationType)
+                .extracting(LogbookOwnerAuthorizationDTO::authorizationType)
                 .contains(
                         Read,
                         Write,
@@ -451,7 +449,7 @@ public class LogbookServiceAuthorizationTest {
                                 )
                                 .authorizations(
                                         List.of(
-                                                AuthorizationDTO
+                                                LogbookOwnerAuthorizationDTO
                                                         .builder()
                                                         .authorizationType(Read)
                                                         .ownerType(Token)
@@ -497,7 +495,7 @@ public class LogbookServiceAuthorizationTest {
                                 )
                                 .authorizations(
                                         List.of(
-                                                AuthorizationDTO
+                                                LogbookOwnerAuthorizationDTO
                                                         .builder()
                                                         .authorizationType(Read)
                                                         .ownerType(Token)
@@ -544,7 +542,7 @@ public class LogbookServiceAuthorizationTest {
                                 )
                                 .authorizations(
                                         List.of(
-                                                AuthorizationDTO
+                                                LogbookOwnerAuthorizationDTO
                                                         .builder()
                                                         .authorizationType(Read)
                                                         .ownerType(Token)
@@ -578,7 +576,7 @@ public class LogbookServiceAuthorizationTest {
                                 .authorizations(
                                         List.of(
                                                 processedAuthorization,
-                                                AuthorizationDTO
+                                                LogbookOwnerAuthorizationDTO
                                                         .builder()
                                                         .authorizationType(Read)
                                                         .ownerType(Token)

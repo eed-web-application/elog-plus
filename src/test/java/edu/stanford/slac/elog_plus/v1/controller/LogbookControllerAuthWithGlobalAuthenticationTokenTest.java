@@ -6,7 +6,6 @@ import edu.stanford.slac.ad.eed.baselib.model.AuthenticationToken;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
-import edu.stanford.slac.elog_plus.config.ELOGAppProperties;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import org.junit.jupiter.api.BeforeEach;
@@ -93,7 +92,7 @@ public class LogbookControllerAuthWithGlobalAuthenticationTokenTest {
                 ),
                 "new logbook",
                 List.of(
-                        AuthorizationDTO
+                        LogbookOwnerAuthorizationDTO
                                 .builder()
                                 .owner(tokenResult.getPayload().email())
                                 .ownerType(AuthorizationOwnerTypeDTO.Token)
@@ -111,7 +110,7 @@ public class LogbookControllerAuthWithGlobalAuthenticationTokenTest {
                 ),
                 "new logbook two",
                 List.of(
-                        AuthorizationDTO
+                        LogbookOwnerAuthorizationDTO
                                 .builder()
                                 .owner("user2@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)

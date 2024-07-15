@@ -2,8 +2,6 @@ package edu.stanford.slac.elog_plus.api.v1.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthenticationTokenDTO;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
@@ -21,5 +19,5 @@ public record UpdateLogbookDTO(
         @Schema(description = "The shift associated to the logbooks")
         List<ShiftDTO> shifts,
         @Schema(description = "The list of authorizations on logbook")
-        List<AuthorizationDTO> authorizations) {
+        List<LogbookOwnerAuthorizationDTO> authorizations) {
 }

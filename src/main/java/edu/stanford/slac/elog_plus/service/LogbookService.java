@@ -218,7 +218,7 @@ public class LogbookService {
             // update authorizations
             verifyAuthorizationAndUpdate(
                     lbToUpdated,
-                    authMapper.toModel(logbookDTO.authorizations()),
+                    logbookMapper.toModel(logbookDTO.authorizations()),
                     authorizationRepository.findByResourceIs(String.format("/logbook/%s", logbookId)),
                     -7,
                     "LogbookService:update"
@@ -1448,7 +1448,7 @@ public class LogbookService {
                     // ensure authorization lists
                     fullLogbook = fullLogbook.toBuilder().authorizations(new ArrayList<>()).build();
                 }
-                // check if the user has a authorization compatible with the authorization type
+                // check if the user has an authorization compatible with the authorization type
                 fullLogbook.authorizations().stream().filter(
                         a -> a.owner().compareToIgnoreCase(userId) == 0
                 ).filter(
@@ -1473,7 +1473,11 @@ public class LogbookService {
 
             // update the logbook
             if (!newAuth.isEmpty()) {
-                fullLogbook.authorizations().addAll(newAuth);
+                fullLogbook.authorizations().addAll(
+                        newAuth.stream().map(
+                                logbookMapper::fromAuthorizationDTO
+                        ).collect(Collectors.toList())
+                );
                 LogbookDTO finalFullLogbook = fullLogbook;
                 wrapCatch(
                         () -> update(

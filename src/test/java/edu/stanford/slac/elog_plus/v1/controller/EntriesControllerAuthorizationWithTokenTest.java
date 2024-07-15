@@ -6,7 +6,6 @@ import edu.stanford.slac.ad.eed.baselib.model.AuthenticationToken;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
-import edu.stanford.slac.elog_plus.config.ELOGAppProperties;
 import edu.stanford.slac.elog_plus.model.*;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import edu.stanford.slac.elog_plus.v1.service.DocumentGenerationService;
@@ -87,13 +86,13 @@ public class EntriesControllerAuthorizationWithTokenTest {
                         ),
                         "LogbookAuthTest1",
                         List.of(
-                                AuthorizationDTO
+                                LogbookOwnerAuthorizationDTO
                                         .builder()
                                         .ownerType(User)
                                         .owner("user2@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Write)
                                         .build(),
-                                AuthorizationDTO
+                                LogbookOwnerAuthorizationDTO
                                         .builder()
                                         .ownerType(User)
                                         .owner("user3@slac.stanford.edu")
@@ -159,7 +158,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                         ),
                         "LogbookAuthTest1",
                         List.of(
-                                AuthorizationDTO
+                                LogbookOwnerAuthorizationDTO
                                         .builder()
                                         .ownerType(AuthorizationOwnerTypeDTO.Group)
                                         .owner("group-2")
@@ -203,7 +202,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                         ),
                         "LogbookAuthTest1",
                         List.of(
-                                AuthorizationDTO
+                                LogbookOwnerAuthorizationDTO
                                         .builder()
                                         .ownerType(User)
                                         .owner("user2@slac.stanford.edu")
@@ -221,7 +220,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                         ),
                         "LogbookAuthTest2",
                         List.of(
-                                AuthorizationDTO
+                                LogbookOwnerAuthorizationDTO
                                         .builder()
                                         .ownerType(User)
                                         .owner("user3@slac.stanford.edu")
@@ -307,7 +306,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                         ),
                         "LogbookAuthTest1",
                         List.of(
-                                AuthorizationDTO
+                                LogbookOwnerAuthorizationDTO
                                         .builder()
                                         .ownerType(Token)
                                         .owner(
@@ -315,7 +314,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                         )
                                         .authorizationType(AuthorizationTypeDTO.Write)
                                         .build(),
-                                AuthorizationDTO
+                                LogbookOwnerAuthorizationDTO
                                         .builder()
                                         .ownerType(Token)
                                         .owner(
@@ -408,7 +407,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                         ),
                         "LogbookAuthTest1",
                         List.of(
-                                AuthorizationDTO
+                                LogbookOwnerAuthorizationDTO
                                         .builder()
                                         .ownerType(Token)
                                         .owner(
@@ -416,7 +415,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                         )
                                         .authorizationType(AuthorizationTypeDTO.Write)
                                         .build(),
-                                AuthorizationDTO
+                                LogbookOwnerAuthorizationDTO
                                         .builder()
                                         .ownerType(Token)
                                         .owner(

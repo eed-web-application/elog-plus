@@ -5,10 +5,7 @@ import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.ad.eed.baselib.model.AuthenticationToken;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
-import edu.stanford.slac.elog_plus.api.v1.dto.LogbookAuthorizationDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.LogbookDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.LogbookGroupAuthorizationDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.LogbookUserAuthorizationDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import org.assertj.core.api.AssertionsForClassTypes;
@@ -78,7 +75,7 @@ public class LogbookControllerAuthTest {
                 ),
                 "new logbook",
                 List.of(
-                        AuthorizationDTO
+                        LogbookOwnerAuthorizationDTO
                                 .builder()
                                 .owner("user2@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
@@ -86,7 +83,7 @@ public class LogbookControllerAuthTest {
                                         Write
                                 )
                                 .build(),
-                        AuthorizationDTO
+                        LogbookOwnerAuthorizationDTO
                                 .builder()
                                 .owner("user3@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
@@ -103,7 +100,7 @@ public class LogbookControllerAuthTest {
                 ),
                 "new logbook 2",
                 List.of(
-                        AuthorizationDTO
+                        LogbookOwnerAuthorizationDTO
                                 .builder()
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
                                 .owner("user2@slac.stanford.edu")
@@ -113,7 +110,6 @@ public class LogbookControllerAuthTest {
                                 .build()
                 )
         );
-
         var newLogbookApiResultThree = testControllerHelperService.getNewLogbookWithNameWithAuthorization(
                 mockMvc,
                 Optional.of(
@@ -243,7 +239,7 @@ public class LogbookControllerAuthTest {
                 ),
                 "new logbook",
                 List.of(
-                        AuthorizationDTO
+                        LogbookOwnerAuthorizationDTO
                                 .builder()
                                 .owner("user2@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
@@ -251,7 +247,7 @@ public class LogbookControllerAuthTest {
                                         Write
                                 )
                                 .build(),
-                        AuthorizationDTO
+                        LogbookOwnerAuthorizationDTO
                                 .builder()
                                 .owner(tokensEmail.getFirst())
                                 .ownerType(AuthorizationOwnerTypeDTO.Token)
@@ -268,7 +264,7 @@ public class LogbookControllerAuthTest {
                 ),
                 "new logbook 2",
                 List.of(
-                        AuthorizationDTO
+                        LogbookOwnerAuthorizationDTO
                                 .builder()
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
                                 .owner("user2@slac.stanford.edu")
@@ -318,7 +314,7 @@ public class LogbookControllerAuthTest {
                         ),
                         "new logbook",
                         List.of(
-                                AuthorizationDTO
+                                LogbookOwnerAuthorizationDTO
                                         .builder()
                                         .owner("user2@slac.stanford.edu")
                                         .ownerType(AuthorizationOwnerTypeDTO.User)
@@ -337,7 +333,7 @@ public class LogbookControllerAuthTest {
                         ),
                         "new logbook 2",
                         List.of(
-                                AuthorizationDTO
+                                LogbookOwnerAuthorizationDTO
                                         .builder()
                                         .owner("user2@slac.stanford.edu")
                                         .ownerType(AuthorizationOwnerTypeDTO.User)
@@ -356,7 +352,7 @@ public class LogbookControllerAuthTest {
                         ),
                         "new logbook 3",
                         List.of(
-                                AuthorizationDTO
+                                LogbookOwnerAuthorizationDTO
                                         .builder()
                                         .owner("user2@slac.stanford.edu")
                                         .ownerType(AuthorizationOwnerTypeDTO.User)
@@ -479,7 +475,7 @@ public class LogbookControllerAuthTest {
                 .isNotNull();
         assertThat(logbook.getPayload().authorizations())
                 .hasSize(2)
-                .extracting(AuthorizationDTO::owner)
+                .extracting(LogbookOwnerAuthorizationDTO::owner)
                 .contains("user1@slac.stanford.edu", "group-1");
 
         // remove authorization for all user
@@ -629,12 +625,12 @@ public class LogbookControllerAuthTest {
                 .isNotNull();
         assertThat(logbook.getPayload().authorizations())
                 .hasSize(4)
-                .extracting(AuthorizationDTO::owner)
+                .extracting(LogbookOwnerAuthorizationDTO::owner)
                 .contains("user1@slac.stanford.edu", "user2@slac.stanford.edu", "group-1", "group-2");
         // check the maximum authorization for each user and group
         assertTrue(
                 logbook.getPayload().authorizations().stream()
-                        .collect(Collectors.groupingBy(AuthorizationDTO::owner))
+                        .collect(Collectors.groupingBy(LogbookOwnerAuthorizationDTO::owner))
                         .values()
                         .stream()
                         .allMatch(authorizations -> authorizations.size() == 1)
@@ -663,7 +659,7 @@ public class LogbookControllerAuthTest {
                         ),
                         "new logbook",
                         List.of(
-                                AuthorizationDTO
+                                LogbookOwnerAuthorizationDTO
                                         .builder()
                                         .owner("user1@slac.stanford.edu")
                                         .ownerType(AuthorizationOwnerTypeDTO.User)
@@ -671,7 +667,7 @@ public class LogbookControllerAuthTest {
                                                 Admin
                                         )
                                         .build(),
-                                AuthorizationDTO
+                                LogbookOwnerAuthorizationDTO
                                         .builder()
                                         .owner("user2@slac.stanford.edu")
                                         .ownerType(AuthorizationOwnerTypeDTO.User)
@@ -690,7 +686,7 @@ public class LogbookControllerAuthTest {
                         ),
                         "new logbook 2",
                         List.of(
-                                AuthorizationDTO
+                                LogbookOwnerAuthorizationDTO
                                         .builder()
                                         .owner("user2@slac.stanford.edu")
                                         .ownerType(AuthorizationOwnerTypeDTO.User)
@@ -698,7 +694,7 @@ public class LogbookControllerAuthTest {
                                                 Write
                                         )
                                         .build(),
-                                AuthorizationDTO
+                                LogbookOwnerAuthorizationDTO
                                         .builder()
                                         .owner("user1@2slac.stanford.edu")
                                         .ownerType(AuthorizationOwnerTypeDTO.User)
@@ -706,7 +702,7 @@ public class LogbookControllerAuthTest {
                                                 Read
                                         )
                                         .build(),
-                                AuthorizationDTO
+                                LogbookOwnerAuthorizationDTO
                                         .builder()
                                         .owner("group-1")
                                         .ownerType(AuthorizationOwnerTypeDTO.Group)
