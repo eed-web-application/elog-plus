@@ -6,8 +6,7 @@ import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.ad.eed.baselib.model.AuthenticationToken;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
-import edu.stanford.slac.elog_plus.api.v1.dto.LogbookOwnerAuthorizationDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.UserDetailsDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import org.junit.jupiter.api.BeforeEach;
@@ -176,5 +175,153 @@ public class NewAuthControllerTest {
                         tuple(Admin.name(), newLogbook2result.getPayload(), "Logbook")
                 );
 
+    }
+
+    @Test
+    public void updateUserDetails() {
+        var newLogbook1result = testControllerHelperService.getNewLogbookWithNameWithAuthorization(
+                mockMvc,
+                Optional.of(
+                        "user1@slac.stanford.edu"
+                ),
+                "new logbook 1",
+                List.of(
+                        LogbookOwnerAuthorizationDTO
+                                .builder()
+                                .owner("user2@slac.stanford.edu")
+                                .ownerType(AuthorizationOwnerTypeDTO.User)
+                                .authorizationType(
+                                        Write
+                                )
+                                .build(),
+                        LogbookOwnerAuthorizationDTO
+                                .builder()
+                                .owner("user3@slac.stanford.edu")
+                                .ownerType(AuthorizationOwnerTypeDTO.User)
+                                .authorizationType(
+                                        Read
+                                )
+                                .build()
+                )
+        );
+        assertThat(newLogbook1result).isNotNull();
+        var newLogbook2result = testControllerHelperService.getNewLogbookWithNameWithAuthorization(
+                mockMvc,
+                Optional.of(
+                        "user1@slac.stanford.edu"
+                ),
+                "new logbook 2",
+                List.of(
+                        LogbookOwnerAuthorizationDTO
+                                .builder()
+                                .owner("user3@slac.stanford.edu")
+                                .ownerType(AuthorizationOwnerTypeDTO.User)
+                                .authorizationType(
+                                        Admin
+                                )
+                                .build()
+                )
+        );
+        assertThat(newLogbook2result).isNotNull();
+
+        var foundUsers = assertDoesNotThrow(
+                () -> testControllerHelperService.authorizationControllerFindAllUsers(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        Optional.of(10),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty()
+                )
+        );
+        assertThat(foundUsers).isNotNull();
+        assertThat(foundUsers.getPayload()).hasSize(3);
+        assertThat(foundUsers.getPayload())
+                .extracting(UserDetailsDTO::email)
+                .contains("user1@slac.stanford.edu", "user2@slac.stanford.edu", "user3@slac.stanford.edu");
+        assertThat(foundUsers.getPayload().get(0).authorization())
+                .extracting(
+                        a -> a.authorizationType().name(),
+                        a -> a.resourceId(),
+                        a -> a.resourceType().name()
+                )
+                .contains(
+                        tuple(Admin.name(), null, "All")
+                );
+        assertThat(foundUsers.getPayload().get(1).authorization())
+                .extracting(
+                        a -> a.authorizationType().name(),
+                        a -> a.resourceId(),
+                        a -> a.resourceType().name()
+                )
+                .contains(
+                        tuple(Write.name(), newLogbook1result.getPayload(), "Logbook")
+                );
+        assertThat(foundUsers.getPayload().get(2).authorization())
+                .extracting(
+                        a -> a.authorizationType().name(),
+                        a -> a.resourceId(),
+                        a -> a.resourceType().name()
+                )
+                .contains(
+                        tuple(Read.name(), newLogbook1result.getPayload(), "Logbook"),
+                        tuple(Admin.name(), newLogbook2result.getPayload(), "Logbook")
+                );
+
+        // update using user3 (admin of lb2) the user details for user2@slac.stanford.edu to be a write of logbook 2 too
+        var updateUserDetailsResult = assertDoesNotThrow(
+                () -> testControllerHelperService.authorizationControllerUpdateUser(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user3@slac.stanford.edu"),
+                        "user2@slac.stanford.edu",
+                        UpdateUserDetailsDTO
+                                .builder()
+                                .authorization(
+                                        List.of(
+                                                // old authorization
+                                                UpdateUserAuthorizationDTO
+                                                        .builder()
+                                                        .authorizationType(Write)
+                                                        .resourceType(ResourceTypeDTO.Logbook)
+                                                        .resourceId(newLogbook2result.getPayload())
+                                                        .build(),
+                                                // new authorization
+                                                UpdateUserAuthorizationDTO
+                                                        .builder()
+                                                        .authorizationType(Write)
+                                                        .resourceType(ResourceTypeDTO.Logbook)
+                                                        .resourceId(newLogbook2result.getPayload())
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(updateUserDetailsResult).isNotNull();
+        var foundUsers2 = assertDoesNotThrow(
+                () -> testControllerHelperService.authorizationControllerFindAllUsers(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        Optional.of(10),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty()
+                )
+        );
+        assertThat(foundUsers2).isNotNull();
+        assertThat(foundUsers2.getPayload()).hasSize(3);
+        assertThat(foundUsers.getPayload().get(1).authorization())
+                .extracting(
+                        a -> a.authorizationType().name(),
+                        a -> a.resourceId(),
+                        a -> a.resourceType().name()
+                )
+                .contains(
+                        tuple(Read.name(), newLogbook1result.getPayload(), "Logbook"),
+                        tuple(Read.name(), newLogbook2result.getPayload(), "Logbook")
+                );
     }
 }

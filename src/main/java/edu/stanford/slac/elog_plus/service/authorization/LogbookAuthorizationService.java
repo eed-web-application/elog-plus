@@ -1,5 +1,6 @@
 package edu.stanford.slac.elog_plus.service.authorization;
 
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.NewAuthorizationDTO;
 import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
@@ -47,6 +48,28 @@ public class LogbookAuthorizationService {
                         "/logbook/%s".formatted(logbookId)
                 )
         );
+        return true;
+    }
+
+    /**
+     * Check for create authorization
+     *
+     * @param authentication     the authentication object
+     * @param newAuthorizationDTO the new authorization dto
+     * @return true if the user is authorized, false otherwise
+     */
+    public boolean canCreateNewAuthorization(Authentication authentication, NewAuthorizationDTO newAuthorizationDTO) {
+        return true;
+    }
+
+    /**
+     * Check for delete authorization
+     *
+     * @param authentication   the authentication object
+     * @param authorizationId  the authorization id
+     * @return true if the user is authorized, false otherwise
+     */
+    public boolean canDeleteAuthorization(Authentication authentication, String authorizationId) {
         return true;
     }
 
@@ -159,6 +182,11 @@ public class LogbookAuthorizationService {
         return true;
     }
 
+    /**
+     * Check if user can update user details
+     * @param authorizations
+     * @return
+     */
     public boolean applyUserAuthorization(Authentication authentication, @Valid List<LogbookUserAuthorizationDTO> authorizations) {
         // extract all logbook id fo check authorizations
         List<String> managedLogbookIds = authorizations.stream().map(LogbookUserAuthorizationDTO::logbookId).distinct().toList();

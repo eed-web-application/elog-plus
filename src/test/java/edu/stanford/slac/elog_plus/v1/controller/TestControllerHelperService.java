@@ -1007,6 +1007,42 @@ public class TestControllerHelperService {
         );
     }
 
+    /**
+     * Update user details
+     * @param mockMvc
+     * @param resultMatcher
+     * @param userInfo
+     * @param userId
+     * @param updateUserDetailsDTO
+     * @return
+     * @throws Exception
+     */
+    public ApiResultResponse<Boolean> authorizationControllerUpdateUser(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String userId,
+            UpdateUserDetailsDTO updateUserDetailsDTO
+    ) throws Exception {
+        MockHttpServletRequestBuilder requestBuilder =
+                put("/v1/user/{userId}", userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(
+                                objectMapper.writeValueAsString(updateUserDetailsDTO)
+
+                        );
+
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
     public ApiResultResponse<Boolean> deleteLogbookUsersAuthorizations(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
