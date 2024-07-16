@@ -269,37 +269,8 @@ public class NewAuthControllerTest {
                         tuple(Admin.name(), newLogbook2result.getPayload(), "Logbook")
                 );
 
-        // update using user3 (admin of lb2) the user details for user2@slac.stanford.edu to be a write of logbook 2 too
-        var updateUserDetailsResult = assertDoesNotThrow(
-                () -> testControllerHelperService.authorizationControllerUpdateUser(
-                        mockMvc,
-                        status().isOk(),
-                        Optional.of("user3@slac.stanford.edu"),
-                        "user2@slac.stanford.edu",
-                        UpdateUserDetailsDTO
-                                .builder()
-                                .authorization(
-                                        List.of(
-                                                // old authorization
-                                                UpdateUserAuthorizationDTO
-                                                        .builder()
-                                                        .authorizationType(Write)
-                                                        .resourceType(ResourceTypeDTO.Logbook)
-                                                        .resourceId(newLogbook2result.getPayload())
-                                                        .build(),
-                                                // new authorization
-                                                UpdateUserAuthorizationDTO
-                                                        .builder()
-                                                        .authorizationType(Write)
-                                                        .resourceType(ResourceTypeDTO.Logbook)
-                                                        .resourceId(newLogbook2result.getPayload())
-                                                        .build()
-                                        )
-                                )
-                                .build()
-                )
-        );
-        assertThat(updateUserDetailsResult).isNotNull();
+       //TODO: update user authorizations
+
         var foundUsers2 = assertDoesNotThrow(
                 () -> testControllerHelperService.authorizationControllerFindAllUsers(
                         mockMvc,

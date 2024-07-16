@@ -17,7 +17,5 @@ public record UpdateLogbookDTO(
         @Schema(description = "The tags associated to the logbooks")
         List<TagDTO> tags,
         @Schema(description = "The shift associated to the logbooks")
-        List<ShiftDTO> shifts,
-        @Schema(description = "The list of authorizations on logbook")
-        List<LogbookOwnerAuthorizationDTO> authorizations) {
+        List<ShiftDTO> shifts) {
 }

@@ -4,6 +4,7 @@ import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.PersonQueryParameterDTO;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.NewAuthorizationDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.UpdateAuthorizationDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.UserDetailsDTO;
 import edu.stanford.slac.elog_plus.api.v1.mapper.LogbookMapperImpl;
 import edu.stanford.slac.elog_plus.service.AuthorizationServices;
@@ -60,6 +61,7 @@ public class LogbookAuthorizationController {
     @ResponseStatus(HttpStatus.OK)
     @Operation(description = "Create new authorization")
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
+    //TODO: in the post filter remove the authorization on logbook that are not allowed to the current user
     public ApiResultResponse<List<UserDetailsDTO>> findAllUsers(
             Authentication authentication,
             @Parameter(description = "The search string to find the user")
@@ -109,8 +111,44 @@ public class LogbookAuthorizationController {
         return ApiResultResponse.of(true);
     }
 
-    @PostMapping(
-            path = "/authorization",
+    /**
+     * Update an authorization
+     *
+     * @param authentication
+     * @param authorizationId the id of the authorization to update
+     * @param updateAuthorizationDTO the new authorization to update
+     * @return the result of the update
+     */
+    @PutMapping(
+            path = "/authorization/{authorizationId}",
+            consumes = {MediaType.APPLICATION_JSON_VALUE},
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+
+    )
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(description = "Manage authorization for logbook user authorization")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @logbookAuthorizationService.canUpdateAuthorization(#authentication, #authorizationId, #newAuthorizationDTO)")
+    public ApiResultResponse<Boolean> updateAuthorizationById(
+            Authentication authentication,
+            @PathVariable @NotNull String authorizationId,
+            @RequestBody @Valid UpdateAuthorizationDTO updateAuthorizationDTO
+    ) {
+        authorizationServices.updateAuthorization(
+                authorizationId,
+                updateAuthorizationDTO
+        );
+        return ApiResultResponse.of(true);
+    }
+
+    /**
+     * Delete an authorization
+     *
+     * @param authentication
+     * @param authorizationId the id of the authorization to delete
+     * @return the result of the deletion
+     */
+    @DeleteMapping(
+            path = "/authorization/{authorizationId}",
             consumes = {MediaType.APPLICATION_JSON_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE}
 
@@ -120,11 +158,13 @@ public class LogbookAuthorizationController {
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @logbookAuthorizationService.canDeleteAuthorization(#authentication, #authorizationId)")
     public ApiResultResponse<Boolean> deleteAuthorizationById(
             Authentication authentication,
-            @NotNull String authorizationId
+            @PathVariable @NotNull String authorizationId
     ) {
         authorizationServices.deleteAuthorization(
                 authorizationId
         );
         return ApiResultResponse.of(true);
     }
+
+    //TODO: add local group and authentication token search
 }

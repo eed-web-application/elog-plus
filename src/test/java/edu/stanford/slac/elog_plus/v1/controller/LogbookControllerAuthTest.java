@@ -446,21 +446,21 @@ public class LogbookControllerAuthTest {
                 )
         );
         // apply authorization for group
-        assertDoesNotThrow(
-                () -> testControllerHelperService.applyLogbookGroupAuthorizations(
-                        mockMvc,
-                        status().isCreated(),
-                        Optional.of("user1@slac.stanford.edu"),
-                        List.of(
-                                LogbookGroupAuthorizationDTO
-                                        .builder()
-                                        .logbookId(newLogbookResult.getPayload())
-                                        .groupId("group-1")
-                                        .authorizationType(Read)
-                                        .build()
-                        )
-                )
-        );
+//        assertDoesNotThrow(
+//                () -> testControllerHelperService.applyLogbookGroupAuthorizations(
+//                        mockMvc,
+//                        status().isCreated(),
+//                        Optional.of("user1@slac.stanford.edu"),
+//                        List.of(
+//                                LogbookGroupAuthorizationDTO
+//                                        .builder()
+//                                        .logbookId(newLogbookResult.getPayload())
+//                                        .groupId("group-1")
+//                                        .authorizationType(Read)
+//                                        .build()
+//                        )
+//                )
+//        );
         logbook = assertDoesNotThrow(
                 () -> testControllerHelperService.getLogbookByID(
                         mockMvc,
@@ -479,14 +479,14 @@ public class LogbookControllerAuthTest {
                 .contains("user1@slac.stanford.edu", "group-1");
 
         // remove authorization for all user
-        assertDoesNotThrow(
-                () -> testControllerHelperService.deleteLogbookUsersAuthorizations(
-                        mockMvc,
-                        status().isOk(),
-                        Optional.of("user1@slac.stanford.edu"),
-                        newLogbookResult.getPayload()
-                )
-        );
+//        assertDoesNotThrow(
+//                () -> testControllerHelperService.deleteLogbookUsersAuthorizations(
+//                        mockMvc,
+//                        status().isOk(),
+//                        Optional.of("user1@slac.stanford.edu"),
+//                        newLogbookResult.getPayload()
+//                )
+//        );
         logbook = assertDoesNotThrow(
                 () -> testControllerHelperService.getLogbookByID(
                         mockMvc,
@@ -502,14 +502,14 @@ public class LogbookControllerAuthTest {
                 .hasSize(1);
 
         // remove authorization for all user
-        assertDoesNotThrow(
-                () -> testControllerHelperService.deleteLogbookGroupAuthorization(
-                        mockMvc,
-                        status().isOk(),
-                        Optional.of("user1@slac.stanford.edu"),
-                        newLogbookResult.getPayload()
-                )
-        );
+//        assertDoesNotThrow(
+//                () -> testControllerHelperService.deleteLogbookGroupAuthorization(
+//                        mockMvc,
+//                        status().isOk(),
+//                        Optional.of("user1@slac.stanford.edu"),
+//                        newLogbookResult.getPayload()
+//                )
+//        );
         logbook = assertDoesNotThrow(
                 () -> testControllerHelperService.getLogbookByID(
                         mockMvc,
@@ -584,33 +584,33 @@ public class LogbookControllerAuthTest {
                 )
         );
         // apply authorization for group
-        assertDoesNotThrow(
-                () -> testControllerHelperService.applyLogbookGroupAuthorizations(
-                        mockMvc,
-                        status().isCreated(),
-                        Optional.of("user1@slac.stanford.edu"),
-                        List.of(
-                                LogbookGroupAuthorizationDTO
-                                        .builder()
-                                        .logbookId(newLogbookResult.getPayload())
-                                        .groupId("group-1")
-                                        .authorizationType(Read)
-                                        .build(),
-                                LogbookGroupAuthorizationDTO
-                                        .builder()
-                                        .logbookId(newLogbookResult.getPayload())
-                                        .groupId("group-2")
-                                        .authorizationType(Write)
-                                        .build(),
-                                LogbookGroupAuthorizationDTO
-                                        .builder()
-                                        .logbookId(newLogbookResult.getPayload())
-                                        .groupId("group-1")
-                                        .authorizationType(Admin)
-                                        .build()
-                        )
-                )
-        );
+//        assertDoesNotThrow(
+//                () -> testControllerHelperService.applyLogbookGroupAuthorizations(
+//                        mockMvc,
+//                        status().isCreated(),
+//                        Optional.of("user1@slac.stanford.edu"),
+//                        List.of(
+//                                LogbookGroupAuthorizationDTO
+//                                        .builder()
+//                                        .logbookId(newLogbookResult.getPayload())
+//                                        .groupId("group-1")
+//                                        .authorizationType(Read)
+//                                        .build(),
+//                                LogbookGroupAuthorizationDTO
+//                                        .builder()
+//                                        .logbookId(newLogbookResult.getPayload())
+//                                        .groupId("group-2")
+//                                        .authorizationType(Write)
+//                                        .build(),
+//                                LogbookGroupAuthorizationDTO
+//                                        .builder()
+//                                        .logbookId(newLogbookResult.getPayload())
+//                                        .groupId("group-1")
+//                                        .authorizationType(Admin)
+//                                        .build()
+//                        )
+//                )
+//        );
         logbook = assertDoesNotThrow(
                 () -> testControllerHelperService.getLogbookByID(
                         mockMvc,

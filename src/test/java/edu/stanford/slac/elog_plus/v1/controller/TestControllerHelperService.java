@@ -7,6 +7,7 @@ import edu.stanford.slac.ad.eed.baselib.auth.JWTHelper;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
+import edu.stanford.slac.elog_plus.api.v1.dto.NewAuthorizationDTO;
 import edu.stanford.slac.elog_plus.api.v2.dto.ImportEntryDTO;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import edu.stanford.slac.elog_plus.v1.service.SharedUtilityService;
@@ -898,6 +899,7 @@ public class TestControllerHelperService {
 
     /**
      * Get logbook authorizations
+     *
      * @param mockMvc
      * @param resultMatcher
      * @param userInfo
@@ -924,6 +926,7 @@ public class TestControllerHelperService {
 
     /**
      * Get logbook authorizations
+     *
      * @param mockMvc
      * @param resultMatcher
      * @param userInfo
@@ -952,9 +955,10 @@ public class TestControllerHelperService {
 
     /**
      * Update logbook
-     * @param mockMvc MockMvc
-     * @param resultMatcher ResultMatcher
-     * @param userInfo optional user information
+     *
+     * @param mockMvc                     MockMvc
+     * @param resultMatcher               ResultMatcher
+     * @param userInfo                    optional user information
      * @param logbookUserAuthorizationDTO LogbookUserAuthorizationDTO
      * @return ApiResultResponse<Boolean>
      * @throws Exception Exception
@@ -1007,30 +1011,17 @@ public class TestControllerHelperService {
         );
     }
 
-    /**
-     * Update user details
-     * @param mockMvc
-     * @param resultMatcher
-     * @param userInfo
-     * @param userId
-     * @param updateUserDetailsDTO
-     * @return
-     * @throws Exception
-     */
-    public ApiResultResponse<Boolean> authorizationControllerUpdateUser(
+    public ApiResultResponse<Boolean> authorizationControllerCreateNewAuthorization(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
-            String userId,
-            UpdateUserDetailsDTO updateUserDetailsDTO
-    ) throws Exception {
+            NewAuthorizationDTO newAuthorizationDTO) throws Exception {
         MockHttpServletRequestBuilder requestBuilder =
-                put("/v1/user/{userId}", userId)
+                post("/v1/authorization")
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
                         .content(
-                                objectMapper.writeValueAsString(updateUserDetailsDTO)
-
+                                objectMapper.writeValueAsString(newAuthorizationDTO)
                         );
 
         return executeHttpRequest(
@@ -1043,37 +1034,20 @@ public class TestControllerHelperService {
         );
     }
 
-    public ApiResultResponse<Boolean> deleteLogbookUsersAuthorizations(
+    public ApiResultResponse<Boolean> authorizationControllerUpdateAuthorization(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
-            String logbookId) throws Exception {
+            String authorizationId,
+            UpdateAuthorizationDTO updateAuthorizationDTO) throws Exception {
         MockHttpServletRequestBuilder requestBuilder =
-                delete("/v1/logbook/{logbookId}/auth/user", logbookId)
+                put("/v1/authorization/{authorizationId}", authorizationId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON);
-        return executeHttpRequest(
-                new TypeReference<>() {
-                },
-                mockMvc,
-                resultMatcher,
-                userInfo,
-                requestBuilder
-        );
-    }
-
-    public ApiResultResponse<Boolean> applyLogbookGroupAuthorizations(
-            MockMvc mockMvc,
-            ResultMatcher resultMatcher,
-            Optional<String> userInfo,
-            List<LogbookGroupAuthorizationDTO> logbookUserAuthorizationDTO) throws Exception {
-        MockHttpServletRequestBuilder requestBuilder =
-                post("/v1/logbook/auth/group")
+                        .accept(MediaType.APPLICATION_JSON)
                         .content(
-                                objectMapper.writeValueAsString(logbookUserAuthorizationDTO)
-                        )
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON);
+                                objectMapper.writeValueAsString(updateAuthorizationDTO)
+                        );
+
         return executeHttpRequest(
                 new TypeReference<>() {
                 },
@@ -1084,38 +1058,14 @@ public class TestControllerHelperService {
         );
     }
 
-    public ApiResultResponse<Boolean> applyLogbookGroupAuthorizations(
+    public ApiResultResponse<Boolean> authorizationControllerDeleteAuthorization(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
-            String groupId,
-            List<LogbookAuthorizationDTO> logbookAuthorization) throws Exception {
+            String authorizationId) throws Exception {
         MockHttpServletRequestBuilder requestBuilder =
-                post("/v1/logbook/auth/group/{groupId}", groupId)
-                        .content(
-                                objectMapper.writeValueAsString(logbookAuthorization)
-                        )
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON);
-        return executeHttpRequest(
-                new TypeReference<>() {
-                },
-                mockMvc,
-                resultMatcher,
-                userInfo,
-                requestBuilder
-        );
-    }
+                delete("/v1/authorization/{authorizationId}", authorizationId);
 
-    public ApiResultResponse<Boolean> deleteLogbookGroupAuthorization(
-            MockMvc mockMvc,
-            ResultMatcher resultMatcher,
-            Optional<String> userInfo,
-            String logbookId) throws Exception {
-        MockHttpServletRequestBuilder requestBuilder =
-                delete("/v1/logbook/{logbookId}/auth/group", logbookId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON);
         return executeHttpRequest(
                 new TypeReference<>() {
                 },
