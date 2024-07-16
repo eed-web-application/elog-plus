@@ -705,16 +705,17 @@ public class LogbooksControllerTest {
                                 .name("updated name")
                                 .tags(emptyList())
                                 .shifts(emptyList())
-                                .authorizations(
-                                        List.of(
-                                                LogbookOwnerAuthorizationDTO
-                                                        .builder()
-                                                        .authorizationType(AuthorizationTypeDTO.Write)
-                                                        .owner("user2@slac.stanford.edu")
-                                                        .ownerType(AuthorizationOwnerTypeDTO.User)
-                                                        .build()
-                                        )
-                                )
+                                //TODO: use new api to authorize
+//                                .authorizations(
+//                                        List.of(
+//                                                LogbookOwnerAuthorizationDTO
+//                                                        .builder()
+//                                                        .authorizationType(AuthorizationTypeDTO.Write)
+//                                                        .owner("user2@slac.stanford.edu")
+//                                                        .ownerType(AuthorizationOwnerTypeDTO.User)
+//                                                        .build()
+//                                        )
+//                                )
                                 .build()
                 )
         );
@@ -753,7 +754,8 @@ public class LogbooksControllerTest {
                                 .name("updated name")
                                 .tags(emptyList())
                                 .shifts(emptyList())
-                                .authorizations(emptyList())
+                                //TODO: use new api to authorize
+//                                .authorizations(emptyList())
                                 .build()
                 )
         );

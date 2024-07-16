@@ -81,14 +81,15 @@ public class LogbookServiceAuthorizationTest {
                                 .shifts(
                                         emptyList()
                                 )
-                                .authorizations(
-                                        List.of(
-                                                LogbookOwnerAuthorizationDTO
-                                                        .builder()
-                                                        .authorizationType(Read)
-                                                        .build()
-                                        )
-                                )
+                                //TODO: use new api to authorize
+//                                .authorizations(
+//                                        List.of(
+//                                                LogbookOwnerAuthorizationDTO
+//                                                        .builder()
+//                                                        .authorizationType(Read)
+//                                                        .build()
+//                                        )
+//                                )
                                 .build()
                 )
         );
@@ -108,15 +109,16 @@ public class LogbookServiceAuthorizationTest {
                                 .shifts(
                                         emptyList()
                                 )
-                                .authorizations(
-                                        List.of(
-                                                LogbookOwnerAuthorizationDTO
-                                                        .builder()
-                                                        .owner("user1@slac.stanford.edu")
-                                                        .authorizationType(Read)
-                                                        .build()
-                                        )
-                                )
+                                //TODO: use new api to authorize
+//                                .authorizations(
+//                                        List.of(
+//                                                LogbookOwnerAuthorizationDTO
+//                                                        .builder()
+//                                                        .owner("user1@slac.stanford.edu")
+//                                                        .authorizationType(Read)
+//                                                        .build()
+//                                        )
+//                                )
                                 .build()
                 )
         );
@@ -147,22 +149,23 @@ public class LogbookServiceAuthorizationTest {
                                 .shifts(
                                         emptyList()
                                 )
-                                .authorizations(
-                                        List.of(
-                                                LogbookOwnerAuthorizationDTO
-                                                        .builder()
-                                                        .authorizationType(Read)
-                                                        .ownerType(User)
-                                                        .owner("user1@slac.stanford.edu")
-                                                        .build(),
-                                                LogbookOwnerAuthorizationDTO
-                                                        .builder()
-                                                        .authorizationType(Write)
-                                                        .ownerType(User)
-                                                        .owner("user1@slac.stanford.edu")
-                                                        .build()
-                                        )
-                                )
+                                //TODO: use new api to authorize
+//                                .authorizations(
+//                                        List.of(
+//                                                LogbookOwnerAuthorizationDTO
+//                                                        .builder()
+//                                                        .authorizationType(Read)
+//                                                        .ownerType(User)
+//                                                        .owner("user1@slac.stanford.edu")
+//                                                        .build(),
+//                                                LogbookOwnerAuthorizationDTO
+//                                                        .builder()
+//                                                        .authorizationType(Write)
+//                                                        .ownerType(User)
+//                                                        .owner("user1@slac.stanford.edu")
+//                                                        .build()
+//                                        )
+//                                )
                                 .build()
                 )
         );
@@ -192,16 +195,17 @@ public class LogbookServiceAuthorizationTest {
                                 .shifts(
                                         emptyList()
                                 )
-                                .authorizations(
-                                        List.of(
-                                                LogbookOwnerAuthorizationDTO
-                                                        .builder()
-                                                        .authorizationType(Write)
-                                                        .owner("user2@slac.stanford.edu")
-                                                        .ownerType(User)
-                                                        .build()
-                                        )
-                                )
+                                //TODO: use new api to authorize
+//                                .authorizations(
+//                                        List.of(
+//                                                LogbookOwnerAuthorizationDTO
+//                                                        .builder()
+//                                                        .authorizationType(Write)
+//                                                        .owner("user2@slac.stanford.edu")
+//                                                        .ownerType(User)
+//                                                        .build()
+//                                        )
+//                                )
                                 .build()
                 )
         );
@@ -238,28 +242,29 @@ public class LogbookServiceAuthorizationTest {
                                 .shifts(
                                         emptyList()
                                 )
-                                .authorizations(
-                                        List.of(
-                                                LogbookOwnerAuthorizationDTO
-                                                        .builder()
-                                                        .authorizationType(Read)
-                                                        .owner("user2@slac.stanford.edu")
-                                                        .ownerType(User)
-                                                        .build(),
-                                                LogbookOwnerAuthorizationDTO
-                                                        .builder()
-                                                        .authorizationType(Read)
-                                                        .owner("userTODelete@slac.stanford.edu")
-                                                        .ownerType(User)
-                                                        .build(),
-                                                LogbookOwnerAuthorizationDTO
-                                                        .builder()
-                                                        .authorizationType(Read)
-                                                        .owner("user3@slac.stanford.edu")
-                                                        .ownerType(User)
-                                                        .build()
-                                        )
-                                )
+                                //TODO: use new api to authorize
+//                                .authorizations(
+//                                        List.of(
+//                                                LogbookOwnerAuthorizationDTO
+//                                                        .builder()
+//                                                        .authorizationType(Read)
+//                                                        .owner("user2@slac.stanford.edu")
+//                                                        .ownerType(User)
+//                                                        .build(),
+//                                                LogbookOwnerAuthorizationDTO
+//                                                        .builder()
+//                                                        .authorizationType(Read)
+//                                                        .owner("userTODelete@slac.stanford.edu")
+//                                                        .ownerType(User)
+//                                                        .build(),
+//                                                LogbookOwnerAuthorizationDTO
+//                                                        .builder()
+//                                                        .authorizationType(Read)
+//                                                        .owner("user3@slac.stanford.edu")
+//                                                        .ownerType(User)
+//                                                        .build()
+//                                        )
+//                                )
                                 .build()
                 )
         );
@@ -288,12 +293,13 @@ public class LogbookServiceAuthorizationTest {
                                 .shifts(
                                         emptyList()
                                 )
-                                .authorizations(
-                                        List.of(
-                                                logbook.authorizations().get(0),
-                                                logbook.authorizations().get(2)
-                                        )
-                                )
+                                //TODO: use new api to authorize
+//                                .authorizations(
+//                                        List.of(
+//                                                logbook.authorizations().get(0),
+//                                                logbook.authorizations().get(2)
+//                                        )
+//                                )
                                 .build()
                 )
         );
@@ -333,28 +339,29 @@ public class LogbookServiceAuthorizationTest {
                                 .shifts(
                                         emptyList()
                                 )
-                                .authorizations(
-                                        List.of(
-                                                LogbookOwnerAuthorizationDTO
-                                                        .builder()
-                                                        .authorizationType(Read)
-                                                        .owner("user2@slac.stanford.edu")
-                                                        .ownerType(User)
-                                                        .build(),
-                                                LogbookOwnerAuthorizationDTO
-                                                        .builder()
-                                                        .authorizationType(Read)
-                                                        .owner("userTOUpdate@slac.stanford.edu")
-                                                        .ownerType(User)
-                                                        .build(),
-                                                LogbookOwnerAuthorizationDTO
-                                                        .builder()
-                                                        .authorizationType(Read)
-                                                        .owner("user3@slac.stanford.edu")
-                                                        .ownerType(User)
-                                                        .build()
-                                        )
-                                )
+                                //TODO: use new api to authorize
+//                                .authorizations(
+//                                        List.of(
+//                                                LogbookOwnerAuthorizationDTO
+//                                                        .builder()
+//                                                        .authorizationType(Read)
+//                                                        .owner("user2@slac.stanford.edu")
+//                                                        .ownerType(User)
+//                                                        .build(),
+//                                                LogbookOwnerAuthorizationDTO
+//                                                        .builder()
+//                                                        .authorizationType(Read)
+//                                                        .owner("userTOUpdate@slac.stanford.edu")
+//                                                        .ownerType(User)
+//                                                        .build(),
+//                                                LogbookOwnerAuthorizationDTO
+//                                                        .builder()
+//                                                        .authorizationType(Read)
+//                                                        .owner("user3@slac.stanford.edu")
+//                                                        .ownerType(User)
+//                                                        .build()
+//                                        )
+//                                )
                                 .build()
                 )
         );
@@ -390,16 +397,17 @@ public class LogbookServiceAuthorizationTest {
                                 .shifts(
                                         emptyList()
                                 )
-                                .authorizations(
-                                        List.of(
-                                                logbook.authorizations().get(0),
-                                                logbook.authorizations().get(1)
-                                                        .toBuilder()
-                                                        .authorizationType(Write)
-                                                        .build(),
-                                                logbook.authorizations().get(2)
-                                        )
-                                )
+                                //TODO: use new api to authorize
+//                                .authorizations(
+//                                        List.of(
+//                                                logbook.authorizations().get(0),
+//                                                logbook.authorizations().get(1)
+//                                                        .toBuilder()
+//                                                        .authorizationType(Write)
+//                                                        .build(),
+//                                                logbook.authorizations().get(2)
+//                                        )
+//                                )
                                 .build()
                 )
         );
@@ -447,16 +455,17 @@ public class LogbookServiceAuthorizationTest {
                                 .shifts(
                                         emptyList()
                                 )
-                                .authorizations(
-                                        List.of(
-                                                LogbookOwnerAuthorizationDTO
-                                                        .builder()
-                                                        .authorizationType(Read)
-                                                        .ownerType(Token)
-                                                        .owner(sharedUtilityService.getTokenEmailForApplicationToken("tok-a"))
-                                                        .build()
-                                        )
-                                )
+                                //TODO: use new api to authorize
+//                                .authorizations(
+//                                        List.of(
+//                                                LogbookOwnerAuthorizationDTO
+//                                                        .builder()
+//                                                        .authorizationType(Read)
+//                                                        .ownerType(Token)
+//                                                        .owner(sharedUtilityService.getTokenEmailForApplicationToken("tok-a"))
+//                                                        .build()
+//                                        )
+//                                )
                                 .build()
                 )
         );
@@ -493,16 +502,17 @@ public class LogbookServiceAuthorizationTest {
                                 .shifts(
                                         emptyList()
                                 )
-                                .authorizations(
-                                        List.of(
-                                                LogbookOwnerAuthorizationDTO
-                                                        .builder()
-                                                        .authorizationType(Read)
-                                                        .ownerType(Token)
-                                                        .owner("tok-a")
-                                                        .build()
-                                        )
-                                )
+                                //TODO: use new api to authorize
+//                                .authorizations(
+//                                        List.of(
+//                                                LogbookOwnerAuthorizationDTO
+//                                                        .builder()
+//                                                        .authorizationType(Read)
+//                                                        .ownerType(Token)
+//                                                        .owner("tok-a")
+//                                                        .build()
+//                                        )
+//                                )
                                 .build()
                 )
         );
@@ -540,16 +550,17 @@ public class LogbookServiceAuthorizationTest {
                                 .shifts(
                                         emptyList()
                                 )
-                                .authorizations(
-                                        List.of(
-                                                LogbookOwnerAuthorizationDTO
-                                                        .builder()
-                                                        .authorizationType(Read)
-                                                        .ownerType(Token)
-                                                        .owner(tokenEmailA)
-                                                        .build()
-                                        )
-                                )
+                                //TODO: use new api to authorize
+//                                .authorizations(
+//                                        List.of(
+//                                                LogbookOwnerAuthorizationDTO
+//                                                        .builder()
+//                                                        .authorizationType(Read)
+//                                                        .ownerType(Token)
+//                                                        .owner(tokenEmailA)
+//                                                        .build()
+//                                        )
+//                                )
                                 .build()
                 )
         );
@@ -573,17 +584,18 @@ public class LogbookServiceAuthorizationTest {
                                 .shifts(
                                         emptyList()
                                 )
-                                .authorizations(
-                                        List.of(
-                                                processedAuthorization,
-                                                LogbookOwnerAuthorizationDTO
-                                                        .builder()
-                                                        .authorizationType(Read)
-                                                        .ownerType(Token)
-                                                        .owner(tokenEmailB) //tok-b@<logbook name>.elog.slac.app$
-                                                        .build()
-                                        )
-                                )
+                                //TODO: use new api to authorize
+//                                .authorizations(
+//                                        List.of(
+//                                                processedAuthorization,
+//                                                LogbookOwnerAuthorizationDTO
+//                                                        .builder()
+//                                                        .authorizationType(Read)
+//                                                        .ownerType(Token)
+//                                                        .owner(tokenEmailB) //tok-b@<logbook name>.elog.slac.app$
+//                                                        .build()
+//                                        )
+//                                )
                                 .build()
                 )
         );

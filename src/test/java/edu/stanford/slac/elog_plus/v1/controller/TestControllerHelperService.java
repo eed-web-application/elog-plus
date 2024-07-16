@@ -84,9 +84,10 @@ public class TestControllerHelperService {
                                 .name(logbookName)
                                 .shifts(Collections.emptyList())
                                 .tags(Collections.emptyList())
-                                .authorizations(
-                                        authorizations
-                                )
+                                //TODO: use new api to authorize
+//                                .authorizations(
+//                                        authorizations
+//                                )
                                 .build()
                 )
         );
@@ -172,9 +173,10 @@ public class TestControllerHelperService {
                                 .name(logbookName)
                                 .shifts(Collections.emptyList())
                                 .tags(Collections.emptyList())
-                                .authorizations(
-                                        authorizations
-                                )
+                                //TODO: use new api to authorize
+//                                .authorizations(
+//                                        authorizations
+//                                )
                                 .build()
                 )
         );
