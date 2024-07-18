@@ -1,11 +1,7 @@
 package edu.stanford.slac.elog_plus.api.v1.controller;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthenticationTokenDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthenticationTokenQueryParameterDTO;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.NewAuthenticationTokenDTO;
-import edu.stanford.slac.ad.eed.baselib.api.v2.dto.LocalGroupQueryParameterDTO;
-import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.ApplicationDetailsDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.NewApplicationDTO;
@@ -25,14 +21,12 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 
-import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
-
 @Validated
 @RestController()
 @RequestMapping("/v1/application")
 @AllArgsConstructor
 @Schema(description = "Api for authentication information")
-public class ApplicationTokenController {
+public class ApplicationController {
     private final AuthService authService;
     private final AuthorizationServices authorizationServices;
 
@@ -52,7 +46,7 @@ public class ApplicationTokenController {
                     """
     )
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @applicationAuthorizationService.canCreateApp(#authentication, #newAuthenticationTokenDTO)")
-    public ApiResultResponse<String> createNewAuthentication(
+    public ApiResultResponse<String> createNewApplication(
             Authentication authentication,
             @Parameter(description = "Are the information to create the a new application")
             @RequestBody NewApplicationDTO newApplicationDTO
@@ -88,7 +82,7 @@ public class ApplicationTokenController {
     /**
      * return all the application token
      */
-    @PostMapping(
+    @GetMapping(
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @ResponseStatus(HttpStatus.OK)
@@ -97,7 +91,7 @@ public class ApplicationTokenController {
     )
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
     @PostAuthorize("@applicationAuthorizationService.applyFilterOnApplicationList(returnObject, #authentication)")
-    public ApiResultResponse<List<ApplicationDetailsDTO>> finAllApplication(
+    public ApiResultResponse<List<ApplicationDetailsDTO>> findAllApplication(
             Authentication authentication,
             @Parameter(name = "anchorId", description = "Is the id of an entry from where start the search")
             @RequestParam("anchorId") Optional<String> anchorId,
