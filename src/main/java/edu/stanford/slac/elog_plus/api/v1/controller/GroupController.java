@@ -31,7 +31,7 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 
 @Validated
 @RestController()
-@RequestMapping("/v1/group")
+@RequestMapping("/v1/groups")
 @AllArgsConstructor
 @Schema(description = "Api for authentication information")
 public class GroupController {
@@ -70,7 +70,7 @@ public class GroupController {
      * @return true if the group was deleted
      */
     @DeleteMapping(
-            path = "/{localGroupId}",
+            path = "/{groupId}",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(summary = "Delete a local group")
@@ -78,10 +78,10 @@ public class GroupController {
     public ApiResultResponse<Boolean> deleteGroup(
             Authentication authentication,
             @Parameter(description = "The id of the local group to delete")
-            @PathVariable @NotEmpty String localGroupId
+            @PathVariable @NotEmpty String groupId
     ) {
         // check authentication
-        authService.deleteLocalGroup(localGroupId);
+        authService.deleteLocalGroup(groupId);
         return ApiResultResponse.of(true);
     }
 
@@ -94,7 +94,7 @@ public class GroupController {
      * @return true if the group was updated
      */
     @PutMapping(
-            path = "/{localGroupId}",
+            path = "/{groupId}",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(summary = "Update a local group")
@@ -102,11 +102,11 @@ public class GroupController {
     public ApiResultResponse<Boolean> updateGroup(
             Authentication authentication,
             @Parameter(description = "The id of the local group to update")
-            @PathVariable @NotEmpty String localGroupId,
+            @PathVariable @NotEmpty String groupId,
             @RequestBody @Valid UpdateLocalGroupDTO updateGroupDTO
     ) {
         // check authentication
-        authService.updateLocalGroup(localGroupId, updateGroupDTO);
+        authService.updateLocalGroup(groupId, updateGroupDTO);
         return ApiResultResponse.of(true);
     }
 
@@ -118,7 +118,7 @@ public class GroupController {
      * @return the local group
      */
     @GetMapping(
-            path = "/{localGroupId}",
+            path = "/{groupId}",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(
@@ -128,15 +128,15 @@ public class GroupController {
     @PostAuthorize("@groupAuthorizationService.applyFilterOnGroup(returnObject, authentication)")
     public ApiResultResponse<GroupDetailsDTO> findGroupById(
             Authentication authentication,
-            @Parameter(description = "The id of the local group to find")
-            @PathVariable @Valid String localGroupId,
+            @Parameter(description = "The id of the group to find")
+            @PathVariable @Valid String groupId,
             @Parameter(description = "Include members")
             @RequestParam("includeMembers") Optional<Boolean> includeMembers,
             @Parameter(description = "Include authorizations")
             @RequestParam("includeAuthorizations") Optional<Boolean> includeAuthorizations
     ) {
         return ApiResultResponse.of(
-                authorizationServices.findGroup(localGroupId, includeMembers.orElse(false),includeAuthorizations.orElse(false))
+                authorizationServices.findGroup(groupId, includeMembers.orElse(false),includeAuthorizations.orElse(false))
         );
     }
 
@@ -144,8 +144,8 @@ public class GroupController {
      * Find the local group using a query parameter
      *
      * @param authentication
-     * @param anchorId
-     * @param contextSize
+     * @param anchor
+     * @param context
      * @param limit
      * @param search
      * @return the list of groups found
@@ -158,10 +158,10 @@ public class GroupController {
     @PostAuthorize("@groupAuthorizationService.applyFilterOnGroupList(returnObject, authentication)")
     public ApiResultResponse<List<GroupDetailsDTO>> findLocalGroup(
             Authentication authentication,
-            @Parameter(name = "anchorId", description = "Is the id of an entry from where start the search")
-            @RequestParam("anchorId") Optional<String> anchorId,
-            @Parameter(name = "contextSize", description = "Include this number of entries before the startDate (used for highlighting entries)")
-            @RequestParam("contextSize") Optional<Integer> contextSize,
+            @Parameter(name = "anchor", description = "Is the id of an entry from where start the search")
+            @RequestParam("anchor") Optional<String> anchor,
+            @Parameter(name = "context", description = "Include this number of entries before the startDate (used for highlighting entries)")
+            @RequestParam("context") Optional<Integer> context,
             @Parameter(name = "limit", description = "Limit the number the number of entries after the start date.")
             @RequestParam(value = "limit") Optional<Integer> limit,
             @Parameter(name = "search", description = "Typical search functionality")
@@ -174,8 +174,8 @@ public class GroupController {
         return ApiResultResponse.of(
                 authorizationServices.findGroups(
                         LocalGroupQueryParameterDTO.builder()
-                                .anchorID(anchorId.orElse(null))
-                                .contextSize(contextSize.orElse(null))
+                                .anchorID(anchor.orElse(null))
+                                .contextSize(context.orElse(null))
                                 .limit(limit.orElse(null))
                                 .search(search.orElse(null))
                                 .build(),

@@ -6,6 +6,7 @@ import edu.stanford.slac.ad.eed.baselib.model.AuthenticationToken;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
+import edu.stanford.slac.elog_plus.api.v1.dto.NewAuthorizationDTO;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import org.assertj.core.api.AssertionsForClassTypes;
@@ -75,17 +76,17 @@ public class LogbookControllerAuthTest {
                 ),
                 "new logbook",
                 List.of(
-                        LogbookOwnerAuthorizationDTO
+                        NewAuthorizationDTO
                                 .builder()
-                                .owner("user2@slac.stanford.edu")
+                                .ownerId("user2@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
                                 .authorizationType(
                                         Write
                                 )
                                 .build(),
-                        LogbookOwnerAuthorizationDTO
+                        NewAuthorizationDTO
                                 .builder()
-                                .owner("user3@slac.stanford.edu")
+                                .ownerId("user3@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
                                 .authorizationType(
                                         Read
@@ -100,10 +101,10 @@ public class LogbookControllerAuthTest {
                 ),
                 "new logbook 2",
                 List.of(
-                        LogbookOwnerAuthorizationDTO
+                        NewAuthorizationDTO
                                 .builder()
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
-                                .owner("user2@slac.stanford.edu")
+                                .ownerId("user2@slac.stanford.edu")
                                 .authorizationType(
                                         Write
                                 )
@@ -219,17 +220,17 @@ public class LogbookControllerAuthTest {
 
     @Test
     public void testGetAllLogbookForAuthTypeUsingApplicationToken() {
-        var tokensEmail = testControllerHelperService.createTokens(
-                mockMvc,
-                Optional.of(
-                        "user1@slac.stanford.edu"
-                ),
-                List.of(
-                        NewAuthenticationTokenDTO
+        var tokensEmail = assertDoesNotThrow(
+                () -> testControllerHelperService.applicationControllerCreateNewApplication(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewApplicationDTO
                                 .builder()
                                 .name("token-a")
                                 .expiration(LocalDate.of(2023, 12, 31))
                                 .build()
+
                 )
         );
         var newLogbookApiResultOne = testControllerHelperService.getNewLogbookWithNameWithAuthorizationAndAppToken(
@@ -249,7 +250,7 @@ public class LogbookControllerAuthTest {
                                 .build(),
                         LogbookOwnerAuthorizationDTO
                                 .builder()
-                                .owner(tokensEmail.getFirst())
+                                .owner(tokensEmail.getPayload())
                                 .ownerType(AuthorizationOwnerTypeDTO.Token)
                                 .authorizationType(
                                         Read
@@ -264,10 +265,10 @@ public class LogbookControllerAuthTest {
                 ),
                 "new logbook 2",
                 List.of(
-                        LogbookOwnerAuthorizationDTO
+                        NewAuthorizationDTO
                                 .builder()
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
-                                .owner("user2@slac.stanford.edu")
+                                .ownerId("user2@slac.stanford.edu")
                                 .authorizationType(
                                         Write
                                 )

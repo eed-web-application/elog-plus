@@ -14,7 +14,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,7 +35,7 @@ public class AuthorizationServices {
      * @param personQueryParameterDTO the query parameter
      * @return the list of users found
      */
-    public List<UserDetailsDTO> findUsers(PersonQueryParameterDTO personQueryParameterDTO) {
+    public List<UserDetailsDTO> findUsers(PersonQueryParameterDTO personQueryParameterDTO, Boolean includeAuthorizations) {
         // found users
         var foundUsers = peopleGroupService.findPersons(personQueryParameterDTO);
         //convert to UserDetailsDTO
@@ -44,13 +43,13 @@ public class AuthorizationServices {
                 u -> authorizationMapper.fromPersonDTO
                         (
                                 u,
-                                authorizationMapper.fromAuthorizationDTO(
+                                includeAuthorizations?authorizationMapper.fromAuthorizationDTO(
                                         authService.getAllAuthenticationForOwner(
                                                 u.mail(),
                                                 AuthorizationOwnerTypeDTO.User,
                                                 Optional.empty()
                                         )
-                                )
+                                ):Collections.emptyList()
                         )
 
         ).toList();
@@ -197,14 +196,15 @@ public class AuthorizationServices {
                 edu.stanford.slac.ad.eed.baselib.api.v1.dto.NewAuthorizationDTO
                         .builder()
                         .owner(newAuthorizationDTO.ownerId())
-                        .ownerType(newAuthorizationDTO.ownerTypeDTO())
+                        .ownerType(newAuthorizationDTO.ownerType())
+                        .authorizationType(newAuthorizationDTO.authorizationType())
                         .resource(resource)
                         .build()
         );
         log.info(
                 "Created new authorization on {}/{} for {}/{} by {}",
                 newAuthorizationDTO.resourceType(), newAuthorizationDTO.resourceId(),
-                newAuthorizationDTO.ownerTypeDTO(), newAuthorizationDTO.ownerId(),
+                newAuthorizationDTO.ownerType(), newAuthorizationDTO.ownerId(),
                 getCurrentUsername()
         );
     }
@@ -266,6 +266,25 @@ public class AuthorizationServices {
      */
     public void deleteApplication(String applicationId) {
         authService.deleteToken(applicationId);
+    }
+
+    public ApplicationDetailsDTO getApplicationById(String applicationId) {
+        var authTokenFound = authService.getAuthenticationTokenById(applicationId).orElseThrow(
+                ()->ControllerLogicException
+                        .builder()
+                        .errorCode(-1)
+                        .errorMessage("Application not found")
+                        .errorDomain("AuthorizationServices::getApplicationById")
+                        .build()
+        );
+        return ApplicationDetailsDTO.builder()
+                .id(authTokenFound.id())
+                .name(authTokenFound.name())
+                .email(authTokenFound.email())
+                .token(authTokenFound.token())
+                .expiration(authTokenFound.expiration())
+                .applicationManaged(authTokenFound.applicationManaged())
+                .build();
     }
 
     /**

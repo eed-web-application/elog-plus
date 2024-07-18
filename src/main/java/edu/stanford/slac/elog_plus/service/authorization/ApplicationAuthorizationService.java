@@ -58,6 +58,27 @@ public class ApplicationAuthorizationService {
     }
 
     /**
+     * Check if the user can delete the application
+     *
+     * @param authentication the authentication
+     * @param applicationId  the application id
+     * @return true if the user can delete the application
+     */
+    public boolean canReadApplication(Authentication authentication, String applicationId) {
+        // assert that all the user that are root of whatever resource
+        assertion(
+                NotAuthorized
+                        .notAuthorizedBuilder()
+                        .errorCode(-1)
+                        .errorDomain("ApplicationAuthorizationService::canReadApplication")
+                        .build(),
+                // is admin
+                () -> authService.checkForRoot(authentication)
+        );
+        return true;
+    }
+
+    /**
      * Apply the filter on the application list
      *
      * @param foundEntryResult the result of the search

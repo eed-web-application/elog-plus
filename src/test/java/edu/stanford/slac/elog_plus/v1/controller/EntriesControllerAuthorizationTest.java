@@ -10,6 +10,7 @@ import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.EntryNewDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.EntrySummaryDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.LogbookOwnerAuthorizationDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.NewAuthorizationDTO;
 import edu.stanford.slac.elog_plus.exception.LogbookNotAuthorized;
 import edu.stanford.slac.elog_plus.model.Attachment;
 import edu.stanford.slac.elog_plus.model.Entry;
@@ -91,10 +92,10 @@ public class EntriesControllerAuthorizationTest {
                         ),
                         "LogbookAuthTest1",
                         List.of(
-                                LogbookOwnerAuthorizationDTO
+                                NewAuthorizationDTO
                                         .builder()
                                         .ownerType(AuthorizationOwnerTypeDTO.User)
-                                        .owner("user2@slac.stanford.edu")
+                                        .ownerId("user2@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Read)
                                         .build()
                         )
@@ -136,10 +137,10 @@ public class EntriesControllerAuthorizationTest {
                         ),
                         "LogbookAuthTest1",
                         List.of(
-                                LogbookOwnerAuthorizationDTO
+                                NewAuthorizationDTO
                                         .builder()
                                         .ownerType(AuthorizationOwnerTypeDTO.User)
-                                        .owner("user2@slac.stanford.edu")
+                                        .ownerId("user2@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Read)
                                         .build()
                         )
@@ -181,16 +182,16 @@ public class EntriesControllerAuthorizationTest {
                         ),
                         "LogbookAuthTest1",
                         List.of(
-                                LogbookOwnerAuthorizationDTO
+                                NewAuthorizationDTO
                                         .builder()
                                         .ownerType(AuthorizationOwnerTypeDTO.User)
-                                        .owner("user2@slac.stanford.edu")
+                                        .ownerId("user2@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Write)
                                         .build(),
-                                LogbookOwnerAuthorizationDTO
+                                NewAuthorizationDTO
                                         .builder()
                                         .ownerType(AuthorizationOwnerTypeDTO.User)
-                                        .owner("user3@slac.stanford.edu")
+                                        .ownerId("user3@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Admin)
                                         .build()
                         )
@@ -253,10 +254,10 @@ public class EntriesControllerAuthorizationTest {
                         ),
                         "LogbookAuthTest1",
                         List.of(
-                                LogbookOwnerAuthorizationDTO
+                                NewAuthorizationDTO
                                         .builder()
                                         .ownerType(AuthorizationOwnerTypeDTO.Group)
-                                        .owner("group-2")
+                                        .ownerId("group-2")
                                         .authorizationType(AuthorizationTypeDTO.Write)
                                         .build()
                         )
@@ -297,10 +298,10 @@ public class EntriesControllerAuthorizationTest {
                         ),
                         "LogbookAuthTest1",
                         List.of(
-                                LogbookOwnerAuthorizationDTO
+                                NewAuthorizationDTO
                                         .builder()
                                         .ownerType(AuthorizationOwnerTypeDTO.User)
-                                        .owner("user2@slac.stanford.edu")
+                                        .ownerId("user2@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Read)
                                         .build()
                         )
@@ -315,10 +316,10 @@ public class EntriesControllerAuthorizationTest {
                         ),
                         "LogbookAuthTest2",
                         List.of(
-                                LogbookOwnerAuthorizationDTO
+                                NewAuthorizationDTO
                                         .builder()
                                         .ownerType(AuthorizationOwnerTypeDTO.User)
-                                        .owner("user3@slac.stanford.edu")
+                                        .ownerId("user3@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Read)
                                         .build()
                         )
@@ -381,10 +382,10 @@ public class EntriesControllerAuthorizationTest {
                         ),
                         "LogbookAuthTest1",
                         List.of(
-                                LogbookOwnerAuthorizationDTO
+                                NewAuthorizationDTO
                                         .builder()
                                         .ownerType(AuthorizationOwnerTypeDTO.User)
-                                        .owner("user2@slac.stanford.edu")
+                                        .ownerId("user2@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Read)
                                         .build()
                         )
@@ -399,10 +400,10 @@ public class EntriesControllerAuthorizationTest {
                         ),
                         "LogbookAuthTest2",
                         List.of(
-                                LogbookOwnerAuthorizationDTO
+                                NewAuthorizationDTO
                                         .builder()
                                         .ownerType(AuthorizationOwnerTypeDTO.User)
-                                        .owner("user3@slac.stanford.edu")
+                                        .ownerId("user3@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Read)
                                         .build()
                         )
@@ -588,10 +589,10 @@ public class EntriesControllerAuthorizationTest {
                         ),
                         "LogbookAuthTest1",
                         List.of(
-                                LogbookOwnerAuthorizationDTO
+                                NewAuthorizationDTO
                                         .builder()
                                         .ownerType(AuthorizationOwnerTypeDTO.User)
-                                        .owner("user2@slac.stanford.edu")
+                                        .ownerId("user2@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Read)
                                         .build()
                         )
@@ -606,10 +607,10 @@ public class EntriesControllerAuthorizationTest {
                         ),
                         "LogbookAuthTest2",
                         List.of(
-                                LogbookOwnerAuthorizationDTO
+                                NewAuthorizationDTO
                                         .builder()
                                         .ownerType(AuthorizationOwnerTypeDTO.User)
-                                        .owner("user3@slac.stanford.edu")
+                                        .ownerId("user3@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Read)
                                         .build()
                         )
@@ -687,10 +688,10 @@ public class EntriesControllerAuthorizationTest {
                         ),
                         "LogbookA",
                         List.of(
-                                LogbookOwnerAuthorizationDTO
+                                NewAuthorizationDTO
                                         .builder()
                                         .ownerType(AuthorizationOwnerTypeDTO.User)
-                                        .owner("user2@slac.stanford.edu")
+                                        .ownerId("user2@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Read)
                                         .build()
                         )
@@ -704,10 +705,10 @@ public class EntriesControllerAuthorizationTest {
                         ),
                         "LogbookB",
                         List.of(
-                                LogbookOwnerAuthorizationDTO
+                                NewAuthorizationDTO
                                         .builder()
                                         .ownerType(AuthorizationOwnerTypeDTO.User)
-                                        .owner("user3@slac.stanford.edu")
+                                        .ownerId("user3@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Read)
                                         .build()
                         )

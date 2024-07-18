@@ -7,6 +7,7 @@ import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.LogbookDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.LogbookOwnerAuthorizationDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.NewApplicationDTO;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import org.junit.jupiter.api.BeforeEach;
@@ -65,22 +66,25 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
 
     @Test
     public void testGetAllLogbookForAuthType() {
-        var tokensEmail = testControllerHelperService.createTokens(
-                mockMvc,
-                Optional.of(
-                        "user1@slac.stanford.edu"
-                ),
-                List.of(
-                        NewAuthenticationTokenDTO
-                                .builder()
-                                .name("token-a")
-                                .expiration(LocalDate.now().plusDays(1))
-                                .build(),
-                        NewAuthenticationTokenDTO
-                                .builder()
-                                .name("token-b")
-                                .expiration(LocalDate.now().plusDays(1))
-                                .build()
+        var tokensEmail = assertDoesNotThrow(
+                () -> testControllerHelperService.applicationControllerCreateNewApplication(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
+                        List.of(
+                                NewApplicationDTO
+                                        .builder()
+                                        .name("token-a")
+                                        .expiration(LocalDate.now().plusDays(1))
+                                        .build(),
+                                NewApplicationDTO
+                                        .builder()
+                                        .name("token-b")
+                                        .expiration(LocalDate.now().plusDays(1))
+                                        .build()
+                        )
                 )
         );
         var newLogbookApiResultOne = testControllerHelperService.getNewLogbookWithNameWithAuthorizationAndAppToken(

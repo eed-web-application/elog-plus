@@ -38,7 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles({"test"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-public class NewAuthControllerTest {
+public class UserControllerControllerTest {
     @Autowired
     private MockMvc mockMvc;
     @Autowired
@@ -71,17 +71,17 @@ public class NewAuthControllerTest {
                 ),
                 "new logbook 1",
                 List.of(
-                        LogbookOwnerAuthorizationDTO
+                        NewAuthorizationDTO
                                 .builder()
-                                .owner("user2@slac.stanford.edu")
+                                .ownerId("user2@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
                                 .authorizationType(
                                         Write
                                 )
                                 .build(),
-                        LogbookOwnerAuthorizationDTO
+                        NewAuthorizationDTO
                                 .builder()
-                                .owner("user3@slac.stanford.edu")
+                                .ownerId("user3@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
                                 .authorizationType(
                                         Read
@@ -97,25 +97,25 @@ public class NewAuthControllerTest {
                 ),
                 "new logbook 2",
                 List.of(
-                        LogbookOwnerAuthorizationDTO
+                        NewAuthorizationDTO
                                 .builder()
-                                .owner("user1@slac.stanford.edu")
+                                .ownerId("user1@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
                                 .authorizationType(
                                         Read
                                 )
                                 .build(),
-                        LogbookOwnerAuthorizationDTO
+                        NewAuthorizationDTO
                                 .builder()
-                                .owner("user2@slac.stanford.edu")
+                                .ownerId("user2@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
                                 .authorizationType(
                                         Write
                                 )
                                 .build(),
-                        LogbookOwnerAuthorizationDTO
+                        NewAuthorizationDTO
                                 .builder()
-                                .owner("user3@slac.stanford.edu")
+                                .ownerId("user3@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
                                 .authorizationType(
                                         Admin
@@ -126,13 +126,14 @@ public class NewAuthControllerTest {
         assertThat(newLogbook1result).isNotNull();
 
         var foundUsers = assertDoesNotThrow(
-                () -> testControllerHelperService.authorizationControllerFindAllUsers(
+                () -> testControllerHelperService.userControllerFindAllUsers(
                         mockMvc,
                         status().isOk(),
                         Optional.of(
                                 "user1@slac.stanford.edu"
                         ),
                         Optional.of(10),
+                        Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty()
@@ -186,17 +187,17 @@ public class NewAuthControllerTest {
                 ),
                 "new logbook 1",
                 List.of(
-                        LogbookOwnerAuthorizationDTO
+                        NewAuthorizationDTO
                                 .builder()
-                                .owner("user2@slac.stanford.edu")
+                                .ownerId("user2@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
                                 .authorizationType(
                                         Write
                                 )
                                 .build(),
-                        LogbookOwnerAuthorizationDTO
+                        NewAuthorizationDTO
                                 .builder()
-                                .owner("user3@slac.stanford.edu")
+                                .ownerId("user3@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
                                 .authorizationType(
                                         Read
@@ -212,9 +213,9 @@ public class NewAuthControllerTest {
                 ),
                 "new logbook 2",
                 List.of(
-                        LogbookOwnerAuthorizationDTO
+                        NewAuthorizationDTO
                                 .builder()
-                                .owner("user3@slac.stanford.edu")
+                                .ownerId("user3@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
                                 .authorizationType(
                                         Admin
@@ -225,11 +226,12 @@ public class NewAuthControllerTest {
         assertThat(newLogbook2result).isNotNull();
 
         var foundUsers = assertDoesNotThrow(
-                () -> testControllerHelperService.authorizationControllerFindAllUsers(
+                () -> testControllerHelperService.userControllerFindAllUsers(
                         mockMvc,
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
                         Optional.of(10),
+                        Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty()
@@ -272,11 +274,12 @@ public class NewAuthControllerTest {
        //TODO: update user authorizations
 
         var foundUsers2 = assertDoesNotThrow(
-                () -> testControllerHelperService.authorizationControllerFindAllUsers(
+                () -> testControllerHelperService.userControllerFindAllUsers(
                         mockMvc,
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
                         Optional.of(10),
+                        Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty()

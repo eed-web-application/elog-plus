@@ -19,7 +19,7 @@ public record NewAuthorizationDTO(
         @Schema(description = "The owner id of the authorization")
         String ownerId,
         @Schema(description = "The owner type of the authorization")
-        AuthorizationOwnerTypeDTO ownerTypeDTO,
+        AuthorizationOwnerTypeDTO ownerType,
         @Schema(description = "The authorization type")
         AuthorizationTypeDTO authorizationType
 ) {}

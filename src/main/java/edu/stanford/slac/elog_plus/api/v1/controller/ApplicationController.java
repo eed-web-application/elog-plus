@@ -23,7 +23,7 @@ import java.util.Optional;
 
 @Validated
 @RestController()
-@RequestMapping("/v1/application")
+@RequestMapping("/v1/applications")
 @AllArgsConstructor
 @Schema(description = "Api for authentication information")
 public class ApplicationController {
@@ -79,6 +79,25 @@ public class ApplicationController {
         return ApiResultResponse.of(true);
     }
 
+    @GetMapping(
+            path = "/{applicationId}",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(
+            summary = "Delete an authentication token"
+    )
+    @PreAuthorize("@baseAuthorizationService.checkForRoot(#authentication) and @applicationAuthorizationService.canReadApplication(#authentication, #applicationId)")
+    public ApiResultResponse<ApplicationDetailsDTO> findApplicationById(
+            Authentication authentication,
+            @Parameter(description = "Is the unique id of the authentication token")
+            @PathVariable() String applicationId
+    ){
+        return ApiResultResponse.of(
+                authorizationServices.getApplicationById(applicationId)
+        );
+    }
+
     /**
      * return all the application token
      */
@@ -94,9 +113,9 @@ public class ApplicationController {
     public ApiResultResponse<List<ApplicationDetailsDTO>> findAllApplication(
             Authentication authentication,
             @Parameter(name = "anchorId", description = "Is the id of an entry from where start the search")
-            @RequestParam("anchorId") Optional<String> anchorId,
-            @Parameter(name = "contextSize", description = "Include this number of entries before the startDate (used for highlighting entries)")
-            @RequestParam("contextSize") Optional<Integer> contextSize,
+            @RequestParam("anchor") Optional<String> anchor,
+            @Parameter(name = "context", description = "Include this number of entries before the startDate (used for highlighting entries)")
+            @RequestParam("context") Optional<Integer> context,
             @Parameter(name = "limit", description = "Limit the number the number of entries after the start date.")
             @RequestParam(value = "limit") Optional<Integer> limit,
             @Parameter(name = "search", description = "Typical search functionality")
@@ -109,8 +128,8 @@ public class ApplicationController {
         return ApiResultResponse.of(
                 authorizationServices.findAllApplications(
                         AuthenticationTokenQueryParameterDTO.builder()
-                                .anchor(anchorId.orElse(null))
-                                .context(contextSize.orElse(null))
+                                .anchor(anchor.orElse(null))
+                                .context(context.orElse(null))
                                 .limit(limit.orElse(null))
                                 .searchFilter(search.orElse(null))
                                 .build(),
@@ -119,5 +138,4 @@ public class ApplicationController {
                 )
         );
     }
-
 }

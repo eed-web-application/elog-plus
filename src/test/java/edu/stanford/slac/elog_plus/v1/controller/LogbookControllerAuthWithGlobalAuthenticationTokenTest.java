@@ -6,6 +6,7 @@ import edu.stanford.slac.ad.eed.baselib.model.AuthenticationToken;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
+import edu.stanford.slac.elog_plus.api.v1.dto.NewAuthorizationDTO;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import org.junit.jupiter.api.BeforeEach;
@@ -64,25 +65,31 @@ public class LogbookControllerAuthWithGlobalAuthenticationTokenTest {
     @Test
     public void testGetAllLogbookForAuthType() {
         // create token
-        ApiResultResponse<AuthenticationTokenDTO> tokenResult = assertDoesNotThrow(
+        ApiResultResponse<String> tokenResult = assertDoesNotThrow(
                 () ->
-                        testControllerHelperService.createNewAuthenticationToken(
+                        testControllerHelperService.applicationControllerCreateNewApplication(
                                 mockMvc,
                                 status().isCreated(),
-                                Optional.of(
-                                        "user1@slac.stanford.edu"
-                                ),
-                                NewAuthenticationTokenDTO
+                                Optional.of("user1@slac.stanford.edu"),
+                                NewApplicationDTO
                                         .builder()
                                         .name("global-token-a")
-                                        .expiration(LocalDate.of(2023,12,31))
+                                        .expiration(LocalDate.of(2023, 12, 31))
                                         .build()
                         )
         );
         assertThat(tokenResult.getErrorCode()).isEqualTo(0);
-        assertThat(tokenResult.getPayload()).extracting(AuthenticationTokenDTO::name).isEqualTo("global-token-a");
-        assertThat(tokenResult.getPayload()).extracting(AuthenticationTokenDTO::email).isEqualTo("global-token-a@%s".formatted(appProperties.getAppEmailPostfix()));
-        assertThat(tokenResult.getPayload()).extracting(AuthenticationTokenDTO::token).isNotNull();
+
+        // retrieve the full application
+        var createdApplication = assertDoesNotThrow(
+                () -> testControllerHelperService.applicationControllerFindApplicationById(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        tokenResult.getPayload()
+                )
+
+        );
 
         //authorize token to a logbook
         var newLogbookApiResultOne = testControllerHelperService.getNewLogbookWithNameWithAuthorization(
@@ -92,9 +99,9 @@ public class LogbookControllerAuthWithGlobalAuthenticationTokenTest {
                 ),
                 "new logbook",
                 List.of(
-                        LogbookOwnerAuthorizationDTO
+                        NewAuthorizationDTO
                                 .builder()
-                                .owner(tokenResult.getPayload().email())
+                                .ownerId(createdApplication.getPayload().email())
                                 .ownerType(AuthorizationOwnerTypeDTO.Token)
                                 .authorizationType(
                                         Write
@@ -102,7 +109,7 @@ public class LogbookControllerAuthWithGlobalAuthenticationTokenTest {
                                 .build()
                 )
         );
-        // creaae new logbook for another user
+        // create new logbook for another user
         var newLogbookApiResultTwo = testControllerHelperService.getNewLogbookWithNameWithAuthorization(
                 mockMvc,
                 Optional.of(
@@ -110,9 +117,9 @@ public class LogbookControllerAuthWithGlobalAuthenticationTokenTest {
                 ),
                 "new logbook two",
                 List.of(
-                        LogbookOwnerAuthorizationDTO
+                        NewAuthorizationDTO
                                 .builder()
-                                .owner("user2@slac.stanford.edu")
+                                .ownerId("user2@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
                                 .authorizationType(
                                         Write
@@ -124,7 +131,7 @@ public class LogbookControllerAuthWithGlobalAuthenticationTokenTest {
                 () -> testControllerHelperService.getAllLogbook(
                         mockMvc,
                         status().isOk(),
-                        Optional.of(tokenResult.getPayload().email()),
+                        Optional.of(createdApplication.getPayload().email()),
                         Optional.of(false),
                         Optional.empty()
                 )
