@@ -19,6 +19,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springdoc.core.service.RequestBodyService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -32,11 +33,11 @@ import java.util.Optional;
 @AllArgsConstructor
 @Schema(description = "Set of api for authorization management")
 public class LogbookAuthorizationController {
-    private final RequestBodyService requestBodyBuilder;
+    private final AuthService authService;
+    private final LogbookService logbookService;
     private final LogbookMapperImpl logbookMapperImpl;
-    AuthService authService;
-    AuthorizationServices authorizationServices;
-    LogbookService logbookService;
+    private final RequestBodyService requestBodyBuilder;
+    private final AuthorizationServices authorizationServices;
 
     /**
      * Find users based on the query parameter
@@ -61,7 +62,7 @@ public class LogbookAuthorizationController {
     @ResponseStatus(HttpStatus.OK)
     @Operation(description = "Create new authorization")
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
-    //TODO: in the post filter remove the authorization on logbook that are not allowed to the current user
+    @PostAuthorize("@logbookAuthorizationService.applyFilterOnUserList(returnObject, authentication)")
     public ApiResultResponse<List<UserDetailsDTO>> findAllUsers(
             Authentication authentication,
             @Parameter(description = "The search string to find the user")
@@ -165,6 +166,4 @@ public class LogbookAuthorizationController {
         );
         return ApiResultResponse.of(true);
     }
-
-    //TODO: add local group and authentication token search
 }

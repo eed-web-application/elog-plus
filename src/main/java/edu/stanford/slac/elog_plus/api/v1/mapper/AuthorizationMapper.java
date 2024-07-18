@@ -1,15 +1,19 @@
 package edu.stanford.slac.elog_plus.api.v1.mapper;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.PersonDTO;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
+import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.ResourceTypeDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.UserAuthorizationDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.DetailsAuthorizationDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.UserDetailsDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
+import java.util.Optional;
 
 @Mapper(
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
@@ -17,35 +21,41 @@ import java.util.List;
         componentModel = "spring"
 )
 public abstract class AuthorizationMapper {
+    @Autowired
+    AuthService authService;
 
     /**
      * Convert a PersonDTO to a UserDetailsDTO
-     * @param personDTO the personDTO to convert
+     *
+     * @param personDTO                the personDTO to convert
      * @param userAuthorizationDTOList the list of authorizations for the user
      * @return the converted UserDetailsDTO
      */
-    public UserDetailsDTO fromPersonDTO(PersonDTO personDTO, List<UserAuthorizationDTO> userAuthorizationDTOList) {
+    public UserDetailsDTO fromPersonDTO(PersonDTO personDTO, List<DetailsAuthorizationDTO> userAuthorizationDTOList) {
         if (personDTO == null) {
             return null;
         }
-
         return UserDetailsDTO.builder()
                 .name(personDTO.commonName())
                 .surname(personDTO.surname())
                 .email(personDTO.mail())
-                .authorization(
-                        userAuthorizationDTOList
-                )
+                .isRoot(authService.checkForRoot(personDTO.mail()))
+                .canManageGroup
+                        (
+                                authService.canManageGroup(personDTO.mail())
+                        )
                 .build();
     }
 
     /**
      * Convert a list of AuthorizationDTO to a list of UserAuthorizationDTO
+     *
      * @param allAuthenticationForOwner the list of AuthorizationDTO to convert
      * @return the converted list of UserAuthorizationDTO
      */
-    public List<UserAuthorizationDTO> fromAuthorizationDTO(
-            List<AuthorizationDTO> allAuthenticationForOwner) {
+    public List<DetailsAuthorizationDTO> fromAuthorizationDTO(
+            List<AuthorizationDTO> allAuthenticationForOwner
+    ) {
         if (allAuthenticationForOwner == null) {
             return null;
         }
@@ -53,7 +63,7 @@ public abstract class AuthorizationMapper {
                 .stream()
                 .filter(a -> a.resource() != null)
                 .map(
-                        a -> UserAuthorizationDTO.builder()
+                        a -> DetailsAuthorizationDTO.builder()
                                 .id(a.id())
                                 .resourceType(getResourceType(a.resource()))
                                 .resourceId(getResourceId(a.resource()))
@@ -65,15 +75,16 @@ public abstract class AuthorizationMapper {
 
     /**
      * Get the resource type from the resource string
+     *
      * @param resource the resource string
      * @return the resource id
      */
     private ResourceTypeDTO getResourceType(String resource) {
         // the resource are of type '/logbook/logbookId' we we need to return ''logbook' as resource
         String[] resourceAndType = resource.split("/");
-        if(resourceAndType.length == 1 && resourceAndType[0].compareToIgnoreCase("*") == 0){
+        if (resourceAndType.length == 1 && resourceAndType[0].compareToIgnoreCase("*") == 0) {
             return ResourceTypeDTO.All;
-        } else if(resourceAndType.length > 1) {
+        } else if (resourceAndType.length > 1) {
             switch (resourceAndType[1]) {
                 case "logbook":
                     return ResourceTypeDTO.Logbook;
@@ -95,15 +106,16 @@ public abstract class AuthorizationMapper {
 
     /**
      * Get the resource id from the resource string
+     *
      * @param resource the resource string
      * @return the resource id
      */
     private String getResourceId(String resource) {
         // the resource are of type '/logbook/logbookId' we  need to return the string value 'logbookId'
         String[] resourceAndType = resource.split("/");
-        if(resourceAndType.length == 1 && resourceAndType[0].compareToIgnoreCase("*") == 0){
+        if (resourceAndType.length == 1 && resourceAndType[0].compareToIgnoreCase("*") == 0) {
             return null;
-        } else if(resourceAndType.length > 1) {
+        } else if (resourceAndType.length > 1) {
             return resourceAndType[2];
         } else {
             throw ControllerLogicException.builder()

@@ -18,5 +18,9 @@ public record UserDetailsDTO (
     String surname,
     @Schema(description = "The email of the user")
     String email,
-    @Schema(description = "The authorization of the user")
-    List<UserAuthorizationDTO> authorization) {}
+    @Schema(description = "The user has root role")
+    Boolean isRoot,
+    @Schema(description = "The user can manage the groups")
+    Boolean canManageGroup,
+    @Schema(description = "The authorization of the user on elog resources")
+    List<DetailsAuthorizationDTO> authorization) {}

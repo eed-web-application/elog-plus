@@ -1,5 +1,6 @@
 package edu.stanford.slac.elog_plus.service.authorization;
 
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
@@ -309,4 +310,69 @@ public class LogbookAuthorizationService {
         return true;
     }
 
+    /**
+     * Check for read authorization
+     *
+     * @param userList       the user list
+     * @param authentication the authentication object
+     * @return true if the user is authorized, false otherwise
+     */
+    public boolean applyFilterOnUserList(ApiResultResponse<List<UserDetailsDTO>> userList, Authentication authentication) {
+        userList.setPayload
+                (
+                        userList
+                                .getPayload()
+                                .parallelStream()
+                                .map
+                                        (
+                                                user -> completeUserAuthorization(user, authentication)
+                                        )
+                                .toList()
+                );
+        return true;
+    }
+
+    /**
+     * Apply the authorization filter on the user
+     *
+     * @param user           the user to manage
+     * @param authentication the authentication
+     * @return the user with the authorization filter applied
+     */
+    private UserDetailsDTO completeUserAuthorization(UserDetailsDTO user, Authentication authentication) {
+        List<DetailsAuthorizationDTO> filteredUserAuthorization = user
+                .authorization()
+                .parallelStream()
+                .filter
+                        (
+                                authorizationDTO -> {
+                                    boolean canBeReturned = authorizationDTO.resourceType() == ResourceTypeDTO.Logbook;
+                                    canBeReturned = canBeReturned && authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
+                                            authentication,
+                                            authorizationDTO.authorizationType(),
+                                            "/logbook/%s".formatted(authorizationDTO.resourceId())
+                                    );
+                                    return canBeReturned;
+                                }
+                        )
+//                .map
+//                        (
+//                                authorizationDTO -> authorizationDTO
+//                                        .toBuilder()
+//                                        .canEdit
+//                                                (
+//                                                        authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
+//                                                                authentication,
+//                                                                authorizationDTO.authorizationType(),
+//                                                                "/logbook/%s".formatted(authorizationDTO.resourceId())
+//                                                        )
+//                                                )
+//                                        .build()
+//                        )
+                .toList();
+        return user
+                .toBuilder()
+                .authorization(filteredUserAuthorization)
+                .build();
+    }
 }

@@ -1,16 +1,14 @@
 package edu.stanford.slac.elog_plus.service;
 
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.PersonQueryParameterDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.*;
+import edu.stanford.slac.ad.eed.baselib.api.v2.dto.LocalGroupDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v2.dto.LocalGroupQueryParameterDTO;
 import edu.stanford.slac.ad.eed.baselib.auth.jwt.SLACAuthenticationJWTToken;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService;
+import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.api.v1.dto.NewAuthorizationDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.ResourceTypeDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.UpdateAuthorizationDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.UserDetailsDTO;
 import edu.stanford.slac.elog_plus.api.v1.mapper.AuthorizationMapper;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -20,6 +18,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,6 +32,7 @@ public class AuthorizationServices {
 
     /**
      * Find users based on the query parameter
+     *
      * @param personQueryParameterDTO the query parameter
      * @return the list of users found
      */
@@ -41,23 +41,153 @@ public class AuthorizationServices {
         var foundUsers = peopleGroupService.findPersons(personQueryParameterDTO);
         //convert to UserDetailsDTO
         return foundUsers.stream().map(
-                u-> authorizationMapper.fromPersonDTO
-                (
-                        u,
-                        authorizationMapper.fromAuthorizationDTO(
-                            authService.getAllAuthenticationForOwner(
-                                    u.mail(),
-                                    AuthorizationOwnerTypeDTO.User,
-                                    Optional.empty()
-                            )
+                u -> authorizationMapper.fromPersonDTO
+                        (
+                                u,
+                                authorizationMapper.fromAuthorizationDTO(
+                                        authService.getAllAuthenticationForOwner(
+                                                u.mail(),
+                                                AuthorizationOwnerTypeDTO.User,
+                                                Optional.empty()
+                                        )
+                                )
                         )
-                )
 
         ).toList();
     }
 
     /**
+     * Find a group
+     *
+     * @param localGroupId          the id of the group to find
+     * @param includeAuthorizations if true include the authorizations
+     * @return the group details
+     */
+    public GroupDetailsDTO findGroup(String localGroupId, Boolean includeMembers, Boolean includeAuthorizations) {
+        // find the group
+        LocalGroupDTO groupFound = authService.findLocalGroupById(localGroupId);
+        return GroupDetailsDTO.builder()
+                .id(groupFound.id())
+                .name(groupFound.name())
+                .description(groupFound.description())
+                .members
+                        (
+                                includeMembers ?
+                                        groupFound.members().stream().map(
+                                                m -> authorizationMapper.fromPersonDTO(
+                                                        m,
+                                                        // user details on group doesn't has authorizations
+                                                        Collections.emptyList()
+                                                )
+                                        ).toList() :
+                                        Collections.emptyList()
+                        )
+                .authorizations
+                        (
+                                includeAuthorizations ?
+                                        authorizationMapper.fromAuthorizationDTO
+                                                (
+                                                        authService.getAllAuthenticationForOwner
+                                                                (
+                                                                        groupFound.name(),
+                                                                        AuthorizationOwnerTypeDTO.Group,
+                                                                        Optional.empty()
+                                                                )
+                                                ) :
+                                        Collections.emptyList()
+                        )
+                .build();
+
+    }
+
+    /**
+     * Find groups based on the query parameter
+     *
+     * @param localGroupQueryParameterDTO the query parameter
+     * @param includeAuthorizations       if true include the authorizations
+     * @return the list of groups found
+     */
+    public List<GroupDetailsDTO> findGroups(
+            LocalGroupQueryParameterDTO localGroupQueryParameterDTO,
+            Boolean includeMembers,
+            Boolean includeAuthorizations
+    ) {
+        var foundGroups = authService.findLocalGroup(localGroupQueryParameterDTO);
+        return foundGroups.stream().map(
+                g -> GroupDetailsDTO.builder()
+                        .id(g.id())
+                        .name(g.name())
+                        .description(g.description())
+                        .members(
+                                includeMembers ?
+                                        g.members().stream().map(
+                                                m -> authorizationMapper.fromPersonDTO(
+                                                        m,
+                                                        // user details on group doesn't has authorizations
+                                                        Collections.emptyList()
+                                                )
+                                        ).toList() :
+                                        Collections.emptyList()
+                        )
+                        .authorizations(
+                                includeAuthorizations ?
+                                        authorizationMapper.fromAuthorizationDTO
+                                                (
+                                                        authService.getAllAuthenticationForOwner
+                                                                (
+                                                                        g.name(),
+                                                                        AuthorizationOwnerTypeDTO.Group,
+                                                                        Optional.empty()
+                                                                )
+                                                ) :
+                                        Collections.emptyList()
+                        )
+                        .build()
+        ).toList();
+    }
+
+    /**
+     * Find all applications
+     *
+     * @param authenticationTokenQueryParameterDTO the query parameter
+     * @param includeMembers                       if true include the members
+     * @param includeAuthorizations                if true include the authorizations
+     * @return the list of applications found
+     */
+    public List<ApplicationDetailsDTO> findAllApplications(
+            AuthenticationTokenQueryParameterDTO authenticationTokenQueryParameterDTO,
+            Boolean includeMembers,
+            Boolean includeAuthorizations
+    ) {
+        var authTokenFound = authService.findAllAuthenticationToken(authenticationTokenQueryParameterDTO);
+        return authTokenFound.stream().map(
+                a -> ApplicationDetailsDTO.builder()
+                        .id(a.id())
+                        .name(a.name())
+                        .email(a.email())
+                        .token(a.token())
+                        .expiration(a.expiration())
+                        .applicationManaged(a.applicationManaged())
+                        .authorizations(
+                                includeAuthorizations ?
+                                        authorizationMapper.fromAuthorizationDTO
+                                                (
+                                                        authService.getAllAuthenticationForOwner
+                                                                (
+                                                                        a.name(),
+                                                                        AuthorizationOwnerTypeDTO.Token,
+                                                                        Optional.empty()
+                                                                )
+                                                ) :
+                                        Collections.emptyList()
+                        )
+                        .build()
+        ).toList();
+    }
+
+    /**
      * Create a new authorization
+     *
      * @param newAuthorizationDTO the new authorization to create
      */
     public void createNew(NewAuthorizationDTO newAuthorizationDTO) {
@@ -74,13 +204,14 @@ public class AuthorizationServices {
         log.info(
                 "Created new authorization on {}/{} for {}/{} by {}",
                 newAuthorizationDTO.resourceType(), newAuthorizationDTO.resourceId(),
-                newAuthorizationDTO.ownerTypeDTO(),newAuthorizationDTO.ownerId(),
+                newAuthorizationDTO.ownerTypeDTO(), newAuthorizationDTO.ownerId(),
                 getCurrentUsername()
         );
     }
 
     /**
      * Delete an authorization
+     *
      * @param authorizationId the id of the authorization to delete
      */
     public void deleteAuthorization(String authorizationId) {
@@ -91,7 +222,8 @@ public class AuthorizationServices {
 
     /**
      * Update an authorization
-     * @param authorizationId the id of the authorization to update
+     *
+     * @param authorizationId        the id of the authorization to update
      * @param updateAuthorizationDTO the update information
      */
     @Transactional
@@ -111,7 +243,34 @@ public class AuthorizationServices {
     }
 
     /**
+     * Create a new application
+     *
+     * @param newApplicationDTO the new application to create
+     * @return the id of the new application
+     */
+    public String createNewApplication(NewApplicationDTO newApplicationDTO) {
+        var createdAuthToken =  authService.addNewApplicationAuthenticationToken(
+                NewAuthenticationTokenDTO
+                        .builder()
+                        .name(newApplicationDTO.name())
+                        .expiration(newApplicationDTO.expiration())
+                        .build(),
+                false);
+        return createdAuthToken.id();
+    }
+
+    /**
+     * Delete an application
+     *
+     * @param applicationId the id of the application to delete
+     */
+    public void deleteApplication(String applicationId) {
+        authService.deleteToken(applicationId);
+    }
+
+    /**
      * Get the current username
+     *
      * @return the current username
      */
     public String getCurrentUsername() {
@@ -129,6 +288,7 @@ public class AuthorizationServices {
 
     /**
      * Create the resource analyzing the resourceType and resource Id
+     *
      * @param newAuthorizationDTO
      * @return
      */
