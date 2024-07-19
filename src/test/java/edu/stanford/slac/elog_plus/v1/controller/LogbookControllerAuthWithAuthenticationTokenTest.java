@@ -90,7 +90,7 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
         var app1Result = assertDoesNotThrow(
                 ()-> testControllerHelperService.applicationControllerFindApplicationById(
                         mockMvc,
-                        status().isCreated(),
+                        status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
                         tokensEmail.getFirst(),
                         Optional.empty()
@@ -100,9 +100,9 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
         var app2Result = assertDoesNotThrow(
                 ()-> testControllerHelperService.applicationControllerFindApplicationById(
                         mockMvc,
-                        status().isCreated(),
+                        status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
-                        tokensEmail.getFirst(),
+                        tokensEmail.get(1),
                         Optional.empty()
                 )
         );
@@ -141,7 +141,7 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
                 List.of(
                         NewAuthorizationDTO
                                 .builder()
-                                .ownerId(tokensEmail.getFirst())
+                                .ownerId(app1Result.getPayload().email())
                                 .ownerType(AuthorizationOwnerTypeDTO.Token)
                                 .authorizationType(Write)
                                 .build()
@@ -151,7 +151,7 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
                 () -> testControllerHelperService.getAllLogbook(
                         mockMvc,
                         status().isOk(),
-                        Optional.of(tokensEmail.getFirst()),
+                        Optional.of(app1Result.getPayload().email()),
                         Optional.of(false),
                         Optional.empty()
                 )
@@ -175,7 +175,7 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
                 () -> testControllerHelperService.getAllLogbook(
                         mockMvc,
                         status().isOk(),
-                        Optional.of(tokensEmail.get(1)),
+                        Optional.of(app2Result.getPayload().email()),
                         Optional.of(false),
                         Optional.empty()
                 )

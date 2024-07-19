@@ -741,7 +741,7 @@ public class LogbookControllerAuthTest {
                 )
         );
         assertThat(user1Details.getPayload().authorization())
-                .hasSize(2)
+                .hasSize(3)
                 .extracting(DetailsAuthorizationDTO::authorizationType)
                 .contains(Write, Admin);
     }
