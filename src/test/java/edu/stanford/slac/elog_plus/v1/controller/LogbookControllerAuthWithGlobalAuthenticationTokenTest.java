@@ -86,7 +86,8 @@ public class LogbookControllerAuthWithGlobalAuthenticationTokenTest {
                         mockMvc,
                         status().isCreated(),
                         Optional.of("user1@slac.stanford.edu"),
-                        tokenResult.getPayload()
+                        tokenResult.getPayload(),
+                        Optional.empty()
                 )
 
         );

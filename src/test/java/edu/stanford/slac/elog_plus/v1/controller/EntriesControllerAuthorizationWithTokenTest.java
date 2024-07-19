@@ -383,9 +383,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
         var tokensEmail = testControllerHelperService.applicationControllerCreateNewApplication(
                 mockMvc,
                 status().isCreated(),
-                Optional.of(
-                        "user1@slac.stanford.edu"
-                ),
+                Optional.of("user1@slac.stanford.edu"),
                 List.of(
                         NewApplicationDTO
                                 .builder()
@@ -401,6 +399,23 @@ public class EntriesControllerAuthorizationWithTokenTest {
                 )
         );
 
+        var app1Result = testControllerHelperService.applicationControllerFindApplicationById(
+                mockMvc,
+                status().isOk(),
+                Optional.of("user1@slac.stanford.edu"),
+                tokensEmail.get(0),
+                Optional.empty()
+                );
+        assertThat(app1Result.getErrorCode()).isEqualTo(0);
+
+        var app2Result = testControllerHelperService.applicationControllerFindApplicationById(
+                mockMvc,
+                status().isOk(),
+                Optional.of("user1@slac.stanford.edu"),
+                tokensEmail.get(1),
+                Optional.empty()
+        );
+        assertThat(app2Result.getErrorCode()).isEqualTo(0);
 
         var newLogBookResult = assertDoesNotThrow(
                 () -> testControllerHelperService.getNewLogbookWithNameWithAuthorization(
@@ -413,13 +428,13 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                 NewAuthorizationDTO
                                         .builder()
                                         .ownerType(Token)
-                                        .ownerId(tokensEmail.getFirst())
+                                        .ownerId(app1Result.getPayload().email())
                                         .authorizationType(AuthorizationTypeDTO.Write)
                                         .build(),
                                 NewAuthorizationDTO
                                         .builder()
                                         .ownerType(Token)
-                                        .ownerId(tokensEmail.get(1))
+                                        .ownerId(app2Result.getPayload().email())
                                         .authorizationType(AuthorizationTypeDTO.Admin)
                                         .build()
                         )
@@ -434,7 +449,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                 mockMvc,
                                 status().isCreated(),
                                 Optional.of(
-                                        tokensEmail.getFirst()
+                                        app1Result.getPayload().email()
                                 ),
                                 EntryNewDTO
                                         .builder()
@@ -458,7 +473,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                 mockMvc,
                                 status().isCreated(),
                                 Optional.of(
-                                       tokensEmail.get(1)
+                                        app2Result.getPayload().email()
                                 ),
                                 EntryNewDTO
                                         .builder()

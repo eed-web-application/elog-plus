@@ -91,10 +91,12 @@ public class ApplicationController {
     public ApiResultResponse<ApplicationDetailsDTO> findApplicationById(
             Authentication authentication,
             @Parameter(description = "Is the unique id of the authentication token")
-            @PathVariable() String applicationId
+            @PathVariable() String applicationId,
+            @Parameter(description = "Include authorizations")
+            @RequestParam("includeAuthorizations") Optional<Boolean> includeAuthorizations
     ){
         return ApiResultResponse.of(
-                authorizationServices.getApplicationById(applicationId)
+                authorizationServices.getApplicationById(applicationId, includeAuthorizations.orElse(false))
         );
     }
 

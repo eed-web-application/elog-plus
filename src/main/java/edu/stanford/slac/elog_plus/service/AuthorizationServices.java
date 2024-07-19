@@ -146,6 +146,45 @@ public class AuthorizationServices {
     }
 
     /**
+     * Find a user
+     *
+     * @param userId               the id of the user to find
+     * @param includeAuthorizations if true include the authorizations
+     * @return the user details
+     */
+    public ApplicationDetailsDTO getApplicationById(String applicationId, boolean includeAuthorizations) {
+        var authTokenFound = authService.getAuthenticationTokenById(applicationId).orElseThrow(
+                ()->ControllerLogicException
+                        .builder()
+                        .errorCode(-1)
+                        .errorMessage("Application not found")
+                        .errorDomain("AuthorizationServices::getApplicationById")
+                        .build()
+        );
+        return ApplicationDetailsDTO.builder()
+                .id(authTokenFound.id())
+                .name(authTokenFound.name())
+                .email(authTokenFound.email())
+                .token(authTokenFound.token())
+                .expiration(authTokenFound.expiration())
+                .applicationManaged(authTokenFound.applicationManaged())
+                .authorizations(
+                        includeAuthorizations ?
+                                authorizationMapper.fromAuthorizationDTO
+                                        (
+                                                authService.getAllAuthenticationForOwner
+                                                        (
+                                                                authTokenFound.email(),
+                                                                AuthorizationOwnerTypeDTO.Token,
+                                                                Optional.empty()
+                                                        )
+                                        ) :
+                                Collections.emptyList()
+                )
+                .build();
+    }
+
+    /**
      * Find all applications
      *
      * @param authenticationTokenQueryParameterDTO the query parameter
@@ -173,7 +212,7 @@ public class AuthorizationServices {
                                                 (
                                                         authService.getAllAuthenticationForOwner
                                                                 (
-                                                                        a.name(),
+                                                                        a.email(),
                                                                         AuthorizationOwnerTypeDTO.Token,
                                                                         Optional.empty()
                                                                 )
@@ -268,24 +307,6 @@ public class AuthorizationServices {
         authService.deleteToken(applicationId);
     }
 
-    public ApplicationDetailsDTO getApplicationById(String applicationId) {
-        var authTokenFound = authService.getAuthenticationTokenById(applicationId).orElseThrow(
-                ()->ControllerLogicException
-                        .builder()
-                        .errorCode(-1)
-                        .errorMessage("Application not found")
-                        .errorDomain("AuthorizationServices::getApplicationById")
-                        .build()
-        );
-        return ApplicationDetailsDTO.builder()
-                .id(authTokenFound.id())
-                .name(authTokenFound.name())
-                .email(authTokenFound.email())
-                .token(authTokenFound.token())
-                .expiration(authTokenFound.expiration())
-                .applicationManaged(authTokenFound.applicationManaged())
-                .build();
-    }
 
     /**
      * Get the current username

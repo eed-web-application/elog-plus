@@ -1158,12 +1158,14 @@ public class TestControllerHelperService {
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
-            String applicationId) throws Exception {
+            String applicationId,
+            Optional<Boolean> includeAuthorizations) throws Exception {
         MockHttpServletRequestBuilder requestBuilder =
                 get("/v1/applications/{applicationId}", applicationId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON);
         userInfo.ifPresent(login -> requestBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
+        includeAuthorizations.ifPresent(a -> requestBuilder.param("includeAuthorizations", String.valueOf(a)));
         return executeHttpRequest(
                 new TypeReference<>() {
                 },

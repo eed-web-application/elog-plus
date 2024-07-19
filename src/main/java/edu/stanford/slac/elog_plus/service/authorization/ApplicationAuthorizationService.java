@@ -30,7 +30,7 @@ public class ApplicationAuthorizationService {
                         .errorDomain("ApplicationAuthorizationService::canCreateApp")
                         .build(),
                 // for now only root can manage application
-                () -> authService.canManageGroup(authentication)
+                () -> authService.checkForRoot(authentication)
 
         );
         return true;
