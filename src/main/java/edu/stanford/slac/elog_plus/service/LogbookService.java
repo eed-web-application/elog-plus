@@ -14,6 +14,7 @@ import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.model.AuthorizationOwnerType;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
+import edu.stanford.slac.elog_plus.api.v1.dto.NewAuthorizationDTO;
 import edu.stanford.slac.elog_plus.api.v1.mapper.LogbookMapper;
 import edu.stanford.slac.elog_plus.api.v1.mapper.ShiftMapper;
 import edu.stanford.slac.elog_plus.api.v1.mapper.TagMapper;
@@ -54,6 +55,7 @@ public class LogbookService {
     private final AuthorizationRepository authorizationRepository;
     private final AuthenticationTokenRepository authenticationTokenRepository;
     private final AuthService authService;
+    private final AuthorizationServices authorizationServices;
     private final AuthMapper authMapper;
     private final AppProperties appProperties;
     private final JWTHelper jwtHelper;
@@ -1186,7 +1188,7 @@ public class LogbookService {
         for (String logbookName :
                 logbookNames) {
             var fullLogbook = getLogbookByName(logbookName);
-            List<AuthorizationDTO> newAuth = new ArrayList<>();
+            List<NewAuthorizationDTO> newAuth = new ArrayList<>();
             for (String userId :
                     userIds) {
                 String logbookId = fullLogbook.id();
@@ -1206,11 +1208,12 @@ public class LogbookService {
                         () -> {
                             // create the authorization
                             newAuth.add(
-                                    AuthorizationDTO.builder()
-                                            .owner(userId)
+                                    NewAuthorizationDTO.builder()
+                                            .ownerId(userId)
                                             .ownerType(AuthorizationOwnerTypeDTO.User)
                                             .authorizationType(authorizationType)
-                                            .resource(String.format("/logbook/%s", logbookId))
+                                            .resourceId(logbookId)
+                                            .resourceType(ResourceTypeDTO.Logbook)
                                             .build()
                             );
                         }
@@ -1219,20 +1222,20 @@ public class LogbookService {
 
             // update the logbook
             if (!newAuth.isEmpty()) {
-                fullLogbook.authorizations().addAll(
-                        newAuth.stream().map(
-                                logbookMapper::fromAuthorizationDTO
-                        ).collect(Collectors.toList())
-                );
-                LogbookDTO finalFullLogbook = fullLogbook;
-                wrapCatch(
-                        () -> update(
-                                finalFullLogbook.id(),
-                                logbookMapper.toUpdateDTO(finalFullLogbook)
-                        ),
-                        -1,
-                        "LogbookService:ensureAuthorizationOnLogbook"
-                );
+               // create all new authorization
+                for (NewAuthorizationDTO auth :
+                        newAuth) {
+                    wrapCatch(
+                            () -> {
+                                authorizationServices.createNew(
+                                        auth
+                                );
+                                return null;
+                            },
+                            -1,
+                            "LogbookService:ensureAuthorizationOnLogbook"
+                    );
+                }
             }
         }
     }
