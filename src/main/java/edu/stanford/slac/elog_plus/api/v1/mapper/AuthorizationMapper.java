@@ -12,6 +12,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,6 +45,7 @@ public abstract class AuthorizationMapper {
                         (
                                 authService.canManageGroup(personDTO.mail())
                         )
+                .authorization(userAuthorizationDTOList==null?Collections.emptyList():userAuthorizationDTOList)
                 .build();
     }
 
@@ -57,7 +59,7 @@ public abstract class AuthorizationMapper {
             List<AuthorizationDTO> allAuthenticationForOwner
     ) {
         if (allAuthenticationForOwner == null) {
-            return null;
+            return Collections.emptyList();
         }
         return allAuthenticationForOwner
                 .stream()

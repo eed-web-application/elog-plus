@@ -35,7 +35,7 @@ public class AuthorizationServices {
      * @param personQueryParameterDTO the query parameter
      * @return the list of users found
      */
-    public List<UserDetailsDTO> findUsers(PersonQueryParameterDTO personQueryParameterDTO, Boolean includeAuthorizations) {
+    public List<UserDetailsDTO> findUsers(PersonQueryParameterDTO personQueryParameterDTO, Boolean includeAuthorizations, Boolean includeInheritance) {
         // found users
         var foundUsers = peopleGroupService.findPersons(personQueryParameterDTO);
         //convert to UserDetailsDTO
@@ -47,12 +47,38 @@ public class AuthorizationServices {
                                         authService.getAllAuthenticationForOwner(
                                                 u.mail(),
                                                 AuthorizationOwnerTypeDTO.User,
-                                                Optional.empty()
+                                                Optional.empty(),
+                                                Optional.of(includeInheritance)
                                         )
                                 ):Collections.emptyList()
                         )
 
         ).toList();
+    }
+
+    /**
+     * Find a user
+     *
+     * @param userId               the id of the user to find
+     * @param includeAuthorizations if true include the authorizations
+     * @return the user details
+     */
+    public UserDetailsDTO findUser(String userId, Boolean includeAuthorizations, Boolean includeInheritance) {
+        // found users
+        var foundUser = peopleGroupService.findPersonByEMail(userId);
+        //convert to UserDetailsDTO
+        return authorizationMapper.fromPersonDTO
+                        (
+                                foundUser,
+                                includeAuthorizations?authorizationMapper.fromAuthorizationDTO(
+                                        authService.getAllAuthenticationForOwner(
+                                                foundUser.mail(),
+                                                AuthorizationOwnerTypeDTO.User,
+                                                Optional.of(false),
+                                                Optional.of(includeInheritance)
+                                        )
+                                ):Collections.emptyList()
+                        );
     }
 
     /**

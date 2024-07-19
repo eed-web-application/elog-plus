@@ -14,9 +14,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @Log4j2
+@Validated
 @RestController("ElogPlusAuthorizationController")
 @RequestMapping("/v1/authorizations")
 @AllArgsConstructor
@@ -36,7 +38,7 @@ public class AuthorizationController {
             produces = {MediaType.APPLICATION_JSON_VALUE}
 
     )
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(HttpStatus.CREATED)
     @Operation(description = "Manage authorization for logbook user authorization")
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @logbookAuthorizationService.canCreateNewAuthorization(#authentication, #newAuthorizationDTO)")
     public ApiResultResponse<Boolean> createNewAuthorization(

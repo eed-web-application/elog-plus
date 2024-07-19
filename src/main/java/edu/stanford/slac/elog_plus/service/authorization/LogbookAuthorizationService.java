@@ -334,6 +334,21 @@ public class LogbookAuthorizationService {
 
     /**
      * Apply the authorization filter on the user
+     * @param user
+     * @param authentication
+     * @return
+     */
+    public boolean applyFilterOnUser(ApiResultResponse<UserDetailsDTO> user, Authentication authentication) {
+        user.setPayload
+                (
+                        completeUserAuthorization(user.getPayload(), authentication)
+
+                );
+        return true;
+    }
+
+    /**
+     * Apply the authorization filter on the user
      *
      * @param user           the user to manage
      * @param authentication the authentication
@@ -346,29 +361,20 @@ public class LogbookAuthorizationService {
                 .filter
                         (
                                 authorizationDTO -> {
-                                    boolean canBeReturned = authorizationDTO.resourceType() == ResourceTypeDTO.Logbook;
-                                    canBeReturned = canBeReturned && authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                                            authentication,
-                                            authorizationDTO.authorizationType(),
-                                            "/logbook/%s".formatted(authorizationDTO.resourceId())
-                                    );
-                                    return canBeReturned;
+                                    switch(authorizationDTO.resourceType()){
+                                        case Logbook:
+                                            return authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
+                                                    authentication,
+                                                    Admin,
+                                                    "/logbook/%s".formatted(authorizationDTO.resourceId())
+                                            );
+                                        case All:
+                                            return true;
+                                        default:
+                                            return false;
+                                    }
                                 }
                         )
-//                .map
-//                        (
-//                                authorizationDTO -> authorizationDTO
-//                                        .toBuilder()
-//                                        .canEdit
-//                                                (
-//                                                        authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-//                                                                authentication,
-//                                                                authorizationDTO.authorizationType(),
-//                                                                "/logbook/%s".formatted(authorizationDTO.resourceId())
-//                                                        )
-//                                                )
-//                                        .build()
-//                        )
                 .toList();
         return user
                 .toBuilder()

@@ -279,13 +279,11 @@ public class EntriesControllerAuthorizationWithTokenTest {
 
     @Test
     public void createNewLogSuccessWithAuthenticationTokenOnLogbook() throws Exception {
-        var tokensEmail = assertDoesNotThrow(
+        var newApplicationsId = assertDoesNotThrow(
                 () -> testControllerHelperService.applicationControllerCreateNewApplication(
                         mockMvc,
                         status().isCreated(),
-                        Optional.of(
-                                "user1@slac.stanford.edu"
-                        ),
+                        Optional.of("user1@slac.stanford.edu"),
                         List.of(
                                 NewApplicationDTO
                                         .builder()
@@ -300,6 +298,25 @@ public class EntriesControllerAuthorizationWithTokenTest {
                         )
                 )
         );
+
+        var newApp1result = assertDoesNotThrow(
+                ()-> testControllerHelperService.applicationControllerFindApplicationById(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        newApplicationsId.get(0),
+                        Optional.empty()
+                )
+        );
+        var newApp2result = assertDoesNotThrow(
+                ()-> testControllerHelperService.applicationControllerFindApplicationById(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        newApplicationsId.get(1),
+                        Optional.empty()
+                )
+        );
         var newLogBookResult = assertDoesNotThrow(
                 () -> testControllerHelperService.getNewLogbookWithNameWithAuthorizationAndAppToken(
                         mockMvc,
@@ -308,19 +325,19 @@ public class EntriesControllerAuthorizationWithTokenTest {
                         ),
                         "LogbookAuthTest1",
                         List.of(
-                                LogbookOwnerAuthorizationDTO
+                                NewAuthorizationDTO
                                         .builder()
                                         .ownerType(Token)
-                                        .owner(
-                                                tokensEmail.getFirst()
+                                        .ownerId(
+                                                newApp1result.getPayload().email()
                                         )
                                         .authorizationType(AuthorizationTypeDTO.Write)
                                         .build(),
-                                LogbookOwnerAuthorizationDTO
+                                NewAuthorizationDTO
                                         .builder()
                                         .ownerType(Token)
-                                        .owner(
-                                                tokensEmail.get(1)
+                                        .ownerId(
+                                                newApp2result.getPayload().email()
                                         )
                                         .authorizationType(AuthorizationTypeDTO.Admin)
                                         .build()
@@ -336,7 +353,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                 mockMvc,
                                 status().isCreated(),
                                 Optional.of(
-                                        tokensEmail.getFirst()
+                                        newApp1result.getPayload().email()
                                 ),
                                 EntryNewDTO
                                         .builder()
@@ -360,7 +377,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                 mockMvc,
                                 status().isCreated(),
                                 Optional.of(
-                                        tokensEmail.get(1)
+                                        newApp2result.getPayload().email()
                                 ),
                                 EntryNewDTO
                                         .builder()

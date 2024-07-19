@@ -136,7 +136,8 @@ public class UserControllerControllerTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
-                        Optional.empty()
+                        Optional.of(true),
+                        Optional.of(true)
                 )
         );
         assertThat(foundUsers).isNotNull();
@@ -234,7 +235,8 @@ public class UserControllerControllerTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
-                        Optional.empty()
+                        Optional.of(true),
+                        Optional.of(true)
                 )
         );
         assertThat(foundUsers).isNotNull();
@@ -271,7 +273,23 @@ public class UserControllerControllerTest {
                         tuple(Admin.name(), newLogbook2result.getPayload(), "Logbook")
                 );
 
-       //TODO: update user authorizations
+       //TODO: update user2 to read on logbook 1 too
+        var updatedUser2 = assertDoesNotThrow(
+                () -> testControllerHelperService.authorizationControllerCreateNewAuthorization(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewAuthorizationDTO
+                                .builder()
+                                .ownerId("user2@slac.stanford.edu")
+                                .ownerType(AuthorizationOwnerTypeDTO.User)
+                                .resourceId(newLogbook2result.getPayload())
+                                .resourceType(ResourceTypeDTO.Logbook)
+                                .authorizationType(Read)
+                                .build()
+                )
+        );
+        assertThat(updatedUser2).isNotNull();
 
         var foundUsers2 = assertDoesNotThrow(
                 () -> testControllerHelperService.userControllerFindAllUsers(
@@ -282,19 +300,20 @@ public class UserControllerControllerTest {
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
-                        Optional.empty()
+                        Optional.of(true),
+                        Optional.of(true)
                 )
         );
         assertThat(foundUsers2).isNotNull();
         assertThat(foundUsers2.getPayload()).hasSize(3);
-        assertThat(foundUsers.getPayload().get(1).authorization())
+        assertThat(foundUsers2.getPayload().get(1).authorization())
                 .extracting(
                         a -> a.authorizationType().name(),
                         a -> a.resourceId(),
                         a -> a.resourceType().name()
                 )
                 .contains(
-                        tuple(Read.name(), newLogbook1result.getPayload(), "Logbook"),
+                        tuple(Write.name(), newLogbook1result.getPayload(), "Logbook"),
                         tuple(Read.name(), newLogbook2result.getPayload(), "Logbook")
                 );
     }

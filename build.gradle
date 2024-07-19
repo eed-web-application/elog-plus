@@ -12,8 +12,8 @@ version = '1.0.0'
 sourceCompatibility = '19'
 
 ext{
-    ad_eed_baselib_version="0.1.67"
-    ad_eed_base_mongodb_lib_version="0.1.36"
+    ad_eed_baselib_version="0.1.69"
+    ad_eed_base_mongodb_lib_version="0.1.38"
     javaSourceCompatibility = JavaVersion.VERSION_21
     javaTargetCompatibility = JavaVersion.VERSION_21
 }
@@ -67,6 +67,7 @@ dependencies {
             'org.springframework.boot:spring-boot-starter-actuator',
             'org.springframework.boot:spring-boot-starter-data-ldap',
             'org.springframework.boot:spring-boot-starter-cache',
+            'org.springframework.boot:spring-boot-starter-validation',
             'io.micrometer:micrometer-registry-prometheus',
             'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0',
             'org.springdoc:springdoc-openapi-starter-webflux-ui:2.5.0',

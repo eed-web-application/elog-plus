@@ -67,8 +67,8 @@ public abstract class LogbookMapper {
      * @return the list of authorizations of the logbook
      */
     public List<LogbookOwnerAuthorizationDTO> getAuthorizations(String id, boolean includeAuthorizations) {
-        if (id == null || id.isEmpty()) return null;
-        if (!includeAuthorizations) return null;
+        if (id == null || id.isEmpty()) return Collections.emptyList();
+        if (!includeAuthorizations) return Collections.emptyList();
         return wrapCatch(
                 () -> authorizationRepository.findByResourceIs(String.format("/logbook/%s", id))
                         .stream()

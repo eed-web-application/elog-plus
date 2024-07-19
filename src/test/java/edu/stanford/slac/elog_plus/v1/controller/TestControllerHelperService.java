@@ -76,32 +76,11 @@ public class TestControllerHelperService {
                 )
                 .isEqualTo(0);
 
-        var updateApiResult = assertDoesNotThrow(
-                () -> updateLogbook(
-                        mockMvc,
-                        status().isOk(),
-                        userInfo,
-                        newLogbookApiResult.getPayload(),
-                        UpdateLogbookDTO
-                                .builder()
-                                .name(logbookName)
-                                .shifts(Collections.emptyList())
-                                .tags(Collections.emptyList())
-                                .build()
-                )
-        );
-        AssertionsForClassTypes.assertThat(updateApiResult)
-                .isNotNull()
-                .extracting(
-                        ApiResultResponse::getErrorCode
-                )
-                .isEqualTo(0);
-
         for(NewAuthorizationDTO newAuthorizationDTO : authorizations) {
             assertDoesNotThrow(
                     () -> authorizationControllerCreateNewAuthorization(
                             mockMvc,
-                            status().isOk(),
+                            status().isCreated(),
                             userInfo,
                             newAuthorizationDTO
                                     .toBuilder()
@@ -127,7 +106,7 @@ public class TestControllerHelperService {
             MockMvc mockMvc,
             Optional<String> userInfo,
             String logbookName,
-            List<LogbookOwnerAuthorizationDTO> authorizations) {
+            List<NewAuthorizationDTO> authorizations) {
 
         var newLogbookApiResult = assertDoesNotThrow(
                 () -> createNewLogbook(
@@ -148,30 +127,20 @@ public class TestControllerHelperService {
                 )
                 .isEqualTo(0);
 
-        var updateApiResult = assertDoesNotThrow(
-                () -> updateLogbook(
-                        mockMvc,
-                        status().isOk(),
-                        userInfo,
-                        newLogbookApiResult.getPayload(),
-                        UpdateLogbookDTO
-                                .builder()
-                                .name(logbookName)
-                                .shifts(Collections.emptyList())
-                                .tags(Collections.emptyList())
-                                //TODO: use new api to authorize
-//                                .authorizations(
-//                                        authorizations
-//                                )
-                                .build()
-                )
-        );
-        AssertionsForClassTypes.assertThat(updateApiResult)
-                .isNotNull()
-                .extracting(
-                        ApiResultResponse::getErrorCode
-                )
-                .isEqualTo(0);
+        for(NewAuthorizationDTO newAuthorizationDTO : authorizations) {
+            assertDoesNotThrow(
+                    () -> authorizationControllerCreateNewAuthorization(
+                            mockMvc,
+                            status().isCreated(),
+                            userInfo,
+                            newAuthorizationDTO
+                                    .toBuilder()
+                                    .resourceType(ResourceTypeDTO.Logbook)
+                                    .resourceId(newLogbookApiResult.getPayload())
+                                    .build()
+                    )
+            );
+        }
         return newLogbookApiResult;
     }
 
@@ -891,33 +860,6 @@ public class TestControllerHelperService {
      * @param mockMvc
      * @param resultMatcher
      * @param userInfo
-     * @return
-     * @throws Exception
-     */
-    public ApiResultResponse<List<LogbookAuthorizationDTO>> getLogbookAuthorizationForCurrentUsers(
-            MockMvc mockMvc,
-            ResultMatcher resultMatcher,
-            Optional<String> userInfo) throws Exception {
-        MockHttpServletRequestBuilder requestBuilder =
-                get("/v1/logbook/auth")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON);
-        return executeHttpRequest(
-                new TypeReference<>() {
-                },
-                mockMvc,
-                resultMatcher,
-                userInfo,
-                requestBuilder
-        );
-    }
-
-    /**
-     * Get logbook authorizations
-     *
-     * @param mockMvc
-     * @param resultMatcher
-     * @param userInfo
      * @param logbookId
      * @return
      * @throws Exception
@@ -929,38 +871,6 @@ public class TestControllerHelperService {
             String logbookId) throws Exception {
         MockHttpServletRequestBuilder requestBuilder =
                 get("/v1/logbook/{logbookId}/auth", logbookId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON);
-        return executeHttpRequest(
-                new TypeReference<>() {
-                },
-                mockMvc,
-                resultMatcher,
-                userInfo,
-                requestBuilder
-        );
-    }
-
-    /**
-     * Update logbook
-     *
-     * @param mockMvc                     MockMvc
-     * @param resultMatcher               ResultMatcher
-     * @param userInfo                    optional user information
-     * @param logbookUserAuthorizationDTO LogbookUserAuthorizationDTO
-     * @return ApiResultResponse<Boolean>
-     * @throws Exception Exception
-     */
-    public ApiResultResponse<Boolean> applyLogbookUserAuthorization(
-            MockMvc mockMvc,
-            ResultMatcher resultMatcher,
-            Optional<String> userInfo,
-            List<LogbookUserAuthorizationDTO> logbookUserAuthorizationDTO) throws Exception {
-        MockHttpServletRequestBuilder requestBuilder =
-                post("/v1/logbook/auth/user")
-                        .content(
-                                objectMapper.writeValueAsString(logbookUserAuthorizationDTO)
-                        )
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON);
         return executeHttpRequest(
@@ -1007,7 +917,8 @@ public class TestControllerHelperService {
             Optional<Integer> context,
             Optional<String> anchor,
             Optional<String> searchFilter,
-            Optional<Boolean> includeAuthorization) throws Exception {
+            Optional<Boolean> includeAuthorizations,
+            Optional<Boolean> includeInheritance) throws Exception {
         MockHttpServletRequestBuilder requestBuilder =
                 get("/v1/users")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -1016,7 +927,31 @@ public class TestControllerHelperService {
         limit.ifPresent(l -> requestBuilder.param("limit", String.valueOf(l)));
         context.ifPresent(c -> requestBuilder.param("context", String.valueOf(c)));
         anchor.ifPresent(a -> requestBuilder.param("anchor", a));
-        includeAuthorization.ifPresent(a -> requestBuilder.param("includeAuthorization", String.valueOf(a)));
+        includeAuthorizations.ifPresent(a -> requestBuilder.param("includeAuthorizations", String.valueOf(a)));
+        includeInheritance.ifPresent(a -> requestBuilder.param("includeInheritance", String.valueOf(a)));
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    public ApiResultResponse<UserDetailsDTO> userControllerFindUserById(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String userId,
+            Optional<Boolean> includeAuthorizations,
+            Optional<Boolean> includeInheritance) throws Exception {
+        MockHttpServletRequestBuilder requestBuilder =
+                get("/v1/users/{userId}", userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON);
+        includeAuthorizations.ifPresent(a -> requestBuilder.param("includeAuthorizations", String.valueOf(a)));
+        includeInheritance.ifPresent(a -> requestBuilder.param("includeInheritance", String.valueOf(a)));
         return executeHttpRequest(
                 new TypeReference<>() {
                 },

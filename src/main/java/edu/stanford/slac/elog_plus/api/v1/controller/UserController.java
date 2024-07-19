@@ -2,11 +2,14 @@ package edu.stanford.slac.elog_plus.api.v1.controller;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.PersonQueryParameterDTO;
+import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.UserDetailsDTO;
 import edu.stanford.slac.elog_plus.service.AuthorizationServices;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -21,11 +24,13 @@ import java.util.Optional;
 
 @Validated
 @RestController()
-@RequestMapping("/v1/application")
+@RequestMapping("/v1/users")
 @AllArgsConstructor
 @Schema(description = "Api for the users information")
 public class UserController {
     private final AuthorizationServices authorizationServices;
+    private final AuthService authService;
+
     /**
      * Find users based on the query parameter
      *
@@ -41,13 +46,11 @@ public class UserController {
      * @return the list of users found
      */
     @GetMapping(
-            path = "/users",
-            consumes = {MediaType.APPLICATION_JSON_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE}
 
     )
     @ResponseStatus(HttpStatus.OK)
-    @Operation(description = "Create new authorization")
+    @Operation(description = "Search from all users")
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
     @PostAuthorize("@logbookAuthorizationService.applyFilterOnUserList(returnObject, authentication)")
     public ApiResultResponse<List<UserDetailsDTO>> findAllUsers(
@@ -61,7 +64,9 @@ public class UserController {
             @Parameter(description = "The anchor of the search")
             @RequestParam(value = "anchor", required = false) Optional<String> anchor,
             @Parameter(description = "Include authorizations")
-            @RequestParam("includeAuthorizations") Optional<Boolean> includeAuthorizations
+            @RequestParam("includeAuthorizations") Optional<Boolean> includeAuthorizations,
+            @Parameter(description = "Include group inheritance")
+            @RequestParam("includeInheritance") Optional<Boolean> includeInheritance
     ) {
         return ApiResultResponse.of(
                 authorizationServices.findUsers(
@@ -71,8 +76,32 @@ public class UserController {
                                 .limit(limit.orElse(null))
                                 .anchor(anchor.orElse(null))
                                 .build(),
-                        includeAuthorizations.orElse(false)
+                        includeAuthorizations.orElse(false),
+                        includeInheritance.orElse(false)
                 )
+        );
+    }
+
+    @GetMapping(
+            path = "/{userId}",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+
+    )
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(description = "Get a single user by id")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
+    @PostAuthorize("@logbookAuthorizationService.applyFilterOnUser(returnObject, authentication)")
+    public ApiResultResponse<UserDetailsDTO> findUserById(
+            Authentication authentication,
+            @Parameter(description = "The user id")
+            @PathVariable String userId,
+            @Parameter(description = "Include authorizations")
+            @RequestParam("includeAuthorizations") Optional<Boolean> includeAuthorizations,
+            @Parameter(description = "Include group inheritance")
+            @RequestParam("includeInheritance") Optional<Boolean> includeInheritance
+    ) {
+        return ApiResultResponse.of(
+                authorizationServices.findUser(userId, includeAuthorizations.orElse(false), includeInheritance.orElse(false))
         );
     }
 }

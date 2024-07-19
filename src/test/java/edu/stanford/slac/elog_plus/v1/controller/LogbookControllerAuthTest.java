@@ -1,15 +1,17 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.*;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v2.dto.NewLocalGroupDTO;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.ad.eed.baselib.model.AuthenticationToken;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
+import edu.stanford.slac.ad.eed.baselib.model.LocalGroup;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
-import edu.stanford.slac.elog_plus.api.v1.dto.NewAuthorizationDTO;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
-import org.assertj.core.api.AssertionsForClassTypes;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,13 +30,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.*;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureMockMvc
@@ -61,6 +61,7 @@ public class LogbookControllerAuthTest {
         mongoTemplate.remove(new Query(), Entry.class);
         //reset authorizations
         mongoTemplate.remove(new Query(), Authorization.class);
+        mongoTemplate.remove(new Query(), LocalGroup.class);
         mongoTemplate.remove(new Query(), AuthenticationToken.class);
         appProperties.getRootUserList().clear();
         appProperties.getRootUserList().add("user1@slac.stanford.edu");
@@ -223,7 +224,7 @@ public class LogbookControllerAuthTest {
         var tokensEmail = assertDoesNotThrow(
                 () -> testControllerHelperService.applicationControllerCreateNewApplication(
                         mockMvc,
-                        status().isOk(),
+                        status().isCreated(),
                         Optional.of("user1@slac.stanford.edu"),
                         NewApplicationDTO
                                 .builder()
@@ -233,6 +234,15 @@ public class LogbookControllerAuthTest {
 
                 )
         );
+        var app1Result = assertDoesNotThrow(
+                () -> testControllerHelperService.applicationControllerFindApplicationById(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        tokensEmail.getPayload(),
+                        Optional.empty()
+                )
+        );
         var newLogbookApiResultOne = testControllerHelperService.getNewLogbookWithNameWithAuthorizationAndAppToken(
                 mockMvc,
                 Optional.of(
@@ -240,17 +250,17 @@ public class LogbookControllerAuthTest {
                 ),
                 "new logbook",
                 List.of(
-                        LogbookOwnerAuthorizationDTO
+                        NewAuthorizationDTO
                                 .builder()
-                                .owner("user2@slac.stanford.edu")
+                                .ownerId("user2@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
                                 .authorizationType(
                                         Write
                                 )
                                 .build(),
-                        LogbookOwnerAuthorizationDTO
+                        NewAuthorizationDTO
                                 .builder()
-                                .owner(tokensEmail.getPayload())
+                                .ownerId(app1Result.getPayload().email())
                                 .ownerType(AuthorizationOwnerTypeDTO.Token)
                                 .authorizationType(
                                         Read
@@ -315,9 +325,9 @@ public class LogbookControllerAuthTest {
                         ),
                         "new logbook",
                         List.of(
-                                LogbookOwnerAuthorizationDTO
+                                NewAuthorizationDTO
                                         .builder()
-                                        .owner("user2@slac.stanford.edu")
+                                        .ownerId("user2@slac.stanford.edu")
                                         .ownerType(AuthorizationOwnerTypeDTO.User)
                                         .authorizationType(
                                                 Read
@@ -334,9 +344,9 @@ public class LogbookControllerAuthTest {
                         ),
                         "new logbook 2",
                         List.of(
-                                LogbookOwnerAuthorizationDTO
+                                NewAuthorizationDTO
                                         .builder()
-                                        .owner("user2@slac.stanford.edu")
+                                        .ownerId("user2@slac.stanford.edu")
                                         .ownerType(AuthorizationOwnerTypeDTO.User)
                                         .authorizationType(
                                                 Write
@@ -353,9 +363,9 @@ public class LogbookControllerAuthTest {
                         ),
                         "new logbook 3",
                         List.of(
-                                LogbookOwnerAuthorizationDTO
+                                NewAuthorizationDTO
                                         .builder()
-                                        .owner("user2@slac.stanford.edu")
+                                        .ownerId("user2@slac.stanford.edu")
                                         .ownerType(AuthorizationOwnerTypeDTO.User)
                                         .authorizationType(
                                                 Read
@@ -431,37 +441,53 @@ public class LogbookControllerAuthTest {
                 .isNullOrEmpty();
 
         // apply authorization for group
-        assertDoesNotThrow(
-                () -> testControllerHelperService.applyLogbookUserAuthorization(
+        var createNewAuth = assertDoesNotThrow(
+                () -> testControllerHelperService.authorizationControllerCreateNewAuthorization(
                         mockMvc,
                         status().isCreated(),
                         Optional.of("user1@slac.stanford.edu"),
-                        List.of(
-                                LogbookUserAuthorizationDTO
-                                        .builder()
-                                        .logbookId(newLogbookResult.getPayload())
-                                        .userId("user1@slac.stanford.edu")
-                                        .authorizationType(Write)
-                                        .build()
-                        )
+                        NewAuthorizationDTO
+                                .builder()
+                                .resourceId(newLogbookResult.getPayload())
+                                .resourceType(ResourceTypeDTO.Logbook)
+                                .ownerId("user1@slac.stanford.edu")
+                                .ownerType(AuthorizationOwnerTypeDTO.User)
+                                .authorizationType(Write)
+                                .build()
                 )
         );
+        assertThat(createNewAuth.getPayload()).isTrue();
+        // create group
+        var groupIdResult = assertDoesNotThrow(
+                () -> testControllerHelperService.groupControllerCreateNewGroup(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewLocalGroupDTO.builder()
+                                .name("local-group-1")
+                                .description("local-group-1 description")
+                                .members(List.of("user1@slac.stanford.edu"))
+                                .build()
+                )
+        );
+        assertThat(groupIdResult.getPayload()).isNotEmpty();
         // apply authorization for group
-//        assertDoesNotThrow(
-//                () -> testControllerHelperService.applyLogbookGroupAuthorizations(
-//                        mockMvc,
-//                        status().isCreated(),
-//                        Optional.of("user1@slac.stanford.edu"),
-//                        List.of(
-//                                LogbookGroupAuthorizationDTO
-//                                        .builder()
-//                                        .logbookId(newLogbookResult.getPayload())
-//                                        .groupId("group-1")
-//                                        .authorizationType(Read)
-//                                        .build()
-//                        )
-//                )
-//        );
+        assertDoesNotThrow(
+                () -> testControllerHelperService.authorizationControllerCreateNewAuthorization(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewAuthorizationDTO
+                                .builder()
+                                .resourceId(newLogbookResult.getPayload())
+                                .resourceType(ResourceTypeDTO.Logbook)
+                                .ownerId("local-group-1")
+                                .ownerType(AuthorizationOwnerTypeDTO.Group)
+                                .authorizationType(Read)
+                                .build()
+                )
+        );
+
         logbook = assertDoesNotThrow(
                 () -> testControllerHelperService.getLogbookByID(
                         mockMvc,
@@ -477,17 +503,11 @@ public class LogbookControllerAuthTest {
         assertThat(logbook.getPayload().authorizations())
                 .hasSize(2)
                 .extracting(LogbookOwnerAuthorizationDTO::owner)
-                .contains("user1@slac.stanford.edu", "group-1");
+                .contains("user1@slac.stanford.edu", "local-group-1");
 
         // remove authorization for all user
-//        assertDoesNotThrow(
-//                () -> testControllerHelperService.deleteLogbookUsersAuthorizations(
-//                        mockMvc,
-//                        status().isOk(),
-//                        Optional.of("user1@slac.stanford.edu"),
-//                        newLogbookResult.getPayload()
-//                )
-//        );
+        authService.deleteAuthorizationForResourcePrefix("/logbook/%s".formatted(newLogbookResult.getPayload()), AuthorizationOwnerTypeDTO.User);
+
         logbook = assertDoesNotThrow(
                 () -> testControllerHelperService.getLogbookByID(
                         mockMvc,
@@ -502,15 +522,9 @@ public class LogbookControllerAuthTest {
         assertThat(logbook.getPayload().authorizations())
                 .hasSize(1);
 
-        // remove authorization for all user
-//        assertDoesNotThrow(
-//                () -> testControllerHelperService.deleteLogbookGroupAuthorization(
-//                        mockMvc,
-//                        status().isOk(),
-//                        Optional.of("user1@slac.stanford.edu"),
-//                        newLogbookResult.getPayload()
-//                )
-//        );
+        // remove authorization for group
+        authService.deleteAuthorizationForResourcePrefix("/logbook/%s".formatted(newLogbookResult.getPayload()), AuthorizationOwnerTypeDTO.Group);
+        // check
         logbook = assertDoesNotThrow(
                 () -> testControllerHelperService.getLogbookByID(
                         mockMvc,
@@ -554,64 +568,140 @@ public class LogbookControllerAuthTest {
         assertThat(logbook.getPayload())
                 .isNotNull();
         assertThat(logbook.getPayload().authorizations())
-                .isNullOrEmpty();
+                .isNotNull()
+                .isEmpty();
 
-        // apply authorization for group
-        assertDoesNotThrow(
-                () -> testControllerHelperService.applyLogbookUserAuthorization(
+        // apply authorization for user
+        var createNewAuth = assertDoesNotThrow(
+                () -> testControllerHelperService.authorizationControllerCreateNewAuthorization(
                         mockMvc,
                         status().isCreated(),
                         Optional.of("user1@slac.stanford.edu"),
-                        List.of(
-                                LogbookUserAuthorizationDTO
-                                        .builder()
-                                        .logbookId(newLogbookResult.getPayload())
-                                        .userId("user1@slac.stanford.edu")
-                                        .authorizationType(Write)
-                                        .build(),
-                                LogbookUserAuthorizationDTO
-                                        .builder()
-                                        .logbookId(newLogbookResult.getPayload())
-                                        .userId("user2@slac.stanford.edu")
-                                        .authorizationType(Read)
-                                        .build(),
-                                LogbookUserAuthorizationDTO
-                                        .builder()
-                                        .logbookId(newLogbookResult.getPayload())
-                                        .userId("user1@slac.stanford.edu")
-                                        .authorizationType(Admin)
-                                        .build()
-                        )
+                        NewAuthorizationDTO
+                                .builder()
+                                .resourceId(newLogbookResult.getPayload())
+                                .resourceType(ResourceTypeDTO.Logbook)
+                                .ownerId("user1@slac.stanford.edu")
+                                .ownerType(AuthorizationOwnerTypeDTO.User)
+                                .authorizationType(Write)
+                                .build()
                 )
         );
+        assertThat(createNewAuth.getPayload()).isTrue();
+        createNewAuth = assertDoesNotThrow(
+                () -> testControllerHelperService.authorizationControllerCreateNewAuthorization(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewAuthorizationDTO
+                                .builder()
+                                .resourceId(newLogbookResult.getPayload())
+                                .resourceType(ResourceTypeDTO.Logbook)
+                                .ownerId("user2@slac.stanford.edu")
+                                .ownerType(AuthorizationOwnerTypeDTO.User)
+                                .authorizationType(Read)
+                                .build()
+                )
+        );
+        assertThat(createNewAuth.getPayload()).isTrue();
+        createNewAuth = assertDoesNotThrow(
+                () -> testControllerHelperService.authorizationControllerCreateNewAuthorization(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewAuthorizationDTO
+                                .builder()
+                                .resourceId(newLogbookResult.getPayload())
+                                .resourceType(ResourceTypeDTO.Logbook)
+                                .ownerId("user1@slac.stanford.edu")
+                                .ownerType(AuthorizationOwnerTypeDTO.User)
+                                .authorizationType(Admin)
+                                .build()
+                )
+        );
+        assertThat(createNewAuth.getPayload()).isTrue();
+
         // apply authorization for group
-//        assertDoesNotThrow(
-//                () -> testControllerHelperService.applyLogbookGroupAuthorizations(
-//                        mockMvc,
-//                        status().isCreated(),
-//                        Optional.of("user1@slac.stanford.edu"),
-//                        List.of(
-//                                LogbookGroupAuthorizationDTO
-//                                        .builder()
-//                                        .logbookId(newLogbookResult.getPayload())
-//                                        .groupId("group-1")
-//                                        .authorizationType(Read)
-//                                        .build(),
-//                                LogbookGroupAuthorizationDTO
-//                                        .builder()
-//                                        .logbookId(newLogbookResult.getPayload())
-//                                        .groupId("group-2")
-//                                        .authorizationType(Write)
-//                                        .build(),
-//                                LogbookGroupAuthorizationDTO
-//                                        .builder()
-//                                        .logbookId(newLogbookResult.getPayload())
-//                                        .groupId("group-1")
-//                                        .authorizationType(Admin)
-//                                        .build()
-//                        )
-//                )
-//        );
+        // create group
+        var group1IdResult = assertDoesNotThrow(
+                () -> testControllerHelperService.groupControllerCreateNewGroup(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewLocalGroupDTO.builder()
+                                .name("local-group-1")
+                                .description("local-group-1 description")
+                                .members(List.of("user1@slac.stanford.edu"))
+                                .build()
+                )
+        );
+        assertThat(group1IdResult.getPayload()).isNotEmpty();
+        var group2IdResult = assertDoesNotThrow(
+                () -> testControllerHelperService.groupControllerCreateNewGroup(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewLocalGroupDTO.builder()
+                                .name("local-group-2")
+                                .description("local-group-2 description")
+                                .members(List.of("user1@slac.stanford.edu", "user2@slac.stanford.edu"))
+                                .build()
+                )
+        );
+        assertThat(group2IdResult.getPayload()).isNotEmpty();
+
+        // apply authorization for group
+        var newAuthResult = assertDoesNotThrow(
+                () -> testControllerHelperService.authorizationControllerCreateNewAuthorization(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewAuthorizationDTO
+                                .builder()
+                                .resourceId(newLogbookResult.getPayload())
+                                .resourceType(ResourceTypeDTO.Logbook)
+                                .ownerId("local-group-1")
+                                .ownerType(AuthorizationOwnerTypeDTO.Group)
+                                .authorizationType(Read)
+                                .build()
+                )
+        );
+        assertThat(newAuthResult).isNotNull();
+
+        newAuthResult = assertDoesNotThrow(
+                () -> testControllerHelperService.authorizationControllerCreateNewAuthorization(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewAuthorizationDTO
+                                .builder()
+                                .resourceId(newLogbookResult.getPayload())
+                                .resourceType(ResourceTypeDTO.Logbook)
+                                .ownerId("local-group-2")
+                                .ownerType(AuthorizationOwnerTypeDTO.Group)
+                                .authorizationType(Write)
+                                .build()
+                )
+        );
+        assertThat(newAuthResult).isNotNull();
+
+        newAuthResult = assertDoesNotThrow(
+                () -> testControllerHelperService.authorizationControllerCreateNewAuthorization(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewAuthorizationDTO
+                                .builder()
+                                .resourceId(newLogbookResult.getPayload())
+                                .resourceType(ResourceTypeDTO.Logbook)
+                                .ownerId("local-group-1")
+                                .ownerType(AuthorizationOwnerTypeDTO.Group)
+                                .authorizationType(Admin)
+                                .build()
+                )
+        );
+        assertThat(newAuthResult).isNotNull();
+
         logbook = assertDoesNotThrow(
                 () -> testControllerHelperService.getLogbookByID(
                         mockMvc,
@@ -625,143 +715,57 @@ public class LogbookControllerAuthTest {
         assertThat(logbook.getPayload())
                 .isNotNull();
         assertThat(logbook.getPayload().authorizations())
-                .hasSize(4)
+                .hasSize(6)
                 .extracting(LogbookOwnerAuthorizationDTO::owner)
-                .contains("user1@slac.stanford.edu", "user2@slac.stanford.edu", "group-1", "group-2");
-        // check the maximum authorization for each user and group
-        assertTrue(
-                logbook.getPayload().authorizations().stream()
-                        .collect(Collectors.groupingBy(LogbookOwnerAuthorizationDTO::owner))
-                        .values()
-                        .stream()
-                        .allMatch(authorizations -> authorizations.size() == 1)
-        );
-        logbook.getPayload().authorizations().stream().filter(a -> a.owner().compareTo("user1@slac.stanford.edu") == 0).findFirst().ifPresent(
-                a -> assertThat(a.authorizationType()).isEqualTo(Admin)
-        );
-        logbook.getPayload().authorizations().stream().filter(a -> a.owner().compareTo("user2@slac.stanford.edu") == 0).findFirst().ifPresent(
-                a -> assertThat(a.authorizationType()).isEqualTo(Read)
-        );
-        logbook.getPayload().authorizations().stream().filter(a -> a.owner().compareTo("group-1") == 0).findFirst().ifPresent(
-                a -> assertThat(a.authorizationType()).isEqualTo(Admin)
-        );
-        logbook.getPayload().authorizations().stream().filter(a -> a.owner().compareTo("group-2") == 0).findFirst().ifPresent(
-                a -> assertThat(a.authorizationType()).isEqualTo(Write)
-        );
-    }
+                .contains("user1@slac.stanford.edu", "user2@slac.stanford.edu", "local-group-1", "local-group-2");
 
-    @Test
-    public void testFetchUserAuthorization() {
-        var logbook1Result = assertDoesNotThrow(
-                () -> testControllerHelperService.getNewLogbookWithNameWithAuthorizationAndAppToken(
-                        mockMvc,
-                        Optional.of(
-                                "user1@slac.stanford.edu"
-                        ),
-                        "new logbook",
-                        List.of(
-                                LogbookOwnerAuthorizationDTO
-                                        .builder()
-                                        .owner("user1@slac.stanford.edu")
-                                        .ownerType(AuthorizationOwnerTypeDTO.User)
-                                        .authorizationType(
-                                                Admin
-                                        )
-                                        .build(),
-                                LogbookOwnerAuthorizationDTO
-                                        .builder()
-                                        .owner("user2@slac.stanford.edu")
-                                        .ownerType(AuthorizationOwnerTypeDTO.User)
-                                        .authorizationType(
-                                                Read
-                                        )
-                                        .build()
-                        )
-                )
-        );
-        var logbook2Result = assertDoesNotThrow(
-                () -> testControllerHelperService.getNewLogbookWithNameWithAuthorizationAndAppToken(
-                        mockMvc,
-                        Optional.of(
-                                "user1@slac.stanford.edu"
-                        ),
-                        "new logbook 2",
-                        List.of(
-                                LogbookOwnerAuthorizationDTO
-                                        .builder()
-                                        .owner("user2@slac.stanford.edu")
-                                        .ownerType(AuthorizationOwnerTypeDTO.User)
-                                        .authorizationType(
-                                                Write
-                                        )
-                                        .build(),
-                                LogbookOwnerAuthorizationDTO
-                                        .builder()
-                                        .owner("user1@2slac.stanford.edu")
-                                        .ownerType(AuthorizationOwnerTypeDTO.User)
-                                        .authorizationType(
-                                                Read
-                                        )
-                                        .build(),
-                                LogbookOwnerAuthorizationDTO
-                                        .builder()
-                                        .owner("group-1")
-                                        .ownerType(AuthorizationOwnerTypeDTO.Group)
-                                        .authorizationType(
-                                                Admin
-                                        )
-                                        .build()
-                        )
-                )
-        );
+        var user1Auth = logbook.getPayload().authorizations().stream().filter(a -> a.owner().compareTo("user1@slac.stanford.edu") == 0).toList();
+        assertThat(user1Auth).hasSize(2).extracting(LogbookOwnerAuthorizationDTO::authorizationType).contains(Write, Admin);
+        var user2Auth = logbook.getPayload().authorizations().stream().filter(a -> a.owner().compareTo("user2@slac.stanford.edu") == 0).toList();
+        assertThat(user2Auth).hasSize(1).extracting(LogbookOwnerAuthorizationDTO::authorizationType).contains(Read);
+        var group1Auth = logbook.getPayload().authorizations().stream().filter(a -> a.owner().compareTo("local-group-1") == 0).toList();
+        assertThat(group1Auth).hasSize(2).extracting(LogbookOwnerAuthorizationDTO::authorizationType).contains(Read, Admin);
+        var group2Auth = logbook.getPayload().authorizations().stream().filter(a -> a.owner().compareTo("local-group-2") == 0).toList();
+        assertThat(group2Auth).hasSize(1).extracting(LogbookOwnerAuthorizationDTO::authorizationType).contains(Write);
 
-        var currentUserAuthorization = assertDoesNotThrow(
-                () -> testControllerHelperService.getLogbookAuthorizationForCurrentUsers(
+
+        // fetch only user authorization
+        var user1Details = assertDoesNotThrow(
+                () -> testControllerHelperService.userControllerFindUserById(
                         mockMvc,
                         status().isOk(),
-                        Optional.of("user1@slac.stanford.edu")
+                        Optional.of("user1@slac.stanford.edu"),
+                        "user1@slac.stanford.edu",
+                        Optional.of(true),
+                        Optional.of(false)
                 )
         );
-
-        assertThat(currentUserAuthorization.getPayload())
+        assertThat(user1Details.getPayload().authorization())
                 .hasSize(2)
-                .anySatisfy(auth -> AssertionsForClassTypes.assertThat(auth).is(LogbookAuthorizationDTOIs.of(logbook1Result.getPayload(), Admin)))
-                .anySatisfy(auth -> AssertionsForClassTypes.assertThat(auth).is(LogbookAuthorizationDTOIs.of(logbook2Result.getPayload(), Admin)));
-
-        currentUserAuthorization = assertDoesNotThrow(
-                () -> testControllerHelperService.getLogbookAuthorizationForCurrentUsers(
-                        mockMvc,
-                        status().isOk(),
-                        Optional.of("user2@slac.stanford.edu")
-                )
-        );
-
-        assertThat(currentUserAuthorization.getPayload())
-                .hasSize(2)
-                .anySatisfy(auth -> AssertionsForClassTypes.assertThat(auth).is(LogbookAuthorizationDTOIs.of(logbook1Result.getPayload(), Read)))
-                .anySatisfy(auth -> AssertionsForClassTypes.assertThat(auth).is(LogbookAuthorizationDTOIs.of(logbook2Result.getPayload(), Write)));
+                .extracting(DetailsAuthorizationDTO::authorizationType)
+                .contains(Write, Admin);
     }
 
     /**
      * Test to ensure that the authorization is not duplicated when the same authorization is added multiple times
      */
-    static private class LogbookAuthorizationDTOIs extends Condition<LogbookAuthorizationDTO> {
-        private final String logbookId;
+    static private class DetailsAuthorizationDTOIs extends Condition<DetailsAuthorizationDTO> {
+        private final String resourceId;
         private final AuthorizationTypeDTO authorizationTypeDTO;
 
-        private LogbookAuthorizationDTOIs(String logbookId, AuthorizationTypeDTO authorizationTypeDTO) {
-            this.logbookId = logbookId;
+        private DetailsAuthorizationDTOIs(String resourceId, AuthorizationTypeDTO authorizationTypeDTO) {
+            this.resourceId = resourceId;
             this.authorizationTypeDTO = authorizationTypeDTO;
         }
 
-        public static LogbookAuthorizationDTOIs of(String logbookId, AuthorizationTypeDTO authorizationTypeDTO) {
-            return new LogbookAuthorizationDTOIs(logbookId, authorizationTypeDTO);
+        public static DetailsAuthorizationDTOIs of(String resourceId, AuthorizationTypeDTO authorizationTypeDTO) {
+            return new DetailsAuthorizationDTOIs(resourceId, authorizationTypeDTO);
         }
 
         @Override
-        public boolean matches(LogbookAuthorizationDTO authorizationDTO) {
+        public boolean matches(DetailsAuthorizationDTO authorizationDTO) {
             return authorizationDTO != null
-                    && authorizationDTO.logbookId().equalsIgnoreCase(logbookId)
+                    && authorizationDTO.resourceId().equals(resourceId)
                     && authorizationDTO.authorizationType().equals(authorizationTypeDTO);
         }
     }
