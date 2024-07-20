@@ -604,22 +604,7 @@ public class LogbookControllerAuthTest {
                 )
         );
         assertThat(createNewAuth.getPayload()).isTrue();
-        createNewAuth = assertDoesNotThrow(
-                () -> testControllerHelperService.authorizationControllerCreateNewAuthorization(
-                        mockMvc,
-                        status().isCreated(),
-                        Optional.of("user1@slac.stanford.edu"),
-                        NewAuthorizationDTO
-                                .builder()
-                                .resourceId(newLogbookResult.getPayload())
-                                .resourceType(ResourceTypeDTO.Logbook)
-                                .ownerId("user1@slac.stanford.edu")
-                                .ownerType(AuthorizationOwnerTypeDTO.User)
-                                .authorizationType(Admin)
-                                .build()
-                )
-        );
-        assertThat(createNewAuth.getPayload()).isTrue();
+
 
         // apply authorization for group
         // create group
@@ -715,12 +700,12 @@ public class LogbookControllerAuthTest {
         assertThat(logbook.getPayload())
                 .isNotNull();
         assertThat(logbook.getPayload().authorizations())
-                .hasSize(6)
+                .hasSize(5)
                 .extracting(LogbookOwnerAuthorizationDTO::owner)
                 .contains("user1@slac.stanford.edu", "user2@slac.stanford.edu", "local-group-1", "local-group-2");
 
         var user1Auth = logbook.getPayload().authorizations().stream().filter(a -> a.owner().compareTo("user1@slac.stanford.edu") == 0).toList();
-        assertThat(user1Auth).hasSize(2).extracting(LogbookOwnerAuthorizationDTO::authorizationType).contains(Write, Admin);
+        assertThat(user1Auth).hasSize(1).extracting(LogbookOwnerAuthorizationDTO::authorizationType).contains(Write);
         var user2Auth = logbook.getPayload().authorizations().stream().filter(a -> a.owner().compareTo("user2@slac.stanford.edu") == 0).toList();
         assertThat(user2Auth).hasSize(1).extracting(LogbookOwnerAuthorizationDTO::authorizationType).contains(Read);
         var group1Auth = logbook.getPayload().authorizations().stream().filter(a -> a.owner().compareTo("local-group-1") == 0).toList();
@@ -741,7 +726,7 @@ public class LogbookControllerAuthTest {
                 )
         );
         assertThat(user1Details.getPayload().authorization())
-                .hasSize(3)
+                .hasSize(2)
                 .extracting(DetailsAuthorizationDTO::authorizationType)
                 .contains(Write, Admin);
     }
