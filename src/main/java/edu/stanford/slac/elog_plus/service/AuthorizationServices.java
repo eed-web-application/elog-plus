@@ -10,6 +10,7 @@ import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.api.v1.dto.NewAuthorizationDTO;
 import edu.stanford.slac.elog_plus.api.v1.mapper.AuthorizationMapper;
+import edu.stanford.slac.elog_plus.exception.ResourceAlreadyAuthorized;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.core.Authentication;
@@ -20,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+
+import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 
 @Service
 @Log4j2
@@ -257,6 +260,28 @@ public class AuthorizationServices {
     public void createNew(NewAuthorizationDTO newAuthorizationDTO) {
         // check the resource type
         String resource = getResource(newAuthorizationDTO);
+        // find resource for same owner
+        var foundAuthorization = authService.getAllAuthenticationForOwner(
+                newAuthorizationDTO.ownerId(),
+                newAuthorizationDTO.ownerType(),
+                Optional.empty()
+        );
+
+        // check if the authorization already exists
+        assertion(
+                ResourceAlreadyAuthorized
+                        .byResource()
+                        .errorCode(-1)
+                        .errorDomain("AuthorizationServices::createNew")
+                        .resource(resource)
+                        .owner(newAuthorizationDTO.ownerId())
+                        .build(),
+                () -> foundAuthorization.stream().noneMatch(
+                        a -> a.resource().equals(resource)
+                )
+        );
+
+        // we can create the authorization
         authService.addNewAuthorization(
                 edu.stanford.slac.ad.eed.baselib.api.v1.dto.NewAuthorizationDTO
                         .builder()
