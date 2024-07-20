@@ -84,7 +84,7 @@ public class LogbookControllerAuthWithGlobalAuthenticationTokenTest {
         var createdApplication = assertDoesNotThrow(
                 () -> testControllerHelperService.applicationControllerFindApplicationById(
                         mockMvc,
-                        status().isCreated(),
+                        status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
                         tokenResult.getPayload(),
                         Optional.empty()
