@@ -1,7 +1,6 @@
 package edu.stanford.slac.elog_plus.service;
 
 import edu.stanford.slac.ad.eed.base_mongodb_lib.repository.AuthenticationTokenRepository;
-import edu.stanford.slac.ad.eed.base_mongodb_lib.repository.AuthorizationRepository;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.*;
 import edu.stanford.slac.ad.eed.baselib.api.v1.mapper.AuthMapper;
 import edu.stanford.slac.ad.eed.baselib.auth.JWTHelper;
@@ -24,7 +23,6 @@ import edu.stanford.slac.elog_plus.utility.StringUtilities;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,7 +45,6 @@ public class LogbookService {
     private final LogbookMapper logbookMapper;
     private final EntryRepository entryRepository;
     private final LogbookRepository logbookRepository;
-    private final AuthorizationRepository authorizationRepository;
     private final AuthenticationTokenRepository authenticationTokenRepository;
     private final AuthService authService;
     private final AuthorizationServices authorizationServices;
@@ -382,19 +379,7 @@ public class LogbookService {
      * @return the full logbooks
      */
     public LogbookDTO getLogbook(String logbookId) {
-        return wrapCatch(() -> logbookRepository.findById(
-                        logbookId
-                ).map(
-                        logbookMapper::fromModel
-                ).orElseThrow(
-                        () -> LogbookNotFound.logbookNotFoundBuilder()
-                                .errorCode(-2)
-                                .errorDomain("LogbookService:getLogbook")
-                                .build()
-                ),
-                -1,
-                "LogbookService:getLogbook"
-        );
+        return getLogbook(logbookId, Optional.empty());
     }
 
     /**
@@ -1193,7 +1178,7 @@ public class LogbookService {
                 }
                 // check if the user has an authorization compatible with the authorization type
                 fullLogbook.authorizations().stream().filter(
-                        a -> a.owner().compareToIgnoreCase(userId) == 0
+                        a -> a.ownerId().compareToIgnoreCase(userId) == 0
                 ).filter(
                         a -> a.permission().compareTo(authorizationType) == 0
                 ).findAny().ifPresentOrElse(
@@ -1235,150 +1220,6 @@ public class LogbookService {
         }
     }
 
-    /**
-     * Apply the logbook
-     * Apply the authorization on multiple logbooks
-     *
-     * @param authorizations the list of authorizations to apply
-     */
-    @Transactional
-    public void applyUserAuthorizations(List<LogbookUserAuthorizationDTO> authorizations) {
-        Map<AuthorizationTypeDTO, Integer> priorities = Map.of(
-                AuthorizationTypeDTO.Admin, 1,
-                AuthorizationTypeDTO.Write, 2,
-                AuthorizationTypeDTO.Read, 3
-        );
-
-        // aggregate authorization for logbook creating AuthorizationDTO list for each one
-        Map<String, List<AuthorizationDTO>> authByLogbook = new HashMap<>();
-        for (LogbookUserAuthorizationDTO auth :
-                authorizations) {
-            if (!authByLogbook.containsKey(auth.logbookId())) {
-                authByLogbook.put(auth.logbookId(), new ArrayList<>());
-            }
-            authByLogbook.get(auth.logbookId()).add(
-                    AuthorizationDTO.builder()
-                            .owner(auth.userId())
-                            .ownerType(AuthorizationOwnerTypeDTO.User)
-                            .authorizationType(auth.authorizationType())
-                            .resource("/logbook/%s".formatted(auth.logbookId()))
-                            .build()
-            );
-        }
-
-        // Transform the entries in authByLogbook
-        applyDistinctAuthorization(authByLogbook, AuthorizationOwnerTypeDTO.Group);
-    }
-
-    /**
-     * Apply the authorization
-     * @param userId the user id
-     * @param authorizations the list of authorizations to apply
-     */
-    @Transactional
-    public void applyUserAuthorizations(String userId, List<LogbookAuthorizationDTO> authorizations) {
-        // aggregate authorization for logbook creating AuthorizationDTO list for each one
-        Map<String, List<AuthorizationDTO>> authByLogbook = new HashMap<>();
-        for (LogbookAuthorizationDTO auth :
-                authorizations) {
-            if (!authByLogbook.containsKey(auth.logbookId())) {
-                authByLogbook.put(auth.logbookId(), new ArrayList<>());
-            }
-            authByLogbook.get(auth.logbookId()).add(
-                    AuthorizationDTO.builder()
-                            .owner(userId)
-                            .ownerType(AuthorizationOwnerTypeDTO.User)
-                            .authorizationType(auth.authorizationType())
-                            .resource("/logbook/%s".formatted(auth.logbookId()))
-                            .build()
-            );
-        }
-
-        // delete and apply new authorization for user
-        for (String logbookId :
-                authByLogbook.keySet()) {
-            // remove all authorization for that user on the logbook
-            wrapCatch(
-                    () -> {
-                        authService.deleteAuthorizationForResourcePrefix(
-                                "/logbook/%s".formatted(logbookId),
-                                userId,
-                                AuthorizationOwnerTypeDTO.User
-                        );
-                        return null;
-                    },
-                    -1,
-                    "LogbookService:applyUserAuthorizations"
-            );
-
-            authByLogbook.get(logbookId).forEach(
-                    auth -> {
-                        // create the new authorization
-                        wrapCatch(
-                                () -> authService.ensureAuthorization(auth),
-                                -2,
-                                "LogbookService:applyUserAuthorizations"
-                        );
-                    }
-            );
-
-        }
-    }
-
-    /**
-     * Apply the authorization
-     * @param groupId the user id
-     * @param authorizations the list of authorizations to apply
-     */
-    @Transactional
-    public void applyGroupAuthorizations(String groupId, List<LogbookAuthorizationDTO> authorizations) {
-        // aggregate authorization for logbook creating AuthorizationDTO list for each one
-        Map<String, List<AuthorizationDTO>> authByLogbook = new HashMap<>();
-        for (LogbookAuthorizationDTO auth :
-                authorizations) {
-            if (!authByLogbook.containsKey(auth.logbookId())) {
-                authByLogbook.put(auth.logbookId(), new ArrayList<>());
-            }
-            authByLogbook.get(auth.logbookId()).add(
-                    AuthorizationDTO.builder()
-                            .owner(groupId)
-                            .ownerType(AuthorizationOwnerTypeDTO.Group)
-                            .authorizationType(auth.authorizationType())
-                            .resource("/logbook/%s".formatted(auth.logbookId()))
-                            .build()
-            );
-        }
-
-        // delete and apply new authorization for user
-        for (String logbookId :
-                authByLogbook.keySet()) {
-            // remove all authorization for that user on the logbook
-            wrapCatch(
-                    () -> {
-                        authService.deleteAuthorizationForResourcePrefix(
-                                "/logbook/%s".formatted(logbookId),
-                                groupId,
-                                AuthorizationOwnerTypeDTO.Group
-                        );
-                        return null;
-                    },
-                    -1,
-                    "LogbookService:applyGroupAuthorizations"
-            );
-
-            authByLogbook.get(logbookId).forEach(
-                    auth -> {
-                        // create the new authorization
-                        wrapCatch(
-                                () -> authService.ensureAuthorization(auth),
-                                -2,
-                                "LogbookService:applyGroupAuthorizations"
-                        );
-                    }
-            );
-
-        }
-    }
 
     /**
      * Delete the authorization for the logbook
@@ -1516,47 +1357,5 @@ public class LogbookService {
                     );
                 }
         );
-    }
-
-    /**
-     * Return all the authorization for the user
-     *
-     * @param authentication the user authentication
-     * @return the list of authorization
-     */
-    public List<LogbookAuthorizationDTO> getAllUserAuthorizations(Authentication authentication) {
-        List<AuthorizationDTO> allMajorAuthorizationOnAllResource = authService.getAllAuthenticationForOwner(authentication.getCredentials().toString(), AuthorizationOwnerTypeDTO.User, Optional.of(true));
-        return allMajorAuthorizationOnAllResource.stream()
-                .filter(
-                        a -> a.resource().startsWith("/logbook/")
-                ).map(
-                        a -> LogbookAuthorizationDTO.builder()
-                                .logbookId(a.resource().substring(9))
-                                .authorizationType(a.authorizationType())
-                                .build()
-                ).toList();
-    }
-
-    /**
-     * Return all the authorization for the user on a specific logbook
-     *
-     * @param authentication the user authentication
-     * @param logbookId the logbook id
-     * @return the list of authorization
-     */
-    public List<LogbookAuthorizationDTO> getAllUserAuthorizations(Authentication authentication, String logbookId) {
-        List<AuthorizationDTO> allMajorAuthorizationOnAllResource = authService.getAllAuthenticationForOwner(
-                authentication.getCredentials().toString(),
-                AuthorizationOwnerTypeDTO.User,
-                "/logbook/%s".formatted(logbookId),
-                Optional.of(true)
-        );
-        return allMajorAuthorizationOnAllResource.stream()
-                .map(
-                        a -> LogbookAuthorizationDTO.builder()
-                                .logbookId(a.resource().substring(9))
-                                .authorizationType(a.authorizationType())
-                                .build()
-                ).toList();
     }
 }

@@ -39,7 +39,7 @@ public class AuthorizationController {
 
     )
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(description = "Create a new authorization for logbook resource")
+    @Operation(description = "Create a new authorization for logbook resourceType")
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @logbookAuthorizationService.canCreateNewAuthorization(#authentication, #newAuthorizationDTO)")
     public ApiResultResponse<Boolean> createNewAuthorization(
             Authentication authentication,

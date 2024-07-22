@@ -258,9 +258,9 @@ public class AuthorizationServices {
      * @param newAuthorizationDTO the new authorization to create
      */
     public void createNew(NewAuthorizationDTO newAuthorizationDTO) {
-        // check the resource type
+        // check the resourceType type
         String resource = getResource(newAuthorizationDTO);
-        // find resource for same owner
+        // find resourceType for same ownerId
         var foundAuthorization = authService.getAllAuthenticationForOwner(
                 newAuthorizationDTO.ownerId(),
                 newAuthorizationDTO.ownerType(),
@@ -378,7 +378,7 @@ public class AuthorizationServices {
     }
 
     /**
-     * Create the resource analyzing the resourceType and resource Id
+     * Create the resourceType analyzing the resourceType and resourceType Id
      *
      * @param newAuthorizationDTO
      * @return

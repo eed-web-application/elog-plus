@@ -9,7 +9,6 @@ import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.EntryNewDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.EntrySummaryDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.LogbookOwnerAuthorizationDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.NewAuthorizationDTO;
 import edu.stanford.slac.elog_plus.exception.LogbookNotAuthorized;
 import edu.stanford.slac.elog_plus.model.Attachment;

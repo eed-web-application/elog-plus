@@ -24,7 +24,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -507,7 +506,7 @@ public class LogbookControllerAuthTest {
                 .isNotNull();
         assertThat(logbook.getPayload().authorizations())
                 .hasSize(2)
-                .extracting(LogbookOwnerAuthorizationDTO::owner)
+                .extracting(DetailsAuthorizationDTO::ownerId)
                 .contains("user1@slac.stanford.edu", "local-group-1");
 
         // remove authorization for all user
@@ -689,17 +688,17 @@ public class LogbookControllerAuthTest {
                 .isNotNull();
         assertThat(logbook.getPayload().authorizations())
                 .hasSize(4)
-                .extracting(LogbookOwnerAuthorizationDTO::owner)
+                .extracting(DetailsAuthorizationDTO::ownerId)
                 .contains("user1@slac.stanford.edu", "user2@slac.stanford.edu", "local-group-1", "local-group-2");
 
-        var user1Auth = logbook.getPayload().authorizations().stream().filter(a -> a.owner().compareTo("user1@slac.stanford.edu") == 0).toList();
-        assertThat(user1Auth).hasSize(1).extracting(LogbookOwnerAuthorizationDTO::permission).contains(Write);
-        var user2Auth = logbook.getPayload().authorizations().stream().filter(a -> a.owner().compareTo("user2@slac.stanford.edu") == 0).toList();
-        assertThat(user2Auth).hasSize(1).extracting(LogbookOwnerAuthorizationDTO::permission).contains(Read);
-        var group1Auth = logbook.getPayload().authorizations().stream().filter(a -> a.owner().compareTo("local-group-1") == 0).toList();
-        assertThat(group1Auth).hasSize(1).extracting(LogbookOwnerAuthorizationDTO::permission).contains(Read);
-        var group2Auth = logbook.getPayload().authorizations().stream().filter(a -> a.owner().compareTo("local-group-2") == 0).toList();
-        assertThat(group2Auth).hasSize(1).extracting(LogbookOwnerAuthorizationDTO::permission).contains(Write);
+        var user1Auth = logbook.getPayload().authorizations().stream().filter(a -> a.ownerId().compareTo("user1@slac.stanford.edu") == 0).toList();
+        assertThat(user1Auth).hasSize(1).extracting(DetailsAuthorizationDTO::permission).contains(Write);
+        var user2Auth = logbook.getPayload().authorizations().stream().filter(a -> a.ownerId().compareTo("user2@slac.stanford.edu") == 0).toList();
+        assertThat(user2Auth).hasSize(1).extracting(DetailsAuthorizationDTO::permission).contains(Read);
+        var group1Auth = logbook.getPayload().authorizations().stream().filter(a -> a.ownerId().compareTo("local-group-1") == 0).toList();
+        assertThat(group1Auth).hasSize(1).extracting(DetailsAuthorizationDTO::permission).contains(Read);
+        var group2Auth = logbook.getPayload().authorizations().stream().filter(a -> a.ownerId().compareTo("local-group-2") == 0).toList();
+        assertThat(group2Auth).hasSize(1).extracting(DetailsAuthorizationDTO::permission).contains(Write);
 
 
         // fetch only user authorization

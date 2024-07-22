@@ -70,13 +70,13 @@ public class LogbookAuthorizationService {
                     ControllerLogicException
                             .builder()
                             .errorCode(-1)
-                            .errorMessage("The resource '*' can only be granted by root users")
+                            .errorMessage("The resourceType '*' can only be granted by root users")
                             .errorDomain("AuthorizationServices::canCreateNewAuthorization")
                             .build(),
                     () -> authService.checkForRoot(authentication)
             );
         } else if (newAuthorizationDTO.resourceType() == ResourceTypeDTO.Logbook) {
-            // check if current user is an admin for the logbook identified by the resource id
+            // check if current user is an admin for the logbook identified by the resourceType id
             assertion(
                     ControllerLogicException
                             .builder()
@@ -120,11 +120,11 @@ public class LogbookAuthorizationService {
             throw ControllerLogicException
                     .builder()
                     .errorCode(-1)
-                    .errorMessage("The resource '*' cannot be updated")
+                    .errorMessage("The resourceType '*' cannot be updated")
                     .errorDomain("AuthorizationServices::canUpdateAuthorization")
                     .build();
         } else if (authorizationFound.resource().startsWith("/logbook/")) {
-            // check if current user is an admin for the logbook identified by the resource id
+            // check if current user is an admin for the logbook identified by the resourceType id
             assertion(
                     ControllerLogicException
                             .builder()
@@ -167,13 +167,13 @@ public class LogbookAuthorizationService {
                     ControllerLogicException
                             .builder()
                             .errorCode(-1)
-                            .errorMessage("The resource '*' can only be deleted by root users")
+                            .errorMessage("The resourceType '*' can only be deleted by root users")
                             .errorDomain("AuthorizationServices::canDeleteAuthorization")
                             .build(),
                     () -> authService.checkForRoot(authentication)
             );
         } else if (authorizationFound.resource().startsWith("/logbook/")) {
-            // check if current user is an admin for the logbook identified by the resource id
+            // check if current user is an admin for the logbook identified by the resourceType id
             assertion(
                     ControllerLogicException
                             .builder()

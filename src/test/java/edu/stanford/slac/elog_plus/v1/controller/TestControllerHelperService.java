@@ -854,35 +854,6 @@ public class TestControllerHelperService {
                 });
     }
 
-    /**
-     * Get logbook authorizations
-     *
-     * @param mockMvc
-     * @param resultMatcher
-     * @param userInfo
-     * @param logbookId
-     * @return
-     * @throws Exception
-     */
-    public ApiResultResponse<List<LogbookAuthorizationDTO>> getLogbookAuthorizationForCurrentUsers(
-            MockMvc mockMvc,
-            ResultMatcher resultMatcher,
-            Optional<String> userInfo,
-            String logbookId) throws Exception {
-        MockHttpServletRequestBuilder requestBuilder =
-                get("/v1/logbook/{logbookId}/auth", logbookId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON);
-        return executeHttpRequest(
-                new TypeReference<>() {
-                },
-                mockMvc,
-                resultMatcher,
-                userInfo,
-                requestBuilder
-        );
-    }
-
     public ApiResultResponse<String> findSummaryIdByShiftNameAndDate(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,

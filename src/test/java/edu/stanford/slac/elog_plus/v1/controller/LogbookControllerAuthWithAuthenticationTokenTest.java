@@ -6,7 +6,6 @@ import edu.stanford.slac.ad.eed.baselib.model.AuthenticationToken;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.LogbookDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.LogbookOwnerAuthorizationDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.NewApplicationDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.NewAuthorizationDTO;
 import edu.stanford.slac.elog_plus.model.Entry;

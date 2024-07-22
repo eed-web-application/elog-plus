@@ -5,10 +5,12 @@ import edu.stanford.slac.ad.eed.base_mongodb_lib.repository.AuthorizationReposit
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.PersonDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.mapper.AuthMapper;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.model.AuthorizationOwnerType;
+import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.config.ELOGAppProperties;
 import edu.stanford.slac.elog_plus.model.Entry;
@@ -39,6 +41,8 @@ public abstract class LogbookMapper {
     protected AppProperties appProperties;
     @Autowired
     protected ELOGAppProperties elogAppProperties;
+    @Autowired
+    protected PeopleGroupService peopleGroupService;
 
     public abstract LogbookSummaryDTO fromModelToSummaryDTO(Logbook log);
 
@@ -46,7 +50,7 @@ public abstract class LogbookMapper {
 
     public abstract LogbookDTO fromModel(Logbook logbook);
 
-    @Mapping(target = "authorizations", expression = "java(getAuthorizations(logbook.getId(), includeAuthorizations))")
+    @Mapping(target = "authorizations", expression = "java(getAuthorizations(logbook, includeAuthorizations))")
     public abstract LogbookDTO fromModel(Logbook logbook, boolean includeAuthorizations);
 
     public abstract Logbook fromDTO(NewLogbookDTO logbookDTO);
@@ -66,14 +70,21 @@ public abstract class LogbookMapper {
      * @param includeAuthorizations if false a null is returned as list of authorizations
      * @return the list of authorizations of the logbook
      */
-    public List<LogbookOwnerAuthorizationDTO> getAuthorizations(String id, boolean includeAuthorizations) {
-        if (id == null || id.isEmpty()) return Collections.emptyList();
+    public List<DetailsAuthorizationDTO> getAuthorizations(Logbook logbook, boolean includeAuthorizations) {
+        if (logbook == null) return Collections.emptyList();
         if (!includeAuthorizations) return Collections.emptyList();
         return wrapCatch(
-                () -> authorizationRepository.findByResourceIs(String.format("/logbook/%s", id))
+                () -> authorizationRepository.findByResourceIs(String.format("/logbook/%s", logbook.getId()))
                         .stream()
                         .map(
-                                auth -> fromAuthorization(auth)
+                                auth -> {
+                                    var convertedAuth = fromAuthorization(auth);
+                                    return convertedAuth.toBuilder()
+                                            .resourceId(logbook.getId())
+                                            .resourceName(logbook.getName())
+                                            .resourceType(ResourceTypeDTO.Logbook)
+                                            .build();
+                                }
                         ).toList(),
                 -1,
                 "LogbookMapper::getAuthorizations"
@@ -84,9 +95,9 @@ public abstract class LogbookMapper {
      * Return all the authorizations for a logbook
      *
      * @param authorization standard authorization
-     * @return the list of owner authorizations
+     * @return the list of ownerId authorizations
      */
-    public LogbookOwnerAuthorizationDTO fromAuthorization(Authorization authorization) {
+    public DetailsAuthorizationDTO fromAuthorization(Authorization authorization) {
         AuthorizationDTO dto = authMapper.fromModel(authorization);
         return fromAuthorizationDTO(dto);
     }
@@ -95,28 +106,15 @@ public abstract class LogbookMapper {
      * Return all the authorizations for a logbook
      *
      * @param authorization standard authorization
-     * @return the list of owner authorizations
+     * @return the list of ownerId authorizations
      */
-    public LogbookOwnerAuthorizationDTO fromAuthorizationDTO(AuthorizationDTO authorization) {
-        return LogbookOwnerAuthorizationDTO.builder()
+    public DetailsAuthorizationDTO fromAuthorizationDTO(AuthorizationDTO authorization) {
+        return DetailsAuthorizationDTO.builder()
                 .id(authorization.id())
-                .owner(authorization.owner())
+                .ownerId(authorization.owner())
                 .ownerType(authorization.ownerType())
                 .permission(authorization.authorizationType())
                 .build();
-    }
-
-    public List<Authorization> toModel(List<LogbookOwnerAuthorizationDTO> authorizations) {
-        if (authorizations == null || authorizations.isEmpty()) return Collections.emptyList();
-        return authorizations.stream()
-                .map(
-                        auth -> Authorization.builder()
-                                .id(auth.id())
-                                .owner(auth.owner())
-                                .ownerType(getAuthorizationOwnerType(auth.ownerType()))
-                                .authorizationType(getAuthorizationType(auth.permission()))
-                                .build()
-                ).toList();
     }
 
     /**

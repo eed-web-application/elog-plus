@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class DoubleAuthorizationError extends ControllerLogicException {
     @Builder(builderMethodName = "doubleAuthorizationError")
     public DoubleAuthorizationError(Integer errorCode, String owner, AuthorizationOwnerType oType, String errorDomain) {
-        super(errorCode, String.format("There is another authentication for the owner:%s and type:'%s'", owner, oType), errorDomain);
+        super(errorCode, String.format("There is another authentication for the ownerId:%s and type:'%s'", owner, oType), errorDomain);
     }
 
 }

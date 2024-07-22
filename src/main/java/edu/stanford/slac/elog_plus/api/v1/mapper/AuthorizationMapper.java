@@ -79,7 +79,7 @@ public abstract class AuthorizationMapper {
                             if(resourceMapIdLabel.containsKey(a.resource())){
                                 label = resourceMapIdLabel.get(a.resource());
                             } else {
-                                // fetch resource and cache
+                                // fetch resourceType and cache
                                 switch (resourceType) {
                                     case Logbook: {
                                         var logbook = logbookRepository.findById(resourceId);
@@ -106,13 +106,13 @@ public abstract class AuthorizationMapper {
     }
 
     /**
-     * Get the resource type from the resource string
+     * Get the resourceType type from the resourceType string
      *
-     * @param resource the resource string
-     * @return the resource id
+     * @param resource the resourceType string
+     * @return the resourceType id
      */
     private ResourceTypeDTO getResourceType(String resource) {
-        // the resource are of type '/logbook/logbookId' we need to return ''logbook' as resource
+        // the resourceType are of type '/logbook/logbookId' we need to return ''logbook' as resourceType
         String[] resourceAndType = resource.split("/");
         if (resourceAndType.length == 1 && resourceAndType[0].compareToIgnoreCase("*") == 0) {
             return ResourceTypeDTO.All;
@@ -130,20 +130,20 @@ public abstract class AuthorizationMapper {
         } else {
             throw ControllerLogicException.builder()
                     .errorCode(-2)
-                    .errorMessage("Invalid resource in authorization")
+                    .errorMessage("Invalid resourceType in authorization")
                     .errorDomain("AuthorizationMapper::getResourceType")
                     .build();
         }
     }
 
     /**
-     * Get the resource id from the resource string
+     * Get the resourceType id from the resourceType string
      *
-     * @param resource the resource string
-     * @return the resource id
+     * @param resource the resourceType string
+     * @return the resourceType id
      */
     private String getResourceId(String resource) {
-        // the resource are of type '/logbook/logbookId' we  need to return the string value 'logbookId'
+        // the resourceType are of type '/logbook/logbookId' we  need to return the string value 'logbookId'
         String[] resourceAndType = resource.split("/");
         if (resourceAndType.length == 1 && resourceAndType[0].compareToIgnoreCase("*") == 0) {
             return null;
@@ -152,7 +152,7 @@ public abstract class AuthorizationMapper {
         } else {
             throw ControllerLogicException.builder()
                     .errorCode(-2)
-                    .errorMessage("Invalid resource in authorization")
+                    .errorMessage("Invalid resourceType in authorization")
                     .errorDomain("AuthorizationMapper::getResourceId")
                     .build();
         }

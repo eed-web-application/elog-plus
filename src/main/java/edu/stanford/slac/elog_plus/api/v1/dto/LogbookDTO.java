@@ -21,5 +21,5 @@ public record LogbookDTO(
         @Schema(description = "The shift associated to the logbooks")
         List<ShiftDTO> shifts,
         @Schema(description = "The list of authorizations on logbook")
-        List<LogbookOwnerAuthorizationDTO> authorizations) {
+        List<DetailsAuthorizationDTO> authorizations) {
 }

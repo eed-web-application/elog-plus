@@ -44,7 +44,7 @@ public class ApplicationAuthorizationService {
      * @return true if the user can delete the application
      */
     public boolean canDeleteApplication(Authentication authentication, String applicationId) {
-        // assert that all the user that are root of whatever resource
+        // assert that all the user that are root of whatever resourceType
         assertion(
                 NotAuthorized
                         .notAuthorizedBuilder()
@@ -65,7 +65,7 @@ public class ApplicationAuthorizationService {
      * @return true if the user can delete the application
      */
     public boolean canReadApplication(Authentication authentication, String applicationId) {
-        // assert that all the user that are root of whatever resource
+        // assert that all the user that are root of whatever resourceType
         assertion(
                 NotAuthorized
                         .notAuthorizedBuilder()
