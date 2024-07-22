@@ -190,7 +190,7 @@ public class EntryAuthorizationService {
                     // Filter out the unauthorized logbooks
                     List<LogbookSummaryDTO> authorizedLogbookSummary = entrySummary.logbooks()
                             .stream()
-                            .filter(lb -> authorizationCache.getAuthorizedLogbookId().contains(lb.id()))
+                            .filter(lb -> authorizationCache.getAuthorizedLogbookId().isEmpty() || authorizationCache.getAuthorizedLogbookId().contains(lb.id()))
                             .toList();
 
                     // Create a new EntrySummaryDTO with the filtered logbooks using toBuilder

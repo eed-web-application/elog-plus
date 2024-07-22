@@ -388,6 +388,5 @@ public class GroupControllerControllerTest {
         for (int i = 0; i < 10; i++) {
             assertThat(first10Groups.getPayload().get(i).name()).isEqualTo("local-group-%02d".formatted(i));
         }
-
     }
 }
