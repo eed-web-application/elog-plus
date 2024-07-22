@@ -21,7 +21,7 @@ public record NewApplicationDTO(
         @NotNull String name,
         @JsonDeserialize(using = LocalDateDeserializer.class)
         @JsonSerialize(using = LocalDateSerializer.class)
-        @Schema(description = "The description of the application")
+        @Schema(description = "The expiration date of the application")
         @NotNull LocalDate expiration
 ) {
 }

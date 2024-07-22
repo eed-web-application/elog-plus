@@ -64,7 +64,7 @@ public class LogbookAuthorizationService {
      */
     public boolean canCreateNewAuthorization(Authentication authentication, NewAuthorizationDTO newAuthorizationDTO) {
         String resource = authorizationServices.getResource(newAuthorizationDTO);
-        if (resource.equals("*") && newAuthorizationDTO.authorizationType() != Admin) {
+        if (resource.equals("*") && newAuthorizationDTO.authorizationType() == Admin) {
             // check if user is a root user
             assertion(
                     ControllerLogicException
@@ -161,7 +161,7 @@ public class LogbookAuthorizationService {
      */
     public boolean canDeleteAuthorization(Authentication authentication, String authorizationId) {
         var authorizationFound = authService.findAuthorizationById(authorizationId);
-        if (authorizationFound.resource().equals("*") && authorizationFound.authorizationType() != Admin) {
+        if (authorizationFound.resource().equals("*") && authorizationFound.authorizationType() == Admin) {
             // check if user is a root user
             assertion(
                     ControllerLogicException

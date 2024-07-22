@@ -79,20 +79,23 @@ public class ApplicationController {
         return ApiResultResponse.of(true);
     }
 
+    /**
+     * return an application using his id
+     */
     @GetMapping(
             path = "/{applicationId}",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @ResponseStatus(HttpStatus.OK)
     @Operation(
-            summary = "Delete an authentication token"
+            summary = "Find an application details using application id"
     )
     @PreAuthorize("@baseAuthorizationService.checkForRoot(#authentication) and @applicationAuthorizationService.canReadApplication(#authentication, #applicationId)")
     public ApiResultResponse<ApplicationDetailsDTO> findApplicationById(
             Authentication authentication,
             @Parameter(description = "Is the unique id of the authentication token")
             @PathVariable() String applicationId,
-            @Parameter(description = "Include authorizations")
+            @Parameter(description = "Include authorizations on the result dto")
             @RequestParam("includeAuthorizations") Optional<Boolean> includeAuthorizations
     ){
         return ApiResultResponse.of(

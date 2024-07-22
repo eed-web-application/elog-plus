@@ -39,7 +39,7 @@ public class AuthorizationController {
 
     )
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(description = "Manage authorization for logbook user authorization")
+    @Operation(description = "Create a new authorization for logbook resource")
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @logbookAuthorizationService.canCreateNewAuthorization(#authentication, #newAuthorizationDTO)")
     public ApiResultResponse<Boolean> createNewAuthorization(
             Authentication authentication,
@@ -89,7 +89,6 @@ public class AuthorizationController {
      */
     @DeleteMapping(
             path = "/{authorizationId}",
-            consumes = {MediaType.APPLICATION_JSON_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE}
 
     )

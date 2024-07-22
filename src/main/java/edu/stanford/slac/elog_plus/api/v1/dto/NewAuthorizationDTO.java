@@ -11,21 +11,21 @@ import lombok.Builder;
 @Builder(toBuilder = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@Schema(description = "New authorization for a user on a logbook")
+@Schema(description = "New authorization for a user on a elog resource")
 public record NewAuthorizationDTO(
         @NotNull
-        @Schema(description = "The resource id that is authorized")
+        @Schema(description = "The resource id that need to be authorized")
         String resourceId,
         @NotNull
-        @Schema(description = "The resource type that is authorized")
+        @Schema(description = "The resource type that need to be authorized")
         ResourceTypeDTO resourceType,
         @NotNull
         @Schema(description = "The owner id of the authorization")
         String ownerId,
         @NotNull
-        @Schema(description = "The owner type of the authorization")
+        @Schema(description = "The owner type of the authorization [User, Group, Token]")
         AuthorizationOwnerTypeDTO ownerType,
         @NotNull
-        @Schema(description = "The authorization type")
+        @Schema(description = "The authorization type [Read, Write, Admin]")
         AuthorizationTypeDTO authorizationType
 ) {}
