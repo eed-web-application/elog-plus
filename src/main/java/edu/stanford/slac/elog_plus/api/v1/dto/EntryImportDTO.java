@@ -20,7 +20,6 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "Is the model for the new ELog creation")
 public record EntryImportDTO(
-        @NotNull
         @Schema(description = "Identifier for unique find the record into the original system")
         String originId,
         @Schema(description = "Is the original id for which this entry is supersede")

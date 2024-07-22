@@ -5,6 +5,9 @@ import edu.stanford.slac.elog_plus.model.Attachment;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.KafkaAdminClient;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,6 +48,12 @@ public class KafkaConfig {
                     }
                 }
         );
+    }
+
+    @Bean
+    public AdminClient admin() {
+        Map<String, Object> props = kafkaProperties.buildAdminProperties();
+        return  AdminClient.create(props);
     }
 
     @Bean

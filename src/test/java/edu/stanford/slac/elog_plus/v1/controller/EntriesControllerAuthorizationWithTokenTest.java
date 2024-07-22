@@ -6,7 +6,7 @@ import edu.stanford.slac.ad.eed.baselib.model.AuthenticationToken;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
-import edu.stanford.slac.elog_plus.config.ELOGAppProperties;
+import edu.stanford.slac.elog_plus.api.v1.dto.NewAuthorizationDTO;
 import edu.stanford.slac.elog_plus.model.*;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import edu.stanford.slac.elog_plus.v1.service.DocumentGenerationService;
@@ -87,16 +87,16 @@ public class EntriesControllerAuthorizationWithTokenTest {
                         ),
                         "LogbookAuthTest1",
                         List.of(
-                                AuthorizationDTO
+                                NewAuthorizationDTO
                                         .builder()
                                         .ownerType(User)
-                                        .owner("user2@slac.stanford.edu")
+                                        .ownerId("user2@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Write)
                                         .build(),
-                                AuthorizationDTO
+                                NewAuthorizationDTO
                                         .builder()
                                         .ownerType(User)
-                                        .owner("user3@slac.stanford.edu")
+                                        .ownerId("user3@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Admin)
                                         .build()
                         )
@@ -159,10 +159,10 @@ public class EntriesControllerAuthorizationWithTokenTest {
                         ),
                         "LogbookAuthTest1",
                         List.of(
-                                AuthorizationDTO
+                                NewAuthorizationDTO
                                         .builder()
                                         .ownerType(AuthorizationOwnerTypeDTO.Group)
-                                        .owner("group-2")
+                                        .ownerId("group-2")
                                         .authorizationType(AuthorizationTypeDTO.Write)
                                         .build()
                         )
@@ -203,10 +203,10 @@ public class EntriesControllerAuthorizationWithTokenTest {
                         ),
                         "LogbookAuthTest1",
                         List.of(
-                                AuthorizationDTO
+                                NewAuthorizationDTO
                                         .builder()
                                         .ownerType(User)
-                                        .owner("user2@slac.stanford.edu")
+                                        .ownerId("user2@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Read)
                                         .build()
                         )
@@ -221,10 +221,10 @@ public class EntriesControllerAuthorizationWithTokenTest {
                         ),
                         "LogbookAuthTest2",
                         List.of(
-                                AuthorizationDTO
+                                NewAuthorizationDTO
                                         .builder()
                                         .ownerType(User)
-                                        .owner("user3@slac.stanford.edu")
+                                        .ownerId("user3@slac.stanford.edu")
                                         .authorizationType(AuthorizationTypeDTO.Read)
                                         .build()
                         )
@@ -279,24 +279,42 @@ public class EntriesControllerAuthorizationWithTokenTest {
 
     @Test
     public void createNewLogSuccessWithAuthenticationTokenOnLogbook() throws Exception {
-        var tokensEmail = assertDoesNotThrow(
-                () -> testControllerHelperService.createTokens(
+        var newApplicationsId = assertDoesNotThrow(
+                () -> testControllerHelperService.applicationControllerCreateNewApplication(
                         mockMvc,
-                        Optional.of(
-                                "user1@slac.stanford.edu"
-                        ),
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
                         List.of(
-                                NewAuthenticationTokenDTO
+                                NewApplicationDTO
                                         .builder()
                                         .name("token-a")
                                         .expiration(LocalDate.of(2023,12,31))
                                         .build(),
-                                NewAuthenticationTokenDTO
+                                NewApplicationDTO
                                         .builder()
                                         .name("token-b")
                                         .expiration(LocalDate.of(2023,12,31))
                                         .build()
                         )
+                )
+        );
+
+        var newApp1result = assertDoesNotThrow(
+                ()-> testControllerHelperService.applicationControllerFindApplicationById(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        newApplicationsId.get(0),
+                        Optional.empty()
+                )
+        );
+        var newApp2result = assertDoesNotThrow(
+                ()-> testControllerHelperService.applicationControllerFindApplicationById(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        newApplicationsId.get(1),
+                        Optional.empty()
                 )
         );
         var newLogBookResult = assertDoesNotThrow(
@@ -307,19 +325,19 @@ public class EntriesControllerAuthorizationWithTokenTest {
                         ),
                         "LogbookAuthTest1",
                         List.of(
-                                AuthorizationDTO
+                                NewAuthorizationDTO
                                         .builder()
                                         .ownerType(Token)
-                                        .owner(
-                                                tokensEmail.getFirst()
+                                        .ownerId(
+                                                newApp1result.getPayload().email()
                                         )
                                         .authorizationType(AuthorizationTypeDTO.Write)
                                         .build(),
-                                AuthorizationDTO
+                                NewAuthorizationDTO
                                         .builder()
                                         .ownerType(Token)
-                                        .owner(
-                                                tokensEmail.get(1)
+                                        .ownerId(
+                                                newApp2result.getPayload().email()
                                         )
                                         .authorizationType(AuthorizationTypeDTO.Admin)
                                         .build()
@@ -335,7 +353,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                 mockMvc,
                                 status().isCreated(),
                                 Optional.of(
-                                        tokensEmail.getFirst()
+                                        newApp1result.getPayload().email()
                                 ),
                                 EntryNewDTO
                                         .builder()
@@ -359,7 +377,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                 mockMvc,
                                 status().isCreated(),
                                 Optional.of(
-                                        tokensEmail.get(1)
+                                        newApp2result.getPayload().email()
                                 ),
                                 EntryNewDTO
                                         .builder()
@@ -379,18 +397,17 @@ public class EntriesControllerAuthorizationWithTokenTest {
 
     @Test
     public void createNewLogSuccessWithGlobalAuthentication() throws Exception {
-        var tokensEmail = testControllerHelperService.createTokens(
+        var tokensEmail = testControllerHelperService.applicationControllerCreateNewApplication(
                 mockMvc,
-                Optional.of(
-                        "user1@slac.stanford.edu"
-                ),
+                status().isCreated(),
+                Optional.of("user1@slac.stanford.edu"),
                 List.of(
-                        NewAuthenticationTokenDTO
+                        NewApplicationDTO
                                 .builder()
                                 .name("token-a")
                                 .expiration(LocalDate.of(2023,12,31))
                                 .build(),
-                        NewAuthenticationTokenDTO
+                        NewApplicationDTO
                                 .builder()
                                 .name("token-b")
                                 .expiration(LocalDate.of(2023,12,31))
@@ -399,6 +416,23 @@ public class EntriesControllerAuthorizationWithTokenTest {
                 )
         );
 
+        var app1Result = testControllerHelperService.applicationControllerFindApplicationById(
+                mockMvc,
+                status().isOk(),
+                Optional.of("user1@slac.stanford.edu"),
+                tokensEmail.get(0),
+                Optional.empty()
+                );
+        assertThat(app1Result.getErrorCode()).isEqualTo(0);
+
+        var app2Result = testControllerHelperService.applicationControllerFindApplicationById(
+                mockMvc,
+                status().isOk(),
+                Optional.of("user1@slac.stanford.edu"),
+                tokensEmail.get(1),
+                Optional.empty()
+        );
+        assertThat(app2Result.getErrorCode()).isEqualTo(0);
 
         var newLogBookResult = assertDoesNotThrow(
                 () -> testControllerHelperService.getNewLogbookWithNameWithAuthorization(
@@ -408,20 +442,16 @@ public class EntriesControllerAuthorizationWithTokenTest {
                         ),
                         "LogbookAuthTest1",
                         List.of(
-                                AuthorizationDTO
+                                NewAuthorizationDTO
                                         .builder()
                                         .ownerType(Token)
-                                        .owner(
-                                                tokensEmail.getFirst()
-                                        )
+                                        .ownerId(app1Result.getPayload().email())
                                         .authorizationType(AuthorizationTypeDTO.Write)
                                         .build(),
-                                AuthorizationDTO
+                                NewAuthorizationDTO
                                         .builder()
                                         .ownerType(Token)
-                                        .owner(
-                                                tokensEmail.get(1)
-                                        )
+                                        .ownerId(app2Result.getPayload().email())
                                         .authorizationType(AuthorizationTypeDTO.Admin)
                                         .build()
                         )
@@ -436,7 +466,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                 mockMvc,
                                 status().isCreated(),
                                 Optional.of(
-                                        tokensEmail.getFirst()
+                                        app1Result.getPayload().email()
                                 ),
                                 EntryNewDTO
                                         .builder()
@@ -460,7 +490,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                 mockMvc,
                                 status().isCreated(),
                                 Optional.of(
-                                       tokensEmail.get(1)
+                                        app2Result.getPayload().email()
                                 ),
                                 EntryNewDTO
                                         .builder()

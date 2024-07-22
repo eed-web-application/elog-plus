@@ -200,8 +200,8 @@ public class EntriesController {
     public ApiResultResponse<List<EntrySummaryDTO>> search(
             Authentication authentication,
             AuthorizationCache authorizationCache,
-            @Parameter(name = "anchorId", description = "Is the id of an entry from where start the search")
-            @RequestParam("anchorId") Optional<String> anchorId,
+            @Parameter(name = "anchor", description = "Is the id of an entry from where start the search")
+            @RequestParam("anchor") Optional<String> anchorId,
             @Parameter(name = "startDate", description = "Only include entries after this date. Defaults to current time.")
             @RequestParam("startDate") Optional<LocalDateTime> startDate,
             @Parameter(name = "endDate", description = "Only include entries before this date. If not supplied, then does not apply any filter")

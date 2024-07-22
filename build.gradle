@@ -11,9 +11,9 @@ group = 'edu.stanford.slac'
 version = '1.0.0'
 sourceCompatibility = '19'
 
-ext{
-    ad_eed_baselib_version="0.1.61"
-    ad_eed_base_mongodb_lib_version="0.1.31"
+ext {
+    ad_eed_baselib_version = "0.1.69"
+    ad_eed_base_mongodb_lib_version = "0.1.39"
     javaSourceCompatibility = JavaVersion.VERSION_21
     javaTargetCompatibility = JavaVersion.VERSION_21
 }
@@ -28,8 +28,8 @@ springBoot {
         {
             properties {
                 additional = [
-                        'ad-eed-baselib': "${project.ext.ad_eed_baselib_version}",
-                        'ad-eed-base-mongodb':"${project.ext.ad_eed_base_mongodb_lib_version}"
+                        'ad-eed-baselib'     : "${project.ext.ad_eed_baselib_version}",
+                        'ad-eed-base-mongodb': "${project.ext.ad_eed_base_mongodb_lib_version}"
                 ]
             }
         }
@@ -67,6 +67,7 @@ dependencies {
             'org.springframework.boot:spring-boot-starter-actuator',
             'org.springframework.boot:spring-boot-starter-data-ldap',
             'org.springframework.boot:spring-boot-starter-cache',
+            'org.springframework.boot:spring-boot-starter-validation',
             'io.micrometer:micrometer-registry-prometheus',
             'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0',
             'org.springdoc:springdoc-openapi-starter-webflux-ui:2.5.0',
@@ -87,7 +88,7 @@ dependencies {
 
     //eed library
     implementation "edu.stanford.slac:slac-ad-eed-baselib:$project.ext.ad_eed_baselib_version",
-                    "edu.stanford.slac:slac-ad-eed-base-mongodb-lib:$project.ext.ad_eed_base_mongodb_lib_version"
+            "edu.stanford.slac:slac-ad-eed-base-mongodb-lib:$project.ext.ad_eed_base_mongodb_lib_version"
 
     // hazelcast
     implementation 'com.hazelcast:hazelcast-spring:5.3.7'
@@ -105,9 +106,11 @@ dependencies {
     testImplementation 'org.projectlombok:lombok:1.18.34'
 
     compileOnly 'org.projectlombok:lombok'
+
     annotationProcessor 'org.projectlombok:lombok'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
     testCompileOnly('org.springframework.security:spring-security-test')
+    testImplementation("org.springframework.kafka:spring-kafka-test:3.1.4")
     testImplementation 'org.springframework.boot:spring-boot-starter-test',
             'org.springframework.security:spring-security-test',
             'org.springframework.ldap:spring-ldap-test',
@@ -126,6 +129,7 @@ jacoco {
 
 test {
     finalizedBy jacocoTestReport // report is always generated after tests run
+    exclude '**/dto/**'
 }
 
 jacocoTestReport {

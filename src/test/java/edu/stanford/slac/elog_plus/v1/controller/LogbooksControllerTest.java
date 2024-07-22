@@ -1,7 +1,6 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
@@ -9,7 +8,6 @@ import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
-import edu.stanford.slac.elog_plus.config.ELOGAppProperties;
 import edu.stanford.slac.elog_plus.exception.LogbookAlreadyExists;
 import edu.stanford.slac.elog_plus.exception.TagAlreadyExists;
 import edu.stanford.slac.elog_plus.model.Entry;
@@ -545,9 +543,9 @@ public class LogbooksControllerTest {
         assertThat(newLogbookResult).isNotNull();
         assertThat(newLogbookResult.getErrorCode()).isEqualTo(0);
 
-        for(int idx = 0; idx <= 99; idx++) {
+        for (int idx = 0; idx <= 99; idx++) {
             int finalIdx = idx;
-            ApiResultResponse<String> newTagResult =  assertDoesNotThrow(
+            ApiResultResponse<String> newTagResult = assertDoesNotThrow(
                     () -> testControllerHelperService.createNewLogbookTags(
                             mockMvc,
                             status().isCreated(),
@@ -599,9 +597,9 @@ public class LogbooksControllerTest {
         assertThat(newLogbookResult).isNotNull();
         assertThat(newLogbookResult.getErrorCode()).isEqualTo(0);
 
-        for(int idx = 0; idx <= 99; idx++) {
+        for (int idx = 0; idx <= 99; idx++) {
             int finalIdx = idx;
-            ApiResultResponse<String> newTagResult =  assertDoesNotThrow(
+            ApiResultResponse<String> newTagResult = assertDoesNotThrow(
                     () -> testControllerHelperService.createNewLogbookTags(
                             mockMvc,
                             status().isCreated(),
@@ -636,9 +634,9 @@ public class LogbooksControllerTest {
         assertThat(newLogbookResultTwo).isNotNull();
         assertThat(newLogbookResultTwo.getErrorCode()).isEqualTo(0);
 
-        for(int idx = 50; idx <= 149; idx++) {
+        for (int idx = 50; idx <= 149; idx++) {
             int finalIdx = idx;
-            ApiResultResponse<String> newTagResult =  assertDoesNotThrow(
+            ApiResultResponse<String> newTagResult = assertDoesNotThrow(
                     () -> testControllerHelperService.createNewLogbookTags(
                             mockMvc,
                             status().isCreated(),
@@ -669,113 +667,5 @@ public class LogbooksControllerTest {
         assertThat(allTagsResult).isNotNull();
         assertThat(allTagsResult.getErrorCode()).isEqualTo(0);
         assertThat(allTagsResult.getPayload().size()).isEqualTo(200);
-    }
-
-    /**
-     * Test for issue #180
-     * <a href="https://github.com/eed-web-application/elog-plus/issues/180"/>
-     */
-    @Test
-    public void testIssue180AuthorizationNotDeleted() {
-        ApiResultResponse<String> creationResult = assertDoesNotThrow(
-                () -> testControllerHelperService.createNewLogbook(
-                        mockMvc,
-                        status().isCreated(),
-                        Optional.of(
-                                "user1@slac.stanford.edu"
-                        ),
-                        NewLogbookDTO.builder()
-                                .name("new-logbooks")
-                                .build()
-                )
-        );
-
-        assertThat(creationResult).isNotNull();
-        assertThat(creationResult.getErrorCode()).isEqualTo(0);
-        assertThat(creationResult.getPayload()).isNotEmpty();
-        // add authorization
-        ApiResultResponse<Boolean> replacementResult = assertDoesNotThrow(
-                () -> testControllerHelperService.updateLogbook(
-                        mockMvc,
-                        status().isOk(),
-                        Optional.of(
-                                "user1@slac.stanford.edu"
-                        ),
-                        creationResult.getPayload(),
-                        UpdateLogbookDTO
-                                .builder()
-                                .name("updated name")
-                                .tags(emptyList())
-                                .shifts(emptyList())
-                                .authorizations(
-                                        List.of(
-                                                AuthorizationDTO
-                                                        .builder()
-                                                        .authorizationType(AuthorizationTypeDTO.Write)
-                                                        .owner("user2@slac.stanford.edu")
-                                                        .ownerType(AuthorizationOwnerTypeDTO.User)
-                                                        .build()
-                                        )
-                                )
-                                .build()
-                )
-        );
-        assertThat(replacementResult).isNotNull();
-        assertThat(replacementResult.getErrorCode()).isEqualTo(0);
-
-        ApiResultResponse<LogbookDTO> fullLogbook = assertDoesNotThrow(
-                () -> testControllerHelperService.getLogbookByID(
-                        mockMvc,
-                        status().isOk(),
-                        Optional.of(
-                                "user1@slac.stanford.edu"
-                        ),
-                        creationResult.getPayload(),
-                        Optional.of(true)
-                )
-        );
-        assertThat(fullLogbook.getErrorCode()).isEqualTo(0);
-        assertThat(fullLogbook.getPayload().name()).isEqualTo("updated-name");
-        assertThat(fullLogbook.getPayload().authorizations())
-                .hasSize(1)
-                .extracting(AuthorizationDTO::owner)
-                .contains("user2@slac.stanford.edu");
-
-        // try to remove auth
-        replacementResult = assertDoesNotThrow(
-                () -> testControllerHelperService.updateLogbook(
-                        mockMvc,
-                        status().isOk(),
-                        Optional.of(
-                                "user1@slac.stanford.edu"
-                        ),
-                        creationResult.getPayload(),
-                        UpdateLogbookDTO
-                                .builder()
-                                .name("updated name")
-                                .tags(emptyList())
-                                .shifts(emptyList())
-                                .authorizations(emptyList())
-                                .build()
-                )
-        );
-        assertThat(replacementResult).isNotNull();
-        assertThat(replacementResult.getErrorCode()).isEqualTo(0);
-
-        // check if authorization has been removed
-        fullLogbook = assertDoesNotThrow(
-                () -> testControllerHelperService.getLogbookByID(
-                        mockMvc,
-                        status().isOk(),
-                        Optional.of(
-                                "user1@slac.stanford.edu"
-                        ),
-                        creationResult.getPayload(),
-                        Optional.of(true)
-                )
-        );
-        assertThat(fullLogbook.getErrorCode()).isEqualTo(0);
-        assertThat(fullLogbook.getPayload().name()).isEqualTo("updated-name");
-        assertThat(fullLogbook.getPayload().authorizations()) .hasSize(0);
     }
 }

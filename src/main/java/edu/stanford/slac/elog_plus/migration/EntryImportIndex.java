@@ -37,7 +37,7 @@ public class EntryImportIndex {
         var ownerIndex =  MongoDDLOps.checkForIndex(
                 Authorization.class,
                 mongoTemplate,
-                "owner"
+                "ownerId"
         );
         if(ownerIndex.isEmpty()) {
             //entry index
@@ -45,10 +45,10 @@ public class EntryImportIndex {
                     Authorization.class,
                     mongoTemplate,
                     new Index().on(
-                                    "owner",
+                                    "ownerId",
                                     Sort.Direction.ASC
                             )
-                            .named("owner")
+                            .named("ownerId")
                             .sparse()
             );
         }

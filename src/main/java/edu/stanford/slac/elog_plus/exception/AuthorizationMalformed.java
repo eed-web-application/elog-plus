@@ -10,11 +10,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class AuthorizationMalformed extends ControllerLogicException {
     @Builder(builderMethodName = "ownerTypeNotFound")
     public AuthorizationMalformed(Integer errorCode, String owner, String errorDomain) {
-        super(errorCode, String.format("The owner type is mandatory for the authorization owner: '%s'", owner), errorDomain);
+        super(errorCode, String.format("The ownerId type is mandatory for the authorization ownerId: '%s'", owner), errorDomain);
     }
 
     @Builder(builderMethodName = "ownerNotFound")
     public AuthorizationMalformed(Integer errorCode, String errorDomain) {
-        super(errorCode, "The owner is mandatory", errorDomain);
+        super(errorCode, "The ownerId is mandatory", errorDomain);
     }
 }

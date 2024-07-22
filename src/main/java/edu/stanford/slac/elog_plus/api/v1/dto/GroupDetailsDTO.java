@@ -10,16 +10,16 @@ import java.util.List;
 @Builder(toBuilder = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@Schema(description = "Identify the single logbooks")
-public record LogbookDTO(
-        @Schema(description = "Unique identifier")
+@Schema(description = "Group details")
+public record GroupDetailsDTO(
+        @Schema(description = "The id of the group")
         String id,
-        @Schema(description = "The name of the logbooks")
+        @Schema(description = "The name of the group")
         String name,
-        @Schema(description = "The tags associated to the logbooks")
-        List<TagDTO> tags,
-        @Schema(description = "The shift associated to the logbooks")
-        List<ShiftDTO> shifts,
-        @Schema(description = "The list of authorizations on logbook")
+        @Schema(description = "The description of the group")
+        String description,
+        @Schema(description = "The list of members of the group")
+        List<UserDetailsDTO> members,
+        @Schema(description = "The list of authorizations of the group")
         List<DetailsAuthorizationDTO> authorizations) {
 }

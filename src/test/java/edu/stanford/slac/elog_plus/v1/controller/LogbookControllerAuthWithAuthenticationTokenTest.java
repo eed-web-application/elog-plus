@@ -6,6 +6,8 @@ import edu.stanford.slac.ad.eed.baselib.model.AuthenticationToken;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.LogbookDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.NewApplicationDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.NewAuthorizationDTO;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import org.junit.jupiter.api.BeforeEach;
@@ -64,24 +66,46 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
 
     @Test
     public void testGetAllLogbookForAuthType() {
-        var tokensEmail = testControllerHelperService.createTokens(
-                mockMvc,
-                Optional.of(
-                        "user1@slac.stanford.edu"
-                ),
-                List.of(
-                        NewAuthenticationTokenDTO
-                                .builder()
-                                .name("token-a")
-                                .expiration(LocalDate.now().plusDays(1))
-                                .build(),
-                        NewAuthenticationTokenDTO
-                                .builder()
-                                .name("token-b")
-                                .expiration(LocalDate.now().plusDays(1))
-                                .build()
+        var tokensEmail = assertDoesNotThrow(
+                () -> testControllerHelperService.applicationControllerCreateNewApplication(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        List.of(
+                                NewApplicationDTO
+                                        .builder()
+                                        .name("token-a")
+                                        .expiration(LocalDate.now().plusDays(1))
+                                        .build(),
+                                NewApplicationDTO
+                                        .builder()
+                                        .name("token-b")
+                                        .expiration(LocalDate.now().plusDays(1))
+                                        .build()
+                        )
                 )
         );
+
+        var app1Result = assertDoesNotThrow(
+                ()-> testControllerHelperService.applicationControllerFindApplicationById(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        tokensEmail.getFirst(),
+                        Optional.empty()
+                )
+        );
+
+        var app2Result = assertDoesNotThrow(
+                ()-> testControllerHelperService.applicationControllerFindApplicationById(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        tokensEmail.get(1),
+                        Optional.empty()
+                )
+        );
+
         var newLogbookApiResultOne = testControllerHelperService.getNewLogbookWithNameWithAuthorizationAndAppToken(
                 mockMvc,
                 Optional.of(
@@ -89,17 +113,17 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
                 ),
                 "new logbook",
                 List.of(
-                        AuthorizationDTO
+                        NewAuthorizationDTO
                                 .builder()
-                                .owner(tokensEmail.getFirst())
+                                .ownerId(app1Result.getPayload().email())
                                 .ownerType(AuthorizationOwnerTypeDTO.Token)
                                 .authorizationType(
                                         Write
                                 )
                                 .build(),
-                        AuthorizationDTO
+                        NewAuthorizationDTO
                                 .builder()
-                                .owner(tokensEmail.get(1))
+                                .ownerId(app2Result.getPayload().email())
                                 .ownerType(AuthorizationOwnerTypeDTO.Token)
                                 .authorizationType(
                                         Read
@@ -114,13 +138,11 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
                 ),
                 "new logbook two",
                 List.of(
-                        AuthorizationDTO
+                        NewAuthorizationDTO
                                 .builder()
-                                .owner(tokensEmail.getFirst())
+                                .ownerId(app1Result.getPayload().email())
                                 .ownerType(AuthorizationOwnerTypeDTO.Token)
-                                .authorizationType(
-                                        Write
-                                )
+                                .authorizationType(Write)
                                 .build()
                 )
         );
@@ -128,7 +150,7 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
                 () -> testControllerHelperService.getAllLogbook(
                         mockMvc,
                         status().isOk(),
-                        Optional.of(tokensEmail.getFirst()),
+                        Optional.of(app1Result.getPayload().email()),
                         Optional.of(false),
                         Optional.empty()
                 )
@@ -152,7 +174,7 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
                 () -> testControllerHelperService.getAllLogbook(
                         mockMvc,
                         status().isOk(),
-                        Optional.of(tokensEmail.get(1)),
+                        Optional.of(app2Result.getPayload().email()),
                         Optional.of(false),
                         Optional.empty()
                 )
