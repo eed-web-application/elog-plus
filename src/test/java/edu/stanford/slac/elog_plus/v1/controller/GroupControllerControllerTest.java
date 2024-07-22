@@ -1,6 +1,7 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
 
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v2.dto.AuthorizationGroupManagementDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v2.dto.NewLocalGroupDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v2.dto.UpdateLocalGroupDTO;
@@ -11,6 +12,7 @@ import edu.stanford.slac.ad.eed.baselib.model.AuthenticationToken;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.model.LocalGroup;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
+import edu.stanford.slac.elog_plus.api.v1.dto.NewAuthorizationDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.UserDetailsDTO;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
@@ -31,6 +33,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 import java.util.Optional;
 
+import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Write;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -388,5 +391,54 @@ public class GroupControllerControllerTest {
         for (int i = 0; i < 10; i++) {
             assertThat(first10Groups.getPayload().get(i).name()).isEqualTo("local-group-%02d".formatted(i));
         }
+    }
+
+    @Test
+    public void checkLabelOnGroupDetails(){
+        var newGroupIdResult = assertDoesNotThrow(
+                () -> testControllerHelperService.groupControllerCreateNewGroup(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewLocalGroupDTO
+                                .builder()
+                                .name("local-group-1")
+                                .description("local-group-1 description")
+                                .members(List.of("user2@slac.stanford.edu"))
+                                .build()
+                )
+        );
+        assertThat(newGroupIdResult).isNotNull();
+        assertThat(newGroupIdResult.getPayload()).isNotEmpty();
+
+        var newLogbookApiResultOne = testControllerHelperService.getNewLogbookWithNameWithAuthorization(
+                mockMvc,
+                Optional.of(
+                        "user1@slac.stanford.edu"
+                ),
+                "new logbook",
+                List.of(
+                        NewAuthorizationDTO
+                                .builder()
+                                .ownerId("local-group-1")
+                                .ownerType(AuthorizationOwnerTypeDTO.Group)
+                                .authorizationType(Write)
+                                .build()
+                )
+        );
+
+        var foundGroup = assertDoesNotThrow(
+                () -> testControllerHelperService.groupControllerFindGroupById(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        newGroupIdResult.getPayload(),
+                        Optional.of(true),
+                        Optional.of(true)
+                )
+        );
+        assertThat(foundGroup).isNotNull();
+        assertThat(foundGroup.getPayload().authorizations()).hasSize(1);
+        assertThat(foundGroup.getPayload().authorizations().get(0).resourceName()).isEqualTo("new logbook");
     }
 }

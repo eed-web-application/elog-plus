@@ -8,11 +8,15 @@ import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.ResourceTypeDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.DetailsAuthorizationDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.UserDetailsDTO;
+import edu.stanford.slac.elog_plus.model.Logbook;
+import edu.stanford.slac.elog_plus.repository.LogbookRepository;
+import edu.stanford.slac.elog_plus.service.LogbookService;
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,7 +28,8 @@ import java.util.Optional;
 public abstract class AuthorizationMapper {
     @Autowired
     AuthService authService;
-
+    @Autowired
+    LogbookRepository logbookRepository;
     /**
      * Convert a PersonDTO to a UserDetailsDTO
      *
@@ -58,6 +63,7 @@ public abstract class AuthorizationMapper {
     public List<DetailsAuthorizationDTO> fromAuthorizationDTO(
             List<AuthorizationDTO> allAuthenticationForOwner
     ) {
+        HashMap<String, String> resourceMapIdLabel = new HashMap<>();
         if (allAuthenticationForOwner == null) {
             return Collections.emptyList();
         }
@@ -65,12 +71,36 @@ public abstract class AuthorizationMapper {
                 .stream()
                 .filter(a -> a.resource() != null)
                 .map(
-                        a -> DetailsAuthorizationDTO.builder()
-                                .id(a.id())
-                                .resourceType(getResourceType(a.resource()))
-                                .resourceId(getResourceId(a.resource()))
-                                .authorizationType(a.authorizationType())
-                                .build()
+                        a -> {
+                            String label = null;
+                            ResourceTypeDTO resourceType = getResourceType(a.resource());
+                            String resourceId = getResourceId(a.resource());
+
+                            if(resourceMapIdLabel.containsKey(a.resource())){
+                                label = resourceMapIdLabel.get(a.resource());
+                            } else {
+                                // fetch resource and cache
+                                switch (resourceType) {
+                                    case Logbook: {
+                                        var logbook = logbookRepository.findById(resourceId);
+                                        if (logbook.isPresent()) {
+                                            label = logbook.get().getName();
+                                            resourceMapIdLabel.put(a.resource(), label);
+                                        }
+                                        break;
+                                    }
+                                    default:
+                                        break;
+                                }
+                            }
+                            return DetailsAuthorizationDTO.builder()
+                                    .id(a.id())
+                                    .resourceType(resourceType)
+                                    .resourceId(resourceId)
+                                    .authorizationType(a.authorizationType())
+                                    .resourceName(label)
+                                    .build();
+                        }
                 )
                 .toList();
     }
@@ -82,7 +112,7 @@ public abstract class AuthorizationMapper {
      * @return the resource id
      */
     private ResourceTypeDTO getResourceType(String resource) {
-        // the resource are of type '/logbook/logbookId' we we need to return ''logbook' as resource
+        // the resource are of type '/logbook/logbookId' we need to return ''logbook' as resource
         String[] resourceAndType = resource.split("/");
         if (resourceAndType.length == 1 && resourceAndType[0].compareToIgnoreCase("*") == 0) {
             return ResourceTypeDTO.All;

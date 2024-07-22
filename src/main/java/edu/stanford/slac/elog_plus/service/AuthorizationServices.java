@@ -104,7 +104,7 @@ public class AuthorizationServices {
                                         groupFound.members().stream().map(
                                                 m -> authorizationMapper.fromPersonDTO(
                                                         m,
-                                                        // user details on group doesn't has authorizations
+                                                        // user details on group doesn't have authorizations
                                                         Collections.emptyList()
                                                 )
                                         ).toList() :

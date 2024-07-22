@@ -317,4 +317,37 @@ public class UserControllerControllerTest {
                         tuple(Read.name(), newLogbook2result.getPayload(), "Logbook")
                 );
     }
+
+    @Test
+    public void checkLabelOnUserDetails(){
+        var newLogbookApiResultOne = testControllerHelperService.getNewLogbookWithNameWithAuthorization(
+                mockMvc,
+                Optional.of(
+                        "user1@slac.stanford.edu"
+                ),
+                "new logbook",
+                List.of(
+                        NewAuthorizationDTO
+                                .builder()
+                                .ownerId("user2@slac.stanford.edu")
+                                .ownerType(AuthorizationOwnerTypeDTO.User)
+                                .authorizationType(Write)
+                                .build()
+                )
+        );
+
+        var foundUser = assertDoesNotThrow(
+                () -> testControllerHelperService.userControllerFindUserById(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        "user2@slac.stanford.edu",
+                        Optional.of(true),
+                        Optional.of(false)
+                )
+        );
+        assertThat(foundUser).isNotNull();
+        assertThat(foundUser.getPayload().authorization()).hasSize(1);
+        assertThat(foundUser.getPayload().authorization().get(0).resourceName()).isEqualTo("new-logbook");
+    }
 }

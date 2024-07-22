@@ -1230,14 +1230,14 @@ public class TestControllerHelperService {
             Optional<String> userInfo,
             String groupId,
             Optional<Boolean> includeMembers,
-            Optional<Boolean> includeAuthorization) throws Exception {
+            Optional<Boolean> includeAuthorizations) throws Exception {
         MockHttpServletRequestBuilder requestBuilder =
                 get("/v1/groups/{groupId}", groupId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON);
         userInfo.ifPresent(login -> requestBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
         includeMembers.ifPresent(m -> requestBuilder.param("includeMembers", String.valueOf(m)));
-        includeAuthorization.ifPresent(a -> requestBuilder.param("includeAuthorization", String.valueOf(a)));
+        includeAuthorizations.ifPresent(a -> requestBuilder.param("includeAuthorizations", String.valueOf(a)));
         return executeHttpRequest(
                 new TypeReference<>() {
                 },
