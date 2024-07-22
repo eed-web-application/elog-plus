@@ -1111,7 +1111,7 @@ public class TestControllerHelperService {
         );
     }
 
-    public ApiResultResponse<ApplicationDetailsDTO> applicationControllerFindAllApplication(
+    public ApiResultResponse<List<ApplicationDetailsDTO>> applicationControllerFindAllApplication(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,

@@ -35,7 +35,7 @@ public class UserController {
      * Find users based on the query parameter
      *
      * @param authentication
-     * @param searchFilter   the search string to find the user
+     * @param search         the search string to find the user
      *                       (optional)
      * @param context        the size of the context to return
      *                       (optional)
@@ -47,7 +47,6 @@ public class UserController {
      */
     @GetMapping(
             produces = {MediaType.APPLICATION_JSON_VALUE}
-
     )
     @ResponseStatus(HttpStatus.OK)
     @Operation(description = "Search from all users")
