@@ -21,6 +21,13 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 public class GroupAuthorizationService {
     private final AuthService authService;
 
+    /**
+     * Check if the user can create a group
+     *
+     * @param authentication     the authentication
+     * @param newLocalGroupDTO the new group dto
+     * @return true if the user can create the group
+     */
     public boolean canCreateGroup(Authentication authentication, NewLocalGroupDTO newLocalGroupDTO) {
         assertion(
                 NotAuthorized
@@ -38,6 +45,13 @@ public class GroupAuthorizationService {
         return true;
     }
 
+    /**
+     * Check if the user can delete the group
+     *
+     * @param authentication the authentication
+     * @param groupId        the group id
+     * @return true if the user can delete the group
+     */
     public boolean canDeleteGroup(Authentication authentication, String groupId) {
         assertion(
                 NotAuthorized
@@ -55,6 +69,13 @@ public class GroupAuthorizationService {
         return true;
     }
 
+    /**
+     * Check if the user can update the group
+     *
+     * @param authentication     the authentication
+     * @param updateLocalGroupDTO the group to update
+     * @return true if the user can update the group
+     */
     public boolean canUpdateGroup(Authentication authentication, UpdateLocalGroupDTO updateLocalGroupDTO) {
         assertion(
                 NotAuthorized
@@ -72,7 +93,14 @@ public class GroupAuthorizationService {
         return true;
     }
 
-    public void canManageGroupAuthorization(Authentication authentication, AuthorizationGroupManagementDTO authorizationGroupManagementDTO) {
+    /**
+     * Check if the user can manage the group authorization
+     *
+     * @param authentication the authentication
+     * @param authorizationGroupManagementDTO the group authorization management dto
+     * @return true if the user can manage the group authorization
+     */
+    public boolean canManageGroupAuthorization(Authentication authentication, AuthorizationGroupManagementDTO authorizationGroupManagementDTO) {
         assertion(
                 NotAuthorized
                         .notAuthorizedBuilder()
@@ -86,6 +114,7 @@ public class GroupAuthorizationService {
                         () -> authService.canManageGroup(authentication)
                 )
         );
+        return true;
     }
 
     /**

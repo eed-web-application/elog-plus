@@ -42,8 +42,8 @@ public class GroupController {
     /**
      * Create a new group
      *
-     * @param authentication
-     * @param newGroupDTO
+     * @param authentication the authentication
+     * @param newGroupDTO    the new group dto
      * @return the id of the new group
      */
     @PostMapping(
@@ -65,8 +65,8 @@ public class GroupController {
     /**
      * Delete a group
      *
-     * @param authentication
-     * @param localGroupId
+     * @param authentication the authentication
+     * @param groupId        the id of the group to delete
      * @return true if the group was deleted
      */
     @DeleteMapping(
@@ -113,8 +113,8 @@ public class GroupController {
     /**
      * Find a local group using an id
      *
-     * @param authentication
-     * @param localGroupId
+     * @param authentication the authentication
+     * @param groupId        the id of the group to find
      * @return the local group
      */
     @GetMapping(
@@ -136,7 +136,7 @@ public class GroupController {
             @RequestParam("includeAuthorizations") Optional<Boolean> includeAuthorizations
     ) {
         return ApiResultResponse.of(
-                authorizationServices.findGroup(groupId, includeMembers.orElse(false),includeAuthorizations.orElse(false))
+                authorizationServices.findGroup(groupId, includeMembers.orElse(false), includeAuthorizations.orElse(false))
         );
     }
 
@@ -199,7 +199,7 @@ public class GroupController {
     @Operation(
             summary = "Get current user information"
     )
-    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @groupAuthorizationService.canManageGroupAuthorization(authentication, authorizationGroupManagementDTO)")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @groupAuthorizationService.canManageGroupAuthorization(#authentication, #authorizationGroupManagementDTO)")
     public ApiResultResponse<Boolean> manageGroupManagementAuthorization(
             Authentication authentication,
             @RequestBody @Valid AuthorizationGroupManagementDTO authorizationGroupManagementDTO

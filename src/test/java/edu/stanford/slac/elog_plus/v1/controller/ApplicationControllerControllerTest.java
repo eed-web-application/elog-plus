@@ -177,6 +177,5 @@ public class ApplicationControllerControllerTest {
         for (int i = 0; i < 10; i++) {
             assertThat(searchResult.getPayload().get(i).name()).isEqualTo("app-%02d".formatted(i));
         }
-
     }
 }

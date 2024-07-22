@@ -127,6 +127,7 @@ jacoco {
 
 test {
     finalizedBy jacocoTestReport // report is always generated after tests run
+    exclude '**/dto/**'
 }
 
 jacocoTestReport {

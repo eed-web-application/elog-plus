@@ -1,4 +1,4 @@
-package edu.stanford.slac.elog_plus.api.v1.controller;
+package edu.stanford.slac.elog_plus.config;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.http.ResponseEntity;
