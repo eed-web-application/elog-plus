@@ -22,6 +22,5 @@ public record LogbookOwnerAuthorizationDTO(
         AuthorizationOwnerTypeDTO ownerType,
         @NotEmpty
         @Schema(description = "The type of authorization [Read, Write, Admin]")
-        AuthorizationTypeDTO authorizationType
-){
-}
+        AuthorizationTypeDTO permission
+){}

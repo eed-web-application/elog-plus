@@ -4,13 +4,10 @@ package edu.stanford.slac.elog_plus.v1.controller;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
-import edu.stanford.slac.ad.eed.baselib.exception.AuthenticationTokenNotFound;
-import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.model.AuthenticationToken;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.model.LocalGroup;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
-import edu.stanford.slac.elog_plus.api.v1.dto.NewApplicationDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.NewAuthorizationDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.ResourceTypeDTO;
 import edu.stanford.slac.elog_plus.model.Entry;
@@ -29,7 +26,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -107,7 +103,7 @@ public class AuthorizationControllerControllerTest {
                 .stream()
                 .filter
                         (
-                                authorization -> authorization.authorizationType() == AuthorizationTypeDTO.Admin &&
+                                authorization -> authorization.permission() == AuthorizationTypeDTO.Admin &&
                                         authorization.resourceType() == ResourceTypeDTO.All
                         )
                 .findFirst();

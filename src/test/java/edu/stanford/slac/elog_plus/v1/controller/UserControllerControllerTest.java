@@ -50,6 +50,7 @@ public class UserControllerControllerTest {
     @Autowired
     private TestControllerHelperService testControllerHelperService;
 
+
     @BeforeEach
     public void preTest() {
         mongoTemplate.remove(new Query(), Logbook.class);
@@ -148,7 +149,7 @@ public class UserControllerControllerTest {
         assertThat(foundUsers.getPayload().get(0).authorization()).hasSize(2);
         assertThat(foundUsers.getPayload().get(0).authorization())
                 .extracting(
-                        a -> a.authorizationType().name(),
+                        a -> a.permission().name(),
                         a -> a.resourceId(),
                         a -> a.resourceType().name()
                 )
@@ -158,7 +159,7 @@ public class UserControllerControllerTest {
                 );
         assertThat(foundUsers.getPayload().get(1).authorization())
                 .extracting(
-                        a -> a.authorizationType().name(),
+                        a -> a.permission().name(),
                         a -> a.resourceId(),
                         a -> a.resourceType().name()
                 )
@@ -168,7 +169,7 @@ public class UserControllerControllerTest {
                 );
         assertThat(foundUsers.getPayload().get(2).authorization())
                 .extracting(
-                        a -> a.authorizationType().name(),
+                        a -> a.permission().name(),
                         a -> a.resourceId(),
                         a -> a.resourceType().name()
                 )
@@ -246,7 +247,7 @@ public class UserControllerControllerTest {
                 .contains("user1@slac.stanford.edu", "user2@slac.stanford.edu", "user3@slac.stanford.edu");
         assertThat(foundUsers.getPayload().get(0).authorization())
                 .extracting(
-                        a -> a.authorizationType().name(),
+                        a -> a.permission().name(),
                         a -> a.resourceId(),
                         a -> a.resourceType().name()
                 )
@@ -255,7 +256,7 @@ public class UserControllerControllerTest {
                 );
         assertThat(foundUsers.getPayload().get(1).authorization())
                 .extracting(
-                        a -> a.authorizationType().name(),
+                        a -> a.permission().name(),
                         a -> a.resourceId(),
                         a -> a.resourceType().name()
                 )
@@ -264,7 +265,7 @@ public class UserControllerControllerTest {
                 );
         assertThat(foundUsers.getPayload().get(2).authorization())
                 .extracting(
-                        a -> a.authorizationType().name(),
+                        a -> a.permission().name(),
                         a -> a.resourceId(),
                         a -> a.resourceType().name()
                 )
@@ -308,7 +309,7 @@ public class UserControllerControllerTest {
         assertThat(foundUsers2.getPayload()).hasSize(3);
         assertThat(foundUsers2.getPayload().get(1).authorization())
                 .extracting(
-                        a -> a.authorizationType().name(),
+                        a -> a.permission().name(),
                         a -> a.resourceId(),
                         a -> a.resourceType().name()
                 )

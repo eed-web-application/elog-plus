@@ -97,7 +97,7 @@ public abstract class AuthorizationMapper {
                                     .id(a.id())
                                     .resourceType(resourceType)
                                     .resourceId(resourceId)
-                                    .authorizationType(a.authorizationType())
+                                    .permission(a.authorizationType())
                                     .resourceName(label)
                                     .build();
                         }

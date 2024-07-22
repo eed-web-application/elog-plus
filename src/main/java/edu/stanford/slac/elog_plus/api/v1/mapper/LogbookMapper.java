@@ -102,7 +102,7 @@ public abstract class LogbookMapper {
                 .id(authorization.id())
                 .owner(authorization.owner())
                 .ownerType(authorization.ownerType())
-                .authorizationType(authorization.authorizationType())
+                .permission(authorization.authorizationType())
                 .build();
     }
 
@@ -114,7 +114,7 @@ public abstract class LogbookMapper {
                                 .id(auth.id())
                                 .owner(auth.owner())
                                 .ownerType(getAuthorizationOwnerType(auth.ownerType()))
-                                .authorizationType(getAuthorizationType(auth.authorizationType()))
+                                .authorizationType(getAuthorizationType(auth.permission()))
                                 .build()
                 ).toList();
     }

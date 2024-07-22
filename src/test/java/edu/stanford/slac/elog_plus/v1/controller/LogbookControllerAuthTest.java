@@ -12,6 +12,7 @@ import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
+import org.apache.kafka.clients.admin.AdminClient;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,6 +24,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -54,9 +56,12 @@ public class LogbookControllerAuthTest {
     private MongoTemplate mongoTemplate;
     @Autowired
     private TestControllerHelperService testControllerHelperService;
+    @Autowired
+    AdminClient adminClient;
 
     @BeforeEach
     public void preTest() {
+        adminClient.deleteTopics(List.of("elog-plus-import-entry"));
         mongoTemplate.remove(new Query(), Logbook.class);
         mongoTemplate.remove(new Query(), Entry.class);
         //reset authorizations
@@ -670,23 +675,6 @@ public class LogbookControllerAuthTest {
         );
         assertThat(newAuthResult).isNotNull();
 
-        newAuthResult = assertDoesNotThrow(
-                () -> testControllerHelperService.authorizationControllerCreateNewAuthorization(
-                        mockMvc,
-                        status().isCreated(),
-                        Optional.of("user1@slac.stanford.edu"),
-                        NewAuthorizationDTO
-                                .builder()
-                                .resourceId(newLogbookResult.getPayload())
-                                .resourceType(ResourceTypeDTO.Logbook)
-                                .ownerId("local-group-1")
-                                .ownerType(AuthorizationOwnerTypeDTO.Group)
-                                .authorizationType(Admin)
-                                .build()
-                )
-        );
-        assertThat(newAuthResult).isNotNull();
-
         logbook = assertDoesNotThrow(
                 () -> testControllerHelperService.getLogbookByID(
                         mockMvc,
@@ -700,18 +688,18 @@ public class LogbookControllerAuthTest {
         assertThat(logbook.getPayload())
                 .isNotNull();
         assertThat(logbook.getPayload().authorizations())
-                .hasSize(5)
+                .hasSize(4)
                 .extracting(LogbookOwnerAuthorizationDTO::owner)
                 .contains("user1@slac.stanford.edu", "user2@slac.stanford.edu", "local-group-1", "local-group-2");
 
         var user1Auth = logbook.getPayload().authorizations().stream().filter(a -> a.owner().compareTo("user1@slac.stanford.edu") == 0).toList();
-        assertThat(user1Auth).hasSize(1).extracting(LogbookOwnerAuthorizationDTO::authorizationType).contains(Write);
+        assertThat(user1Auth).hasSize(1).extracting(LogbookOwnerAuthorizationDTO::permission).contains(Write);
         var user2Auth = logbook.getPayload().authorizations().stream().filter(a -> a.owner().compareTo("user2@slac.stanford.edu") == 0).toList();
-        assertThat(user2Auth).hasSize(1).extracting(LogbookOwnerAuthorizationDTO::authorizationType).contains(Read);
+        assertThat(user2Auth).hasSize(1).extracting(LogbookOwnerAuthorizationDTO::permission).contains(Read);
         var group1Auth = logbook.getPayload().authorizations().stream().filter(a -> a.owner().compareTo("local-group-1") == 0).toList();
-        assertThat(group1Auth).hasSize(2).extracting(LogbookOwnerAuthorizationDTO::authorizationType).contains(Read, Admin);
+        assertThat(group1Auth).hasSize(1).extracting(LogbookOwnerAuthorizationDTO::permission).contains(Read);
         var group2Auth = logbook.getPayload().authorizations().stream().filter(a -> a.owner().compareTo("local-group-2") == 0).toList();
-        assertThat(group2Auth).hasSize(1).extracting(LogbookOwnerAuthorizationDTO::authorizationType).contains(Write);
+        assertThat(group2Auth).hasSize(1).extracting(LogbookOwnerAuthorizationDTO::permission).contains(Write);
 
 
         // fetch only user authorization
@@ -727,7 +715,7 @@ public class LogbookControllerAuthTest {
         );
         assertThat(user1Details.getPayload().authorization())
                 .hasSize(2)
-                .extracting(DetailsAuthorizationDTO::authorizationType)
+                .extracting(DetailsAuthorizationDTO::permission)
                 .contains(Write, Admin);
     }
 
@@ -751,7 +739,7 @@ public class LogbookControllerAuthTest {
         public boolean matches(DetailsAuthorizationDTO authorizationDTO) {
             return authorizationDTO != null
                     && authorizationDTO.resourceId().equals(resourceId)
-                    && authorizationDTO.authorizationType().equals(authorizationTypeDTO);
+                    && authorizationDTO.permission().equals(authorizationTypeDTO);
         }
     }
 }

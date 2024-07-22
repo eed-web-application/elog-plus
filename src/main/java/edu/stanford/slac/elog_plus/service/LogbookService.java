@@ -6,12 +6,8 @@ import edu.stanford.slac.ad.eed.baselib.api.v1.dto.*;
 import edu.stanford.slac.ad.eed.baselib.api.v1.mapper.AuthMapper;
 import edu.stanford.slac.ad.eed.baselib.auth.JWTHelper;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
-import edu.stanford.slac.ad.eed.baselib.exception.AuthenticationTokenMalformed;
-import edu.stanford.slac.ad.eed.baselib.exception.AuthenticationTokenNotFound;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.model.AuthenticationToken;
-import edu.stanford.slac.ad.eed.baselib.model.Authorization;
-import edu.stanford.slac.ad.eed.baselib.model.AuthorizationOwnerType;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.api.v1.dto.NewAuthorizationDTO;
@@ -28,7 +24,6 @@ import edu.stanford.slac.elog_plus.utility.StringUtilities;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -1200,7 +1195,7 @@ public class LogbookService {
                 fullLogbook.authorizations().stream().filter(
                         a -> a.owner().compareToIgnoreCase(userId) == 0
                 ).filter(
-                        a -> a.authorizationType().compareTo(authorizationType) == 0
+                        a -> a.permission().compareTo(authorizationType) == 0
                 ).findAny().ifPresentOrElse(
                         (a) -> {
                             log.info("User '{}' already has the authorization '{}' on logbook '{}'", userId, authorizationType, logbookName);
@@ -1328,34 +1323,6 @@ public class LogbookService {
             );
 
         }
-    }
-
-    /**
-     * Apply the logbook
-     * Apply the authorization on multiple logbooks
-     *
-     * @param authorizations the list of authorizations to apply
-     */
-    @Transactional
-    public void applyGroupAuthorizations(List<LogbookGroupAuthorizationDTO> authorizations) {
-        // aggregate authorization for logbook creating AuthorizationDTO list for each one
-        Map<String, List<AuthorizationDTO>> authByLogbook = new HashMap<>();
-        for (LogbookGroupAuthorizationDTO auth :
-                authorizations) {
-            if (!authByLogbook.containsKey(auth.logbookId())) {
-                authByLogbook.put(auth.logbookId(), new ArrayList<>());
-            }
-            authByLogbook.get(auth.logbookId()).add(
-                    AuthorizationDTO.builder()
-                            .owner(auth.groupId())
-                            .ownerType(AuthorizationOwnerTypeDTO.Group)
-                            .authorizationType(auth.authorizationType())
-                            .resource("/logbook/%s".formatted(auth.logbookId()))
-                            .build()
-            );
-        }
-
-        applyDistinctAuthorization(authByLogbook, AuthorizationOwnerTypeDTO.Group);
     }
 
     /**

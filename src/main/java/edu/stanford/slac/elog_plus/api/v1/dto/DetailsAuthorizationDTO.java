@@ -20,6 +20,5 @@ public record DetailsAuthorizationDTO(
         @Schema(description = "The name of the authorized resource")
         String resourceName,
         @Schema(description = "The type of the authorization [Read, Write, Admin]")
-        AuthorizationTypeDTO authorizationType
-){
-}
+        AuthorizationTypeDTO permission
+){}

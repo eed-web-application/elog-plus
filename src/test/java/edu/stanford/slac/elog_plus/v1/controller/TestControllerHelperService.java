@@ -549,7 +549,7 @@ public class TestControllerHelperService {
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
-            Optional<String> anchorId,
+            Optional<String> anchor,
             Optional<LocalDateTime> startDate,
             Optional<LocalDateTime> endDate,
             Optional<Integer> contextSize,
@@ -564,7 +564,7 @@ public class TestControllerHelperService {
         MockHttpServletRequestBuilder getBuilder =
                 get("/v1/entries")
                         .accept(MediaType.APPLICATION_JSON);
-        anchorId.ifPresent(string -> getBuilder.param("anchorId", string));
+        anchor.ifPresent(string -> getBuilder.param("anchor", string));
         startDate.ifPresent(localDateTime -> getBuilder.param("startDate", String.valueOf(localDateTime)));
         endDate.ifPresent(localDateTime -> getBuilder.param("endDate", String.valueOf(localDateTime)));
         contextSize.ifPresent(size -> getBuilder.param("contextSize", String.valueOf(size)));

@@ -439,6 +439,6 @@ public class GroupControllerControllerTest {
         );
         assertThat(foundGroup).isNotNull();
         assertThat(foundGroup.getPayload().authorizations()).hasSize(1);
-        assertThat(foundGroup.getPayload().authorizations().get(0).resourceName()).isEqualTo("new logbook");
+        assertThat(foundGroup.getPayload().authorizations().get(0).resourceName()).isEqualTo("new-logbook");
     }
 }
