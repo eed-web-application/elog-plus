@@ -50,21 +50,3 @@ gecos: Name3 Surname3
 cn: Surname3
 sn: Surname3
 mail: user3@slac.stanford.edu
-
-# Create Group
-dn: cn=group-1,ou=Group, dc=sdf,dc=slac,dc=stanford,dc=edu
-cn: group-1
-objectClass: posixGroup
-objectClass: top
-objectClass: importedObject
-gidNumber: 3591
-memberUid: user1@slac.stanford.edu
-
-dn: cn=group-2,ou=Group, dc=sdf,dc=slac,dc=stanford,dc=edu
-cn: group-2
-objectClass: posixGroup
-objectClass: top
-objectClass: importedObject
-gidNumber: 3591
-memberUid: user1@slac.stanford.edu
-memberUid: user2@slac.stanford.edu

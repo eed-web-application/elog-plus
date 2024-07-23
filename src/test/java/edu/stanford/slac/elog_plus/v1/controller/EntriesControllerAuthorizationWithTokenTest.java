@@ -4,12 +4,14 @@ import edu.stanford.slac.ad.eed.baselib.api.v1.dto.*;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.ad.eed.baselib.model.AuthenticationToken;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
+import edu.stanford.slac.ad.eed.baselib.model.LocalGroup;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.api.v1.dto.NewAuthorizationDTO;
 import edu.stanford.slac.elog_plus.model.*;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import edu.stanford.slac.elog_plus.v1.service.DocumentGenerationService;
+import edu.stanford.slac.elog_plus.v1.service.SharedUtilityService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -63,6 +65,11 @@ public class EntriesControllerAuthorizationWithTokenTest {
     @Autowired
     private DocumentGenerationService documentGenerationService;
 
+    @Autowired
+    private SharedUtilityService sharedUtilityService;
+
+    private List<String> groupIds;
+
     @BeforeEach
     public void preTest() {
         mongoTemplate.remove(new Query(), Entry.class);
@@ -72,9 +79,11 @@ public class EntriesControllerAuthorizationWithTokenTest {
         //reset authorizations
         mongoTemplate.remove(new Query(), Authorization.class);
         mongoTemplate.remove(new Query(), AuthenticationToken.class);
+        mongoTemplate.remove(new Query(), LocalGroup.class);
         appProperties.getRootUserList().clear();
         appProperties.getRootUserList().add("user1@slac.stanford.edu");
         authService.updateRootUser();
+        groupIds = sharedUtilityService.createDefaultGroup();
     }
 
     @Test
@@ -162,7 +171,8 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                 NewAuthorizationDTO
                                         .builder()
                                         .ownerType(AuthorizationOwnerTypeDTO.Group)
-                                        .ownerId("group-2")
+                                        // group-2 id
+                                        .ownerId(groupIds.get(1))
                                         .authorizationType(AuthorizationTypeDTO.Write)
                                         .build()
                         )
