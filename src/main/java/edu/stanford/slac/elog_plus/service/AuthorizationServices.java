@@ -319,17 +319,7 @@ public class AuthorizationServices {
     @Transactional
     public void updateAuthorization(String authorizationId, UpdateAuthorizationDTO updateAuthorizationDTO) {
         var authorizationFound = authService.findAuthorizationById(authorizationId);
-//        authService.deleteAuthorizationById(authorizationId);
-        authService.updateAuthorizationType(authorizationId, updateAuthorizationDTO.authorizationType());
-//        authService.addNewAuthorization(
-//                edu.stanford.slac.ad.eed.baselib.api.v1.dto.NewAuthorizationDTO
-//                        .builder()
-//                        .owner(authorizationFound.owner())
-//                        .ownerType(authorizationFound.ownerType())
-//                        .resource(authorizationFound.resource())
-//                        .authorizationType(updateAuthorizationDTO.authorizationType())
-//                        .build()
-//        );
+        authService.updateAuthorizationType(authorizationId, updateAuthorizationDTO.permission());
     }
 
     /**

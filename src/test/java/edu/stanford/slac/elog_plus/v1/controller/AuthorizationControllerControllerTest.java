@@ -187,7 +187,7 @@ public class AuthorizationControllerControllerTest {
                         userDetailsResult.getPayload().authorization().get(0).id(),
                         UpdateAuthorizationDTO
                                 .builder()
-                                .authorizationType(AuthorizationTypeDTO.Write)
+                                .permission(AuthorizationTypeDTO.Write)
                                 .build()
 
                 )
