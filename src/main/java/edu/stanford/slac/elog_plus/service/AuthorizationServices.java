@@ -46,14 +46,14 @@ public class AuthorizationServices {
                 u -> authorizationMapper.fromPersonDTO
                         (
                                 u,
-                                includeAuthorizations?authorizationMapper.fromAuthorizationDTO(
+                                includeAuthorizations ? authorizationMapper.fromAuthorizationDTO(
                                         authService.getAllAuthenticationForOwner(
                                                 u.mail(),
                                                 AuthorizationOwnerTypeDTO.User,
                                                 Optional.empty(),
                                                 Optional.of(includeInheritance)
                                         )
-                                ):Collections.emptyList()
+                                ) : Collections.emptyList()
                         )
 
         ).toList();
@@ -62,7 +62,7 @@ public class AuthorizationServices {
     /**
      * Find a user
      *
-     * @param userId               the id of the user to find
+     * @param userId                the id of the user to find
      * @param includeAuthorizations if true include the authorizations
      * @return the user details
      */
@@ -71,17 +71,17 @@ public class AuthorizationServices {
         var foundUser = peopleGroupService.findPersonByEMail(userId);
         //convert to UserDetailsDTO
         return authorizationMapper.fromPersonDTO
-                        (
-                                foundUser,
-                                includeAuthorizations?authorizationMapper.fromAuthorizationDTO(
-                                        authService.getAllAuthenticationForOwner(
-                                                foundUser.mail(),
-                                                AuthorizationOwnerTypeDTO.User,
-                                                Optional.of(false),
-                                                Optional.of(includeInheritance)
-                                        )
-                                ):Collections.emptyList()
-                        );
+                (
+                        foundUser,
+                        includeAuthorizations ? authorizationMapper.fromAuthorizationDTO(
+                                authService.getAllAuthenticationForOwner(
+                                        foundUser.mail(),
+                                        AuthorizationOwnerTypeDTO.User,
+                                        Optional.of(false),
+                                        Optional.of(includeInheritance)
+                                )
+                        ) : Collections.emptyList()
+                );
     }
 
     /**
@@ -177,13 +177,13 @@ public class AuthorizationServices {
     /**
      * Find a user
      *
-     * @param userId               the id of the user to find
+     * @param applicationId         the id of the user to find
      * @param includeAuthorizations if true include the authorizations
      * @return the user details
      */
     public ApplicationDetailsDTO getApplicationById(String applicationId, boolean includeAuthorizations) {
         var authTokenFound = authService.getAuthenticationTokenById(applicationId).orElseThrow(
-                ()->ControllerLogicException
+                () -> ControllerLogicException
                         .builder()
                         .errorCode(-1)
                         .errorMessage("Application not found")
@@ -267,6 +267,9 @@ public class AuthorizationServices {
                 Optional.empty()
         );
 
+        //check if user, group or application exists before to add authorization
+        ensureOwnerExistence(newAuthorizationDTO.ownerId(), newAuthorizationDTO.ownerType());
+
         // check if the authorization already exists
         assertion(
                 ResourceAlreadyAuthorized
@@ -300,6 +303,42 @@ public class AuthorizationServices {
     }
 
     /**
+     * Check if the owner exists
+     *
+     * @param ownerId                   the id of the owner
+     * @param authorizationOwnerTypeDTO the type of the owner
+     */
+    private void ensureOwnerExistence(String ownerId, AuthorizationOwnerTypeDTO authorizationOwnerTypeDTO) {
+        switch (authorizationOwnerTypeDTO) {
+            case User:
+                // if not found will try an exception
+                peopleGroupService.findPersonByEMail(ownerId);
+                break;
+            case Group:
+                // if not found will try an exception
+                authService.findLocalGroupById(ownerId);
+                break;
+            case Token:
+                authService.getAuthenticationTokenByEmail(ownerId).orElseThrow(
+                        () -> ControllerLogicException
+                                .builder()
+                                .errorCode(-1)
+                                .errorMessage("Application not found")
+                                .errorDomain("AuthorizationServices::ensureOwnerExistence")
+                                .build()
+                );
+                break;
+            default:
+                throw ControllerLogicException
+                        .builder()
+                        .errorCode(-1)
+                        .errorMessage("Owner type not found")
+                        .errorDomain("AuthorizationServices::ensureOwnerExistence")
+                        .build();
+        }
+    }
+
+    /**
      * Delete an authorization
      *
      * @param authorizationId the id of the authorization to delete
@@ -329,7 +368,7 @@ public class AuthorizationServices {
      * @return the id of the new application
      */
     public String createNewApplication(NewApplicationDTO newApplicationDTO) {
-        var createdAuthToken =  authService.addNewApplicationAuthenticationToken(
+        var createdAuthToken = authService.addNewApplicationAuthenticationToken(
                 NewAuthenticationTokenDTO
                         .builder()
                         .name(newApplicationDTO.name())
