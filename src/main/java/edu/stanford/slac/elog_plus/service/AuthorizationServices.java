@@ -271,18 +271,17 @@ public class AuthorizationServices {
         ensureOwnerExistence(newAuthorizationDTO.ownerId(), newAuthorizationDTO.ownerType());
 
         // check if the authorization already exists
-        assertion(
-                ResourceAlreadyAuthorized
-                        .byResource()
-                        .errorCode(-1)
-                        .errorDomain("AuthorizationServices::createNew")
-                        .resource(resource)
-                        .owner(newAuthorizationDTO.ownerId())
-                        .build(),
-                () -> foundAuthorization.stream().noneMatch(
-                        a -> a.resource().equals(resource)
-                )
-        );
+        if(foundAuthorization.stream().noneMatch(
+                a -> a.resource().equals(resource)
+        )) {
+            log.info(
+                    "Resource {}/{} already authorized for {}/{} by {}",
+                    newAuthorizationDTO.resourceType(), newAuthorizationDTO.resourceId(),
+                    newAuthorizationDTO.ownerType(), newAuthorizationDTO.ownerId(),
+                    getCurrentUsername()
+            );
+            return;
+        }
 
         // we can create the authorization
         authService.addNewAuthorization(
