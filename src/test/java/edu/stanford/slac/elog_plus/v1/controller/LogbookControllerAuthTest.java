@@ -258,17 +258,13 @@ public class LogbookControllerAuthTest {
                                 .builder()
                                 .ownerId("user2@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
-                                .authorizationType(
-                                        Write
-                                )
+                                .authorizationType(Write)
                                 .build(),
                         NewAuthorizationDTO
                                 .builder()
-                                .ownerId(app1Result.getPayload().email())
+                                .ownerId(app1Result.getPayload().id())
                                 .ownerType(AuthorizationOwnerTypeDTO.Token)
-                                .authorizationType(
-                                        Read
-                                )
+                                .authorizationType(Read)
                                 .build()
                 )
         );
@@ -283,9 +279,7 @@ public class LogbookControllerAuthTest {
                                 .builder()
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
                                 .ownerId("user2@slac.stanford.edu")
-                                .authorizationType(
-                                        Write
-                                )
+                                .authorizationType(Write)
                                 .build()
                 )
         );
@@ -485,7 +479,7 @@ public class LogbookControllerAuthTest {
                                 .builder()
                                 .resourceId(newLogbookResult.getPayload())
                                 .resourceType(ResourceTypeDTO.Logbook)
-                                .ownerId("local-group-1")
+                                .ownerId(groupIdResult.getPayload())
                                 .ownerType(AuthorizationOwnerTypeDTO.Group)
                                 .authorizationType(Read)
                                 .build()
@@ -507,7 +501,7 @@ public class LogbookControllerAuthTest {
         assertThat(logbook.getPayload().authorizations())
                 .hasSize(2)
                 .extracting(DetailsAuthorizationDTO::ownerId)
-                .contains("user1@slac.stanford.edu", "local-group-1");
+                .contains("user1@slac.stanford.edu", groupIdResult.getPayload());
 
         // remove authorization for all user
         authService.deleteAuthorizationForResourcePrefix("/logbook/%s".formatted(newLogbookResult.getPayload()), AuthorizationOwnerTypeDTO.User);
@@ -649,7 +643,7 @@ public class LogbookControllerAuthTest {
                                 .builder()
                                 .resourceId(newLogbookResult.getPayload())
                                 .resourceType(ResourceTypeDTO.Logbook)
-                                .ownerId("local-group-1")
+                                .ownerId(group1IdResult.getPayload())
                                 .ownerType(AuthorizationOwnerTypeDTO.Group)
                                 .authorizationType(Read)
                                 .build()
@@ -666,7 +660,7 @@ public class LogbookControllerAuthTest {
                                 .builder()
                                 .resourceId(newLogbookResult.getPayload())
                                 .resourceType(ResourceTypeDTO.Logbook)
-                                .ownerId("local-group-2")
+                                .ownerId(group2IdResult.getPayload())
                                 .ownerType(AuthorizationOwnerTypeDTO.Group)
                                 .authorizationType(Write)
                                 .build()
@@ -689,15 +683,15 @@ public class LogbookControllerAuthTest {
         assertThat(logbook.getPayload().authorizations())
                 .hasSize(4)
                 .extracting(DetailsAuthorizationDTO::ownerId)
-                .contains("user1@slac.stanford.edu", "user2@slac.stanford.edu", "local-group-1", "local-group-2");
+                .contains("user1@slac.stanford.edu", "user2@slac.stanford.edu", group1IdResult.getPayload(), group2IdResult.getPayload());
 
         var user1Auth = logbook.getPayload().authorizations().stream().filter(a -> a.ownerId().compareTo("user1@slac.stanford.edu") == 0).toList();
         assertThat(user1Auth).hasSize(1).extracting(DetailsAuthorizationDTO::permission).contains(Write);
         var user2Auth = logbook.getPayload().authorizations().stream().filter(a -> a.ownerId().compareTo("user2@slac.stanford.edu") == 0).toList();
         assertThat(user2Auth).hasSize(1).extracting(DetailsAuthorizationDTO::permission).contains(Read);
-        var group1Auth = logbook.getPayload().authorizations().stream().filter(a -> a.ownerId().compareTo("local-group-1") == 0).toList();
+        var group1Auth = logbook.getPayload().authorizations().stream().filter(a -> a.ownerId().compareTo(group1IdResult.getPayload()) == 0).toList();
         assertThat(group1Auth).hasSize(1).extracting(DetailsAuthorizationDTO::permission).contains(Read);
-        var group2Auth = logbook.getPayload().authorizations().stream().filter(a -> a.ownerId().compareTo("local-group-2") == 0).toList();
+        var group2Auth = logbook.getPayload().authorizations().stream().filter(a -> a.ownerId().compareTo(group2IdResult.getPayload()) == 0).toList();
         assertThat(group2Auth).hasSize(1).extracting(DetailsAuthorizationDTO::permission).contains(Write);
 
 

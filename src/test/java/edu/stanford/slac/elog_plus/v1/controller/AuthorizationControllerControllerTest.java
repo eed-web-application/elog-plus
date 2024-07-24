@@ -10,6 +10,7 @@ import edu.stanford.slac.ad.eed.baselib.model.LocalGroup;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.NewAuthorizationDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.ResourceTypeDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.UpdateAuthorizationDTO;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import org.junit.jupiter.api.BeforeEach;
@@ -134,5 +135,84 @@ public class AuthorizationControllerControllerTest {
         assertThat(userDetailsNoRootResult.getPayload()).isNotNull();
         assertThat(userDetailsNoRootResult.getPayload().email()).isEqualTo("user2@slac.stanford.edu");
         assertThat(userDetailsNoRootResult.getPayload().isRoot()).isFalse();
+    }
+
+    @Test
+    public void updateAuthorization() {
+        var newAuthIdResult = assertDoesNotThrow(
+                () -> testControllerHelperService.authorizationControllerCreateNewAuthorization(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewAuthorizationDTO
+                                .builder()
+                                .ownerId("user2@slac.stanford.edu")
+                                .ownerType(AuthorizationOwnerTypeDTO.User)
+                                .resourceType(ResourceTypeDTO.Logbook)
+                                .resourceId("1")
+                                .authorizationType(AuthorizationTypeDTO.Admin)
+                                .build()
+                )
+        );
+
+        // fetch user details
+        var userDetailsResult = assertDoesNotThrow(
+                () -> testControllerHelperService.userControllerFindUserById(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        "user2@slac.stanford.edu",
+                        Optional.of(true),
+                        Optional.of(false)
+                )
+        );
+        assertThat(userDetailsResult).isNotNull();
+        assertThat(userDetailsResult.getPayload()).isNotNull();
+        assertThat(userDetailsResult.getPayload().email()).isEqualTo("user2@slac.stanford.edu");
+        assertThat(userDetailsResult.getPayload().authorization())
+                .hasSize(1)
+                .anySatisfy(
+                        authorization -> {
+                            assertThat(authorization.permission()).isEqualTo(AuthorizationTypeDTO.Admin);
+                            assertThat(authorization.resourceType()).isEqualTo(ResourceTypeDTO.Logbook);
+                            assertThat(authorization.resourceId()).isEqualTo("1");
+                        }
+                );
+
+        assertDoesNotThrow(
+                () -> testControllerHelperService.authorizationControllerUpdateAuthorization(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        userDetailsResult.getPayload().authorization().get(0).id(),
+                        UpdateAuthorizationDTO
+                                .builder()
+                                .permission(AuthorizationTypeDTO.Write)
+                                .build()
+
+                )
+        );
+        var userDetailsUpdatedResult = assertDoesNotThrow(
+                () -> testControllerHelperService.userControllerFindUserById(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        "user2@slac.stanford.edu",
+                        Optional.of(true),
+                        Optional.of(false)
+                )
+        );
+        assertThat(userDetailsUpdatedResult).isNotNull();
+        assertThat(userDetailsUpdatedResult.getPayload()).isNotNull();
+        assertThat(userDetailsUpdatedResult.getPayload().email()).isEqualTo("user2@slac.stanford.edu");
+        assertThat(userDetailsUpdatedResult.getPayload().authorization())
+                .hasSize(1)
+                .anySatisfy(
+                        authorization -> {
+                            assertThat(authorization.permission()).isEqualTo(AuthorizationTypeDTO.Write);
+                            assertThat(authorization.resourceType()).isEqualTo(ResourceTypeDTO.Logbook);
+                            assertThat(authorization.resourceId()).isEqualTo("1");
+                        }
+                );
     }
 }

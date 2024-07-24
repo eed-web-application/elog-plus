@@ -274,7 +274,6 @@ public class UserControllerControllerTest {
                         tuple(Admin.name(), newLogbook2result.getPayload(), "Logbook")
                 );
 
-       //TODO: update user2 to read on logbook 1 too
         var updatedUser2 = assertDoesNotThrow(
                 () -> testControllerHelperService.authorizationControllerCreateNewAuthorization(
                         mockMvc,

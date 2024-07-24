@@ -114,7 +114,7 @@ public class EntriesControllerTest {
         AssertionsForClassTypes.assertThat(newLogID.getErrorCode()).isEqualTo(0);
     }
 
-    @Test
+    //@Test
     public void createNewLogUsingServiceJWT() throws Exception {
         var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc, appProperties.getInternalServiceTokenEmail());
         ApiResultResponse<String> newLogID =

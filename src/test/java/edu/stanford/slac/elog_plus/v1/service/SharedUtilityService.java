@@ -2,6 +2,7 @@ package edu.stanford.slac.elog_plus.v1.service;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.NewAuthenticationTokenDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.PersonDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v2.dto.NewLocalGroupDTO;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService;
@@ -15,6 +16,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 
 import static edu.stanford.slac.elog_plus.utility.StringUtilities.logbookNameNormalization;
 import static edu.stanford.slac.elog_plus.utility.StringUtilities.tokenNameNormalization;
@@ -32,7 +35,40 @@ public class SharedUtilityService {
     private PeopleGroupService peopleGroupService;
 
     /**
+     * Create a default group for testing
+     */
+    public List<String> createDefaultGroup() {
+        List<String> ids = new LinkedList<>();
+        ids.add(
+                assertDoesNotThrow(
+                        () -> authService.createLocalGroup(
+                                NewLocalGroupDTO
+                                        .builder()
+                                        .name("group-1")
+                                        .description("group-1 description")
+                                        .members(List.of("user1@slac.stanford.edu"))
+                                        .build()
+                        )
+                )
+        );
+        ids.add(
+                assertDoesNotThrow(
+                        () -> authService.createLocalGroup(
+                                NewLocalGroupDTO
+                                        .builder()
+                                        .name("group-2")
+                                        .description("group-2 description")
+                                        .members(List.of("user1@slac.stanford.edu", "user2@slac.stanford.edu"))
+                                        .build()
+                        )
+                )
+        );
+        return ids;
+    }
+
+    /**
      * Create a new token and return the email of the token
+     *
      * @param tokenName the name of the token
      * @return the email of the token
      */
@@ -81,7 +117,7 @@ public class SharedUtilityService {
     }
 
     public Authentication getAuthenticationMockForFirstRootUser() {
-        if(appProperties.getRootUserList().isEmpty()) {
+        if (appProperties.getRootUserList().isEmpty()) {
             return null;
         } else {
             return getAuthenticationMockForEmail(
