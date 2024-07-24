@@ -62,10 +62,8 @@ public class AuthorizationServiceTest {
                         .build()
                 )
         );
-
-        ResourceAlreadyAuthorized alreadyAuthorizedUser = assertThrows(
-                ResourceAlreadyAuthorized.class,
-                () -> authorizationServices.createNew(
+        // no throw on same authorization
+        assertDoesNotThrow(() -> authorizationServices.createNew(
                         NewAuthorizationDTO
                                 .builder()
                                 .authorizationType(AuthorizationTypeDTO.Write)
@@ -76,6 +74,5 @@ public class AuthorizationServiceTest {
                                 .build()
                 )
         );
-        Assertions.assertThat(alreadyAuthorizedUser.getErrorCode()).isEqualTo(-1);
     }
 }
