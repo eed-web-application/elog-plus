@@ -100,7 +100,7 @@ public class AuthorizationControllerControllerTest {
         assertThat(userDetailsResult.getPayload().isRoot()).isTrue();
 
         // find root authorization
-        var rootAuthorization = userDetailsResult.getPayload().authorization()
+        var rootAuthorization = userDetailsResult.getPayload().authorizations()
                 .stream()
                 .filter
                         (
@@ -169,7 +169,7 @@ public class AuthorizationControllerControllerTest {
         assertThat(userDetailsResult).isNotNull();
         assertThat(userDetailsResult.getPayload()).isNotNull();
         assertThat(userDetailsResult.getPayload().email()).isEqualTo("user2@slac.stanford.edu");
-        assertThat(userDetailsResult.getPayload().authorization())
+        assertThat(userDetailsResult.getPayload().authorizations())
                 .hasSize(1)
                 .anySatisfy(
                         authorization -> {
@@ -184,7 +184,7 @@ public class AuthorizationControllerControllerTest {
                         mockMvc,
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
-                        userDetailsResult.getPayload().authorization().get(0).id(),
+                        userDetailsResult.getPayload().authorizations().get(0).id(),
                         UpdateAuthorizationDTO
                                 .builder()
                                 .permission(AuthorizationTypeDTO.Write)
@@ -205,7 +205,7 @@ public class AuthorizationControllerControllerTest {
         assertThat(userDetailsUpdatedResult).isNotNull();
         assertThat(userDetailsUpdatedResult.getPayload()).isNotNull();
         assertThat(userDetailsUpdatedResult.getPayload().email()).isEqualTo("user2@slac.stanford.edu");
-        assertThat(userDetailsUpdatedResult.getPayload().authorization())
+        assertThat(userDetailsUpdatedResult.getPayload().authorizations())
                 .hasSize(1)
                 .anySatisfy(
                         authorization -> {

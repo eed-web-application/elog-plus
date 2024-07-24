@@ -25,4 +25,4 @@ public record UserDetailsDTO(
         @Schema(description = "The user can manage the groups")
         Boolean canManageGroup,
         @Schema(description = "The authorization of the user on elog resources")
-        List<DetailsAuthorizationDTO> authorization) {}
+        List<DetailsAuthorizationDTO> authorizations) {}

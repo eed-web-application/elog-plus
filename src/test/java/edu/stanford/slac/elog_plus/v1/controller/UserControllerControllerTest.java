@@ -146,8 +146,8 @@ public class UserControllerControllerTest {
         assertThat(foundUsers.getPayload())
                 .extracting(UserDetailsDTO::email)
                 .contains("user1@slac.stanford.edu", "user2@slac.stanford.edu", "user3@slac.stanford.edu");
-        assertThat(foundUsers.getPayload().get(0).authorization()).hasSize(2);
-        assertThat(foundUsers.getPayload().get(0).authorization())
+        assertThat(foundUsers.getPayload().get(0).authorizations()).hasSize(2);
+        assertThat(foundUsers.getPayload().get(0).authorizations())
                 .extracting(
                         a -> a.permission().name(),
                         a -> a.resourceId(),
@@ -157,7 +157,7 @@ public class UserControllerControllerTest {
                         tuple(Read.name(), newLogbook2result.getPayload(), "Logbook"),
                         tuple(Admin.name(), null, "All")
                 );
-        assertThat(foundUsers.getPayload().get(1).authorization())
+        assertThat(foundUsers.getPayload().get(1).authorizations())
                 .extracting(
                         a -> a.permission().name(),
                         a -> a.resourceId(),
@@ -167,7 +167,7 @@ public class UserControllerControllerTest {
                         tuple(Write.name(), newLogbook1result.getPayload(), "Logbook"),
                         tuple(Write.name(), newLogbook2result.getPayload(), "Logbook")
                 );
-        assertThat(foundUsers.getPayload().get(2).authorization())
+        assertThat(foundUsers.getPayload().get(2).authorizations())
                 .extracting(
                         a -> a.permission().name(),
                         a -> a.resourceId(),
@@ -245,7 +245,7 @@ public class UserControllerControllerTest {
         assertThat(foundUsers.getPayload())
                 .extracting(UserDetailsDTO::email)
                 .contains("user1@slac.stanford.edu", "user2@slac.stanford.edu", "user3@slac.stanford.edu");
-        assertThat(foundUsers.getPayload().get(0).authorization())
+        assertThat(foundUsers.getPayload().get(0).authorizations())
                 .extracting(
                         a -> a.permission().name(),
                         a -> a.resourceId(),
@@ -254,7 +254,7 @@ public class UserControllerControllerTest {
                 .contains(
                         tuple(Admin.name(), null, "All")
                 );
-        assertThat(foundUsers.getPayload().get(1).authorization())
+        assertThat(foundUsers.getPayload().get(1).authorizations())
                 .extracting(
                         a -> a.permission().name(),
                         a -> a.resourceId(),
@@ -263,7 +263,7 @@ public class UserControllerControllerTest {
                 .contains(
                         tuple(Write.name(), newLogbook1result.getPayload(), "Logbook")
                 );
-        assertThat(foundUsers.getPayload().get(2).authorization())
+        assertThat(foundUsers.getPayload().get(2).authorizations())
                 .extracting(
                         a -> a.permission().name(),
                         a -> a.resourceId(),
@@ -306,7 +306,7 @@ public class UserControllerControllerTest {
         );
         assertThat(foundUsers2).isNotNull();
         assertThat(foundUsers2.getPayload()).hasSize(3);
-        assertThat(foundUsers2.getPayload().get(1).authorization())
+        assertThat(foundUsers2.getPayload().get(1).authorizations())
                 .extracting(
                         a -> a.permission().name(),
                         a -> a.resourceId(),
@@ -347,7 +347,7 @@ public class UserControllerControllerTest {
                 )
         );
         assertThat(foundUser).isNotNull();
-        assertThat(foundUser.getPayload().authorization()).hasSize(1);
-        assertThat(foundUser.getPayload().authorization().get(0).resourceName()).isEqualTo("new-logbook");
+        assertThat(foundUser.getPayload().authorizations()).hasSize(1);
+        assertThat(foundUser.getPayload().authorizations().get(0).resourceName()).isEqualTo("new-logbook");
     }
 }
