@@ -271,9 +271,7 @@ public class AuthorizationServices {
         ensureOwnerExistence(newAuthorizationDTO.ownerId(), newAuthorizationDTO.ownerType());
 
         // check if the authorization already exists
-        if(foundAuthorization.stream().noneMatch(
-                a -> a.resource().equals(resource)
-        )) {
+        if(foundAuthorization.stream().anyMatch(a -> a.resource().equals(resource))) {
             log.info(
                     "Resource {}/{} already authorized for {}/{} by {}",
                     newAuthorizationDTO.resourceType(), newAuthorizationDTO.resourceId(),
