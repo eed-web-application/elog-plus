@@ -339,7 +339,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                         .builder()
                                         .ownerType(Token)
                                         .ownerId(
-                                                newApp1result.getPayload().email()
+                                                newApp1result.getPayload().id()
                                         )
                                         .authorizationType(AuthorizationTypeDTO.Write)
                                         .build(),
@@ -347,7 +347,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                         .builder()
                                         .ownerType(Token)
                                         .ownerId(
-                                                newApp2result.getPayload().email()
+                                                newApp2result.getPayload().id()
                                         )
                                         .authorizationType(AuthorizationTypeDTO.Admin)
                                         .build()
@@ -455,13 +455,13 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                 NewAuthorizationDTO
                                         .builder()
                                         .ownerType(Token)
-                                        .ownerId(app1Result.getPayload().email())
+                                        .ownerId(app1Result.getPayload().id())
                                         .authorizationType(AuthorizationTypeDTO.Write)
                                         .build(),
                                 NewAuthorizationDTO
                                         .builder()
                                         .ownerType(Token)
-                                        .ownerId(app2Result.getPayload().email())
+                                        .ownerId(app2Result.getPayload().id())
                                         .authorizationType(AuthorizationTypeDTO.Admin)
                                         .build()
                         )

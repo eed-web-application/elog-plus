@@ -117,7 +117,7 @@ public class AuthorizationServices {
                                                 (
                                                         authService.getAllAuthenticationForOwner
                                                                 (
-                                                                        groupFound.name(),
+                                                                        groupFound.id(),
                                                                         AuthorizationOwnerTypeDTO.Group,
                                                                         Optional.empty()
                                                                 )
@@ -163,7 +163,7 @@ public class AuthorizationServices {
                                                 (
                                                         authService.getAllAuthenticationForOwner
                                                                 (
-                                                                        g.name(),
+                                                                        g.id(),
                                                                         AuthorizationOwnerTypeDTO.Group,
                                                                         Optional.empty()
                                                                 )
@@ -319,7 +319,7 @@ public class AuthorizationServices {
                 authService.findLocalGroupById(ownerId);
                 break;
             case Token:
-                authService.getAuthenticationTokenByEmail(ownerId).orElseThrow(
+                authService.getAuthenticationTokenById(ownerId).orElseThrow(
                         () -> ControllerLogicException
                                 .builder()
                                 .errorCode(-1)

@@ -420,7 +420,7 @@ public class GroupControllerControllerTest {
                 List.of(
                         NewAuthorizationDTO
                                 .builder()
-                                .ownerId("local-group-1")
+                                .ownerId(newGroupIdResult.getPayload())
                                 .ownerType(AuthorizationOwnerTypeDTO.Group)
                                 .authorizationType(Write)
                                 .build()

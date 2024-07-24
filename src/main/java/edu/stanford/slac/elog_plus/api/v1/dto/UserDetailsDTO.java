@@ -11,16 +11,18 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "User details")
-public record UserDetailsDTO (
-    @Schema(description = "The name of the user")
-    String name,
-    @Schema(description = "The surname of the user")
-    String surname,
-    @Schema(description = "The email of the user")
-    String email,
-    @Schema(description = "The user has root role")
-    Boolean isRoot,
-    @Schema(description = "The user can manage the groups")
-    Boolean canManageGroup,
-    @Schema(description = "The authorization of the user on elog resources")
-    List<DetailsAuthorizationDTO> authorization) {}
+public record UserDetailsDTO(
+        @Schema(description = "The id of the user")
+        String id,
+        @Schema(description = "The name of the user")
+        String name,
+        @Schema(description = "The surname of the user")
+        String surname,
+        @Schema(description = "The email of the user")
+        String email,
+        @Schema(description = "The user has root role")
+        Boolean isRoot,
+        @Schema(description = "The user can manage the groups")
+        Boolean canManageGroup,
+        @Schema(description = "The authorization of the user on elog resources")
+        List<DetailsAuthorizationDTO> authorization) {}

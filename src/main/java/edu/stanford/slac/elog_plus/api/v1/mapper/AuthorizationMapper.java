@@ -42,6 +42,7 @@ public abstract class AuthorizationMapper {
             return null;
         }
         return UserDetailsDTO.builder()
+                .id(personDTO.mail())
                 .name(personDTO.commonName())
                 .surname(personDTO.surname())
                 .email(personDTO.mail())

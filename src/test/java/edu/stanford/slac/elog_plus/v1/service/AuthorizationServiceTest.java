@@ -58,7 +58,7 @@ public class AuthorizationServiceTest {
                         .resourceId("r1")
                         .resourceType(ResourceTypeDTO.Logbook)
                         .ownerType(AuthorizationOwnerTypeDTO.User)
-                        .ownerId("u1")
+                        .ownerId("user1@slac.stanford.edu")
                         .build()
                 )
         );
@@ -72,7 +72,7 @@ public class AuthorizationServiceTest {
                                 .resourceId("r1")
                                 .resourceType(ResourceTypeDTO.Logbook)
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
-                                .ownerId("u1")
+                                .ownerId("user1@slac.stanford.edu")
                                 .build()
                 )
         );

@@ -102,7 +102,7 @@ public class LogbookControllerAuthWithGlobalAuthenticationTokenTest {
                 List.of(
                         NewAuthorizationDTO
                                 .builder()
-                                .ownerId(createdApplication.getPayload().email())
+                                .ownerId(createdApplication.getPayload().id())
                                 .ownerType(AuthorizationOwnerTypeDTO.Token)
                                 .authorizationType(
                                         Write
@@ -122,9 +122,7 @@ public class LogbookControllerAuthWithGlobalAuthenticationTokenTest {
                                 .builder()
                                 .ownerId("user2@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
-                                .authorizationType(
-                                        Write
-                                )
+                                .authorizationType(Write)
                                 .build()
                 )
         );
@@ -132,7 +130,7 @@ public class LogbookControllerAuthWithGlobalAuthenticationTokenTest {
                 () -> testControllerHelperService.getAllLogbook(
                         mockMvc,
                         status().isOk(),
-                        Optional.of(createdApplication.getPayload().email()),
+                        Optional.of(createdApplication.getPayload().id()),
                         Optional.of(false),
                         Optional.empty()
                 )
@@ -151,5 +149,4 @@ public class LogbookControllerAuthWithGlobalAuthenticationTokenTest {
                         newLogbookApiResultOne.getPayload()
                 );
     }
-
 }
