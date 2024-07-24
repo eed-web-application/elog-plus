@@ -706,7 +706,7 @@ public class LogbookControllerAuthTest {
                         Optional.of(false)
                 )
         );
-        assertThat(user1Details.getPayload().authorization())
+        assertThat(user1Details.getPayload().authorizations())
                 .hasSize(2)
                 .extracting(DetailsAuthorizationDTO::permission)
                 .contains(Write, Admin);

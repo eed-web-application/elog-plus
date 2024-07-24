@@ -356,7 +356,7 @@ public class LogbookAuthorizationService {
      */
     private UserDetailsDTO completeUserAuthorization(UserDetailsDTO user, Authentication authentication) {
         List<DetailsAuthorizationDTO> filteredUserAuthorization = user
-                .authorization()
+                .authorizations()
                 .parallelStream()
                 .filter
                         (
@@ -378,7 +378,7 @@ public class LogbookAuthorizationService {
                 .toList();
         return user
                 .toBuilder()
-                .authorization(filteredUserAuthorization)
+                .authorizations(filteredUserAuthorization)
                 .build();
     }
 }

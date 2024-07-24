@@ -51,7 +51,7 @@ public abstract class AuthorizationMapper {
                         (
                                 authService.canManageGroup(personDTO.mail())
                         )
-                .authorization(userAuthorizationDTOList==null?Collections.emptyList():userAuthorizationDTOList)
+                .authorizations(userAuthorizationDTOList==null?Collections.emptyList():userAuthorizationDTOList)
                 .build();
     }
 
