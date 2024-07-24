@@ -117,7 +117,7 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
                                 .builder()
                                 .ownerId(app1Result.getPayload().id())
                                 .ownerType(AuthorizationOwnerTypeDTO.Token)
-                                .authorizationType(
+                                .permission(
                                         Write
                                 )
                                 .build(),
@@ -125,7 +125,7 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
                                 .builder()
                                 .ownerId(app2Result.getPayload().id())
                                 .ownerType(AuthorizationOwnerTypeDTO.Token)
-                                .authorizationType(
+                                .permission(
                                         Read
                                 )
                                 .build()
@@ -142,7 +142,7 @@ public class LogbookControllerAuthWithAuthenticationTokenTest {
                                 .builder()
                                 .ownerId(app1Result.getPayload().id())
                                 .ownerType(AuthorizationOwnerTypeDTO.Token)
-                                .authorizationType(Write)
+                                .permission(Write)
                                 .build()
                 )
         );

@@ -287,7 +287,7 @@ public class AuthorizationServices {
                         .builder()
                         .owner(newAuthorizationDTO.ownerId())
                         .ownerType(newAuthorizationDTO.ownerType())
-                        .authorizationType(newAuthorizationDTO.authorizationType())
+                        .authorizationType(newAuthorizationDTO.permission())
                         .resource(resource)
                         .build()
         );

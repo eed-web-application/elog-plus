@@ -54,7 +54,7 @@ public class AuthorizationServiceTest {
                 authorizationServices.createNew(
                 NewAuthorizationDTO
                         .builder()
-                        .authorizationType(AuthorizationTypeDTO.Read)
+                        .permission(AuthorizationTypeDTO.Read)
                         .resourceId("r1")
                         .resourceType(ResourceTypeDTO.Logbook)
                         .ownerType(AuthorizationOwnerTypeDTO.User)
@@ -66,7 +66,7 @@ public class AuthorizationServiceTest {
         assertDoesNotThrow(() -> authorizationServices.createNew(
                         NewAuthorizationDTO
                                 .builder()
-                                .authorizationType(AuthorizationTypeDTO.Write)
+                                .permission(AuthorizationTypeDTO.Write)
                                 .resourceId("r1")
                                 .resourceType(ResourceTypeDTO.Logbook)
                                 .ownerType(AuthorizationOwnerTypeDTO.User)

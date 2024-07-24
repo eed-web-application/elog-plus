@@ -27,5 +27,5 @@ public record NewAuthorizationDTO(
         AuthorizationOwnerTypeDTO ownerType,
         @NotNull
         @Schema(description = "The authorization type [Read, Write, Admin]")
-        AuthorizationTypeDTO authorizationType
+        AuthorizationTypeDTO permission
 ) {}

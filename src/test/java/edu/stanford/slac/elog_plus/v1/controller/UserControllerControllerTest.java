@@ -76,7 +76,7 @@ public class UserControllerControllerTest {
                                 .builder()
                                 .ownerId("user2@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
-                                .authorizationType(
+                                .permission(
                                         Write
                                 )
                                 .build(),
@@ -84,7 +84,7 @@ public class UserControllerControllerTest {
                                 .builder()
                                 .ownerId("user3@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
-                                .authorizationType(
+                                .permission(
                                         Read
                                 )
                                 .build()
@@ -102,7 +102,7 @@ public class UserControllerControllerTest {
                                 .builder()
                                 .ownerId("user1@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
-                                .authorizationType(
+                                .permission(
                                         Read
                                 )
                                 .build(),
@@ -110,7 +110,7 @@ public class UserControllerControllerTest {
                                 .builder()
                                 .ownerId("user2@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
-                                .authorizationType(
+                                .permission(
                                         Write
                                 )
                                 .build(),
@@ -118,7 +118,7 @@ public class UserControllerControllerTest {
                                 .builder()
                                 .ownerId("user3@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
-                                .authorizationType(
+                                .permission(
                                         Admin
                                 )
                                 .build()
@@ -193,7 +193,7 @@ public class UserControllerControllerTest {
                                 .builder()
                                 .ownerId("user2@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
-                                .authorizationType(
+                                .permission(
                                         Write
                                 )
                                 .build(),
@@ -201,7 +201,7 @@ public class UserControllerControllerTest {
                                 .builder()
                                 .ownerId("user3@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
-                                .authorizationType(
+                                .permission(
                                         Read
                                 )
                                 .build()
@@ -219,7 +219,7 @@ public class UserControllerControllerTest {
                                 .builder()
                                 .ownerId("user3@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
-                                .authorizationType(
+                                .permission(
                                         Admin
                                 )
                                 .build()
@@ -285,7 +285,7 @@ public class UserControllerControllerTest {
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
                                 .resourceId(newLogbook2result.getPayload())
                                 .resourceType(ResourceTypeDTO.Logbook)
-                                .authorizationType(Read)
+                                .permission(Read)
                                 .build()
                 )
         );
@@ -331,7 +331,7 @@ public class UserControllerControllerTest {
                                 .builder()
                                 .ownerId("user2@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
-                                .authorizationType(Write)
+                                .permission(Write)
                                 .build()
                 )
         );
