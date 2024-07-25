@@ -203,7 +203,7 @@ public class AuthorizationServices {
                                         (
                                                 authService.getAllAuthenticationForOwner
                                                         (
-                                                                authTokenFound.email(),
+                                                                authTokenFound.id(),
                                                                 AuthorizationOwnerTypeDTO.Token,
                                                                 Optional.empty()
                                                         )
@@ -241,7 +241,7 @@ public class AuthorizationServices {
                                                 (
                                                         authService.getAllAuthenticationForOwner
                                                                 (
-                                                                        a.email(),
+                                                                        a.id(),
                                                                         AuthorizationOwnerTypeDTO.Token,
                                                                         Optional.empty()
                                                                 )
