@@ -100,13 +100,13 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                         .builder()
                                         .ownerType(User)
                                         .ownerId("user2@slac.stanford.edu")
-                                        .authorizationType(AuthorizationTypeDTO.Write)
+                                        .permission(AuthorizationTypeDTO.Write)
                                         .build(),
                                 NewAuthorizationDTO
                                         .builder()
                                         .ownerType(User)
                                         .ownerId("user3@slac.stanford.edu")
-                                        .authorizationType(AuthorizationTypeDTO.Admin)
+                                        .permission(AuthorizationTypeDTO.Admin)
                                         .build()
                         )
                 )
@@ -173,7 +173,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                         .ownerType(AuthorizationOwnerTypeDTO.Group)
                                         // group-2 id
                                         .ownerId(groupIds.get(1))
-                                        .authorizationType(AuthorizationTypeDTO.Write)
+                                        .permission(AuthorizationTypeDTO.Write)
                                         .build()
                         )
                 )
@@ -217,7 +217,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                         .builder()
                                         .ownerType(User)
                                         .ownerId("user2@slac.stanford.edu")
-                                        .authorizationType(AuthorizationTypeDTO.Read)
+                                        .permission(AuthorizationTypeDTO.Read)
                                         .build()
                         )
                 )
@@ -235,7 +235,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                         .builder()
                                         .ownerType(User)
                                         .ownerId("user3@slac.stanford.edu")
-                                        .authorizationType(AuthorizationTypeDTO.Read)
+                                        .permission(AuthorizationTypeDTO.Read)
                                         .build()
                         )
                 )
@@ -341,7 +341,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                         .ownerId(
                                                 newApp1result.getPayload().id()
                                         )
-                                        .authorizationType(AuthorizationTypeDTO.Write)
+                                        .permission(AuthorizationTypeDTO.Write)
                                         .build(),
                                 NewAuthorizationDTO
                                         .builder()
@@ -349,7 +349,7 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                         .ownerId(
                                                 newApp2result.getPayload().id()
                                         )
-                                        .authorizationType(AuthorizationTypeDTO.Admin)
+                                        .permission(AuthorizationTypeDTO.Admin)
                                         .build()
                         )
                 )
@@ -456,13 +456,13 @@ public class EntriesControllerAuthorizationWithTokenTest {
                                         .builder()
                                         .ownerType(Token)
                                         .ownerId(app1Result.getPayload().id())
-                                        .authorizationType(AuthorizationTypeDTO.Write)
+                                        .permission(AuthorizationTypeDTO.Write)
                                         .build(),
                                 NewAuthorizationDTO
                                         .builder()
                                         .ownerType(Token)
                                         .ownerId(app2Result.getPayload().id())
-                                        .authorizationType(AuthorizationTypeDTO.Admin)
+                                        .permission(AuthorizationTypeDTO.Admin)
                                         .build()
                         )
                 )

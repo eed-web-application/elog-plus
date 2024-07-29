@@ -104,7 +104,7 @@ public class LogbookControllerAuthWithGlobalAuthenticationTokenTest {
                                 .builder()
                                 .ownerId(createdApplication.getPayload().id())
                                 .ownerType(AuthorizationOwnerTypeDTO.Token)
-                                .authorizationType(
+                                .permission(
                                         Write
                                 )
                                 .build()
@@ -122,7 +122,7 @@ public class LogbookControllerAuthWithGlobalAuthenticationTokenTest {
                                 .builder()
                                 .ownerId("user2@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
-                                .authorizationType(Write)
+                                .permission(Write)
                                 .build()
                 )
         );

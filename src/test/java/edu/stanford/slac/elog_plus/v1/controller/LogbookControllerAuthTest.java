@@ -85,7 +85,7 @@ public class LogbookControllerAuthTest {
                                 .builder()
                                 .ownerId("user2@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
-                                .authorizationType(
+                                .permission(
                                         Write
                                 )
                                 .build(),
@@ -93,7 +93,7 @@ public class LogbookControllerAuthTest {
                                 .builder()
                                 .ownerId("user3@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
-                                .authorizationType(
+                                .permission(
                                         Read
                                 )
                                 .build()
@@ -110,7 +110,7 @@ public class LogbookControllerAuthTest {
                                 .builder()
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
                                 .ownerId("user2@slac.stanford.edu")
-                                .authorizationType(
+                                .permission(
                                         Write
                                 )
                                 .build()
@@ -258,13 +258,13 @@ public class LogbookControllerAuthTest {
                                 .builder()
                                 .ownerId("user2@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
-                                .authorizationType(Write)
+                                .permission(Write)
                                 .build(),
                         NewAuthorizationDTO
                                 .builder()
                                 .ownerId(app1Result.getPayload().id())
                                 .ownerType(AuthorizationOwnerTypeDTO.Token)
-                                .authorizationType(Read)
+                                .permission(Read)
                                 .build()
                 )
         );
@@ -279,7 +279,7 @@ public class LogbookControllerAuthTest {
                                 .builder()
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
                                 .ownerId("user2@slac.stanford.edu")
-                                .authorizationType(Write)
+                                .permission(Write)
                                 .build()
                 )
         );
@@ -327,7 +327,7 @@ public class LogbookControllerAuthTest {
                                         .builder()
                                         .ownerId("user2@slac.stanford.edu")
                                         .ownerType(AuthorizationOwnerTypeDTO.User)
-                                        .authorizationType(
+                                        .permission(
                                                 Read
                                         )
                                         .build()
@@ -346,7 +346,7 @@ public class LogbookControllerAuthTest {
                                         .builder()
                                         .ownerId("user2@slac.stanford.edu")
                                         .ownerType(AuthorizationOwnerTypeDTO.User)
-                                        .authorizationType(
+                                        .permission(
                                                 Write
                                         )
                                         .build()
@@ -365,7 +365,7 @@ public class LogbookControllerAuthTest {
                                         .builder()
                                         .ownerId("user2@slac.stanford.edu")
                                         .ownerType(AuthorizationOwnerTypeDTO.User)
-                                        .authorizationType(
+                                        .permission(
                                                 Read
                                         )
                                         .build()
@@ -450,7 +450,7 @@ public class LogbookControllerAuthTest {
                                 .resourceType(ResourceTypeDTO.Logbook)
                                 .ownerId("user1@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
-                                .authorizationType(Write)
+                                .permission(Write)
                                 .build()
                 )
         );
@@ -481,7 +481,7 @@ public class LogbookControllerAuthTest {
                                 .resourceType(ResourceTypeDTO.Logbook)
                                 .ownerId(groupIdResult.getPayload())
                                 .ownerType(AuthorizationOwnerTypeDTO.Group)
-                                .authorizationType(Read)
+                                .permission(Read)
                                 .build()
                 )
         );
@@ -581,7 +581,7 @@ public class LogbookControllerAuthTest {
                                 .resourceType(ResourceTypeDTO.Logbook)
                                 .ownerId("user1@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
-                                .authorizationType(Write)
+                                .permission(Write)
                                 .build()
                 )
         );
@@ -597,7 +597,7 @@ public class LogbookControllerAuthTest {
                                 .resourceType(ResourceTypeDTO.Logbook)
                                 .ownerId("user2@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
-                                .authorizationType(Read)
+                                .permission(Read)
                                 .build()
                 )
         );
@@ -645,7 +645,7 @@ public class LogbookControllerAuthTest {
                                 .resourceType(ResourceTypeDTO.Logbook)
                                 .ownerId(group1IdResult.getPayload())
                                 .ownerType(AuthorizationOwnerTypeDTO.Group)
-                                .authorizationType(Read)
+                                .permission(Read)
                                 .build()
                 )
         );
@@ -662,7 +662,7 @@ public class LogbookControllerAuthTest {
                                 .resourceType(ResourceTypeDTO.Logbook)
                                 .ownerId(group2IdResult.getPayload())
                                 .ownerType(AuthorizationOwnerTypeDTO.Group)
-                                .authorizationType(Write)
+                                .permission(Write)
                                 .build()
                 )
         );

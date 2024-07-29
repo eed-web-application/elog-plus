@@ -78,7 +78,7 @@ public class AuthorizationControllerControllerTest {
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
                                 .resourceType(ResourceTypeDTO.All)
                                 .resourceId("*")
-                                .authorizationType(AuthorizationTypeDTO.Admin)
+                                .permission(AuthorizationTypeDTO.Admin)
                                 .build()
                 )
         );
@@ -150,7 +150,7 @@ public class AuthorizationControllerControllerTest {
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
                                 .resourceType(ResourceTypeDTO.Logbook)
                                 .resourceId("1")
-                                .authorizationType(AuthorizationTypeDTO.Admin)
+                                .permission(AuthorizationTypeDTO.Admin)
                                 .build()
                 )
         );

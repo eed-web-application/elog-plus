@@ -422,7 +422,7 @@ public class GroupControllerControllerTest {
                                 .builder()
                                 .ownerId(newGroupIdResult.getPayload())
                                 .ownerType(AuthorizationOwnerTypeDTO.Group)
-                                .authorizationType(Write)
+                                .permission(Write)
                                 .build()
                 )
         );

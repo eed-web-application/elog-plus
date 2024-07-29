@@ -1191,7 +1191,7 @@ public class LogbookService {
                                     NewAuthorizationDTO.builder()
                                             .ownerId(userId)
                                             .ownerType(AuthorizationOwnerTypeDTO.User)
-                                            .authorizationType(authorizationType)
+                                            .permission(authorizationType)
                                             .resourceId(logbookId)
                                             .resourceType(ResourceTypeDTO.Logbook)
                                             .build()

@@ -64,7 +64,7 @@ public class LogbookAuthorizationService {
      */
     public boolean canCreateNewAuthorization(Authentication authentication, NewAuthorizationDTO newAuthorizationDTO) {
         String resource = authorizationServices.getResource(newAuthorizationDTO);
-        if (resource.equals("*") && newAuthorizationDTO.authorizationType() == Admin) {
+        if (resource.equals("*") && newAuthorizationDTO.permission() == Admin) {
             // check if user is a root user
             assertion(
                     ControllerLogicException
