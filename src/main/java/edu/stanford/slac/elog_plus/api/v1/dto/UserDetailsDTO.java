@@ -18,6 +18,8 @@ public record UserDetailsDTO(
         String name,
         @Schema(description = "The surname of the user")
         String surname,
+        @Schema(description = "The gecos of the user")
+        String gecos,
         @Schema(description = "The email of the user")
         String email,
         @Schema(description = "The user has root role")
