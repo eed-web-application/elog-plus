@@ -45,6 +45,7 @@ public abstract class AuthorizationMapper {
                 .id(personDTO.mail())
                 .name(personDTO.commonName())
                 .surname(personDTO.surname())
+                .gecos(personDTO.gecos())
                 .email(personDTO.mail())
                 .isRoot(authService.checkForRoot(personDTO.mail()))
                 .canManageGroup
