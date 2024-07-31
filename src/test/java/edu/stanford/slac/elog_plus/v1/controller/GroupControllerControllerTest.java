@@ -178,10 +178,10 @@ public class GroupControllerControllerTest {
         assertThat(deleteGroupResult.getPayload()).isTrue();
 
         var groupNotFound = assertThrows(
-                ControllerLogicException.class,
+                GroupNotFound.class,
                 () -> testControllerHelperService.groupControllerFindGroupById(
                         mockMvc,
-                        status().is5xxServerError(),
+                        status().is4xxClientError(),
                         Optional.of("user1@slac.stanford.edu"),
                         groupCreationResult.getPayload(),
                         Optional.of(true),
