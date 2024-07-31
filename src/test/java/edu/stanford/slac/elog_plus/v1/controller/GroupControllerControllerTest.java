@@ -111,6 +111,43 @@ public class GroupControllerControllerTest {
     }
 
     @Test
+    public void testForIssue227() {
+        var groupCreationResult = assertDoesNotThrow(
+                () -> testControllerHelperService.groupControllerCreateNewGroup(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewLocalGroupDTO
+                                .builder()
+                                .name("local-group-1")
+                                .description("local-group-1 description")
+                                .build()
+                )
+        );
+        assertThat(groupCreationResult).isNotNull();
+        assertThat(groupCreationResult.getPayload()).isNotEmpty();
+
+        // fetch group by id
+        var fullGroupDetails = assertDoesNotThrow(
+                () -> testControllerHelperService.groupControllerFindGroupById(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        groupCreationResult.getPayload(),
+                        Optional.of(true),
+                        Optional.empty()
+                )
+        );
+        assertThat(fullGroupDetails).isNotNull();
+        assertThat(fullGroupDetails.getPayload()).isNotNull();
+        assertThat(fullGroupDetails.getPayload().id()).isEqualTo(groupCreationResult.getPayload());
+        assertThat(fullGroupDetails.getPayload().name()).isEqualTo("local-group-1");
+        assertThat(fullGroupDetails.getPayload().description()).isEqualTo("local-group-1 description");
+        assertThat(fullGroupDetails.getPayload().members()).isEmpty();
+    }
+
+
+    @Test
     public void deleteGroup() {
         var groupCreationResult = assertDoesNotThrow(
                 () -> testControllerHelperService.groupControllerCreateNewGroup(
