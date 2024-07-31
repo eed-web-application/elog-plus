@@ -7,6 +7,7 @@ import edu.stanford.slac.ad.eed.baselib.api.v2.dto.NewLocalGroupDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v2.dto.UpdateLocalGroupDTO;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
+import edu.stanford.slac.ad.eed.baselib.exception.GroupNotFound;
 import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.model.AuthenticationToken;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
@@ -440,5 +441,21 @@ public class GroupControllerControllerTest {
         assertThat(foundGroup).isNotNull();
         assertThat(foundGroup.getPayload().authorizations()).hasSize(1);
         assertThat(foundGroup.getPayload().authorizations().get(0).resourceName()).isEqualTo("new-logbook");
+    }
+
+    @Test
+    public void testFetchingNonExistingGroupReturn404() {
+        var groupNotFound = assertThrows(
+                GroupNotFound.class,
+                () -> testControllerHelperService.groupControllerFindGroupById(
+                        mockMvc,
+                        status().is4xxClientError(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        "wrong-id",
+                        Optional.of(true),
+                        Optional.of(true)
+                )
+        );
+        assertThat(groupNotFound).isNotNull();
     }
 }
