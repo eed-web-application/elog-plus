@@ -15,6 +15,7 @@ import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.config.ELOGAppProperties;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
+import edu.stanford.slac.elog_plus.service.AuthorizationServices;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
@@ -43,6 +44,8 @@ public abstract class LogbookMapper {
     protected ELOGAppProperties elogAppProperties;
     @Autowired
     protected PeopleGroupService peopleGroupService;
+    @Autowired
+    protected AuthorizationServices authorizationServices;
 
     public abstract LogbookSummaryDTO fromModelToSummaryDTO(Logbook log);
 
@@ -109,10 +112,29 @@ public abstract class LogbookMapper {
      * @return the list of ownerId authorizations
      */
     public DetailsAuthorizationDTO fromAuthorizationDTO(AuthorizationDTO authorization) {
+        String ownerLabel = authorization.owner();
+        switch(authorization.ownerType()){
+            case User: {
+                PersonDTO person = peopleGroupService.findPersonByEMail(authorization.owner());
+                ownerLabel = person != null ? person.gecos() : null;
+                break;
+            }
+            case Group: {
+                var groupFound = authorizationServices.findGroup(authorization.owner(), false, false);
+                ownerLabel = groupFound != null ? groupFound.name() : null;
+                break;
+            }
+            case Token: {
+                var foundApplication = authorizationServices.getApplicationById(authorization.owner(), false);
+                ownerLabel = foundApplication != null ? foundApplication.name() : null;
+                break;
+            }
+        }
         return DetailsAuthorizationDTO.builder()
                 .id(authorization.id())
                 .ownerId(authorization.owner())
                 .ownerType(authorization.ownerType())
+                .ownerName(ownerLabel)
                 .permission(authorization.authorizationType())
                 .build();
     }

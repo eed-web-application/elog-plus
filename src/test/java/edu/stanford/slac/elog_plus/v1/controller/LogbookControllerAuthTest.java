@@ -684,6 +684,10 @@ public class LogbookControllerAuthTest {
                 .hasSize(4)
                 .extracting(DetailsAuthorizationDTO::ownerId)
                 .contains("user1@slac.stanford.edu", "user2@slac.stanford.edu", group1IdResult.getPayload(), group2IdResult.getPayload());
+        assertThat(logbook.getPayload().authorizations())
+                .hasSize(4)
+                .extracting(DetailsAuthorizationDTO::ownerName)
+                .contains("Name1 Surname1", "Name2 Surname2", "local-group-1", "local-group-2");
 
         var user1Auth = logbook.getPayload().authorizations().stream().filter(a -> a.ownerId().compareTo("user1@slac.stanford.edu") == 0).toList();
         assertThat(user1Auth).hasSize(1).extracting(DetailsAuthorizationDTO::permission).contains(Write);
