@@ -94,13 +94,14 @@ public class AuthorizationServices {
     public GroupDetailsDTO findGroup(String localGroupId, Boolean includeMembers, Boolean includeAuthorizations) {
         // find the group
         LocalGroupDTO groupFound = authService.findLocalGroupById(localGroupId);
+        boolean processGroup = includeMembers && groupFound.members()!=null;
         return GroupDetailsDTO.builder()
                 .id(groupFound.id())
                 .name(groupFound.name())
                 .description(groupFound.description())
                 .members
                         (
-                                includeMembers ?
+                                processGroup ?
                                         groupFound.members().stream().map(
                                                 m -> authorizationMapper.fromPersonDTO(
                                                         m,

@@ -7,6 +7,7 @@ import edu.stanford.slac.ad.eed.baselib.api.v2.dto.NewLocalGroupDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v2.dto.UpdateLocalGroupDTO;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
+import edu.stanford.slac.ad.eed.baselib.exception.GroupNotFound;
 import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.model.AuthenticationToken;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
@@ -110,6 +111,43 @@ public class GroupControllerControllerTest {
     }
 
     @Test
+    public void testForIssue227() {
+        var groupCreationResult = assertDoesNotThrow(
+                () -> testControllerHelperService.groupControllerCreateNewGroup(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewLocalGroupDTO
+                                .builder()
+                                .name("local-group-1")
+                                .description("local-group-1 description")
+                                .build()
+                )
+        );
+        assertThat(groupCreationResult).isNotNull();
+        assertThat(groupCreationResult.getPayload()).isNotEmpty();
+
+        // fetch group by id
+        var fullGroupDetails = assertDoesNotThrow(
+                () -> testControllerHelperService.groupControllerFindGroupById(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        groupCreationResult.getPayload(),
+                        Optional.of(true),
+                        Optional.empty()
+                )
+        );
+        assertThat(fullGroupDetails).isNotNull();
+        assertThat(fullGroupDetails.getPayload()).isNotNull();
+        assertThat(fullGroupDetails.getPayload().id()).isEqualTo(groupCreationResult.getPayload());
+        assertThat(fullGroupDetails.getPayload().name()).isEqualTo("local-group-1");
+        assertThat(fullGroupDetails.getPayload().description()).isEqualTo("local-group-1 description");
+        assertThat(fullGroupDetails.getPayload().members()).isEmpty();
+    }
+
+
+    @Test
     public void deleteGroup() {
         var groupCreationResult = assertDoesNotThrow(
                 () -> testControllerHelperService.groupControllerCreateNewGroup(
@@ -140,10 +178,10 @@ public class GroupControllerControllerTest {
         assertThat(deleteGroupResult.getPayload()).isTrue();
 
         var groupNotFound = assertThrows(
-                ControllerLogicException.class,
+                GroupNotFound.class,
                 () -> testControllerHelperService.groupControllerFindGroupById(
                         mockMvc,
-                        status().is5xxServerError(),
+                        status().is4xxClientError(),
                         Optional.of("user1@slac.stanford.edu"),
                         groupCreationResult.getPayload(),
                         Optional.of(true),
@@ -440,5 +478,21 @@ public class GroupControllerControllerTest {
         assertThat(foundGroup).isNotNull();
         assertThat(foundGroup.getPayload().authorizations()).hasSize(1);
         assertThat(foundGroup.getPayload().authorizations().get(0).resourceName()).isEqualTo("new-logbook");
+    }
+
+    @Test
+    public void testFetchingNonExistingGroupReturn404() {
+        var groupNotFound = assertThrows(
+                GroupNotFound.class,
+                () -> testControllerHelperService.groupControllerFindGroupById(
+                        mockMvc,
+                        status().is4xxClientError(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        "wrong-id",
+                        Optional.of(true),
+                        Optional.of(true)
+                )
+        );
+        assertThat(groupNotFound).isNotNull();
     }
 }
