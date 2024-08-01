@@ -4,13 +4,13 @@ import edu.stanford.slac.ad.eed.baselib.api.v1.dto.*;
 import edu.stanford.slac.ad.eed.baselib.api.v2.dto.LocalGroupDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v2.dto.LocalGroupQueryParameterDTO;
 import edu.stanford.slac.ad.eed.baselib.auth.jwt.SLACAuthenticationJWTToken;
+import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.api.v1.dto.NewAuthorizationDTO;
 import edu.stanford.slac.elog_plus.api.v1.mapper.AuthorizationMapper;
-import edu.stanford.slac.elog_plus.exception.ResourceAlreadyAuthorized;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.core.Authentication;
@@ -29,6 +29,7 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 @AllArgsConstructor
 public class AuthorizationServices {
     AuthService authService;
+    AppProperties appProperties;
     PeopleGroupService peopleGroupService;
     AuthorizationMapper authorizationMapper;
 
@@ -416,6 +417,8 @@ public class AuthorizationServices {
                 return "/logbook/%s".formatted(newAuthorizationDTO.resourceId());
             case All:
                 return "*";
+            case Group:
+                return "%s/group".formatted(appProperties.getAppName());
             default:
                 throw ControllerLogicException
                         .builder()

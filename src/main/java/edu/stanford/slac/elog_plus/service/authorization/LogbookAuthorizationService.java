@@ -1,6 +1,7 @@
 package edu.stanford.slac.elog_plus.service.authorization;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
+import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
@@ -24,6 +25,7 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 @Service
 @AllArgsConstructor
 public class LogbookAuthorizationService {
+    private final AppProperties appProperties;
     private final AuthorizationServices authorizationServices;
     private final AuthService authService;
 
@@ -64,16 +66,30 @@ public class LogbookAuthorizationService {
      */
     public boolean canCreateNewAuthorization(Authentication authentication, NewAuthorizationDTO newAuthorizationDTO) {
         String resource = authorizationServices.getResource(newAuthorizationDTO);
-        if (resource.equals("*") && newAuthorizationDTO.permission() == Admin) {
+        if (newAuthorizationDTO.resourceType()==ResourceTypeDTO.All && newAuthorizationDTO.permission() == Admin) {
             // check if user is a root user
             assertion(
                     ControllerLogicException
                             .builder()
                             .errorCode(-1)
-                            .errorMessage("The resourceType '*' can only be granted by root users")
+                            .errorMessage("The resourceType 'All' can only be granted by root users")
                             .errorDomain("AuthorizationServices::canCreateNewAuthorization")
                             .build(),
                     () -> authService.checkForRoot(authentication)
+            );
+        } else if (newAuthorizationDTO.resourceType()==ResourceTypeDTO.Group && newAuthorizationDTO.permission() == Admin) {
+            // check if user is a root user
+            assertion(
+                    ControllerLogicException
+                            .builder()
+                            .errorCode(-1)
+                            .errorMessage("The resourceType 'Group' can only be granted by root users or by how can manage groups")
+                            .errorDomain("AuthorizationServices::canCreateNewAuthorization")
+                            .build(),
+                    () -> any(
+                            ()->authService.checkForRoot(authentication),
+                            ()->authService.canManageGroup(authentication)
+                    )
             );
         } else if (newAuthorizationDTO.resourceType() == ResourceTypeDTO.Logbook) {
             // check if current user is an admin for the logbook identified by the resourceType id
@@ -99,7 +115,7 @@ public class LogbookAuthorizationService {
         } else {
             throw ControllerLogicException.builder()
                     .errorCode(-1)
-                    .errorMessage("bad authorized resources")
+                    .errorMessage("bad authorized details")
                     .errorDomain("AuthorizationServices::canCreateNewAuthorization")
                     .build();
         }
@@ -120,7 +136,15 @@ public class LogbookAuthorizationService {
             throw ControllerLogicException
                     .builder()
                     .errorCode(-1)
-                    .errorMessage("The resourceType '*' cannot be updated")
+                    .errorMessage("The root authorization cannot be updated")
+                    .errorDomain("AuthorizationServices::canUpdateAuthorization")
+                    .build();
+        } else if (authorizationFound.resource().equalsIgnoreCase("%s/group".formatted(appProperties.getAppName())) && authorizationFound.authorizationType() == Admin) {
+            // check if user is a root user
+            throw ControllerLogicException
+                    .builder()
+                    .errorCode(-1)
+                    .errorMessage("The group management authorization cannot be updated")
                     .errorDomain("AuthorizationServices::canUpdateAuthorization")
                     .build();
         } else if (authorizationFound.resource().startsWith("/logbook/")) {
@@ -172,7 +196,21 @@ public class LogbookAuthorizationService {
                             .build(),
                     () -> authService.checkForRoot(authentication)
             );
-        } else if (authorizationFound.resource().startsWith("/logbook/")) {
+        } else if (authorizationFound.resource().equalsIgnoreCase("%s/group".formatted(appProperties.getAppName())) && authorizationFound.authorizationType() == Admin) {
+            // check if user is a root user or an admin for the group
+            assertion(
+                    ControllerLogicException
+                            .builder()
+                            .errorCode(-1)
+                            .errorMessage("The resourceType 'Group' can only be granted by root users or by how can manage groups")
+                            .errorDomain("AuthorizationServices::canCreateNewAuthorization")
+                            .build(),
+                    () -> any(
+                            ()->authService.checkForRoot(authentication),
+                            ()->authService.canManageGroup(authentication)
+                    )
+            );
+        }  else if (authorizationFound.resource().startsWith("/logbook/")) {
             // check if current user is an admin for the logbook identified by the resourceType id
             assertion(
                     ControllerLogicException
@@ -369,6 +407,8 @@ public class LogbookAuthorizationService {
                                                     "/logbook/%s".formatted(authorizationDTO.resourceId())
                                             );
                                         case All:
+                                            return true;
+                                        case Group:
                                             return true;
                                         default:
                                             return false;
