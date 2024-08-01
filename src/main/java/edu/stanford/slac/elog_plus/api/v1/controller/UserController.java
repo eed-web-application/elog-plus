@@ -82,6 +82,29 @@ public class UserController {
     }
 
     @GetMapping(
+            path = "/{userId}",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+
+    )
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(description = "Get a single user by id")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
+    @PostAuthorize("@logbookAuthorizationService.applyFilterOnUser(returnObject, authentication)")
+    public ApiResultResponse<UserDetailsDTO> findUserById(
+            Authentication authentication,
+            @Parameter(description = "The user id")
+            @PathVariable String userId,
+            @Parameter(description = "Include authorizations")
+            @RequestParam("includeAuthorizations") Optional<Boolean> includeAuthorizations,
+            @Parameter(description = "Include group inheritance")
+            @RequestParam("includeInheritance") Optional<Boolean> includeInheritance
+    ) {
+        return ApiResultResponse.of(
+                authorizationServices.findUser(userId, includeAuthorizations.orElse(false), includeInheritance.orElse(false))
+        );
+    }
+
+    @GetMapping(
             path = "/me",
             produces = {MediaType.APPLICATION_JSON_VALUE}
 
