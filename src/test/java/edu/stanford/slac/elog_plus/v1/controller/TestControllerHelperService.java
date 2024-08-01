@@ -76,7 +76,7 @@ public class TestControllerHelperService {
                 )
                 .isEqualTo(0);
 
-        for(NewAuthorizationDTO newAuthorizationDTO : authorizations) {
+        for (NewAuthorizationDTO newAuthorizationDTO : authorizations) {
             assertDoesNotThrow(
                     () -> authorizationControllerCreateNewAuthorization(
                             mockMvc,
@@ -127,7 +127,7 @@ public class TestControllerHelperService {
                 )
                 .isEqualTo(0);
 
-        for(NewAuthorizationDTO newAuthorizationDTO : authorizations) {
+        for (NewAuthorizationDTO newAuthorizationDTO : authorizations) {
             assertDoesNotThrow(
                     () -> authorizationControllerCreateNewAuthorization(
                             mockMvc,
@@ -933,6 +933,44 @@ public class TestControllerHelperService {
         );
     }
 
+    /**
+     * Find current user details
+     *
+     * @param mockMvc               MockMvc
+     * @param resultMatcher         ResultMatcher
+     * @param userInfo              Optional<String>
+     * @return ApiResultResponse<UserDetailsDTO>
+     * @throws Exception Exception
+     */
+    public ApiResultResponse<UserDetailsDTO> userControllerFindMe(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            Optional<String> impersonateUserInfo) throws Exception {
+        MockHttpServletRequestBuilder requestBuilder =
+                get("/v1/users/me")
+                        .accept(MediaType.APPLICATION_JSON);
+        impersonateUserInfo.ifPresent(impersonateUserId -> requestBuilder.header(appProperties.getImpersonateHeaderName(), impersonateUserId));
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    /**
+     * Find current user details
+     *
+     * @param mockMvc               MockMvc
+     * @param resultMatcher         ResultMatcher
+     * @param userInfo              Optional<String>
+     * @param newAuthorizationDTO   NewAuthorizationDTO
+     * @return ApiResultResponse<UserDetailsDTO> ApiResultResponse<UserDetailsDTO>
+     * @throws Exception Exception
+     */
     public ApiResultResponse<Boolean> authorizationControllerCreateNewAuthorization(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
@@ -1144,7 +1182,7 @@ public class TestControllerHelperService {
             Optional<String> userInfo,
             String groupId) throws Exception {
         MockHttpServletRequestBuilder requestBuilder =
-                delete("/v1/groups/{groupId}",groupId)
+                delete("/v1/groups/{groupId}", groupId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON);
         userInfo.ifPresent(login -> requestBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
@@ -1165,7 +1203,7 @@ public class TestControllerHelperService {
             String groupId,
             UpdateLocalGroupDTO updateLocalGroupDTO) throws Exception {
         MockHttpServletRequestBuilder requestBuilder =
-                put("/v1/groups/{groupId}",groupId)
+                put("/v1/groups/{groupId}", groupId)
                         .content(objectMapper.writeValueAsString(updateLocalGroupDTO))
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON);
