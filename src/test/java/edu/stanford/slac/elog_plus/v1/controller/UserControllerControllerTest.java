@@ -319,7 +319,7 @@ public class UserControllerControllerTest {
     }
 
     @Test
-    public void checkLabelOnUserDetails(){
+    public void checkLabelOnUserDetails() {
         var newLogbookApiResultOne = testControllerHelperService.getNewLogbookWithNameWithAuthorization(
                 mockMvc,
                 Optional.of(
@@ -349,5 +349,36 @@ public class UserControllerControllerTest {
         assertThat(foundUser).isNotNull();
         assertThat(foundUser.getPayload().authorizations()).hasSize(1);
         assertThat(foundUser.getPayload().authorizations().get(0).resourceName()).isEqualTo("new-logbook");
+    }
+
+    @Test
+    public void getCurrentUserDetails() {
+        var currentUserDetails = assertDoesNotThrow(
+                () -> testControllerHelperService.userControllerFindMe(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        Optional.empty()
+                )
+        );
+
+        assertThat(currentUserDetails).isNotNull();
+        assertThat(currentUserDetails.getPayload().email()).isNotNull();
+        assertThat(currentUserDetails.getPayload().email()).isEqualTo("user1@slac.stanford.edu");
+        assertThat(currentUserDetails.getPayload().isRoot()).isTrue();
+
+        currentUserDetails = assertDoesNotThrow(
+                () -> testControllerHelperService.userControllerFindMe(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        Optional.of("user2@slac.stanford.edu")
+                )
+        );
+
+        assertThat(currentUserDetails).isNotNull();
+        assertThat(currentUserDetails.getPayload().email()).isNotNull();
+        assertThat(currentUserDetails.getPayload().email()).isEqualTo("user2@slac.stanford.edu");
+        assertThat(currentUserDetails.getPayload().isRoot()).isFalse();
     }
 }

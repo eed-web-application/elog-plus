@@ -103,4 +103,21 @@ public class UserController {
                 authorizationServices.findUser(userId, includeAuthorizations.orElse(false), includeInheritance.orElse(false))
         );
     }
+
+    @GetMapping(
+            path = "/me",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+
+    )
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(description = "Get a single user by id")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
+    @PostAuthorize("@logbookAuthorizationService.applyFilterOnUser(returnObject, authentication)")
+    public ApiResultResponse<UserDetailsDTO> findUserById(
+            Authentication authentication
+    ) {
+        return ApiResultResponse.of(
+                authorizationServices.findUser(authentication.getPrincipal().toString(), true, true)
+        );
+    }
 }
