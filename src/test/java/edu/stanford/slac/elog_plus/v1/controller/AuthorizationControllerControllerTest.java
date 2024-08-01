@@ -138,6 +138,77 @@ public class AuthorizationControllerControllerTest {
     }
 
     @Test
+    public void testAuthorizingGroupManagement() {
+        assertDoesNotThrow(
+                () -> testControllerHelperService.authorizationControllerCreateNewAuthorization(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewAuthorizationDTO
+                                .builder()
+                                .ownerId("user2@slac.stanford.edu")
+                                .ownerType(AuthorizationOwnerTypeDTO.User)
+                                .resourceType(ResourceTypeDTO.Group)
+                                .permission(AuthorizationTypeDTO.Admin)
+                                .build()
+                )
+        );
+
+        // fetch user details
+        var userDetailsResult = assertDoesNotThrow(
+                () -> testControllerHelperService.userControllerFindUserById(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        "user2@slac.stanford.edu",
+                        Optional.of(true),
+                        Optional.of(false)
+                )
+        );
+        assertThat(userDetailsResult).isNotNull();
+        assertThat(userDetailsResult.getPayload()).isNotNull();
+        assertThat(userDetailsResult.getPayload().email()).isEqualTo("user2@slac.stanford.edu");
+        assertThat(userDetailsResult.getPayload().canManageGroup()).isTrue();
+
+        // find root authorization
+        var rootAuthorization = userDetailsResult.getPayload().authorizations()
+                .stream()
+                .filter
+                        (
+                                authorization -> authorization.permission() == AuthorizationTypeDTO.Admin &&
+                                        authorization.resourceType() == ResourceTypeDTO.Group
+                        )
+                .findFirst();
+        assertThat(rootAuthorization).isPresent();
+        // remove as user
+        var deleteGroupManagementAuthorizationResult = assertDoesNotThrow(
+                () -> testControllerHelperService.authorizationControllerDeleteAuthorization(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        rootAuthorization.get().id()
+                )
+        );
+        assertThat(deleteGroupManagementAuthorizationResult).isNotNull();
+        assertThat(deleteGroupManagementAuthorizationResult.getPayload()).isTrue();
+
+        var userDetailsNoGroupManagementResult = assertDoesNotThrow(
+                () -> testControllerHelperService.userControllerFindUserById(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        "user2@slac.stanford.edu",
+                        Optional.of(true),
+                        Optional.of(false)
+                )
+        );
+        assertThat(userDetailsNoGroupManagementResult).isNotNull();
+        assertThat(userDetailsNoGroupManagementResult.getPayload()).isNotNull();
+        assertThat(userDetailsNoGroupManagementResult.getPayload().email()).isEqualTo("user2@slac.stanford.edu");
+        assertThat(userDetailsNoGroupManagementResult.getPayload().canManageGroup()).isFalse();
+    }
+
+    @Test
     public void updateAuthorization() {
         var newAuthIdResult = assertDoesNotThrow(
                 () -> testControllerHelperService.authorizationControllerCreateNewAuthorization(

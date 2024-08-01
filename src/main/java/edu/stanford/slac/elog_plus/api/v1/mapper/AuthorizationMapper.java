@@ -118,6 +118,8 @@ public abstract class AuthorizationMapper {
         String[] resourceAndType = resource.split("/");
         if (resourceAndType.length == 1 && resourceAndType[0].compareToIgnoreCase("*") == 0) {
             return ResourceTypeDTO.All;
+        } else if (resourceAndType.length == 2 && resourceAndType[1].compareToIgnoreCase("group") == 0) {
+            return ResourceTypeDTO.Group;
         } else if (resourceAndType.length > 1) {
             switch (resourceAndType[1]) {
                 case "logbook":
@@ -148,6 +150,8 @@ public abstract class AuthorizationMapper {
         // the resourceType are of type '/logbook/logbookId' we  need to return the string value 'logbookId'
         String[] resourceAndType = resource.split("/");
         if (resourceAndType.length == 1 && resourceAndType[0].compareToIgnoreCase("*") == 0) {
+            return null;
+        } else if (resourceAndType.length == 2 && resourceAndType[1].compareToIgnoreCase("group") == 0) {
             return null;
         } else if (resourceAndType.length > 1) {
             return resourceAndType[2];
