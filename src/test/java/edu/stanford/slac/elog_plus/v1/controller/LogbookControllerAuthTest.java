@@ -378,7 +378,7 @@ public class LogbookControllerAuthTest {
                         mockMvc,
                         status().isOk(),
                         Optional.of("user2@slac.stanford.edu"),
-                        Optional.of(false),
+                        Optional.of(true),
                         Optional.of(Read.name())
                 )
         );
