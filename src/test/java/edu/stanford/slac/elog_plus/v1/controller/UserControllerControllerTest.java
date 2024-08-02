@@ -419,6 +419,8 @@ public class UserControllerControllerTest {
         );
         assertThat(secondPage).isNotNull();
         assertThat(secondPage.getPayload()).hasSize(10);
+        assertThat(secondPage.getPayload().get(0).email()).isEqualTo("user19@slac.stanford.edu");
+        assertThat(secondPage.getPayload().get(9).email()).isEqualTo("user7@slac.stanford.edu");
     }
 
 }
