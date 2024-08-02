@@ -133,7 +133,7 @@ public class UserControllerControllerTest {
                         Optional.of(
                                 "user1@slac.stanford.edu"
                         ),
-                        Optional.of(10),
+                        Optional.of(3),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
@@ -145,7 +145,7 @@ public class UserControllerControllerTest {
         assertThat(foundUsers.getPayload()).hasSize(3);
         assertThat(foundUsers.getPayload())
                 .extracting(UserDetailsDTO::email)
-                .contains("user1@slac.stanford.edu", "user2@slac.stanford.edu", "user3@slac.stanford.edu");
+                .contains("user1@slac.stanford.edu", "user10@slac.stanford.edu", "user11@slac.stanford.edu");
         assertThat(foundUsers.getPayload().get(0).authorizations()).hasSize(2);
         assertThat(foundUsers.getPayload().get(0).authorizations())
                 .extracting(
@@ -163,20 +163,14 @@ public class UserControllerControllerTest {
                         a -> a.resourceId(),
                         a -> a.resourceType().name()
                 )
-                .contains(
-                        tuple(Write.name(), newLogbook1result.getPayload(), "Logbook"),
-                        tuple(Write.name(), newLogbook2result.getPayload(), "Logbook")
-                );
+                .isEmpty();
         assertThat(foundUsers.getPayload().get(2).authorizations())
                 .extracting(
                         a -> a.permission().name(),
                         a -> a.resourceId(),
                         a -> a.resourceType().name()
                 )
-                .contains(
-                        tuple(Read.name(), newLogbook1result.getPayload(), "Logbook"),
-                        tuple(Admin.name(), newLogbook2result.getPayload(), "Logbook")
-                );
+                .isEmpty();
 
     }
 
@@ -191,7 +185,7 @@ public class UserControllerControllerTest {
                 List.of(
                         NewAuthorizationDTO
                                 .builder()
-                                .ownerId("user2@slac.stanford.edu")
+                                .ownerId("user10@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
                                 .permission(
                                         Write
@@ -199,7 +193,7 @@ public class UserControllerControllerTest {
                                 .build(),
                         NewAuthorizationDTO
                                 .builder()
-                                .ownerId("user3@slac.stanford.edu")
+                                .ownerId("user11@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
                                 .permission(
                                         Read
@@ -217,7 +211,7 @@ public class UserControllerControllerTest {
                 List.of(
                         NewAuthorizationDTO
                                 .builder()
-                                .ownerId("user3@slac.stanford.edu")
+                                .ownerId("user11@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
                                 .permission(
                                         Admin
@@ -232,7 +226,7 @@ public class UserControllerControllerTest {
                         mockMvc,
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
-                        Optional.of(10),
+                        Optional.of(3),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
@@ -244,7 +238,7 @@ public class UserControllerControllerTest {
         assertThat(foundUsers.getPayload()).hasSize(3);
         assertThat(foundUsers.getPayload())
                 .extracting(UserDetailsDTO::email)
-                .contains("user1@slac.stanford.edu", "user2@slac.stanford.edu", "user3@slac.stanford.edu");
+                .contains("user1@slac.stanford.edu", "user10@slac.stanford.edu", "user11@slac.stanford.edu");
         assertThat(foundUsers.getPayload().get(0).authorizations())
                 .extracting(
                         a -> a.permission().name(),
@@ -281,7 +275,7 @@ public class UserControllerControllerTest {
                         Optional.of("user1@slac.stanford.edu"),
                         NewAuthorizationDTO
                                 .builder()
-                                .ownerId("user2@slac.stanford.edu")
+                                .ownerId("user10@slac.stanford.edu")
                                 .ownerType(AuthorizationOwnerTypeDTO.User)
                                 .resourceId(newLogbook2result.getPayload())
                                 .resourceType(ResourceTypeDTO.Logbook)
@@ -295,8 +289,8 @@ public class UserControllerControllerTest {
                 () -> testControllerHelperService.userControllerFindAllUsers(
                         mockMvc,
                         status().isOk(),
-                        Optional.of("user1@slac.stanford.edu"),
-                        Optional.of(10),
+                        Optional.of("user11@slac.stanford.edu"),
+                        Optional.of(3),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.empty(),
@@ -381,4 +375,46 @@ public class UserControllerControllerTest {
         assertThat(currentUserDetails.getPayload().email()).isEqualTo("user2@slac.stanford.edu");
         assertThat(currentUserDetails.getPayload().isRoot()).isFalse();
     }
+
+    @Test
+    public void testUsersPagination() {
+        var firstPage = assertDoesNotThrow(
+                () -> testControllerHelperService.userControllerFindAllUsers(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        Optional.of(10),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(true),
+                        Optional.of(true)
+                )
+        );
+
+        assertThat(firstPage).isNotNull();
+        assertThat(firstPage.getPayload()).hasSize(10);
+        assertThat(firstPage.getPayload().get(0).email()).isEqualTo("user1@slac.stanford.edu");
+        assertThat(firstPage.getPayload().get(1).email()).isEqualTo("user10@slac.stanford.edu");
+        assertThat(firstPage.getPayload().get(9).email()).isEqualTo("user18@slac.stanford.edu");
+
+        var secondPage = assertDoesNotThrow(
+                () -> testControllerHelperService.userControllerFindAllUsers(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        Optional.of(10),
+                        Optional.empty(),
+                        Optional.of(firstPage.getPayload().get(9).id()),
+                        Optional.empty(),
+                        Optional.of(true),
+                        Optional.of(true)
+                )
+        );
+        assertThat(secondPage).isNotNull();
+        assertThat(secondPage.getPayload()).hasSize(10);
+        assertThat(secondPage.getPayload().get(0).email()).isEqualTo("user19@slac.stanford.edu");
+        assertThat(secondPage.getPayload().get(9).email()).isEqualTo("user7@slac.stanford.edu");
+    }
+
 }
