@@ -42,7 +42,7 @@ public abstract class AuthorizationMapper {
             return null;
         }
         return UserDetailsDTO.builder()
-                .id(personDTO.mail())
+                .id(personDTO.uid())
                 .name(personDTO.commonName())
                 .surname(personDTO.surname())
                 .gecos(personDTO.gecos())

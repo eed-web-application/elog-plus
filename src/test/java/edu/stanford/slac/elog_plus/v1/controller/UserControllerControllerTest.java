@@ -381,4 +381,46 @@ public class UserControllerControllerTest {
         assertThat(currentUserDetails.getPayload().email()).isEqualTo("user2@slac.stanford.edu");
         assertThat(currentUserDetails.getPayload().isRoot()).isFalse();
     }
+
+    @Test
+    public void testUsersPagination() {
+        var firstPage = assertDoesNotThrow(
+                () -> testControllerHelperService.userControllerFindAllUsers(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        Optional.of(10),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(true),
+                        Optional.of(true)
+                )
+        );
+
+        assertThat(firstPage).isNotNull();
+        assertThat(firstPage.getPayload()).hasSize(10);
+        assertThat(firstPage.getPayload().get(0).email()).isEqualTo("user1@slac.stanford.edu");
+        assertThat(firstPage.getPayload().get(1).email()).isEqualTo("user10@slac.stanford.edu");
+        assertThat(firstPage.getPayload().get(9).email()).isEqualTo("user18@slac.stanford.edu");
+
+        var secondPage = assertDoesNotThrow(
+                () -> testControllerHelperService.userControllerFindAllUsers(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        Optional.of(10),
+                        Optional.empty(),
+                        Optional.of(firstPage.getPayload().get(9).id()),
+                        Optional.empty(),
+                        Optional.of(true),
+                        Optional.of(true)
+                )
+        );
+        assertThat(secondPage).isNotNull();
+        assertThat(secondPage.getPayload()).hasSize(10);
+        assertThat(secondPage.getPayload().get(0).email()).isEqualTo("user19@slac.stanford.edu");
+        assertThat(secondPage.getPayload().get(9).email()).isEqualTo("user7@slac.stanford.edu");
+    }
+
 }
