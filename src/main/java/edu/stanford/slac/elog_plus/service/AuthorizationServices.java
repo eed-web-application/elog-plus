@@ -310,18 +310,28 @@ public class AuthorizationServices {
      * @param ownerId                   the id of the owner
      * @param authorizationOwnerTypeDTO the type of the owner
      */
-    private void ensureOwnerExistence(String ownerId, AuthorizationOwnerTypeDTO authorizationOwnerTypeDTO) {
+    private String ensureOwnerExistence(String ownerId, AuthorizationOwnerTypeDTO authorizationOwnerTypeDTO) {
+        String realIdToUse = null;
         switch (authorizationOwnerTypeDTO) {
-            case User:
+            case User: {
+                PersonDTO foundPerson = null;
                 // if not found will try an exception
-                peopleGroupService.findPersonByEMail(ownerId);
+                try {
+                    foundPerson = peopleGroupService.findPersonByEMail(ownerId);
+                } catch (Exception e) {
+                    // try to find As ID
+                    foundPerson = peopleGroupService.findPersonByUid(ownerId);
+                }
+                // return always email also in case the uid is passed
+                realIdToUse = foundPerson.mail();
                 break;
+            }
             case Group:
                 // if not found will try an exception
-                authService.findLocalGroupById(ownerId);
+                authService.findLocalGroupById(realIdToUse = ownerId);
                 break;
             case Token:
-                authService.getAuthenticationTokenById(ownerId).orElseThrow(
+                authService.getAuthenticationTokenById(realIdToUse = ownerId).orElseThrow(
                         () -> ControllerLogicException
                                 .builder()
                                 .errorCode(-1)
@@ -338,6 +348,7 @@ public class AuthorizationServices {
                         .errorDomain("AuthorizationServices::ensureOwnerExistence")
                         .build();
         }
+        return realIdToUse;
     }
 
     /**
