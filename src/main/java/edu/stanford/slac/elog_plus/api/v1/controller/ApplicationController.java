@@ -114,7 +114,7 @@ public class ApplicationController {
             summary = "Search into all application"
     )
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
-    @PostAuthorize("@applicationAuthorizationService.applyFilterOnApplicationList(returnObject, #authentication)")
+    //@PostAuthorize("@applicationAuthorizationService.applyFilterOnApplicationList(returnObject, #authentication)")
     public ApiResultResponse<List<ApplicationDetailsDTO>> findAllApplication(
             Authentication authentication,
             @Parameter(name = "anchorId", description = "Is the id of an entry from where start the search")
