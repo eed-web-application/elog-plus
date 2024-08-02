@@ -411,7 +411,7 @@ public class UserControllerControllerTest {
                         Optional.of("user1@slac.stanford.edu"),
                         Optional.of(10),
                         Optional.empty(),
-                        Optional.of(firstPage.getPayload().get(9).email()),
+                        Optional.of(firstPage.getPayload().get(9).id()),
                         Optional.empty(),
                         Optional.of(true),
                         Optional.of(true)
