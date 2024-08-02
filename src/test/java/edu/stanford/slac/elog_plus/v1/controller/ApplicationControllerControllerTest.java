@@ -1,6 +1,8 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
 
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.ad.eed.baselib.exception.AuthenticationTokenNotFound;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
@@ -10,6 +12,8 @@ import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.model.LocalGroup;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.NewApplicationDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.NewAuthorizationDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.ResourceTypeDTO;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import org.junit.jupiter.api.BeforeEach;
@@ -177,5 +181,52 @@ public class ApplicationControllerControllerTest {
         for (int i = 0; i < 10; i++) {
             assertThat(searchResult.getPayload().get(i).name()).isEqualTo("app-%02d".formatted(i));
         }
+    }
+
+    @Test
+    public void fetchApplcaitionAuthorizations() {
+        var app1Result = assertDoesNotThrow(
+                () -> testControllerHelperService.applicationControllerCreateNewApplication(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewApplicationDTO.builder()
+                                .name("app-1")
+                                .expiration(LocalDate.of(2100, 1, 1))
+                                .build()
+                )
+        );
+        assertThat(app1Result).isNotNull();
+        var authResult = assertDoesNotThrow(
+                () -> testControllerHelperService.authorizationControllerCreateNewAuthorization(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewAuthorizationDTO
+                                .builder()
+                                .ownerId(app1Result.getPayload())
+                                .ownerType(AuthorizationOwnerTypeDTO.Token)
+                                .resourceId("r1")
+                                .resourceType(ResourceTypeDTO.Logbook)
+                                .permission(AuthorizationTypeDTO.Admin)
+                                .build()
+                )
+        );
+        assertThat(authResult).isNotNull();
+
+        // search for the first 10
+        var searchResult = assertDoesNotThrow(
+                () -> testControllerHelperService.applicationControllerFindApplicationById(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        app1Result.getPayload(),
+                        Optional.of(true)
+                )
+        );
+        assertThat(searchResult).isNotNull();
+        assertThat(searchResult.getPayload()).isNotNull();
+        assertThat(searchResult.getPayload().authorizations()).isNotNull().hasSize(1);
+        assertThat(searchResult.getPayload().authorizations().get(0).ownerId()).isEqualTo(app1Result.getPayload());
     }
 }

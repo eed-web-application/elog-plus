@@ -186,6 +186,7 @@ public class AuthorizationServices {
      * @return the user details
      */
     public ApplicationDetailsDTO getApplicationById(String applicationId, boolean includeAuthorizations) {
+        log.info("Finding application with id {}", applicationId);
         var authTokenFound = authService.getAuthenticationTokenById(applicationId).orElseThrow(
                 () -> ControllerLogicException
                         .builder()
@@ -194,6 +195,21 @@ public class AuthorizationServices {
                         .errorDomain("AuthorizationServices::getApplicationById")
                         .build()
         );
+        log.info("Founding authorizations for application {}", authTokenFound.id());
+        List<DetailsAuthorizationDTO> auhtorizationList = includeAuthorizations ?
+                authorizationMapper.fromAuthorizationDTO
+                        (
+                                authService.getAllAuthenticationForOwner
+                                        (
+                                                authTokenFound.id(),
+                                                AuthorizationOwnerTypeDTO.Token,
+                                                Optional.empty()
+                                        )
+                        ) :
+                Collections.emptyList();
+        if(auhtorizationList.size()>0) {
+            log.info("Found {} authorizations for application {}", auhtorizationList.size(), authTokenFound);
+        }
         return ApplicationDetailsDTO.builder()
                 .id(authTokenFound.id())
                 .name(authTokenFound.name())
@@ -201,19 +217,7 @@ public class AuthorizationServices {
                 .token(authTokenFound.token())
                 .expiration(authTokenFound.expiration())
                 .applicationManaged(authTokenFound.applicationManaged())
-                .authorizations(
-                        includeAuthorizations ?
-                                authorizationMapper.fromAuthorizationDTO
-                                        (
-                                                authService.getAllAuthenticationForOwner
-                                                        (
-                                                                authTokenFound.id(),
-                                                                AuthorizationOwnerTypeDTO.Token,
-                                                                Optional.empty()
-                                                        )
-                                        ) :
-                                Collections.emptyList()
-                )
+                .authorizations(auhtorizationList)
                 .build();
     }
 
