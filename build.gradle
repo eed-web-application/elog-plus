@@ -12,8 +12,8 @@ version = '1.0.0'
 sourceCompatibility = '19'
 
 ext {
-    ad_eed_baselib_version = "0.1.81"
-    ad_eed_base_mongodb_lib_version = "1.0.4"
+    ad_eed_baselib_version = "0.1.82"
+    ad_eed_base_mongodb_lib_version = "1.0.5"
     javaSourceCompatibility = JavaVersion.VERSION_21
     javaTargetCompatibility = JavaVersion.VERSION_21
 }
