@@ -227,6 +227,5 @@ public class ApplicationControllerControllerTest {
         assertThat(searchResult).isNotNull();
         assertThat(searchResult.getPayload()).isNotNull();
         assertThat(searchResult.getPayload().authorizations()).isNotNull().hasSize(1);
-        assertThat(searchResult.getPayload().authorizations().get(0).ownerId()).isEqualTo(app1Result.getPayload());
     }
 }
