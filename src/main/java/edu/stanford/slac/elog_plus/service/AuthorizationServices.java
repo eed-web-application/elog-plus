@@ -273,7 +273,7 @@ public class AuthorizationServices {
         );
 
         //check if user, group or application exists before to add authorization
-        ensureOwnerExistence(newAuthorizationDTO.ownerId(), newAuthorizationDTO.ownerType());
+        String realId = ensureOwnerExistence(newAuthorizationDTO.ownerId(), newAuthorizationDTO.ownerType());
 
         // check if the authorization already exists
         if(foundAuthorization.stream().anyMatch(a -> a.resource().equals(resource))) {
@@ -285,22 +285,21 @@ public class AuthorizationServices {
             );
             return;
         }
-
+        log.info(
+                "Creating new authorization on {}/{} for {}/{} by {}",
+                newAuthorizationDTO.resourceType(), newAuthorizationDTO.resourceId(),
+                newAuthorizationDTO.ownerType(), newAuthorizationDTO.ownerId(),
+                getCurrentUsername()
+        );
         // we can create the authorization
         authService.addNewAuthorization(
                 edu.stanford.slac.ad.eed.baselib.api.v1.dto.NewAuthorizationDTO
                         .builder()
-                        .owner(newAuthorizationDTO.ownerId())
+                        .owner(realId)
                         .ownerType(newAuthorizationDTO.ownerType())
                         .authorizationType(newAuthorizationDTO.permission())
                         .resource(resource)
                         .build()
-        );
-        log.info(
-                "Created new authorization on {}/{} for {}/{} by {}",
-                newAuthorizationDTO.resourceType(), newAuthorizationDTO.resourceId(),
-                newAuthorizationDTO.ownerType(), newAuthorizationDTO.ownerId(),
-                getCurrentUsername()
         );
     }
 
