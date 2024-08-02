@@ -42,6 +42,7 @@ public class AuthorizationServices {
     public List<UserDetailsDTO> findUsers(PersonQueryParameterDTO personQueryParameterDTO, Boolean includeAuthorizations, Boolean includeInheritance) {
         // found users
         var foundUsers = peopleGroupService.findPersons(personQueryParameterDTO);
+        log.info("Finding users with query {} return {} results", personQueryParameterDTO, foundUsers.size());
         //convert to UserDetailsDTO
         return foundUsers.stream().map(
                 u -> authorizationMapper.fromPersonDTO
@@ -143,6 +144,7 @@ public class AuthorizationServices {
             Boolean includeAuthorizations
     ) {
         var foundGroups = authService.findLocalGroup(localGroupQueryParameterDTO);
+        log.info("Finding groups with query {} return {} results", localGroupQueryParameterDTO, foundGroups.size());
         return foundGroups.stream().map(
                 g -> GroupDetailsDTO.builder()
                         .id(g.id())
@@ -229,6 +231,7 @@ public class AuthorizationServices {
             Boolean includeAuthorizations
     ) {
         var authTokenFound = authService.findAllAuthenticationToken(authenticationTokenQueryParameterDTO);
+        log.info("Finding applications with query {} return {} results", authenticationTokenQueryParameterDTO, authTokenFound.size());
         return authTokenFound.stream().map(
                 a -> ApplicationDetailsDTO.builder()
                         .id(a.id())
@@ -358,6 +361,7 @@ public class AuthorizationServices {
     public void updateAuthorization(String authorizationId, UpdateAuthorizationDTO updateAuthorizationDTO) {
         var authorizationFound = authService.findAuthorizationById(authorizationId);
         authService.updateAuthorizationType(authorizationId, updateAuthorizationDTO.permission());
+        log.info("Updating authorization {} by {}", authorizationFound, getCurrentUsername());
     }
 
     /**
@@ -374,6 +378,7 @@ public class AuthorizationServices {
                         .expiration(newApplicationDTO.expiration())
                         .build(),
                 false);
+        log.info("Created new application {} by {}", createdAuthToken, getCurrentUsername());
         return createdAuthToken.id();
     }
 
