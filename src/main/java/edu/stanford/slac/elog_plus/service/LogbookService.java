@@ -970,7 +970,7 @@ public class LogbookService {
                         .errorDomain(errorDomain)
                         .build()
         );
-
+        log.info("Shift '{}' validate date from: {}[{}] against to: {}[{}]", shiftToAdd.getName(), shiftToAdd.getFrom(), shiftToAdd.getFromTime(), shiftToAdd.getTo(), shiftToAdd.getToTime());
         assertion(
                 () -> shiftToAdd.getFromTime().isBefore(shiftToAdd.getToTime()),
                 ControllerLogicException
