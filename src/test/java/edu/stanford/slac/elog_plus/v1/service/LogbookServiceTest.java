@@ -671,6 +671,210 @@ public class LogbookServiceTest {
         assertThat(fullLogbook.shifts()).extracting("name").contains("Shift1", "Shift2", "Shift3");
     }
 
+
+    @Test
+    public void testShiftMattBug() {
+        String newLogbookID = sharedUtilityService.getTestLogbook();
+        LogbookDTO createdLogbook = assertDoesNotThrow(
+                () -> logbookService.getLogbook(
+                        newLogbookID
+                )
+        );
+        assertThat(createdLogbook).isNotNull();
+        assertThat(createdLogbook.id()).isEqualTo(newLogbookID);
+        // update logbook with owl shift (12::00AM-07:59AM) and Day Shift (08:00AM-03:59PM)
+        LogbookDTO updatedLogbook = assertDoesNotThrow(
+                () -> logbookService.update(
+                        newLogbookID,
+                        UpdateLogbookDTO
+                                .builder()
+                                .name(createdLogbook.name())
+                                .tags(emptyList())
+                                .shifts(
+                                        List.of(
+                                                ShiftDTO
+                                                        .builder()
+                                                        .name("Owl Shift")
+                                                        .from(
+                                                                DateUtilities.toUTCString(
+                                                                        LocalTime.of(
+                                                                                0,
+                                                                                0
+                                                                        )
+                                                                )
+                                                        )
+                                                        .to(
+                                                                DateUtilities.toUTCString(
+                                                                        LocalTime.of(
+                                                                                7,
+                                                                                59
+                                                                        )
+                                                                )
+                                                        )
+                                                        .build(),
+                                                ShiftDTO
+                                                        .builder()
+                                                        .name("Day Shift")
+                                                        .from(
+                                                                DateUtilities.toUTCString(
+                                                                        LocalTime.of(
+                                                                                8,
+                                                                                0
+                                                                        )
+                                                                )
+                                                        )
+                                                        .to(
+                                                                DateUtilities.toUTCString(
+                                                                        LocalTime.of(
+                                                                                15,
+                                                                                59
+                                                                        )
+                                                                )
+                                                        )
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(updatedLogbook).isNotNull();
+        assertThat(updatedLogbook.id()).isEqualTo(newLogbookID);
+        assertThat(updatedLogbook.shifts()).extracting("name").contains("Owl Shift", "Day Shift");
+        assertThat(updatedLogbook.shifts()).extracting("from").contains(
+                DateUtilities.toUTCString(
+                        LocalTime.of(
+                                0,
+                                0
+                        )
+                ),
+                DateUtilities.toUTCString(
+                        LocalTime.of(
+                                8,
+                                0
+                        )
+                )
+        );
+
+        // add now the swing shift (04:00PM-11:59PM)
+        LogbookDTO anotherLogbookUpdate = assertDoesNotThrow(
+                () -> logbookService.update(
+                        newLogbookID,
+                        UpdateLogbookDTO
+                                .builder()
+                                .name(updatedLogbook.name())
+                                .tags(emptyList())
+                                .shifts(
+                                        List.of(
+                                                ShiftDTO
+                                                        .builder()
+                                                        .name("Owl Shift")
+                                                        .from(
+                                                                DateUtilities.toUTCString(
+                                                                        LocalTime.of(
+                                                                                0,
+                                                                                0
+                                                                        )
+                                                                )
+                                                        )
+                                                        .to(
+                                                                DateUtilities.toUTCString(
+                                                                        LocalTime.of(
+                                                                                7,
+                                                                                59
+                                                                        )
+                                                                )
+                                                        )
+                                                        .build(),
+                                                ShiftDTO
+                                                        .builder()
+                                                        .name("Day Shift")
+                                                        .from(
+                                                                DateUtilities.toUTCString(
+                                                                        LocalTime.of(
+                                                                                8,
+                                                                                0
+                                                                        )
+                                                                )
+                                                        )
+                                                        .to(
+                                                                DateUtilities.toUTCString(
+                                                                        LocalTime.of(
+                                                                                15,
+                                                                                59
+                                                                        )
+                                                                )
+                                                        )
+                                                        .build(),
+                                                ShiftDTO
+                                                        .builder()
+                                                        .name("Swing Shift")
+                                                        .from(
+                                                                DateUtilities.toUTCString(
+                                                                        LocalTime.of(
+                                                                                16,
+                                                                                0
+                                                                        )
+                                                                )
+                                                        )
+                                                        .to(
+                                                                DateUtilities.toUTCString(
+                                                                        LocalTime.of(
+                                                                                23,
+                                                                                59
+                                                                        )
+                                                                )
+                                                        )
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(anotherLogbookUpdate).isNotNull();
+        assertThat(anotherLogbookUpdate.id()).isEqualTo(newLogbookID);
+        assertThat(anotherLogbookUpdate.shifts()).extracting("name").contains("Owl Shift", "Day Shift", "Swing Shift");
+        assertThat(anotherLogbookUpdate.shifts()).extracting("from").contains(
+                DateUtilities.toUTCString(
+                        LocalTime.of(
+                                0,
+                                0
+                        )
+                ),
+                DateUtilities.toUTCString(
+                        LocalTime.of(
+                                8,
+                                0
+                        )
+                ),
+                DateUtilities.toUTCString(
+                        LocalTime.of(
+                                16,
+                                0
+                        )
+                )
+        );
+        assertThat(anotherLogbookUpdate.shifts()).extracting("to").contains(
+                DateUtilities.toUTCString(
+                        LocalTime.of(
+                                7,
+                                59
+                        )
+                ),
+                DateUtilities.toUTCString(
+                        LocalTime.of(
+                                15,
+                                59
+                        )
+                ),
+                DateUtilities.toUTCString(
+                        LocalTime.of(
+                                23,
+                                59
+                        )
+                )
+        );
+    }
+
     @Test
     public void shiftReplaceFailWithWrongID() {
         String newLogbookID = sharedUtilityService.getTestLogbook();
