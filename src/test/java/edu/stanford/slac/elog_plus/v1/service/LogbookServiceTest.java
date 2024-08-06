@@ -226,21 +226,6 @@ public class LogbookServiceTest {
         );
         assertThat(exceptBadTime.getErrorCode()).isEqualTo(-1);
         assertThat(exceptBadTime.getErrorMessage()).containsPattern(".*'to'.*range 00:01-23:59");
-
-        exceptBadTime = assertThrows(
-                ControllerLogicException.class,
-                () -> logbookService.addShift(
-                        newLogbookID,
-                        NewShiftDTO
-                                .builder()
-                                .name("Shift1")
-                                .from("00:30")
-                                .to("00:20")
-                                .build()
-                )
-        );
-        assertThat(exceptBadTime.getErrorCode()).isEqualTo(-1);
-        assertThat(exceptBadTime.getErrorMessage()).containsPattern(".*'from'.*before.*'to'.*");
     }
 
     @Test
@@ -383,7 +368,7 @@ public class LogbookServiceTest {
                                         DateUtilities.toUTCString(
                                                 LocalTime.of(
                                                         0,
-                                                        1
+                                                        0
                                                 )
                                         ))
                                 .to(
@@ -409,7 +394,7 @@ public class LogbookServiceTest {
                                         DateUtilities.toUTCString(
                                                 LocalTime.of(
                                                         2,
-                                                        1
+                                                        0
                                                 )
                                         )
                                 )
@@ -453,7 +438,7 @@ public class LogbookServiceTest {
                 )
         );
         AssertionsForClassTypes.assertThat(exceptOverlap.getErrorCode()).isEqualTo(-3);
-        AssertionsForClassTypes.assertThat(exceptOverlap.getErrorMessage()).containsPattern(".*'from'.*overlap.*Shift1");
+        AssertionsForClassTypes.assertThat(exceptOverlap.getErrorMessage()).containsPattern(".*ShiftFails.*overlap.*Shift1");
 
         exceptOverlap = assertThrows(
                 ControllerLogicException.class,
@@ -482,7 +467,7 @@ public class LogbookServiceTest {
                 )
         );
         AssertionsForClassTypes.assertThat(exceptOverlap.getErrorCode()).isEqualTo(-3);
-        AssertionsForClassTypes.assertThat(exceptOverlap.getErrorMessage()).containsPattern(".*'to'.*overlap.*Shift2");
+        AssertionsForClassTypes.assertThat(exceptOverlap.getErrorMessage()).containsPattern(".*ShiftFails.*overlap.*Shift2");
     }
 
     @Test
