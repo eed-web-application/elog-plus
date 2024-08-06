@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -846,151 +847,6 @@ public class LogbookService {
         );
     }
 
-    private static void checkShiftAmongAllOther(
-            Shift newShift,
-            List<Shift> allShift,
-            Integer errorCode,
-            String errorDomain) {
-        for (Shift savedShift :
-                allShift) {
-            // check from field
-            if (
-                    (
-                            newShift.getFromTime().equals(savedShift.getFromTime()) ||
-                                    newShift.getFromTime().equals(savedShift.getToTime())
-                    ) ||
-
-                            (
-                                    newShift.getToTime().equals(savedShift.getFromTime()) ||
-                                            newShift.getToTime().equals(savedShift.getToTime())
-                            )
-            ) {
-                throw ControllerLogicException
-                        .builder()
-                        .errorCode(errorCode)
-                        .errorMessage(String.format("New shift 'from' field overlap with the shift %s", savedShift.getName()))
-                        .errorDomain(errorDomain)
-                        .build();
-            }
-
-            if (
-                    newShift.getFromTime().isBefore(savedShift.getToTime()) &&
-                            newShift.getFromTime().isAfter(savedShift.getFromTime())
-            ) {
-                throw ControllerLogicException
-                        .builder()
-                        .errorCode(errorCode)
-                        .errorMessage(String.format("New shift 'from' field overlap with the shift %s", savedShift.getName()))
-                        .errorDomain(errorDomain)
-                        .build();
-            }
-
-            if (
-                    newShift.getToTime().isBefore(savedShift.getToTime()) &&
-                            newShift.getToTime().isAfter(savedShift.getFromTime())
-            ) {
-                throw ControllerLogicException
-                        .builder()
-                        .errorCode(errorCode)
-                        .errorMessage(String.format("New shift 'to' field overlap with the shif %s", savedShift.getName()))
-                        .errorDomain(errorDomain)
-                        .build();
-            }
-        }
-    }
-
-    /**
-     * Validate the shift
-     *
-     * @param shiftToAdd is the shift to validate
-     */
-    private Shift validateShift(Shift shiftToAdd, Integer errorCode, String errorDomain) {
-        final String timeRegex = "^(0?[0-9]|1[0-9]|2[0-3]):([0-5][0-9])$";
-        final Pattern pattern = Pattern.compile(timeRegex, Pattern.MULTILINE);
-
-        assertion(
-                () -> shiftToAdd != null,
-                ControllerLogicException
-                        .builder()
-                        .errorCode(errorCode)
-                        .errorMessage("The shift cannot be null")
-                        .errorDomain(errorDomain)
-                        .build()
-        );
-
-        // check 'name'
-        assertion(
-                () -> shiftToAdd.getName() != null && !shiftToAdd.getName().isEmpty(),
-                ControllerLogicException
-                        .builder()
-                        .errorCode(errorCode)
-                        .errorMessage("The shift 'name' is mandatory")
-                        .errorDomain(errorDomain)
-                        .build()
-        );
-
-        //check 'from' field
-        assertion(
-                () -> shiftToAdd.getFrom() != null && !shiftToAdd.getFrom().isEmpty(),
-                ControllerLogicException
-                        .builder()
-                        .errorCode(errorCode)
-                        .errorMessage("The shift 'from' field is mandatory")
-                        .errorDomain(errorDomain)
-                        .build()
-        );
-        Matcher fromMatcher = pattern.matcher(shiftToAdd.getFrom());
-        assertion(
-                () -> fromMatcher.matches() && fromMatcher.groupCount() == 2,
-                ControllerLogicException
-                        .builder()
-                        .errorCode(errorCode)
-                        .errorMessage("The shift 'from' field need to be a time in the range 00:01-23:59")
-                        .errorDomain(errorDomain)
-                        .build()
-        );
-
-        //check 'to' field
-        assertion(
-                () -> shiftToAdd.getTo() != null && !shiftToAdd.getTo().isEmpty(),
-                ControllerLogicException
-                        .builder()
-                        .errorCode(errorCode)
-                        .errorMessage("The shift 'to' field is mandatory")
-                        .errorDomain(errorDomain)
-                        .build()
-        );
-        Matcher toMatcher = pattern.matcher(shiftToAdd.getTo());
-        assertion(
-                () -> toMatcher.matches() && toMatcher.groupCount() == 2,
-                ControllerLogicException
-                        .builder()
-                        .errorCode(errorCode)
-                        .errorMessage("The shift 'to' field need to be a time in the range 00:01-23:59")
-                        .errorDomain(errorDomain)
-                        .build()
-        );
-        log.info("Shift '{}' validate date from: {}[{}] against to: {}[{}]", shiftToAdd.getName(), shiftToAdd.getFrom(), shiftToAdd.getFromTime(), shiftToAdd.getTo(), shiftToAdd.getToTime());
-        assertion(
-                () -> shiftToAdd.getFromTime().isBefore(shiftToAdd.getToTime()),
-                ControllerLogicException
-                        .builder()
-                        .errorCode(errorCode)
-                        .errorMessage("The shift 'from' time should be before 'to' time")
-                        .errorDomain(errorDomain)
-                        .build()
-        );
-        shiftToAdd.setFromMinutesSinceMidnight(
-                shiftToAdd.getFromTime().getHour() * 60 + shiftToAdd.getFromTime().getMinute()
-        );
-        shiftToAdd.setToMinutesSinceMidnight(
-                shiftToAdd.getToTime().getHour() * 60 + shiftToAdd.getToTime().getMinute()
-        );
-        //shiftToAdd.setFromTime(fromTime);
-        //.setToTime(toTime);
-        return shiftToAdd;
-    }
-
     /**
      * Return the shift which the date fall in its range
      *
@@ -1357,5 +1213,144 @@ public class LogbookService {
                     );
                 }
         );
+    }
+
+
+    /**
+     * Check if the shift overlap with the other
+     *
+     * @param newShift     the new shift to check
+     * @param allShift     all the shift to check
+     * @param errorCode    the error code to generate in case of fail
+     * @param errorDomain  the error domain in case of fail
+     */
+    private void checkShiftAmongAllOther(
+            Shift newShift,
+            List<Shift> allShift,
+            Integer errorCode,
+            String errorDomain) {
+        for (Shift savedShift :
+                allShift) {
+            // check from field
+            if(overlap(
+                    newShift.getFromTime(),
+                    newShift.getToTime(),
+                    savedShift.getFromTime(),
+                    savedShift.getToTime()
+            )){
+                throw ControllerLogicException
+                        .builder()
+                        .errorCode(errorCode)
+                        .errorMessage(String.format("New shift %s overlap the shift %s", newShift.getName(), savedShift.getName()))
+                        .errorDomain(errorDomain)
+                        .build();
+            }
+        }
+    }
+
+    /**
+     * Check if two interval overlap
+     *
+     * @param start1 the start of the first interval
+     * @param end1   the end of the first interval
+     * @param start2 the start of the second interval
+     * @param end2   the end of the second interval
+     * @return true if the interval overlap
+     */
+    private boolean overlap(LocalTime start1, LocalTime end1, LocalTime start2, LocalTime end2) {
+        if (start1.isAfter(end1)) { // interval 1 crosses midnight
+            if (start2.isAfter(end2)) { // both intervals cross midnight, so they overlap at midnight
+                return true;
+            }
+            // Swap the intervals so interval 1 does not cross midnight
+            return overlap(start2, end2, start1, end1);
+        }
+
+        // Now we know that interval 1 cannot cross midnight
+        if (start2.isAfter(end2)) { // Interval 2 crosses midnight
+            return start2.isBefore(end1) || end2.isAfter(start1);
+        } else { // None of the intervals crosses midnight
+            return start2.isBefore(end1) && end2.isAfter(start1);
+        }
+    }
+
+    /**
+     * Validate the shift
+     *
+     * @param shiftToAdd is the shift to validate
+     */
+    private Shift validateShift(Shift shiftToAdd, Integer errorCode, String errorDomain) {
+        final String timeRegex = "^(0?[0-9]|1[0-9]|2[0-3]):([0-5][0-9])$";
+        final Pattern pattern = Pattern.compile(timeRegex, Pattern.MULTILINE);
+
+        assertion(
+                () -> shiftToAdd != null,
+                ControllerLogicException
+                        .builder()
+                        .errorCode(errorCode)
+                        .errorMessage("The shift cannot be null")
+                        .errorDomain(errorDomain)
+                        .build()
+        );
+
+        // check 'name'
+        assertion(
+                () -> shiftToAdd.getName() != null && !shiftToAdd.getName().isEmpty(),
+                ControllerLogicException
+                        .builder()
+                        .errorCode(errorCode)
+                        .errorMessage("The shift 'name' is mandatory")
+                        .errorDomain(errorDomain)
+                        .build()
+        );
+
+        //check 'from' field
+        assertion(
+                () -> shiftToAdd.getFrom() != null && !shiftToAdd.getFrom().isEmpty(),
+                ControllerLogicException
+                        .builder()
+                        .errorCode(errorCode)
+                        .errorMessage("The shift 'from' field is mandatory")
+                        .errorDomain(errorDomain)
+                        .build()
+        );
+        Matcher fromMatcher = pattern.matcher(shiftToAdd.getFrom());
+        assertion(
+                () -> fromMatcher.matches() && fromMatcher.groupCount() == 2,
+                ControllerLogicException
+                        .builder()
+                        .errorCode(errorCode)
+                        .errorMessage("The shift 'from' field need to be a time in the range 00:01-23:59")
+                        .errorDomain(errorDomain)
+                        .build()
+        );
+
+        //check 'to' field
+        assertion(
+                () -> shiftToAdd.getTo() != null && !shiftToAdd.getTo().isEmpty(),
+                ControllerLogicException
+                        .builder()
+                        .errorCode(errorCode)
+                        .errorMessage("The shift 'to' field is mandatory")
+                        .errorDomain(errorDomain)
+                        .build()
+        );
+        Matcher toMatcher = pattern.matcher(shiftToAdd.getTo());
+        assertion(
+                () -> toMatcher.matches() && toMatcher.groupCount() == 2,
+                ControllerLogicException
+                        .builder()
+                        .errorCode(errorCode)
+                        .errorMessage("The shift 'to' field need to be a time in the range 00:01-23:59")
+                        .errorDomain(errorDomain)
+                        .build()
+        );
+        shiftToAdd.setFromMinutesSinceMidnight(
+                shiftToAdd.getFromTime().getHour() * 60 + shiftToAdd.getFromTime().getMinute()
+        );
+        shiftToAdd.setToMinutesSinceMidnight(
+                shiftToAdd.getToTime().getHour() * 60 + shiftToAdd.getToTime().getMinute()
+        );
+        return shiftToAdd;
     }
 }
