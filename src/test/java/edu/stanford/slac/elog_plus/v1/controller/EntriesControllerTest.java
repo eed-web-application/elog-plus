@@ -1965,7 +1965,7 @@ public class EntriesControllerTest {
         );
         AssertionsForClassTypes.assertThat(logEntry).isNotNull();
         AssertionsForClassTypes.assertThat(logEntry.getErrorCode()).isEqualTo(0);
-        AssertionsForClassTypes.assertThat(logEntry.getPayload()).isEqualTo(newLogID.getPayload());
+        AssertionsForClassTypes.assertThat(logEntry.getPayload().id()).isEqualTo(newLogID.getPayload());
     }
 
     @Test
