@@ -56,7 +56,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class AttachmentControllerTest {
     @Autowired
     private MockMvc mockMvc;
-
     @Autowired
     private MongoTemplate mongoTemplate;
     @Autowired

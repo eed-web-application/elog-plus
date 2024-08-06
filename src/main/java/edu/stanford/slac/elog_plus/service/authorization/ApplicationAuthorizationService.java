@@ -8,6 +8,7 @@ import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.ApplicationDetailsDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.GroupDetailsDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.NewApplicationDTO;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -22,7 +23,7 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 public class ApplicationAuthorizationService {
     private final AuthService authService;
 
-    public boolean canCreateApp(Authentication authentication, NewLocalGroupDTO newLocalGroupDTO) {
+    public boolean canCreateApp(Authentication authentication, NewApplicationDTO newApplicationDTO) {
         assertion(
                 NotAuthorized
                         .notAuthorizedBuilder()
