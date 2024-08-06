@@ -176,6 +176,7 @@ public class LogbookRepositoryImpl implements LogbookRepositoryCustom {
     @Override
     public Optional<Shift> findShiftFromLocalTime(String logbookId, LocalTime localTime) {
         Optional<Shift> result = null;
+        localTime = localTime.withSecond(0).withNano(0);
         int minutesFromMidnight = localTime.getHour() * 60 + localTime.getMinute();
         Query q = new Query();
         q.addCriteria(
@@ -185,13 +186,14 @@ public class LogbookRepositoryImpl implements LogbookRepositoryCustom {
                 .include("shifts");
         Logbook l = mongoTemplate.findOne(q, Logbook.class);
         if (l != null) {
+            LocalTime finalLocalTime = localTime;
             result = l.getShifts()
                     .stream()
                     .filter(
                             s ->
-                                    (localTime.equals(s.getFromTime()) || localTime.equals(s.getToTime())) ||
+                                    (finalLocalTime.equals(s.getFromTime()) || finalLocalTime.equals(s.getToTime())) ||
                                             (
-                                                    localTime.isAfter(s.getFromTime()) && localTime.isBefore(s.getToTime())
+                                                    finalLocalTime.isAfter(s.getFromTime()) && finalLocalTime.isBefore(s.getToTime())
                                             )
 
                     )
