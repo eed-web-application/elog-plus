@@ -12,6 +12,7 @@ import edu.stanford.slac.ad.eed.baselib.auth.JWTHelper;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
+import edu.stanford.slac.elog_plus.api.v1.dto.LogbookDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.NewLogbookDTO;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
@@ -69,7 +70,7 @@ public class PrinterControllerTest {
     @Autowired
     private TestControllerHelperService testControllerHelperService;
 
-    private String testLogbookId;
+    private LogbookDTO fullLogbook;
 
     @BeforeEach
     public void preTest() {
@@ -95,7 +96,19 @@ public class PrinterControllerTest {
         );
         assertThat(testLogbookIdResult).isNotNull();
         assertThat(testLogbookIdResult.getPayload()).isNotNull();
-        testLogbookId = testLogbookIdResult.getPayload();
+        var fullLogbookResult = assertDoesNotThrow(
+                () -> testControllerHelperService.getLogbookByID(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
+                        testLogbookIdResult.getPayload()
+                )
+        );
+        assertThat(fullLogbookResult).isNotNull();
+        assertThat(fullLogbookResult.getPayload()).isNotNull();
+        fullLogbook = fullLogbookResult.getPayload();
     }
 
     @Test
@@ -104,17 +117,17 @@ public class PrinterControllerTest {
         IppPacket attributeRequestResponse = IppPacket.getPrinterAttributes(uri)
                 .putOperationAttributes
                         (
-                        requestingUserName.of("user1@slac.stanford.edu"),
-                        requestedAttributes.of("all")
-                )
+                                requestingUserName.of("user1@slac.stanford.edu"),
+                                requestedAttributes.of("all")
+                        )
                 .build();
         IppPacketData response = null;
         try (IppPacketData request = new IppPacketData(attributeRequestResponse)) {
             response = assertDoesNotThrow(() -> sendRequest(Optional.of("user1@slac.stanford.edu"), request, status().isOk()));
             assertThat(response).isNotNull();
             System.out.println("\nReceived: " + response.getPacket().prettyPrint(100, "  "));
-        }finally {
-            if(response!=null) response.close();
+        } finally {
+            if (response != null) response.close();
         }
 
     }
@@ -122,7 +135,7 @@ public class PrinterControllerTest {
     @Test
     public void failPrintingWithNoAuth() {
         // check if printer support png
-        try (InputStream is = assertDoesNotThrow(()->documentGenerationService.getTestPng())) {
+        try (InputStream is = assertDoesNotThrow(() -> documentGenerationService.getTestPng())) {
             try (var responsePacket = assertDoesNotThrow(() -> print(Optional.empty(), is, MediaType.IMAGE_PNG_VALUE, status().isOk()))) {
                 assertThat(responsePacket).isNotNull();
                 assertThat(responsePacket.getPacket().getStatus()).isEqualTo(Status.clientErrorNotAuthorized);
@@ -144,8 +157,8 @@ public class PrinterControllerTest {
             assertThat(formats.contains(MediaType.IMAGE_PNG_VALUE)).isTrue();
         }
 
-        try (InputStream is = assertDoesNotThrow(()->documentGenerationService.getTestPng())) {
-            try (var responsePacket = assertDoesNotThrow(() -> print(Optional.of("user1@slac.stanford.edu"), is, MediaType.IMAGE_PNG_VALUE, status().isOk()))) {
+        try (InputStream is = assertDoesNotThrow(() -> documentGenerationService.getTestPng())) {
+            try (var responsePacket = assertDoesNotThrow(() -> print(Optional.of("user1@slac.stanford.edu"), is, fullLogbook.name(), status().isOk()))) {
                 assertThat(responsePacket).isNotNull();
                 System.out.println("\nReceived: " + responsePacket.getPacket().prettyPrint(100, "  "));
             }
@@ -154,7 +167,7 @@ public class PrinterControllerTest {
         }
     }
 
-    public IppPacketData getJobStatus(Optional<String> userInfo, ResultMatcher status,int jobId) throws Exception {
+    public IppPacketData getJobStatus(Optional<String> userInfo, ResultMatcher status, int jobId) throws Exception {
         // Query for supported document formats
         IppPacket attributeRequest = IppPacket.getJobAttributes(URI.create("/v1/printers/defaults"))
                 .putOperationAttributes(
@@ -190,17 +203,18 @@ public class PrinterControllerTest {
      *
      * @param userInfo The user info
      * @param is       The input stream
-     * @param mimeType The mime type
+     * @param logbook  The logbook where to print
      * @param status   The expected status
      * @return The IPP packet data
      * @throws Throwable If an error occurs
      */
-    public IppPacketData print(Optional<String> userInfo, InputStream is, String mimeType, ResultMatcher status) throws Throwable {
+    public IppPacketData print(Optional<String> userInfo, InputStream is, String logbook, ResultMatcher status) throws Throwable {
         // Deliver the print request
         IppPacket.Builder printRequestBuilder = IppPacket.printJob(URI.create("/v1/printers/defaults"));
         printRequestBuilder.putOperationAttributes(
                 requestingUserName.of("user"),
-                documentFormat.of(mimeType));
+                documentFormat.of("application/octet-stream"));
+        printRequestBuilder.putJobAttributes(new NameType.Set("logbook").of(logbook));
         userInfo.ifPresent(
                 s -> printRequestBuilder.putJobAttributes(new NameType.Set("jwt").of(jwtHelper.generateJwt(s)))
         );
@@ -213,8 +227,8 @@ public class PrinterControllerTest {
     /**
      * Send an IPP request and return the response
      *
-     * @param request        The IPP request
-     * @param resultMatcher  The expected result
+     * @param request       The IPP request
+     * @param resultMatcher The expected result
      * @return The IPP response
      * @throws Exception If an error occurs
      */

@@ -1,11 +1,15 @@
 package edu.stanford.slac.elog_plus.service;
 
-import com.hp.jipp.encoding.*;
+import com.hp.jipp.encoding.IppPacket;
+import com.hp.jipp.encoding.NameType;
 import com.hp.jipp.model.*;
 import com.hp.jipp.trans.IppPacketData;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.security.core.Authentication;
+import org.apache.tika.config.TikaConfig;
+import org.apache.tika.detect.Detector;
+import org.apache.tika.metadata.Metadata;
+import org.apache.tika.mime.MediaType;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
@@ -29,14 +33,24 @@ public class PrinterService {
      * @param inputData The IPP packet data
      * @return The print command
      */
-    public int getPrintCommand(IppPacketData inputData){
+    public int getPrintCommand(IppPacketData inputData) {
         return inputData.getPacket().getOperation().getCode();
+    }
+
+    /**
+     * Get the logbook destination from the IPP packet
+     *
+     * @param inputData The IPP packet data
+     * @return The logbook destination
+     */
+    public String getLogbookDestination(IppPacketData inputData) {
+        return inputData.getPacket().getString(jobAttributes, new NameType.Set("logbook"));
     }
 
     /**
      * Process an IPP packet
      *
-     * @param inputData  The IPP packet data
+     * @param inputData The IPP packet data
      * @return The IPP packet data
      */
     public IppPacketData handleIppPacket(IppPacketData inputData) {
@@ -56,13 +70,14 @@ public class PrinterService {
     /**
      * Create an error response packet
      *
-     * @param requestPacket         The request packet
-     * @param status The status
+     * @param requestPacket The request packet
+     * @param status        The status
      * @return The error response packet
      */
     public IppPacket createErrorResponsePacket(IppPacket requestPacket, Status status) {
         return IppPacket.response(status).build();
     }
+
 
     /**
      * Handle a Print-Job request
@@ -75,29 +90,41 @@ public class PrinterService {
         log.info("Received Print-Job request");
         // Fetch the document from the IPP packet
         IppPacket responsePacket = null;
-
-        // get the mimetype
-        String mimeType = requestPacket.getString(operationAttributes, Types.documentFormat);
-        if(mimeType==null) {
-            // return error
-            return IppPacket.jobResponse(
-                    Status.clientErrorBadRequest,
-                    requestPacket.getRequestId(),
-                    URI.create("/v1/printers/defaults/jobs/1"),
-                    JobState.aborted,
-                    Collections.singletonList(JobStateReason.jobQueued))
-                    .putAttributes(operationAttributes, Types.printerUri.of(URI.create("/v1/printers/defaults")))
-                    .build();
-        }
+        TikaConfig config = TikaConfig.getDefaultConfig();
+        Detector detector = config.getDetector();
+        Metadata metadata = new Metadata();
         try {
-
-            if (documentStream != null) {
-                if(mimeType.equalsIgnoreCase("text/plain")){
-                    handleText(documentStream);
-                } else {
-                    handleImages(documentStream);
-                }
+            if (documentStream == null) {
+                // return error
+                return IppPacket.jobResponse(
+                                Status.clientErrorBadRequest,
+                                requestPacket.getRequestId(),
+                                URI.create("/v1/printers/defaults/jobs/1"),
+                                JobState.aborted,
+                                Collections.singletonList(JobStateReason.jobQueued))
+                        .putAttributes(operationAttributes, Types.printerUri.of(URI.create("/v1/printers/defaults")))
+                        .build();
             }
+            MediaType mediaType = detector.detect(documentStream, metadata);
+            if (mediaType == null) {
+                // return error
+                return IppPacket.jobResponse(
+                                Status.clientErrorBadRequest,
+                                requestPacket.getRequestId(),
+                                URI.create("/v1/printers/defaults/jobs/1"),
+                                JobState.aborted,
+                                Collections.singletonList(JobStateReason.jobQueued))
+                        .putAttributes(operationAttributes, Types.printerUri.of(URI.create("/v1/printers/defaults")))
+                        .build();
+            }
+
+            switch (mediaType.getBaseType().getType()) {
+                case "text" -> handleTextBaseType(mediaType.getSubtype(), documentStream);
+                case "image" -> handleImageBaseType(mediaType.getSubtype(), documentStream);
+                case "application" -> handleApplicationBaseType(mediaType.getSubtype(), documentStream);
+                default -> {return new IppPacket(Status.clientErrorBadRequest, requestPacket.getRequestId());}
+            }
+
             responsePacket = IppPacket.jobResponse(
                             Status.successfulOk,
                             requestPacket.getRequestId(),
@@ -113,10 +140,19 @@ public class PrinterService {
         return responsePacket;
     }
 
-    private void handleImages(InputStream documentStream) {
+    private void handleApplicationBaseType(String subtype, InputStream documentStream) {
+        log.info("Create entry form application print request for subtype: %s".formatted(subtype));
+        if(subtype.equals("pdf")) {
+            log.info("Create entry form pdf print request");
+        }
     }
 
-    private void handleText(InputStream documentStream) throws IOException {
+    private void handleImageBaseType(String subtype, InputStream documentStream) {
+        log.info("Create entry form image print request for subtype: %s".formatted(subtype));
+    }
+
+    private void handleTextBaseType(String subtype, InputStream documentStream) throws IOException {
+        log.info("Create entry form text document print request for subtype: %s".formatted(subtype));
         StringBuilder documentContent = new StringBuilder();
         BufferedReader reader = new BufferedReader(new InputStreamReader(documentStream, StandardCharsets.UTF_8));
         String line;
