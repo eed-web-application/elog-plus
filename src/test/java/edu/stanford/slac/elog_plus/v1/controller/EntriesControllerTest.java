@@ -13,6 +13,7 @@ import edu.stanford.slac.elog_plus.model.Attachment;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import edu.stanford.slac.elog_plus.service.LogbookService;
+import edu.stanford.slac.elog_plus.utility.DateUtilities;
 import edu.stanford.slac.elog_plus.v1.service.DocumentGenerationService;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.assertj.core.api.AssertionsForInterfaceTypes;
@@ -35,6 +36,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -1885,6 +1887,85 @@ public class EntriesControllerTest {
         }
         assertThat(firstEntryFirstPage.eventAt().getDayOfMonth()).isEqualTo(now.minusDays(1).getDayOfMonth());
         assertThat(lastEntryLastPage.eventAt().getDayOfMonth()).isEqualTo(now.minusDays(50).getDayOfMonth());
+    }
+
+    @Test
+    public void testEntryInTheRightShift() {
+        var newLogBookResult = testControllerHelperService.getTestLogbook(mockMvc);
+        ApiResultResponse<LogbookDTO> finalNewLogBookResult2 = newLogBookResult;
+        ApiResultResponse<Boolean> replacementResult = assertDoesNotThrow(
+                () -> testControllerHelperService.updateLogbook(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
+                        finalNewLogBookResult2.getPayload().id(),
+                        UpdateLogbookDTO
+                                .builder()
+                                .name(finalNewLogBookResult2.getPayload().name())
+                                .tags(
+                                        Collections.emptyList()
+                                )
+                                .shifts(
+                                        List.of(
+                                                ShiftDTO.builder()
+                                                        .id(null)
+                                                        .name("Owl Shift")
+                                                        .from(DateUtilities.toUTCString(LocalTime.of(0,0)))
+                                                        .to(DateUtilities.toUTCString(LocalTime.of(7,59)))
+                                                        .build(),
+                                                ShiftDTO.builder()
+                                                        .id(null)
+                                                        .name("Day Shift")
+                                                        .from(DateUtilities.toUTCString(LocalTime.of(8,0)))
+                                                        .to(DateUtilities.toUTCString(LocalTime.of(15,59)))
+                                                        .build(),
+                                                ShiftDTO.builder()
+                                                        .id(null)
+                                                        .name("Swing Shift")
+                                                        .from(DateUtilities.toUTCString(LocalTime.of(16,0)))
+                                                        .to(DateUtilities.toUTCString(LocalTime.of(23,59)))
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+
+        ApiResultResponse<String> newLogID =
+                assertDoesNotThrow(
+                        () ->
+                                testControllerHelperService.createNewLog(
+                                        mockMvc,
+                                        status().isCreated(),
+                                        Optional.of(
+                                                "user1@slac.stanford.edu"
+                                        ),
+                                        EntryNewDTO
+                                                .builder()
+                                                .logbooks(List.of(newLogBookResult.getPayload().id()))
+                                                .text("This is a log for test")
+                                                .title("A very wonderful log")
+                                                .eventAt(LocalDateTime.of(2024,1,1, 7,59,30))
+                                                .build()
+                                )
+                );
+
+        AssertionsForClassTypes.assertThat(newLogID).isNotNull();
+
+        ApiResultResponse<EntryDTO> logEntry = assertDoesNotThrow(
+                () ->
+                        testControllerHelperService.getFullLog(
+                                mockMvc,
+                                status().isOk(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                newLogID.getPayload()
+                        )
+        );
+        AssertionsForClassTypes.assertThat(logEntry).isNotNull();
+        AssertionsForClassTypes.assertThat(logEntry.getErrorCode()).isEqualTo(0);
+        AssertionsForClassTypes.assertThat(logEntry.getPayload().id()).isEqualTo(newLogID.getPayload());
     }
 
     @Test
