@@ -165,7 +165,7 @@ public class LogbookServiceTest {
     }
 
     @Test
-    public void failAddingShiftWithBadTImeFrom() {
+    public void failAddingShiftWithBadTimeFrom() {
         String newLogbookID = sharedUtilityService.getTestLogbook();
         ControllerLogicException exceptBadTime = assertThrows(
                 ControllerLogicException.class,

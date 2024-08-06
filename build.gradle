@@ -85,7 +85,7 @@ dependencies {
             'io.jsonwebtoken:jjwt-jackson:0.12.5',
             'io.jsonwebtoken:jjwt-extensions:0.12.6',
             'com.unboundid:unboundid-ldapsdk:7.0.1'
-
+    implementation 'com.hp.jipp:jipp-core:0.7.16-beta1'
     //eed library
     implementation "edu.stanford.slac:slac-ad-eed-baselib:$project.ext.ad_eed_baselib_version",
             "edu.stanford.slac:slac-ad-eed-base-mongodb-lib:$project.ext.ad_eed_base_mongodb_lib_version"
