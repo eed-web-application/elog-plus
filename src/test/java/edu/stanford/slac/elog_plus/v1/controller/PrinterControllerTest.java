@@ -36,6 +36,7 @@ import org.springframework.test.web.servlet.ResultMatcher;
 
 import java.io.*;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.List;
 import java.util.Optional;
@@ -147,7 +148,7 @@ public class PrinterControllerTest {
     }
 
     @Test
-    public void testPrinting() {
+    public void testPrintingImage() {
         // check if printer support png
         List<String> formats;
         try (var formatResponsePacket = assertDoesNotThrow(() -> getPrinterProperties(Optional.of("user1@slac.stanford.edu"), status().isOk()))) {
@@ -166,6 +167,27 @@ public class PrinterControllerTest {
             throw new RuntimeException(e);
         }
     }
+    @Test
+    public void testPrintingText() {
+        // check if printer support png
+        List<String> formats;
+        try (var formatResponsePacket = assertDoesNotThrow(() -> getPrinterProperties(Optional.of("user1@slac.stanford.edu"), status().isOk()))) {
+            // Make sure the format is supported
+            System.out.println("\nReceived: " + formatResponsePacket.getPacket().prettyPrint(100, "  "));
+            formats = formatResponsePacket.getPacket().getStrings(printerAttributes, documentFormatSupported);
+            assertThat(formats.contains(MediaType.IMAGE_PNG_VALUE)).isTrue();
+        }
+
+        try (InputStream is = assertDoesNotThrow(() -> documentGenerationService.getTestPng())) {
+            try (var responsePacket = assertDoesNotThrow(() -> print(Optional.of("user1@slac.stanford.edu"), new ByteArrayInputStream("hello world".getBytes(StandardCharsets.UTF_8)), fullLogbook.name(), status().isOk()))) {
+                assertThat(responsePacket).isNotNull();
+                System.out.println("\nReceived: " + responsePacket.getPacket().prettyPrint(100, "  "));
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 
     public IppPacketData getJobStatus(Optional<String> userInfo, ResultMatcher status, int jobId) throws Exception {
         // Query for supported document formats

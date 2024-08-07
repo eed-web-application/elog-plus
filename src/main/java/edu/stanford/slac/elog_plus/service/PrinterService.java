@@ -4,12 +4,19 @@ import com.hp.jipp.encoding.IppPacket;
 import com.hp.jipp.encoding.NameType;
 import com.hp.jipp.model.*;
 import com.hp.jipp.trans.IppPacketData;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.PersonDTO;
+import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
+import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService;
+import edu.stanford.slac.elog_plus.api.v1.dto.EntryNewDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.LogbookDTO;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.detect.Detector;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
@@ -26,6 +33,9 @@ import static com.hp.jipp.encoding.Tag.*;
 @Service
 @AllArgsConstructor
 public class PrinterService {
+    private final PeopleGroupService peopleGroupService;
+    private final AppProperties appProperties;
+    private final EntryService entryService;
 
     /**
      * Get the print command from the IPP packet
@@ -47,19 +57,24 @@ public class PrinterService {
         return inputData.getPacket().getString(jobAttributes, new NameType.Set("logbook"));
     }
 
+    public String getFileName(IppPacket packet) {
+        return packet.getString(jobAttributes, new NameType.Set("document-name-supplied"));
+
+    }
+
     /**
      * Process an IPP packet
      *
      * @param inputData The IPP packet data
      * @return The IPP packet data
      */
-    public IppPacketData handleIppPacket(IppPacketData inputData) {
+    public IppPacketData handleIppPacket(IppPacketData inputData, LogbookDTO logbook) {
         IppPacket requestPacket = inputData.getPacket();
         log.info("Processing IPP request: " + requestPacket);
 
         IppPacket responsePacket;
         responsePacket = switch (getPrintCommand(inputData)) {
-            case Operation.Code.printJob -> handlePrintDocument(requestPacket, inputData.getData());
+            case Operation.Code.printJob -> handlePrintDocument(requestPacket, inputData.getData(), logbook);
             case Operation.Code.getPrinterAttributes -> handleGetPrinterAttributes(requestPacket);
             default -> createErrorResponsePacket(requestPacket, Status.clientErrorNotFetchable);
         };
@@ -86,8 +101,8 @@ public class PrinterService {
      * @param documentStream The document stream
      * @return The IPP response packet
      */
-    private IppPacket handlePrintDocument(IppPacket requestPacket, InputStream documentStream) {
-        log.info("Received Print-Job request");
+    private IppPacket handlePrintDocument(IppPacket requestPacket, InputStream documentStream, LogbookDTO logbook) {
+        log.info("Received Print-Job request for logbook {}", logbook.name());
         // Fetch the document from the IPP packet
         IppPacket responsePacket = null;
         TikaConfig config = TikaConfig.getDefaultConfig();
@@ -119,9 +134,9 @@ public class PrinterService {
             }
 
             switch (mediaType.getBaseType().getType()) {
-                case "text" -> handleTextBaseType(mediaType.getSubtype(), documentStream);
-                case "image" -> handleImageBaseType(mediaType.getSubtype(), documentStream);
-                case "application" -> handleApplicationBaseType(mediaType.getSubtype(), documentStream);
+                case "text" -> handleTextBaseType(requestPacket, logbook, mediaType.getSubtype(), documentStream);
+                case "image" -> handleImageBaseType(requestPacket, logbook, mediaType.getSubtype(), documentStream);
+                case "application" -> handleApplicationBaseType(requestPacket, logbook, mediaType.getSubtype(), documentStream);
                 default -> {return new IppPacket(Status.clientErrorBadRequest, requestPacket.getRequestId());}
             }
 
@@ -140,18 +155,18 @@ public class PrinterService {
         return responsePacket;
     }
 
-    private void handleApplicationBaseType(String subtype, InputStream documentStream) {
+    private void handleApplicationBaseType(IppPacket requestPacket, LogbookDTO logbookDTO, String subtype, InputStream documentStream) {
         log.info("Create entry form application print request for subtype: %s".formatted(subtype));
         if(subtype.equals("pdf")) {
             log.info("Create entry form pdf print request");
         }
     }
 
-    private void handleImageBaseType(String subtype, InputStream documentStream) {
+    private void handleImageBaseType(IppPacket requestPacket, LogbookDTO logbookDTO, String subtype, InputStream documentStream) {
         log.info("Create entry form image print request for subtype: %s".formatted(subtype));
     }
 
-    private void handleTextBaseType(String subtype, InputStream documentStream) throws IOException {
+    private void handleTextBaseType(IppPacket requestPacket, LogbookDTO logbookDTO, String subtype, InputStream documentStream) throws IOException {
         log.info("Create entry form text document print request for subtype: %s".formatted(subtype));
         StringBuilder documentContent = new StringBuilder();
         BufferedReader reader = new BufferedReader(new InputStreamReader(documentStream, StandardCharsets.UTF_8));
@@ -159,7 +174,28 @@ public class PrinterService {
         while ((line = reader.readLine()) != null) {
             documentContent.append(line).append("\n");
         }
+        String documentFileName = getFileName(requestPacket);
+        PersonDTO creator = null;
+        Authentication auth =  SecurityContextHolder.getContext().getAuthentication();
         // we have all the document
+        if (auth.getCredentials().toString().endsWith(appProperties.getAuthenticationTokenDomain())) {
+            // create fake person for authentication token
+            creator = PersonDTO
+                    .builder()
+                    .gecos("Application Token")
+                    .mail(auth.getPrincipal().toString())
+                    .build();
+        } else {
+            creator = peopleGroupService.findPerson(auth);
+        }
+        entryService.createNew(
+                EntryNewDTO.builder()
+                        .logbooks(Collections.singletonList(logbookDTO.id()))
+                        .title(documentFileName==null?"Printed Text Document":documentFileName)
+                        .text(documentContent.toString())
+                        .build(),
+                creator
+        );
     }
 
     /**

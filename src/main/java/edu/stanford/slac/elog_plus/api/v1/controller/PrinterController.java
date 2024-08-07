@@ -58,11 +58,12 @@ public class PrinterController {
                 response = new IppPacketData(printerService.createErrorResponsePacket(data.getPacket(), Status.clientErrorNotAuthorized));
             } else {
                 boolean authorized = true;
+                LogbookDTO fullLogbook = null;
                 if(operation == Operation.Code.printJob) {
                     // get the logbook where the entry should be created
                     String logbook = printerService.getLogbookDestination(data);
                     log.info("Printing to logbook {}", logbook);
-                    LogbookDTO fullLogbook = logbookService.getLogbookByName(logbook);
+                    fullLogbook = logbookService.getLogbookByName(logbook);
                     authorized = authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                             authentication,
                             Write,
@@ -72,7 +73,7 @@ public class PrinterController {
                 if (!authorized) {
                     response = new IppPacketData(printerService.createErrorResponsePacket(data.getPacket(), Status.clientErrorNotAuthorized));
                 } else {
-                    response = printerService.handleIppPacket(data);
+                    response = printerService.handleIppPacket(data, fullLogbook);
                 }
             }
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
