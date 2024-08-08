@@ -6,9 +6,11 @@ import com.hp.jipp.model.*;
 import com.hp.jipp.trans.IppPacketData;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.PersonDTO;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
+import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService;
 import edu.stanford.slac.elog_plus.api.v1.dto.EntryNewDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.LogbookDTO;
+import edu.stanford.slac.elog_plus.model.FileObjectDescription;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.tika.config.TikaConfig;
@@ -26,16 +28,19 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.List;
 
 import static com.hp.jipp.encoding.Tag.*;
+import static io.jsonwebtoken.lang.Collections.emptyList;
 
 @Log4j2
 @Service
 @AllArgsConstructor
 public class PrinterService {
-    private final PeopleGroupService peopleGroupService;
     private final AppProperties appProperties;
+    private final PeopleGroupService peopleGroupService;
     private final EntryService entryService;
+    private final AttachmentService attachmentService;
 
     /**
      * Get the print command from the IPP packet
@@ -57,6 +62,12 @@ public class PrinterService {
         return inputData.getPacket().getString(jobAttributes, new NameType.Set("logbook"));
     }
 
+    /**
+     * Get the file name from the IPP packet
+     *
+     * @param packet The IPP packet
+     * @return The file name
+     */
     public String getFileName(IppPacket packet) {
         return packet.getString(jobAttributes, new NameType.Set("document-name-supplied"));
 
@@ -134,10 +145,12 @@ public class PrinterService {
             }
 
             switch (mediaType.getBaseType().getType()) {
-                case "text" -> handleTextBaseType(requestPacket, logbook, mediaType.getSubtype(), documentStream);
-                case "image" -> handleImageBaseType(requestPacket, logbook, mediaType.getSubtype(), documentStream);
-                case "application" -> handleApplicationBaseType(requestPacket, logbook, mediaType.getSubtype(), documentStream);
-                default -> {return new IppPacket(Status.clientErrorBadRequest, requestPacket.getRequestId());}
+                case "text" -> handleTextBaseType(requestPacket, logbook, mediaType, documentStream);
+                case "image" -> handleImageBaseType(requestPacket, logbook, mediaType, documentStream);
+                case "application" -> handleApplicationBaseType(requestPacket, logbook, mediaType, documentStream);
+                default -> {
+                    return new IppPacket(Status.clientErrorBadRequest, requestPacket.getRequestId());
+                }
             }
 
             responsePacket = IppPacket.jobResponse(
@@ -149,34 +162,104 @@ public class PrinterService {
                     .putAttributes(operationAttributes, Types.printerUri.of(URI.create("/v1/printers/defaults")))
                     .build();
         } catch (IOException e) {
+            log.error("Error processing print job {}", e.toString());
             responsePacket = new IppPacket(Status.clientErrorBadRequest, requestPacket.getRequestId());
         }
         // Return the response packet
         return responsePacket;
     }
 
-    private void handleApplicationBaseType(IppPacket requestPacket, LogbookDTO logbookDTO, String subtype, InputStream documentStream) {
-        log.info("Create entry form application print request for subtype: %s".formatted(subtype));
-        if(subtype.equals("pdf")) {
-            log.info("Create entry form pdf print request");
+    /**
+     * Handle an application base type
+     *
+     * @param requestPacket  The IPP request packet
+     * @param logbookDTO     The logbook DTO
+     * @param type           The media type
+     * @param documentStream The document stream
+     */
+    private void handleApplicationBaseType(IppPacket requestPacket, LogbookDTO logbookDTO, MediaType type, InputStream documentStream) throws IOException {
+        log.info("Create entry form application print request for subtype: {}", type.getSubtype());
+        if (!type.getSubtype().equals("pdf")) {
+            throw ControllerLogicException.builder()
+                    .errorCode(-1)
+                    .errorMessage("Unsupported document type")
+                    .errorDomain("PrinterService::handleApplicationBaseType")
+                    .build();
         }
+        log.info("Create entry form pdf print request");
+        // create attachment first, then we can create entry that own the attachment
+        String attachmentId = crateAttachment(requestPacket, logbookDTO, type, documentStream);
+
+        // if all is gone as it should at this point we can create the entry
+        if (attachmentId == null) {
+            throw ControllerLogicException.builder()
+                    .errorCode(-1)
+                    .errorMessage("Error creating attachment")
+                    .errorDomain("PrinterService::handleApplicationBaseType")
+                    .build();
+        }
+
+        // create entry
+        createEntry(requestPacket, logbookDTO, null, List.of(attachmentId));
     }
 
-    private void handleImageBaseType(IppPacket requestPacket, LogbookDTO logbookDTO, String subtype, InputStream documentStream) {
-        log.info("Create entry form image print request for subtype: %s".formatted(subtype));
+    /**
+     * Handle an image base type
+     *
+     * @param requestPacket  The IPP request packet
+     * @param logbookDTO     The logbook DTO
+     * @param type           The media type
+     * @param documentStream The document stream
+     */
+    private void handleImageBaseType(IppPacket requestPacket, LogbookDTO logbookDTO, MediaType type, InputStream documentStream) throws IOException {
+        log.info("Create entry form image print request for subtype: {}", type);
+        // create attachment first, then we can create entry that own the attachment
+        String attachmentId = crateAttachment(requestPacket, logbookDTO, type, documentStream);
+
+        // if all is gone as it should at this point we can create the entry
+        if (attachmentId == null) {
+            throw ControllerLogicException.builder()
+                    .errorCode(-1)
+                    .errorMessage("Error creating attachment")
+                    .errorDomain("PrinterService::handleImageBaseType")
+                    .build();
+        }
+        // create entry
+        createEntry(requestPacket, logbookDTO, null, List.of(attachmentId));
     }
 
-    private void handleTextBaseType(IppPacket requestPacket, LogbookDTO logbookDTO, String subtype, InputStream documentStream) throws IOException {
-        log.info("Create entry form text document print request for subtype: %s".formatted(subtype));
+    /**
+     * Handle a text base type
+     *
+     * @param requestPacket  The IPP request packet
+     * @param logbookDTO     The logbook DTO
+     * @param type           The media type
+     * @param documentStream The document stream
+     * @throws IOException If an error occurs
+     */
+    private void handleTextBaseType(IppPacket requestPacket, LogbookDTO logbookDTO, MediaType type, InputStream documentStream) throws IOException {
+        log.info("Create entry form text document print request for subtype: {}", type.getSubtype());
         StringBuilder documentContent = new StringBuilder();
         BufferedReader reader = new BufferedReader(new InputStreamReader(documentStream, StandardCharsets.UTF_8));
         String line;
         while ((line = reader.readLine()) != null) {
             documentContent.append(line).append("\n");
         }
+        createEntry(requestPacket, logbookDTO, documentContent, emptyList());
+    }
+
+    /**
+     * Create an entry
+     *
+     * @param requestPacket   The IPP request packet
+     * @param logbookDTO      The logbook DTO
+     * @param documentContent The document content
+     * @throws IOException If an error occurs
+     */
+    private void createEntry(IppPacket requestPacket, LogbookDTO logbookDTO, StringBuilder documentContent, List<String> attachmentId) throws IOException {
         String documentFileName = getFileName(requestPacket);
         PersonDTO creator = null;
-        Authentication auth =  SecurityContextHolder.getContext().getAuthentication();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         // we have all the document
         if (auth.getCredentials().toString().endsWith(appProperties.getAuthenticationTokenDomain())) {
             // create fake person for authentication token
@@ -191,10 +274,32 @@ public class PrinterService {
         entryService.createNew(
                 EntryNewDTO.builder()
                         .logbooks(Collections.singletonList(logbookDTO.id()))
-                        .title(documentFileName==null?"Printed Text Document":documentFileName)
-                        .text(documentContent.toString())
+                        .title(documentFileName == null ? "Printed Text Document" : documentFileName)
+                        .text((documentContent != null && !documentContent.isEmpty()) ? documentContent.toString() : "")
+                        .attachments(attachmentId)
                         .build(),
                 creator
+        );
+    }
+
+    /**
+     * Create an attachment
+     *
+     * @param requestPacket  The IPP request packet
+     * @param logbookDTO     The logbook DTO
+     * @param type           The media type
+     * @param documentStream The document stream
+     */
+    private String crateAttachment(IppPacket requestPacket, LogbookDTO logbookDTO, MediaType type, InputStream documentStream) {
+        log.info("Create attachment from image print request for subtype: {}", type.getSubtype());
+        String documentFileName = getFileName(requestPacket);
+        return attachmentService.createAttachment(
+                FileObjectDescription.builder()
+                        .contentType(type.toString())
+                        .fileName(documentFileName == null ? "Printed Document" : documentFileName)
+                        .is(documentStream)
+                        .build(),
+                true
         );
     }
 

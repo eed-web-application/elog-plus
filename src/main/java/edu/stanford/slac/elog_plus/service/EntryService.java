@@ -146,7 +146,7 @@ public class EntryService {
      * @param entryNewDTO is a new log information
      * @return the id of the newly created log
      */
-    @Transactional(propagation = Propagation.NESTED)
+    @Transactional
     public String createNew(EntryNewDTO entryNewDTO, PersonDTO personDTO) {
         String firstname = "";
         String lastName = "";
@@ -174,7 +174,6 @@ public class EntryService {
      * @param entryNewDTO is a new log information
      * @return the id of the newly created log
      */
-    @Transactional(propagation = Propagation.NESTED)
     public Entry toModelWithAuthorization(EntryNewDTO entryNewDTO) {
         Faker faker = new Faker();
         return entryMapper.fromDTO(
@@ -192,7 +191,7 @@ public class EntryService {
      * @param newEntry is a new log information
      * @return the id of the newly created log
      */
-    @Transactional(propagation = Propagation.NESTED)
+    @Transactional()
     public String createNew(Entry newEntry) {
         //get and check for logbooks
         Entry finalNewEntry = newEntry;
@@ -253,7 +252,7 @@ public class EntryService {
                                             .errorMessage("The attachment id '%s' has not been found".formatted(attachmentID))
                                             .errorDomain("LogService::createNew")
                                             .build(),
-                                    ()->attachmentService.exists(attachmentID)
+                                    () -> attachmentService.exists(attachmentID)
                             );
 
                             //tag attachment as used
@@ -289,18 +288,10 @@ public class EntryService {
                         isEmpty()),
                 ControllerLogicException
                         .builder()
-                                .
-
-                        errorCode(-4)
-                                .
-
-                        errorMessage("The title is mandatory")
-                                .
-
-                        errorDomain("LogService::createNew")
-                                .
-
-                        build()
+                        .errorCode(-4)
+                        .errorMessage("The title is mandatory")
+                        .errorDomain("LogService::createNew")
+                        .build()
         );
         newEntry.setTitle(
                 StringUtilities.sanitizeEntryTitle(newEntry.getTitle())
@@ -310,18 +301,10 @@ public class EntryService {
                 () -> (finalNewEntry1.getText() != null),
                 ControllerLogicException
                         .builder()
-                                .
-
-                        errorCode(-4)
-                                .
-
-                        errorMessage("The body is mandatory also if empty")
-                                .
-
-                        errorDomain("LogService::createNew")
-                                .
-
-                        build()
+                        .errorCode(-4)
+                        .errorMessage("The body is mandatory also if empty")
+                        .errorDomain("LogService::createNew")
+                        .build()
         );
         newEntry.setText(
                 StringUtilities.sanitizeEntryText(newEntry.getText())

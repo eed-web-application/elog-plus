@@ -14,9 +14,15 @@ import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.LogbookDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.NewLogbookDTO;
+import edu.stanford.slac.elog_plus.model.Attachment;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import edu.stanford.slac.elog_plus.v1.service.DocumentGenerationService;
+import io.github.ollama4j.OllamaAPI;
+import io.github.ollama4j.models.OllamaResult;
+import io.github.ollama4j.types.OllamaModelType;
+import io.github.ollama4j.utils.OptionsBuilder;
+import io.github.ollama4j.utils.PromptBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -25,6 +31,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.MediaType;
@@ -33,15 +40,14 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultMatcher;
+import org.springframework.util.MimeTypeUtils;
 
 import java.io.*;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.text.ParseException;
 import java.util.List;
 import java.util.Optional;
 
-import static com.hp.jipp.encoding.Tag.nameWithoutLanguage;
 import static com.hp.jipp.encoding.Tag.printerAttributes;
 import static com.hp.jipp.model.Types.*;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -77,6 +83,7 @@ public class PrinterControllerTest {
     public void preTest() {
         mongoTemplate.remove(new Query(), Logbook.class);
         mongoTemplate.remove(new Query(), Entry.class);
+        mongoTemplate.remove(new Query(), Attachment.class);
         //reset authorizations
         mongoTemplate.remove(new Query(), Authorization.class);
         appProperties.getRootUserList().clear();
@@ -169,15 +176,6 @@ public class PrinterControllerTest {
     }
     @Test
     public void testPrintingText() {
-        // check if printer support png
-        List<String> formats;
-        try (var formatResponsePacket = assertDoesNotThrow(() -> getPrinterProperties(Optional.of("user1@slac.stanford.edu"), status().isOk()))) {
-            // Make sure the format is supported
-            System.out.println("\nReceived: " + formatResponsePacket.getPacket().prettyPrint(100, "  "));
-            formats = formatResponsePacket.getPacket().getStrings(printerAttributes, documentFormatSupported);
-            assertThat(formats.contains(MediaType.IMAGE_PNG_VALUE)).isTrue();
-        }
-
         try (InputStream is = assertDoesNotThrow(() -> documentGenerationService.getTestPng())) {
             try (var responsePacket = assertDoesNotThrow(() -> print(Optional.of("user1@slac.stanford.edu"), new ByteArrayInputStream("hello world".getBytes(StandardCharsets.UTF_8)), fullLogbook.name(), status().isOk()))) {
                 assertThat(responsePacket).isNotNull();
