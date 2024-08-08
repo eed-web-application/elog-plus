@@ -761,7 +761,7 @@ public class TestControllerHelperService {
                 });
     }
 
-    public ApiResultResponse<List<TagDTO>> getLogbookTagsFromTagsController(
+    public ApiResultResponse<List<TagDTO>> tagControllerGetAllTags(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
