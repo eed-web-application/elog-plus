@@ -1,8 +1,6 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
@@ -564,7 +562,7 @@ public class LogbooksControllerTest {
         }
 
         ApiResultResponse<List<TagDTO>> allTagsResult = assertDoesNotThrow(
-                () -> testControllerHelperService.getLogbookTagsFromTagsController(
+                () -> testControllerHelperService.tagControllerGetAllTags(
                         mockMvc,
                         status().isOk(),
                         Optional.of(
@@ -655,7 +653,7 @@ public class LogbooksControllerTest {
         }
 
         ApiResultResponse<List<TagDTO>> allTagsResult = assertDoesNotThrow(
-                () -> testControllerHelperService.getLogbookTagsFromTagsController(
+                () -> testControllerHelperService.tagControllerGetAllTags(
                         mockMvc,
                         status().isOk(),
                         Optional.of(
