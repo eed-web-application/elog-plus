@@ -3,10 +3,7 @@ package edu.stanford.slac.elog_plus.service.authorization;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
 import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
-import edu.stanford.slac.elog_plus.api.v1.dto.EntryDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.EntryNewDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.EntrySummaryDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.LogbookSummaryDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.exception.LogbookNotAuthorized;
 import edu.stanford.slac.elog_plus.service.EntryService;
 import edu.stanford.slac.elog_plus.service.LogbookService;
@@ -137,7 +134,7 @@ public class EntryAuthorizationService {
                         .build(),
                 //and
                 () -> any(
-                        ()->authService.checkForRoot(authentication),
+                        () -> authService.checkForRoot(authentication),
                         // or is authorized at least in on e logbook to read
                         () -> !authorizationCache.getAuthorizedLogbookId().isEmpty()
                 )
@@ -192,10 +189,15 @@ public class EntryAuthorizationService {
                             .stream()
                             .filter(lb -> authorizationCache.getAuthorizedLogbookId().isEmpty() || authorizationCache.getAuthorizedLogbookId().contains(lb.id()))
                             .toList();
-
+                    // filter out tags not authorized
+                    List<TagDTO> authorizedTag = entrySummary.tags()
+                            .stream()
+                            .filter(tag -> authorizationCache.getAuthorizedLogbookId().isEmpty() || authorizationCache.getAuthorizedLogbookId().contains(tag.logbook().id()))
+                            .toList();
                     // Create a new EntrySummaryDTO with the filtered logbooks using toBuilder
                     return entrySummary.toBuilder()
                             .logbooks(authorizedLogbookSummary)
+                            .tags(authorizedTag)
                             .build();
                 })
                 .toList();
@@ -203,7 +205,7 @@ public class EntryAuthorizationService {
         return true;
     }
 
-    public boolean canSearchEntry( Authentication authentication,  Optional<List<String>> logBooks, AuthorizationCache authorizationCache) {
+    public boolean canSearchEntry(Authentication authentication, Optional<List<String>> logBooks, AuthorizationCache authorizationCache) {
         // check authorization on
         assertion(
                 NotAuthorized.notAuthorizedBuilder()
@@ -214,20 +216,20 @@ public class EntryAuthorizationService {
                 () -> authService.checkAuthentication(authentication)
         );
 
-        if(!authService.checkForRoot(authentication)) {
+        if (!authService.checkForRoot(authentication)) {
             // if user is not root whe t check for specific authorization
             authorizationCache.setAuthorizedLogbookId(
                     authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
-                            authentication.getCredentials().toString(),
-                            Read,
-                            "/logbook/",
-                            Optional.empty()
-                    ).stream().map(
-                            auth -> auth.resource().substring(
-                                    auth.resource().lastIndexOf("/") + 1
+                                    authentication.getCredentials().toString(),
+                                    Read,
+                                    "/logbook/",
+                                    Optional.empty()
+                            ).stream().map(
+                                    auth -> auth.resource().substring(
+                                            auth.resource().lastIndexOf("/") + 1
+                                    )
                             )
-                    )
-                    .toList()
+                            .toList()
             );
 
             if (logBooks.isPresent() && !logBooks.get().isEmpty()) {
@@ -235,7 +237,7 @@ public class EntryAuthorizationService {
                 // current user
                 logBooks.get().forEach(
                         lId -> {
-                            if(!authorizationCache.getAuthorizedLogbookId().contains(lId)) {
+                            if (!authorizationCache.getAuthorizedLogbookId().contains(lId)) {
                                 // notify the error on logbook authorization
                                 var logbook = logbookService.getLogbook(lId);
                                 throw LogbookNotAuthorized.logbookAuthorizedBuilder()

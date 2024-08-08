@@ -8,9 +8,7 @@ import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.model.LocalGroup;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
-import edu.stanford.slac.elog_plus.api.v1.dto.EntryNewDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.EntrySummaryDTO;
-import edu.stanford.slac.elog_plus.api.v1.dto.NewAuthorizationDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.exception.LogbookNotAuthorized;
 import edu.stanford.slac.elog_plus.model.Attachment;
 import edu.stanford.slac.elog_plus.model.Entry;
@@ -708,6 +706,18 @@ public class EntriesControllerAuthorizationTest {
                         )
                 )
         );
+        // create tags for logbookA
+        var tagLogbookAResult = assertDoesNotThrow(
+                () -> testControllerHelperService.createNewLogbookTags(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        logbookA.getPayload(),
+                        NewTagDTO.builder().name("TagLogbookA").build()
+                )
+        );
+        assertThat(tagLogbookAResult.getErrorCode()).isEqualTo(0);
+
         var logbookB = assertDoesNotThrow(
                 () -> testControllerHelperService.getNewLogbookWithNameWithAuthorization(
                         mockMvc,
@@ -725,10 +735,22 @@ public class EntriesControllerAuthorizationTest {
                         )
                 )
         );
+        // create tags for logbookA
+        var tagLogbookBResult = assertDoesNotThrow(
+                () -> testControllerHelperService.createNewLogbookTags(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        logbookB.getPayload(),
+                        NewTagDTO.builder().name("TagLogbookB").build()
+                )
+        );
+        assertThat(tagLogbookBResult.getErrorCode()).isEqualTo(0);
 
         // write a limited random number of entries to logbook A or logbook B
         for (int i = 0; i < entry_size; i++) {
             var logbookId = i % 2 == 0 ? logbookA.getPayload() : logbookB.getPayload();
+            var tagId = i % 2 == 0 ? tagLogbookAResult.getPayload() : tagLogbookBResult.getPayload();
             int finalI = i;
             var entryCreationResult =
                     assertDoesNotThrow(
@@ -743,6 +765,11 @@ public class EntriesControllerAuthorizationTest {
                                             .logbooks(
                                                     List.of(
                                                             logbookId
+                                                    )
+                                            )
+                                            .tags(
+                                                    List.of(
+                                                            tagId
                                                     )
                                             )
                                             .text(String.format("This is a log for test %d in logbook %s", finalI, logbookId))
@@ -808,6 +835,7 @@ public class EntriesControllerAuthorizationTest {
                 .hasSize(idForLogbookA.size())
                 .extracting(EntrySummaryDTO::id)
                 .contains(idForLogbookA.toArray(new String[idForLogbookA.size()]));
+
 
         entriesForLogbookAWithUser2 = assertDoesNotThrow(
                 () -> testControllerHelperService.submitSearchByGetWithAnchor(
