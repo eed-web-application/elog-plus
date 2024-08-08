@@ -1,6 +1,7 @@
 package edu.stanford.slac.elog_plus.api.v1.controller;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationDTO;
 import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.LogbookDTO;
@@ -18,12 +19,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Read;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
+import static java.util.Collections.emptyList;
 
 @RestController()
 @RequestMapping("/v1/tags")
@@ -44,18 +47,36 @@ public class TagsController {
             Authentication authentication
     ) {
         // filter all readable
-        List<LogbookDTO> allReadableLogbook = logbookService.getAllLogbook().stream()
-                .filter(
-                        lb-> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                                authentication,
-                                Read,
-                                "/logbook/%s".formatted(lb.id())
-                        )
-                )
-                .toList();
+        List<String> filteredLogbook = new ArrayList<>(logbooks.orElse(new ArrayList<>()));
+        if (!authService.checkForRoot(authentication)) {
+            // get al authorized logbook authorizations
+            List<AuthorizationDTO> authOnLogbook = authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
+                    authentication.getCredentials().toString(),
+                    Read,
+                    "/logbook/",
+                    Optional.empty()
+            );
+            // filter the logbook
+            var authorizedLogbook = authOnLogbook.stream()
+                    .map(AuthorizationDTO::resource)
+                    .map(s -> s.replace("/logbook/", ""))
+                    .toList();
+            // remove all logbook that are not in the list
+            if(filteredLogbook.isEmpty()) {
+                filteredLogbook.addAll(authorizedLogbook);
+            } else {
+                filteredLogbook.retainAll(authorizedLogbook);
+            }
+            return ApiResultResponse.of(
+                    // if the list is empty return an empty list because no one of the logbook wanted is authorized
+                    filteredLogbook.isEmpty()?emptyList():logbookService.getAllTagsByLogbooksIds(filteredLogbook)
+            );
+        } else {
+            return ApiResultResponse.of(
+                    logbookService.getAllTagsByLogbooksIds(filteredLogbook)
+            );
+        }
 
-        return ApiResultResponse.of(
-                logbookService.getAllTagsByLogbooksIds(logbooks.orElse(Collections.emptyList()))
-        );
+
     }
 }
