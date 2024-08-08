@@ -179,7 +179,7 @@ public class PrinterService {
      */
     private void handleApplicationBaseType(IppPacket requestPacket, LogbookDTO logbookDTO, MediaType type, InputStream documentStream) throws IOException {
         log.info("Create entry form application print request for subtype: {}", type.getSubtype());
-        if (!type.getSubtype().equals("pdf")) {
+        if (!type.getSubtype().equals("pdf") && !type.getSubtype().equals("postscript")) {
             throw ControllerLogicException.builder()
                     .errorCode(-1)
                     .errorMessage("Unsupported document type")

@@ -23,6 +23,7 @@ import io.github.ollama4j.models.OllamaResult;
 import io.github.ollama4j.types.OllamaModelType;
 import io.github.ollama4j.utils.OptionsBuilder;
 import io.github.ollama4j.utils.PromptBuilder;
+import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -133,7 +134,7 @@ public class PrinterControllerTest {
         try (IppPacketData request = new IppPacketData(attributeRequestResponse)) {
             response = assertDoesNotThrow(() -> sendRequest(Optional.of("user1@slac.stanford.edu"), request, status().isOk()));
             assertThat(response).isNotNull();
-            System.out.println("\nReceived: " + response.getPacket().prettyPrint(100, "  "));
+            assertThat(response.getPacket().getStatus()).isEqualTo(Status.successfulOk);
         } finally {
             if (response != null) response.close();
         }
@@ -147,7 +148,6 @@ public class PrinterControllerTest {
             try (var responsePacket = assertDoesNotThrow(() -> print(Optional.empty(), is, MediaType.IMAGE_PNG_VALUE, status().isOk()))) {
                 assertThat(responsePacket).isNotNull();
                 assertThat(responsePacket.getPacket().getStatus()).isEqualTo(Status.clientErrorNotAuthorized);
-                System.out.println("\nReceived: " + responsePacket.getPacket().prettyPrint(100, "  "));
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -155,11 +155,12 @@ public class PrinterControllerTest {
     }
 
     @Test
-    public void testPrintingImage() {
+    public void testPrintingPNGImage() {
         // check if printer support png
         List<String> formats;
         try (var formatResponsePacket = assertDoesNotThrow(() -> getPrinterProperties(Optional.of("user1@slac.stanford.edu"), status().isOk()))) {
             // Make sure the format is supported
+            assertThat(formatResponsePacket.getPacket().getStatus()).isEqualTo(Status.successfulOk);
             System.out.println("\nReceived: " + formatResponsePacket.getPacket().prettyPrint(100, "  "));
             formats = formatResponsePacket.getPacket().getStrings(printerAttributes, documentFormatSupported);
             assertThat(formats.contains(MediaType.IMAGE_PNG_VALUE)).isTrue();
@@ -168,12 +169,61 @@ public class PrinterControllerTest {
         try (InputStream is = assertDoesNotThrow(() -> documentGenerationService.getTestPng())) {
             try (var responsePacket = assertDoesNotThrow(() -> print(Optional.of("user1@slac.stanford.edu"), is, fullLogbook.name(), status().isOk()))) {
                 assertThat(responsePacket).isNotNull();
-                System.out.println("\nReceived: " + responsePacket.getPacket().prettyPrint(100, "  "));
+                assertThat(responsePacket.getPacket().getStatus()).isEqualTo(Status.successfulOk);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
+
+    @Test
+    public void testPrintingPSImage() {
+        // check if printer support png
+        List<String> formats;
+        try (var formatResponsePacket = assertDoesNotThrow(() -> getPrinterProperties(Optional.of("user1@slac.stanford.edu"), status().isOk()))) {
+            // Make sure the format is supported
+            assertThat(formatResponsePacket.getPacket().getStatus()).isEqualTo(Status.successfulOk);
+            System.out.println("\nReceived: " + formatResponsePacket.getPacket().prettyPrint(100, "  "));
+            formats = formatResponsePacket.getPacket().getStrings(printerAttributes, documentFormatSupported);
+            assertThat(formats.contains("application/postscript")).isTrue();
+        }
+
+        try (InputStream is = assertDoesNotThrow(() -> documentGenerationService.getTestPS())) {
+            try (var responsePacket = assertDoesNotThrow(() -> print(Optional.of("user1@slac.stanford.edu"), is, fullLogbook.name(), status().isOk()))) {
+                assertThat(responsePacket).isNotNull();
+                assertThat(responsePacket.getPacket().getStatus()).isEqualTo(Status.successfulOk);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    public void testPrintingPDFImage() {
+        // check if printer support png
+        List<String> formats;
+        try (var formatResponsePacket = assertDoesNotThrow(() -> getPrinterProperties(Optional.of("user1@slac.stanford.edu"), status().isOk()))) {
+            // Make sure the format is supported
+            System.out.println("\nReceived: " + formatResponsePacket.getPacket().prettyPrint(100, "  "));
+            formats = formatResponsePacket.getPacket().getStrings(printerAttributes, documentFormatSupported);
+            assertThat(formats.contains(MediaType.APPLICATION_PDF_VALUE)).isTrue();
+        }
+
+        assertDoesNotThrow(() -> {
+                    try (var pdfDocument = documentGenerationService.generatePdf()) {
+                        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                        pdfDocument.save(outputStream);
+                        try (InputStream is = new ByteArrayInputStream(outputStream.toByteArray())) {
+                            try (var responsePacket = assertDoesNotThrow(() -> print(Optional.of("user1@slac.stanford.edu"), is, fullLogbook.name(), status().isOk()))) {
+                                assertThat(responsePacket).isNotNull();
+                                assertThat(responsePacket.getPacket().getStatus()).isEqualTo(Status.successfulOk);
+                            }
+                        }
+                    }
+                }
+        );
+    }
+
     @Test
     public void testPrintingText() {
         try (InputStream is = assertDoesNotThrow(() -> documentGenerationService.getTestPng())) {

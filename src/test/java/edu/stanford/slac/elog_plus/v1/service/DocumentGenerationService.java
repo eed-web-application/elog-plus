@@ -27,6 +27,10 @@ public class DocumentGenerationService {
         return getClass().getClassLoader().getResourceAsStream("test.png");
     }
 
+    public InputStream getTestPS() throws URISyntaxException {
+        return getClass().getClassLoader().getResourceAsStream("test.ps");
+    }
+
     public PDDocument generatePdf() throws IOException {
         Faker faker = new Faker();
         PDDocument doc = new PDDocument();
