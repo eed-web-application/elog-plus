@@ -29,7 +29,7 @@ public class AuthorizationController {
     /**
      * Create new authorization
      *
-     * @param authentication
+     * @param authentication the authentication object
      * @param newAuthorizationDTO the new authorization to create
      * @return the result of the creation
      */
@@ -54,7 +54,7 @@ public class AuthorizationController {
     /**
      * Update an authorization
      *
-     * @param authentication
+     * @param authentication the authentication object
      * @param authorizationId the id of the authorization to update
      * @param updateAuthorizationDTO the new authorization to update
      * @return the result of the update
@@ -83,7 +83,7 @@ public class AuthorizationController {
     /**
      * Delete an authorization
      *
-     * @param authentication
+     * @param authentication the authentication object
      * @param authorizationId the id of the authorization to delete
      * @return the result of the deletion
      */

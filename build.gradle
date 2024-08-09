@@ -9,7 +9,6 @@ plugins {
 
 group = 'edu.stanford.slac'
 version = '1.0.0'
-sourceCompatibility = '19'
 
 ext {
     ad_eed_baselib_version = "0.1.84"
@@ -44,6 +43,8 @@ configurations {
 
 repositories {
     mavenCentral()
+//    maven { url 'https://repo.spring.io/milestone' }
+//    maven { url 'https://repo.spring.io/snapshot' }
     maven {
         url = uri("https://maven.pkg.github.com/eed-web-application/slac-ad-eed-baselib")
         credentials {
@@ -85,6 +86,15 @@ dependencies {
             'io.jsonwebtoken:jjwt-jackson:0.12.5',
             'io.jsonwebtoken:jjwt-extensions:0.12.6',
             'com.unboundid:unboundid-ldapsdk:7.0.1'
+    implementation 'com.hp.jipp:jipp-core:0.7.16-beta1'
+
+    // tika
+    implementation 'org.overviewproject:mime-types:2.0.0'
+    implementation 'org.apache.tika:tika-core:2.9.2'
+    implementation 'org.apache.tika:tika-parsers-standard-package:2.9.2'
+
+    //ollama
+    implementation 'io.github.ollama4j:ollama4j:1.0.79'
 
     //eed library
     implementation "edu.stanford.slac:slac-ad-eed-baselib:$project.ext.ad_eed_baselib_version",

@@ -88,9 +88,9 @@ public class GroupController {
     /**
      * Update a group
      *
-     * @param authentication
-     * @param localGroupId
-     * @param updateGroupDTO
+     * @param authentication the authentication
+     * @param groupId        the id of the group to update
+     * @param updateGroupDTO the update group dto
      * @return true if the group was updated
      */
     @PutMapping(
@@ -98,7 +98,7 @@ public class GroupController {
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(summary = "Update a local group")
-    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @groupAuthorizationService.canUpdateGroup(#authentication, #localGroupId)")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @groupAuthorizationService.canUpdateGroup(#authentication, #updateGroupDTO)")
     public ApiResultResponse<Boolean> updateGroup(
             Authentication authentication,
             @Parameter(description = "The id of the local group to update")
@@ -143,11 +143,6 @@ public class GroupController {
     /**
      * Find the local group using a query parameter
      *
-     * @param authentication
-     * @param anchor
-     * @param context
-     * @param limit
-     * @param search
      * @return the list of groups found
      */
     @GetMapping(

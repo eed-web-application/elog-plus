@@ -45,7 +45,7 @@ public class ApplicationController {
                     it should be submitted in the http header along with the http request
                     """
     )
-    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @applicationAuthorizationService.canCreateApp(#authentication, #newAuthenticationTokenDTO)")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @applicationAuthorizationService.canCreateApp(#authentication, #newApplicationDTO)")
     public ApiResultResponse<String> createNewApplication(
             Authentication authentication,
             @Parameter(description = "Are the information to create the a new application")
