@@ -39,7 +39,7 @@ public class PrinterController {
     PrinterService printerService;
 
     @PostMapping(
-            value = "/defaults",
+            value = "/default",
             consumes = {"application/ipp"}
     )
     public ResponseEntity<byte[]> defaultPrinter(

@@ -280,7 +280,7 @@ public class PrinterControllerTest {
      */
     public IppPacketData print(Optional<String> userInfo, InputStream is, String logbook, ResultMatcher status) throws Throwable {
         // Deliver the print request
-        IppPacket.Builder printRequestBuilder = IppPacket.printJob(URI.create("/v1/printers/defaults"));
+        IppPacket.Builder printRequestBuilder = IppPacket.printJob(URI.create("/v1/printers/default"));
         printRequestBuilder.putOperationAttributes(
                 requestingUserName.of("user"),
                 documentFormat.of("application/octet-stream"));
@@ -314,7 +314,7 @@ public class PrinterControllerTest {
             }
         }
 
-        var postBuilder = post("/v1/printers/defaults")
+        var postBuilder = post("/v1/printers/default")
                 .contentType("application/ipp")
                 .content(outputStream.toByteArray());
 //        userInfo.ifPresent(login -> postBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
