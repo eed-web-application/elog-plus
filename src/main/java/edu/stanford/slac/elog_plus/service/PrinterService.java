@@ -316,14 +316,16 @@ public class PrinterService {
                 .response(Status.successfulOk)
                 .putAttributes(
                         operationAttributes,
-                        Types.printerUri.of(URI.create("%s/v1/printers/default".formatted(elogAppProperties.getIppUriPrefix()))),
+                        Types.printerUri.of(getPrinterUri()),
                         Types.attributesCharset.of("utf-8"),
                         Types.attributesNaturalLanguage.of("en")
                 )
                 .putAttributes(
                         printerAttributes,
+                        Types.printerUriSupported.of(getPrinterUri()),
                         Types.printerName.of("ElogIPPPrinterInterface"),
                         Types.printerState.of(PrinterState.idle),
+                        Types.printerLocation.of(getPrinterUri().toString()),
                         Types.printerStateReasons.of("none"),
                         Types.operationsSupported.of(
                                 Operation.printJob,
@@ -343,5 +345,13 @@ public class PrinterService {
                         )
                 )
                 .build();
+    }
+
+    private URI getPrinterUri() {
+        return URI.create("%s/v1/printers/default".formatted(elogAppProperties.getIppUriPrefix()));
+    }
+
+    private URI getPrinterUri(String postfix) {
+        return URI.create("%s/v1/printers/default/%s".formatted(elogAppProperties.getIppUriPrefix(), postfix));
     }
 }
