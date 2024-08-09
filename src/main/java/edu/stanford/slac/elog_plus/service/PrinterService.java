@@ -10,6 +10,7 @@ import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService;
 import edu.stanford.slac.elog_plus.api.v1.dto.EntryNewDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.LogbookDTO;
+import edu.stanford.slac.elog_plus.config.ELOGAppProperties;
 import edu.stanford.slac.elog_plus.model.FileObjectDescription;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -37,6 +38,7 @@ import static io.jsonwebtoken.lang.Collections.emptyList;
 @Service
 @AllArgsConstructor
 public class PrinterService {
+    private final ELOGAppProperties elogAppProperties;
     private final AppProperties appProperties;
     private final PeopleGroupService peopleGroupService;
     private final EntryService entryService;
@@ -314,7 +316,7 @@ public class PrinterService {
                 .response(Status.successfulOk)
                 .putAttributes(
                         operationAttributes,
-                        Types.printerUri.of(URI.create("/v1/printers/defaults")),
+                        Types.printerUri.of(URI.create("%s/v1/printers/default".formatted(elogAppProperties.getIppUriPrefix()))),
                         Types.attributesCharset.of("utf-8"),
                         Types.attributesNaturalLanguage.of("en")
                 )

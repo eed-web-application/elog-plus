@@ -13,4 +13,5 @@ public class ELOGAppProperties {
     private String imagePreviewTopic;
     private String importEntryTopic;
     private StorageProperties storage;
+    private String ippUriPrefix;
 }
