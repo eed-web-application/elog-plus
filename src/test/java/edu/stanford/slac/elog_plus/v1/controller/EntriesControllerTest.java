@@ -17,6 +17,10 @@ import edu.stanford.slac.elog_plus.utility.DateUtilities;
 import edu.stanford.slac.elog_plus.v1.service.DocumentGenerationService;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.assertj.core.api.AssertionsForInterfaceTypes;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.parser.Parser;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -41,6 +45,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import static edu.stanford.slac.elog_plus.api.v1.mapper.EntryMapper.ELOG_ENTRY_REF;
+import static edu.stanford.slac.elog_plus.api.v1.mapper.EntryMapper.ELOG_ENTRY_REF_ID;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -2103,11 +2109,11 @@ public class EntriesControllerTest {
         AssertionsForClassTypes.assertThat(newLogID2.getErrorCode()).isEqualTo(0);
 
         // create entry that reference the two above
-        String text = """
-                This is the text of the referencer
-                <a href="http://localhost/elog/entry/%s">
-                <a href="http://localhost/elog/entry/%s">
-                """.formatted(newLogID1.getPayload(), newLogID2.getPayload());
+        Element fragment = new Element("div");
+        fragment.appendElement(ELOG_ENTRY_REF).attr(ELOG_ENTRY_REF_ID, newLogID1.getPayload());
+        fragment.appendText("This is the text between two referencer");
+        fragment.appendElement(ELOG_ENTRY_REF).attr(ELOG_ENTRY_REF_ID, newLogID2.getPayload());
+
         ApiResultResponse<String> newLogIDReferencer =
                 assertDoesNotThrow(
                         () ->
@@ -2121,7 +2127,7 @@ public class EntriesControllerTest {
                                                 .builder()
                                                 .logbooks(List.of(newLogBookResult.getPayload().id()))
                                                 .title("Referencer log")
-                                                .text(text)
+                                                .text(fragment.html())
                                                 .build()
                                 )
                 );

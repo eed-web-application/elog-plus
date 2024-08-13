@@ -6,6 +6,10 @@ import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.repository.EntryRepository;
 import edu.stanford.slac.elog_plus.service.AttachmentService;
 import edu.stanford.slac.elog_plus.service.LogbookService;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
@@ -14,8 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 
@@ -24,7 +26,8 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
         componentModel = "spring"
 )
 public abstract class EntryMapper {
-    static Pattern referencePattern = Pattern.compile("href=\"(http|https)://[^/]+(?:/[^/]+)*/entry/([\\w-]+)\"");
+    public static final String ELOG_ENTRY_REF = "elog-entry-ref";
+    public static final String ELOG_ENTRY_REF_ID = "id";
     @Autowired
     private EntryRepository entryRepository;
     @Autowired
@@ -103,9 +106,11 @@ public abstract class EntryMapper {
     public List<String> createReferences(String text) {
         List<String> result = new ArrayList<>();
         if (text == null || text.isEmpty()) return result;
-        Matcher matcher = referencePattern.matcher(text);
-        while (matcher.find()) {
-            result.add(matcher.group(2));
+        Document document = Jsoup.parseBodyFragment(text);
+        Elements elements = document.select(ELOG_ENTRY_REF);
+        for (Element element : elements) {
+            // Get the 'id' attribute
+            result.add(element.attr(ELOG_ENTRY_REF_ID));
         }
         return result;
     }
