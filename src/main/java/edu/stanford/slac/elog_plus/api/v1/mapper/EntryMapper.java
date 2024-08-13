@@ -110,7 +110,10 @@ public abstract class EntryMapper {
         Elements elements = document.select(ELOG_ENTRY_REF);
         for (Element element : elements) {
             // Get the 'id' attribute
-            result.add(element.attr(ELOG_ENTRY_REF_ID));
+            if(!element.hasAttr(ELOG_ENTRY_REF_ID)) continue;
+            String id = element.attr(ELOG_ENTRY_REF_ID);
+            if(id.isEmpty() || result.contains(id)) continue;
+            result.add(id);
         }
         return result;
     }

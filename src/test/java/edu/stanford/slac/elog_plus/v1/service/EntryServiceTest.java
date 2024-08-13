@@ -1871,14 +1871,16 @@ public class EntryServiceTest {
                 )
         );
         assertThat(referencedEntryId).isNotNull();
-
+        Element fragmentRef1 = new Element("div");
+        fragmentRef1.appendText("This is a text with reference");
+        fragmentRef1.appendElement(ELOG_ENTRY_REF).attr(ELOG_ENTRY_REF_ID, referencedEntryId);
         String referencerEntryId = assertDoesNotThrow(
                 () -> entryService.createNew(
                         EntryNewDTO
                                 .builder()
                                 .logbooks(List.of(logbook.id()))
                                 .title("New entry")
-                                .text("This is a text with reference in a link <a href=\"http://test.com/entry/%s\">Reference link</a>".formatted(referencedEntryId))
+                                .text(fragmentRef1.html())
                                 .build(),
                         sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                 )
@@ -1887,6 +1889,11 @@ public class EntryServiceTest {
 
 
         // now supersede the entry that reference the first one
+        Element fragmentRef2 = new Element("div");
+        fragmentRef2.appendText("This is a text with reference");
+        fragmentRef2.appendElement(ELOG_ENTRY_REF).attr(ELOG_ENTRY_REF_ID, referencedEntryId);
+        fragmentRef2.appendElement(ELOG_ENTRY_REF).attr(ELOG_ENTRY_REF_ID, referencedEntryId);
+
         String referencerSupersedeEntryId = assertDoesNotThrow(
                 () -> entryService.createNewSupersede(
                         referencerEntryId,
@@ -1894,7 +1901,7 @@ public class EntryServiceTest {
                                 .builder()
                                 .logbooks(List.of(logbook.id()))
                                 .title("New entry that supersede the referencer one")
-                                .text("This is a text with reference in a link <a href=\"http://test.com/entry/%s\" data-references-entry=\"%s\">Reference link</a>".formatted(referencedEntryId, referencedEntryId))
+                                .text(fragmentRef2.html())
                                 .build()
                 )
         );
