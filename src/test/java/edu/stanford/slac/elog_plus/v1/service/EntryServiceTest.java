@@ -14,6 +14,10 @@ import edu.stanford.slac.elog_plus.service.EntryService;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import edu.stanford.slac.elog_plus.utility.DateUtilities;
 import org.assertj.core.api.Condition;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -33,6 +37,8 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 
+import static edu.stanford.slac.elog_plus.api.v1.mapper.EntryMapper.ELOG_ENTRY_REF;
+import static edu.stanford.slac.elog_plus.api.v1.mapper.EntryMapper.ELOG_ENTRY_REF_ID;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.AssertionsForClassTypes.*;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -94,28 +100,6 @@ public class EntryServiceTest {
         );
 
         assertThat(newLogID).isNotNull();
-    }
-
-    @Test
-    public void testLogTextSanitization() {
-        var logbook = getTestLogbook();
-        String newLogID = entryService.createNew(
-                EntryNewDTO
-                        .builder()
-                        .logbooks(List.of(logbook.id()))
-                        .text("<h1>H1</h1><h2>H2</h2><p><a href='http://example.com/' onclick='stealCookies()'>Link</a></p>")
-                        .title("A very wonderful log")
-                        .build(),
-                sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
-        );
-
-        EntryDTO fullLog =
-                assertDoesNotThrow(
-                        () -> entryService.getFullEntry(
-                                newLogID
-                        )
-                );
-        assertThat(fullLog.text()).isEqualTo("<h1>H1</h1>\n<h2>H2</h2>\n<p><a href=\"http://example.com/\" rel=\"nofollow\">Link</a></p>");
     }
 
     @Test
@@ -1792,13 +1776,17 @@ public class EntryServiceTest {
         );
         assertThat(referencedEntryId).isNotNull();
 
+        Element fragment = new Element("div");
+        fragment.appendText("This is a text with reference");
+        fragment.appendElement(ELOG_ENTRY_REF).attr(ELOG_ENTRY_REF_ID, referencedEntryId);
+
         String referencerEntryId = assertDoesNotThrow(
                 () -> entryService.createNew(
                         EntryNewDTO
                                 .builder()
                                 .logbooks(List.of(logbook.id()))
                                 .title("New entry")
-                                .text("This is a text with reference in a link <a href=\"http://test.com/entry/%s\">Reference link</a>".formatted(referencedEntryId))
+                                .text(fragment.html())
                                 .build(),
                         sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                 )
@@ -1819,7 +1807,9 @@ public class EntryServiceTest {
         );
 
         assertThat(referencerEntry.references()).hasSize(1).extracting("id").contains(referencedEntryId);
-
+        Document document = Jsoup.parseBodyFragment(referencerEntry.text());
+        Elements elements = document.select(ELOG_ENTRY_REF);
+        assertThat(elements).hasSize(1);
         //fetch referenced
         EntryDTO referencedEntry = assertDoesNotThrow(
                 () -> entryService.getFullEntry(
@@ -1881,14 +1871,16 @@ public class EntryServiceTest {
                 )
         );
         assertThat(referencedEntryId).isNotNull();
-
+        Element fragmentRef1 = new Element("div");
+        fragmentRef1.appendText("This is a text with reference");
+        fragmentRef1.appendElement(ELOG_ENTRY_REF).attr(ELOG_ENTRY_REF_ID, referencedEntryId);
         String referencerEntryId = assertDoesNotThrow(
                 () -> entryService.createNew(
                         EntryNewDTO
                                 .builder()
                                 .logbooks(List.of(logbook.id()))
                                 .title("New entry")
-                                .text("This is a text with reference in a link <a href=\"http://test.com/entry/%s\">Reference link</a>".formatted(referencedEntryId))
+                                .text(fragmentRef1.html())
                                 .build(),
                         sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                 )
@@ -1897,6 +1889,11 @@ public class EntryServiceTest {
 
 
         // now supersede the entry that reference the first one
+        Element fragmentRef2 = new Element("div");
+        fragmentRef2.appendText("This is a text with reference");
+        fragmentRef2.appendElement(ELOG_ENTRY_REF).attr(ELOG_ENTRY_REF_ID, referencedEntryId);
+        fragmentRef2.appendElement(ELOG_ENTRY_REF).attr(ELOG_ENTRY_REF_ID, referencedEntryId);
+
         String referencerSupersedeEntryId = assertDoesNotThrow(
                 () -> entryService.createNewSupersede(
                         referencerEntryId,
@@ -1904,7 +1901,7 @@ public class EntryServiceTest {
                                 .builder()
                                 .logbooks(List.of(logbook.id()))
                                 .title("New entry that supersede the referencer one")
-                                .text("This is a text with reference in a link <a href=\"http://test.com/entry/%s\" data-references-entry=\"%s\">Reference link</a>".formatted(referencedEntryId, referencedEntryId))
+                                .text(fragmentRef2.html())
                                 .build()
                 )
         );

@@ -3,6 +3,7 @@ package edu.stanford.slac.elog_plus.v1.mapper;
 import edu.stanford.slac.elog_plus.api.v1.dto.EntryNewDTO;
 import edu.stanford.slac.elog_plus.api.v1.mapper.EntryMapper;
 import edu.stanford.slac.elog_plus.model.Entry;
+import org.jsoup.nodes.Element;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,6 +13,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import static edu.stanford.slac.elog_plus.api.v1.mapper.EntryMapper.ELOG_ENTRY_REF;
+import static edu.stanford.slac.elog_plus.api.v1.mapper.EntryMapper.ELOG_ENTRY_REF_ID;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 @AutoConfigureMockMvc
@@ -56,15 +59,14 @@ public class MapperTest {
 
     @Test
     public void findReferenceInText() {
+        Element fragment = new Element("div");
+        fragment.appendText("This is a text with reference");
+        fragment.appendElement(ELOG_ENTRY_REF).attr(ELOG_ENTRY_REF_ID, "uuid-reference1");
+        fragment.appendElement(ELOG_ENTRY_REF).attr(ELOG_ENTRY_REF_ID, "uuid-reference2");
         Entry newEntry = entryMapper.fromDTO(
                 EntryNewDTO
                         .builder()
-                        .text(
-                                """
-                                <a href="http://test.com/entry/uuid-reference1">
-                                <a href="http://test.com/entry/uuid-reference2">
-                                """
-                        )
+                        .text(fragment.html())
                         .build(),
                 "firstName",
                 "lastName",
