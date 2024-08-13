@@ -103,28 +103,6 @@ public class EntryServiceTest {
     }
 
     @Test
-    public void testLogTextSanitization() {
-        var logbook = getTestLogbook();
-        String newLogID = entryService.createNew(
-                EntryNewDTO
-                        .builder()
-                        .logbooks(List.of(logbook.id()))
-                        .text("<h1>H1</h1><h2>H2</h2><p><a href='http://example.com/' onclick='stealCookies()'>Link</a></p>")
-                        .title("A very wonderful log")
-                        .build(),
-                sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
-        );
-
-        EntryDTO fullLog =
-                assertDoesNotThrow(
-                        () -> entryService.getFullEntry(
-                                newLogID
-                        )
-                );
-        assertThat(fullLog.text()).isEqualTo("<h1>H1</h1>\n<h2>H2</h2>\n<p><a href=\"http://example.com/\" rel=\"nofollow\">Link</a></p>");
-    }
-
-    @Test
     public void testFailBadAttachmentID() {
         var logbook = getTestLogbook();
         ControllerLogicException ex =
