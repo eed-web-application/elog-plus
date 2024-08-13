@@ -5,6 +5,8 @@ import org.jsoup.safety.Safelist;
 
 import java.text.Normalizer;
 
+import static edu.stanford.slac.elog_plus.api.v1.mapper.EntryMapper.ELOG_ENTRY_REF;
+
 public class StringUtilities {
     static public String tagNameNormalization(String tagName) {
         return Normalizer
@@ -35,7 +37,7 @@ public class StringUtilities {
 
     public static String sanitizeEntryText(String text) {
         Safelist safelist = Safelist.basic();
-        safelist.addTags("h1", "h2", "h3", "h4");
+        safelist.addTags("h1", "h2", "h3", "h4", ELOG_ENTRY_REF);
         return Jsoup.clean(text, safelist);
     }
 

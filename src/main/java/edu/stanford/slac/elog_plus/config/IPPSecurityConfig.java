@@ -19,6 +19,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 
+import java.util.List;
+
 import static org.springframework.core.Ordered.HIGHEST_PRECEDENCE;
 import static org.springframework.data.mongodb.core.BulkOperations.BulkMode.ORDERED;
 
@@ -48,7 +50,10 @@ public class IPPSecurityConfig {
                         AnonymousAuthenticationFilter.class
                 )
                 .addFilterBefore(
-                        new InstallServletRequestWrapper(),
+                        InstallServletRequestWrapper
+                                .builder()
+                                .applyOnUri(List.of("/v1/printers/**"))
+                                .build(),
                         AnonymousAuthenticationFilter.class // Add CustomAuthenticationFilter before IPPAuthenticationFilter
                 )
                 .addFilterBefore(

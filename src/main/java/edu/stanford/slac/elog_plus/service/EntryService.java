@@ -306,9 +306,10 @@ public class EntryService {
                         .errorDomain("LogService::createNew")
                         .build()
         );
-        newEntry.setText(
-                StringUtilities.sanitizeEntryText(newEntry.getText())
-        );
+        // no more sanitization on text we get all
+//        newEntry.setText(
+//                StringUtilities.sanitizeEntryText(newEntry.getText())
+//        );
 
         // remove the invalid references
         filterOutInvalidReference(newEntry);
