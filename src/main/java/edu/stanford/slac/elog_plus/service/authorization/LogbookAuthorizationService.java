@@ -7,6 +7,7 @@ import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.service.AuthorizationServices;
+import edu.stanford.slac.elog_plus.service.LogbookService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -25,9 +26,10 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 @Service
 @AllArgsConstructor
 public class LogbookAuthorizationService {
-    private final AppProperties appProperties;
-    private final AuthorizationServices authorizationServices;
     private final AuthService authService;
+    private final AppProperties appProperties;
+    private final LogbookService logbookService;
+    private final AuthorizationServices authorizationServices;
 
     /**
      * Check for read authorization
@@ -40,6 +42,8 @@ public class LogbookAuthorizationService {
             Authentication authentication,
             String logbookId
     ) {
+        // return all public readable logbook ids
+        List<String> allPublicReadableLogbookIds = logbookService.getAllIdsReadAll();
         assertion(
                 NotAuthorized
                         .notAuthorizedBuilder()
@@ -48,10 +52,15 @@ public class LogbookAuthorizationService {
                         .build(),
                 // needs be authenticated
                 // and need to be an admin or root
-                () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                        authentication,
-                        Admin,
-                        "/logbook/%s".formatted(logbookId)
+                () -> any(
+                        // is authorized on logbook
+                        () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
+                                authentication,
+                                Admin,
+                                "/logbook/%s".formatted(logbookId)
+                        ),
+                        // or logbook is public readable
+                        () -> allPublicReadableLogbookIds.contains(logbookId)
                 )
         );
         return true;
@@ -66,7 +75,7 @@ public class LogbookAuthorizationService {
      */
     public boolean canCreateNewAuthorization(Authentication authentication, NewAuthorizationDTO newAuthorizationDTO) {
         String resource = authorizationServices.getResource(newAuthorizationDTO);
-        if (newAuthorizationDTO.resourceType()==ResourceTypeDTO.All && newAuthorizationDTO.permission() == Admin) {
+        if (newAuthorizationDTO.resourceType() == ResourceTypeDTO.All && newAuthorizationDTO.permission() == Admin) {
             // check if user is a root user
             assertion(
                     ControllerLogicException
@@ -77,7 +86,7 @@ public class LogbookAuthorizationService {
                             .build(),
                     () -> authService.checkForRoot(authentication)
             );
-        } else if (newAuthorizationDTO.resourceType()==ResourceTypeDTO.Group && newAuthorizationDTO.permission() == Admin) {
+        } else if (newAuthorizationDTO.resourceType() == ResourceTypeDTO.Group && newAuthorizationDTO.permission() == Admin) {
             // check if user is a root user
             assertion(
                     ControllerLogicException
@@ -87,8 +96,8 @@ public class LogbookAuthorizationService {
                             .errorDomain("AuthorizationServices::canCreateNewAuthorization")
                             .build(),
                     () -> any(
-                            ()->authService.checkForRoot(authentication),
-                            ()->authService.canManageGroup(authentication)
+                            () -> authService.checkForRoot(authentication),
+                            () -> authService.canManageGroup(authentication)
                     )
             );
         } else if (newAuthorizationDTO.resourceType() == ResourceTypeDTO.Logbook) {
@@ -206,11 +215,11 @@ public class LogbookAuthorizationService {
                             .errorDomain("AuthorizationServices::canCreateNewAuthorization")
                             .build(),
                     () -> any(
-                            ()->authService.checkForRoot(authentication),
-                            ()->authService.canManageGroup(authentication)
+                            () -> authService.checkForRoot(authentication),
+                            () -> authService.canManageGroup(authentication)
                     )
             );
-        }  else if (authorizationFound.resource().startsWith("/logbook/")) {
+        } else if (authorizationFound.resource().startsWith("/logbook/")) {
             // check if current user is an admin for the logbook identified by the resourceType id
             assertion(
                     ControllerLogicException
@@ -372,6 +381,7 @@ public class LogbookAuthorizationService {
 
     /**
      * Apply the authorization filter on the user
+     *
      * @param user
      * @param authentication
      * @return
@@ -399,7 +409,7 @@ public class LogbookAuthorizationService {
                 .filter
                         (
                                 authorizationDTO -> {
-                                    switch(authorizationDTO.resourceType()){
+                                    switch (authorizationDTO.resourceType()) {
                                         case Logbook:
 //                                            return authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
 //                                                    authentication,

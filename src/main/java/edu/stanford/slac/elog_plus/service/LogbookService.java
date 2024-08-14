@@ -53,8 +53,39 @@ public class LogbookService {
     private final AppProperties appProperties;
     private final JWTHelper jwtHelper;
 
+    /**
+     * Validate the shift
+     *
+     * @return the validated shift
+     */
     public List<LogbookDTO> getAllLogbook() {
         return getAllLogbook(Optional.empty());
+    }
+
+    /**
+     * Return all the logbooks
+     *
+     * @return the lis tof all logbooks
+     */
+    public List<String> getAllIdsReadAll() {
+        return wrapCatch(
+                ()->logbookRepository.findAllByReadAllIsTrue().stream().map(Logbook::getId).toList(),
+                -1,
+                "LogbookService:getAllIdsReadAll"
+        );
+    }
+
+    /**
+     * Return all the logbooks
+     *
+     * @return the lis tof all logbooks
+     */
+    public List<String> getAllIdsWriteAll() {
+        return wrapCatch(
+                ()->logbookRepository.findAllByWriteAllIsTrue().stream().map(Logbook::getId).toList(),
+                -1,
+                "LogbookService:getAllIdsWriteAll"
+        );
     }
 
     /**
@@ -188,6 +219,7 @@ public class LogbookService {
         if (lbToUpdated.getTags() == null) {
             lbToUpdated.setTags(new ArrayList<>());
         }
+
         // normalize name and shift
         lbToUpdated.setName(
                 StringUtilities.logbookNameNormalization(logbookDTO.name())
@@ -206,6 +238,14 @@ public class LogbookService {
                 -5,
                 "LogbookService:update"
         );
+
+
+        lbToUpdated.setReadAll(updateLogbookInfo.isReadAll());
+        lbToUpdated.setWriteAll(updateLogbookInfo.isWriteAll());
+        if(updateLogbookInfo.isWriteAll()) {
+            // force also readAll to true
+            lbToUpdated.setReadAll(true);
+        }
 
         //we can save the logbooks
         var updatedLB = wrapCatch(

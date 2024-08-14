@@ -20,6 +20,10 @@ public record LogbookDTO(
         List<TagDTO> tags,
         @Schema(description = "The shift associated to the logbooks")
         List<ShiftDTO> shifts,
+        @Schema(description = "Indicate if the logbook entries can be read by all")
+        Boolean readAll,
+        @Schema(description = "Indicate if the logbook entries can be created by all")
+        Boolean writeAll,
         @Schema(description = "The list of authorizations on logbook")
         List<DetailsAuthorizationDTO> authorizations) {
 }

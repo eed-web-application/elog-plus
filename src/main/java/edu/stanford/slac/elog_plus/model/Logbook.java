@@ -16,9 +16,28 @@ import java.util.List;
 public class Logbook {
     @Id
     private String id;
+    /**
+     * The name of the logbook
+     */
     private String name;
+    /**
+     * If true, all users can read the logbook
+     */
+    @Builder.Default
+    private boolean readAll = false;
+    /**
+     * If true, all users can write the logbook
+     */
+    @Builder.Default
+    private boolean writeAll = false;
+    /**
+     * Are all the tag that can be used in this logbook
+     */
     @Builder.Default
     private List<Tag> tags = Collections.emptyList();
+    /**
+     * Are all the shifts that can be used in this logbook
+     */
     @Builder.Default
     private List<Shift> shifts = Collections.emptyList();
 }

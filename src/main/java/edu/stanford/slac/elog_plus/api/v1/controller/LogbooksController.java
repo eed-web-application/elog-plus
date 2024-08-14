@@ -20,8 +20,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Read;
+import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Write;
+import static java.util.Collections.emptyList;
 
 
 @RestController()
@@ -58,23 +62,36 @@ public class LogbooksController {
                     logbookService.getAllLogbook(includeAuthorizations)
             );
         } else {
+            AuthorizationTypeDTO requestAuthorization = authorizationType.orElse(Read);
             // get all the logbook where the user is authorized (all type of authorizations)
             List<AuthorizationDTO> authOnLogbook = authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
                     authentication.getCredentials().toString(),
-                    authorizationType.orElse(
-                            Read
-                    ),
+                    requestAuthorization,
                     "/logbook/",
                     Optional.empty()
             );
+            List<String> authorizedLogbook = authOnLogbook.stream()
+                    .map(
+                            auth -> auth.resource().substring(
+                                    auth.resource().lastIndexOf("/") + 1
+                            )
+                    )
+                    .toList();
+            // add all readAll logbook to care about no duplication
+            List<String> readAllLogbook = emptyList();
+            if(requestAuthorization == Read) {
+                // for read authorization we need to consider also public readable logbook
+                readAllLogbook = logbookService.getAllIdsReadAll();
+            } else if(requestAuthorization == Write) {
+                // for write authorization we need to consider also public writable logbook
+                readAllLogbook = logbookService.getAllIdsWriteAll();
+            }
+            logbookService.getAllIdsReadAll();
             return ApiResultResponse.of(
                     logbookService.getLogbook(
-                            authOnLogbook.stream()
-                                    .map(
-                                            auth -> auth.resource().substring(
-                                                    auth.resource().lastIndexOf("/") + 1
-                                            )
-                                    )
+                            // concat all the logbook and remove duplication
+                            Stream.concat(authorizedLogbook.stream(), readAllLogbook.stream())
+                                    .distinct()
                                     .toList(),
                             includeAuthorizations
                     )
@@ -131,7 +148,7 @@ public class LogbooksController {
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize(
             "@baseAuthorizationService.checkAuthenticated(#authentication) and " +
-            "@logbookAuthorizationService.authorizedUpdateOnLogbook(#authentication, #logbookId, #updateLogbookDTO)")
+                    "@logbookAuthorizationService.authorizedUpdateOnLogbook(#authentication, #logbookId, #updateLogbookDTO)")
     public ApiResultResponse<Boolean> updateLogbook(
             Authentication authentication,
             @PathVariable @NotNull String logbookId,
@@ -151,7 +168,7 @@ public class LogbooksController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize(
             "@baseAuthorizationService.checkAuthenticated(#authentication) and " +
-            "@logbookAuthorizationService.authorizedOnCreateNewTag(#authentication, #logbookId, #newTagDTO)")
+                    "@logbookAuthorizationService.authorizedOnCreateNewTag(#authentication, #logbookId, #newTagDTO)")
     public ApiResultResponse<String> createTag(
             Authentication authentication,
             @PathVariable @NotNull String logbookId,
@@ -168,7 +185,7 @@ public class LogbooksController {
     )
     @PreAuthorize(
             "@baseAuthorizationService.checkAuthenticated(#authentication) and " +
-            "@logbookAuthorizationService.authorizedOnGetAllTag(#authentication, #logbookId)"
+                    "@logbookAuthorizationService.authorizedOnGetAllTag(#authentication, #logbookId)"
     )
     public ApiResultResponse<List<TagDTO>> getAllTags(
             Authentication authentication,
@@ -187,7 +204,7 @@ public class LogbooksController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize(
             "@baseAuthorizationService.checkAuthenticated(#authentication) and " +
-            "@logbookAuthorizationService.authorizedOnReplaceShift(#authentication, #logbookId, #shiftReplacement)"
+                    "@logbookAuthorizationService.authorizedOnReplaceShift(#authentication, #logbookId, #shiftReplacement)"
     )
     public ApiResultResponse<Boolean> replaceShift(
             Authentication authentication,
