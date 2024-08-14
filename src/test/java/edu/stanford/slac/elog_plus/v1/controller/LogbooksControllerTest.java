@@ -93,6 +93,11 @@ public class LogbooksControllerTest {
         );
         assertThat(getLogResult).isNotNull();
         assertThat(getLogResult.getPayload().id()).isEqualTo(creationResult.getPayload());
+        assertThat(getLogResult.getPayload().name()).isEqualTo("new-logbooks");
+        assertThat(getLogResult.getPayload().tags()).isEmpty();
+        assertThat(getLogResult.getPayload().shifts()).isEmpty();
+        assertThat(getLogResult.getPayload().readAll()).isFalse();
+        assertThat(getLogResult.getPayload().writeAll()).isFalse();
     }
 
     @Test
@@ -456,6 +461,61 @@ public class LogbooksControllerTest {
         assertThat(fullLogbook.getPayload().name()).isEqualTo("updated-name");
         assertThat(fullLogbook.getPayload().tags()).hasSize(1).extracting("name").contains("tag-1");
         assertThat(fullLogbook.getPayload().shifts()).hasSize(1).extracting("name").contains("Shift A");
+    }
+
+    @Test
+    public void updateLogbookReadAndWriteAll() throws Exception {
+        ApiResultResponse<String> creationResult = assertDoesNotThrow(
+                () -> testControllerHelperService.createNewLogbook(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
+                        NewLogbookDTO.builder()
+                                .name("new-logbooks")
+                                .build()
+                )
+        );
+
+        assertThat(creationResult).isNotNull();
+        assertThat(creationResult.getErrorCode()).isEqualTo(0);
+        assertThat(creationResult.getPayload()).isNotEmpty();
+
+        ApiResultResponse<Boolean> replacementResult = assertDoesNotThrow(
+                () -> testControllerHelperService.updateLogbook(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
+                        creationResult.getPayload(),
+                        UpdateLogbookDTO
+                                .builder()
+                                .name("updated name")
+                                .writeAll(true)
+                                .readAll(true)
+                                .tags(emptyList())
+                                .shifts(emptyList())
+                                .build()
+                )
+        );
+        assertThat(replacementResult).isNotNull();
+        assertThat(replacementResult.getErrorCode()).isEqualTo(0);
+
+        ApiResultResponse<LogbookDTO> fullLogbook = assertDoesNotThrow(
+                () -> testControllerHelperService.getLogbookByID(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
+                        creationResult.getPayload()
+                )
+        );
+        assertThat(fullLogbook.getErrorCode()).isEqualTo(0);
+        assertThat(fullLogbook.getPayload().readAll()).isTrue();
+        assertThat(fullLogbook.getPayload().writeAll()).isTrue();
     }
 
     @Test

@@ -14,6 +14,10 @@ import java.util.List;
 public record UpdateLogbookDTO(
         @Schema(description = "The name of the logbooks")
         String name,
+        @Schema(description = "Indicate if the logbook can be read by all")
+        Boolean readAll,
+        @Schema(description = "Indicate if the logbook can be written by all")
+        Boolean writeAll,
         @Schema(description = "The tags associated to the logbooks")
         List<TagDTO> tags,
         @Schema(description = "The shift associated to the logbooks")

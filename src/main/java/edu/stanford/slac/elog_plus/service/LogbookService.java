@@ -188,6 +188,7 @@ public class LogbookService {
         if (lbToUpdated.getTags() == null) {
             lbToUpdated.setTags(new ArrayList<>());
         }
+
         // normalize name and shift
         lbToUpdated.setName(
                 StringUtilities.logbookNameNormalization(logbookDTO.name())
@@ -207,6 +208,10 @@ public class LogbookService {
                 "LogbookService:update"
         );
 
+        lbToUpdated.setReadAll(updateLogbookInfo.getReadAll());
+        lbToUpdated.setWriteAll(updateLogbookInfo.getWriteAll());
+
+        updateLogbookInfo.setWriteAll(logbookDTO.writeAll());
         //we can save the logbooks
         var updatedLB = wrapCatch(
                 () -> logbookRepository.save(lbToUpdated),
