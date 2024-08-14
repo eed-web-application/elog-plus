@@ -8,12 +8,14 @@ import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.model.LocalGroup;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
+import edu.stanford.slac.elog_plus.exception.LogbookNotAuthorized;
 import edu.stanford.slac.elog_plus.model.Attachment;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import edu.stanford.slac.elog_plus.v1.service.DocumentGenerationService;
 import edu.stanford.slac.elog_plus.v1.service.SharedUtilityService;
+import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,8 +31,10 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Read;
 import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Write;
@@ -96,24 +100,7 @@ public class EntriesControllerLogbookReadWriteAllTest {
                         "user1@slac.stanford.edu"
                 ),
                 "new logbook",
-                List.of(
-                        NewAuthorizationDTO
-                                .builder()
-                                .ownerId("user2@slac.stanford.edu")
-                                .ownerType(AuthorizationOwnerTypeDTO.User)
-                                .permission(
-                                        Write
-                                )
-                                .build(),
-                        NewAuthorizationDTO
-                                .builder()
-                                .ownerId("user3@slac.stanford.edu")
-                                .ownerType(AuthorizationOwnerTypeDTO.User)
-                                .permission(
-                                        Read
-                                )
-                                .build()
-                )
+                emptyList()
         );
         assertThat(newLogbookApiResultOne.getErrorCode()).isEqualTo(0);
         // create logbook 2
@@ -260,6 +247,94 @@ public class EntriesControllerLogbookReadWriteAllTest {
                         )
                 );
         assertThat(newEntryIdResultWithUser3.getErrorCode()).isEqualTo(0);
+    }
+
+    @Test
+    public void searchOnReadAllLogbook() throws Exception {
+        int entry_size = 10;
+        Set<String> idForLogbook1 = new HashSet<>();
+        Set<String> idForLogbook3 = new HashSet<>();
+        // try to create to a write all logbook 2
+        // write a limited random number of entries to logbook A or logbook B
+        for (int i = 0; i < entry_size; i++) {
+            var logbookId = i % 2 == 0 ? newLogbookApiResultOne.getPayload() : newLogbookApiResultThreeReadAll.getPayload();
+            int finalI = i;
+            var entryCreationResult =
+                    assertDoesNotThrow(
+                            () -> testControllerHelperService.createNewLog(
+                                    mockMvc,
+                                    status().isCreated(),
+                                    Optional.of(
+                                            "user1@slac.stanford.edu"
+                                    ),
+                                    EntryNewDTO
+                                            .builder()
+                                            .logbooks(
+                                                    List.of(
+                                                            logbookId
+                                                    )
+                                            )
+                                            .tags(emptyList())
+                                            .text(String.format("This is a log for test %d in logbook %s", finalI, logbookId))
+                                            .title("Another very wonderful logbook 1 and 2")
+                                            .build()
+                            )
+                    );
+            assertThat(entryCreationResult.getErrorCode()).isEqualTo(0);
+            if (i % 2 == 0) {
+                idForLogbook1.add(entryCreationResult.getPayload());
+            } else {
+                idForLogbook3.add(entryCreationResult.getPayload());
+            }
+        }
+
+        // start search on both logbook 1 and 3 with user 2, only entry form logbook 3 should be found
+        // giving thew logbook 1 need to get the error for not authorized
+        var exceptionForUser3 = assertThrows(
+                LogbookNotAuthorized.class,
+                () -> testControllerHelperService.submitSearchByGetWithAnchor(
+                        mockMvc,
+                        status().isUnauthorized(),
+                        Optional.of(
+                                "user2@slac.stanford.edu"
+                        ),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(entry_size),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(List.of(newLogbookApiResultOne.getPayload(), newLogbookApiResultThreeReadAll.getPayload())),
+                        Optional.empty(),
+                        Optional.empty()
+                )
+        );
+        AssertionsForClassTypes.assertThat(exceptionForUser3.getErrorCode()).isEqualTo(-1);
+
+        var foundOnLogbook3 = assertDoesNotThrow(
+                () -> testControllerHelperService.submitSearchByGetWithAnchor(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of(
+                                "user2@slac.stanford.edu"
+                        ),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(entry_size),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(List.of(newLogbookApiResultThreeReadAll.getPayload())),
+                        Optional.empty(),
+                        Optional.empty()
+                )
+        );
+        assertThat(foundOnLogbook3.getErrorCode()).isEqualTo(0);
+        assertThat(foundOnLogbook3.getPayload().size()).isEqualTo(idForLogbook3.size());
     }
 
 }
