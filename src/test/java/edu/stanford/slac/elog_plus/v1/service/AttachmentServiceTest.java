@@ -113,7 +113,7 @@ public class AttachmentServiceTest {
 
             await()
                     .atMost(30, SECONDS)
-                    .pollDelay(2, SECONDS)
+                    .pollInterval(1, SECONDS)
                     .until(
                             () -> {
                                 String state = attachmentService.getPreviewProcessingState(attachmentID);
@@ -149,7 +149,10 @@ public class AttachmentServiceTest {
                     true
             );
 
-            await().atMost(10, SECONDS).until(
+            await()
+                    .atMost(10, SECONDS)
+                    .pollInterval(1, SECONDS)
+                    .until(
                     () -> {
                         String state = attachmentService.getPreviewProcessingState(attachmentID);
                         log.info("state {} for attachment id {}", state, attachmentID);
@@ -165,7 +168,7 @@ public class AttachmentServiceTest {
     }
 
     @Test
-    public void testPdfPreviewUnavailable() throws IOException {
+    public void testPdfPreview() throws IOException {
         try (PDDocument pdf = assertDoesNotThrow(
                 () -> documentGenerationService.generatePdf()
         )) {
@@ -185,13 +188,49 @@ public class AttachmentServiceTest {
                     true
             );
 
-            await().atMost(10, SECONDS).until(
+            await().atMost(20, SECONDS)
+                    .pollInterval(1, SECONDS)
+                    .until(
+                            () -> {
+                                String state = attachmentService.getPreviewProcessingState(attachmentID);
+                                log.info("state {} for attachement id {}", state, attachmentID);
+                                return state.compareTo(Attachment.PreviewProcessingState.Completed.name()) == 0;
+                            }
+                    );
+        }
+    }
+
+    @Test
+    public void testPSPreview() throws IOException {
+        try (InputStream is = assertDoesNotThrow(
+                () -> documentGenerationService.getTestPS()
+        )) {
+            //save the
+            String attachmentID = attachmentService.createAttachment(
+                    FileObjectDescription
+                            .builder()
+                            .fileName("psFileName")
+                            .contentType("application/ps")
+                            .is(is)
+                            .build(),
+                    true
+            );
+
+            await()
+                    .atMost(20, SECONDS)
+                    .pollInterval(1, SECONDS)
+                    .until(
                     () -> {
                         String state = attachmentService.getPreviewProcessingState(attachmentID);
-                        log.info("state {} for attachement id {}", state, attachmentID);
-                        return state.compareTo(Attachment.PreviewProcessingState.PreviewNotAvailable.name()) == 0;
+                        log.info("state {} for attachment id {}", state, attachmentID);
+                        return state.compareTo(Attachment.PreviewProcessingState.Completed.name()) == 0;
                     }
             );
+
+            AttachmentDTO attachment = assertDoesNotThrow(
+                    () -> attachmentService.getAttachment(attachmentID)
+            );
+            assertThat(attachment.previewState()).isEqualTo(Attachment.PreviewProcessingState.Completed.name());
         }
     }
 

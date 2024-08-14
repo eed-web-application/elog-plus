@@ -86,7 +86,11 @@ dependencies {
             'io.jsonwebtoken:jjwt-jackson:0.12.5',
             'io.jsonwebtoken:jjwt-extensions:0.12.6',
             'com.unboundid:unboundid-ldapsdk:7.0.1'
-    implementation 'com.hp.jipp:jipp-core:0.7.16-beta1'
+
+    // jipp for IPP printer
+    implementation 'com.hp.jipp:jipp-core:0.7.16'
+
+    implementation 'org.apache.pdfbox:pdfbox:3.0.3'
 
     // tika
     implementation 'org.overviewproject:mime-types:2.0.0'
@@ -101,13 +105,13 @@ dependencies {
             "edu.stanford.slac:slac-ad-eed-base-mongodb-lib:$project.ext.ad_eed_base_mongodb_lib_version"
 
     // hazelcast
-    implementation 'com.hazelcast:hazelcast-spring:5.3.7'
+    implementation 'com.hazelcast:hazelcast-spring:5.3.8'
 
     // MongoDB
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
 
     // JSOUP
-    implementation 'org.jsoup:jsoup:1.17.2'
+    implementation 'org.jsoup:jsoup:1.18.1'
 
     // mongock
     implementation 'io.mongock:mongock-bom:5.4.4',
@@ -118,14 +122,14 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
 
     annotationProcessor 'org.projectlombok:lombok'
-    annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.0'
     testCompileOnly('org.springframework.security:spring-security-test')
-    testImplementation("org.springframework.kafka:spring-kafka-test:3.1.4")
+    testImplementation('org.springframework.kafka:spring-kafka-test:3.2.0')
     testImplementation 'org.springframework.boot:spring-boot-starter-test',
             'org.springframework.security:spring-security-test',
             'org.springframework.ldap:spring-ldap-test',
             'org.awaitility:awaitility:4.2.1',
-            'org.apache.pdfbox:pdfbox:3.0.2'
+            'org.apache.pdfbox:pdfbox:3.0.3'
 
 }
 
@@ -138,6 +142,9 @@ jacoco {
 }
 
 test {
+    // Optionally, set environment variables if needed
+//    systemProperty 'java.library.path', '/path/to/jmagick/lib'
+
     finalizedBy jacocoTestReport // report is always generated after tests run
     exclude '**/dto/**'
 }
