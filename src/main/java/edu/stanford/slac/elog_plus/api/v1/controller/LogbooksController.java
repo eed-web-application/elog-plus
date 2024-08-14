@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Read;
 
@@ -67,14 +69,20 @@ public class LogbooksController {
                     "/logbook/",
                     Optional.empty()
             );
+            List<String> authorizedLogbook = authOnLogbook.stream()
+                    .map(
+                            auth -> auth.resource().substring(
+                                    auth.resource().lastIndexOf("/") + 1
+                            )
+                    )
+                    .toList();
+            // add all readAll logbook to care about no duplication
+            List<String> readAllLogbook = logbookService.getAllIdsReadAll();
             return ApiResultResponse.of(
                     logbookService.getLogbook(
-                            authOnLogbook.stream()
-                                    .map(
-                                            auth -> auth.resource().substring(
-                                                    auth.resource().lastIndexOf("/") + 1
-                                            )
-                                    )
+                            // concat all the logbook and remove duplication
+                            Stream.concat(authorizedLogbook.stream(), readAllLogbook.stream())
+                                    .distinct()
                                     .toList(),
                             includeAuthorizations
                     )
@@ -131,7 +139,7 @@ public class LogbooksController {
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize(
             "@baseAuthorizationService.checkAuthenticated(#authentication) and " +
-            "@logbookAuthorizationService.authorizedUpdateOnLogbook(#authentication, #logbookId, #updateLogbookDTO)")
+                    "@logbookAuthorizationService.authorizedUpdateOnLogbook(#authentication, #logbookId, #updateLogbookDTO)")
     public ApiResultResponse<Boolean> updateLogbook(
             Authentication authentication,
             @PathVariable @NotNull String logbookId,
@@ -151,7 +159,7 @@ public class LogbooksController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize(
             "@baseAuthorizationService.checkAuthenticated(#authentication) and " +
-            "@logbookAuthorizationService.authorizedOnCreateNewTag(#authentication, #logbookId, #newTagDTO)")
+                    "@logbookAuthorizationService.authorizedOnCreateNewTag(#authentication, #logbookId, #newTagDTO)")
     public ApiResultResponse<String> createTag(
             Authentication authentication,
             @PathVariable @NotNull String logbookId,
@@ -168,7 +176,7 @@ public class LogbooksController {
     )
     @PreAuthorize(
             "@baseAuthorizationService.checkAuthenticated(#authentication) and " +
-            "@logbookAuthorizationService.authorizedOnGetAllTag(#authentication, #logbookId)"
+                    "@logbookAuthorizationService.authorizedOnGetAllTag(#authentication, #logbookId)"
     )
     public ApiResultResponse<List<TagDTO>> getAllTags(
             Authentication authentication,
@@ -187,7 +195,7 @@ public class LogbooksController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize(
             "@baseAuthorizationService.checkAuthenticated(#authentication) and " +
-            "@logbookAuthorizationService.authorizedOnReplaceShift(#authentication, #logbookId, #shiftReplacement)"
+                    "@logbookAuthorizationService.authorizedOnReplaceShift(#authentication, #logbookId, #shiftReplacement)"
     )
     public ApiResultResponse<Boolean> replaceShift(
             Authentication authentication,

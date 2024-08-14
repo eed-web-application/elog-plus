@@ -25,9 +25,9 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 @Service
 @AllArgsConstructor
 public class LogbookAuthorizationService {
+    private final AuthService authService;
     private final AppProperties appProperties;
     private final AuthorizationServices authorizationServices;
-    private final AuthService authService;
 
     /**
      * Check for read authorization

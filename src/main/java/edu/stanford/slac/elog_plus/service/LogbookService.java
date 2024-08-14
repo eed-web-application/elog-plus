@@ -53,8 +53,39 @@ public class LogbookService {
     private final AppProperties appProperties;
     private final JWTHelper jwtHelper;
 
+    /**
+     * Validate the shift
+     *
+     * @return the validated shift
+     */
     public List<LogbookDTO> getAllLogbook() {
         return getAllLogbook(Optional.empty());
+    }
+
+    /**
+     * Return all the logbooks
+     *
+     * @return the lis tof all logbooks
+     */
+    public List<String> getAllIdsReadAll() {
+        return wrapCatch(
+                logbookRepository::findAllLogbookIdsReadAllIsTrue,
+                -1,
+                "LogbookService:getAllIdsReadAll"
+        );
+    }
+
+    /**
+     * Return all the logbooks
+     *
+     * @return the lis tof all logbooks
+     */
+    public List<String> getAllIdsWriteAll() {
+        return wrapCatch(
+                logbookRepository::findAllLogbookIdsWriteAllIsTrue,
+                -1,
+                "LogbookService:getAllIdsWriteAll"
+        );
     }
 
     /**
