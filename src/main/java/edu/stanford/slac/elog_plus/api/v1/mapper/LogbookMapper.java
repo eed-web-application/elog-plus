@@ -60,6 +60,8 @@ public abstract class LogbookMapper {
 
     public abstract Logbook fromDTO(LogbookDTO logbookDTO);
 
+    @Mapping(target = "readAll", source = "readAll", defaultValue = "false")
+    @Mapping(target = "writeAll", source = "writeAll", defaultValue = "false")
     public abstract Logbook fromDTO(UpdateLogbookDTO logbookDTO);
 
     public abstract Entry fromDTO(EntryNewDTO entryNewDTO, String firstName, String lastName, String userName);
@@ -69,7 +71,7 @@ public abstract class LogbookMapper {
     /**
      * Return all the authorizations for a logbook
      *
-     * @param id                    the id of the logbook
+     * @param logbook                    the id of the logbook
      * @param includeAuthorizations if false a null is returned as list of authorizations
      * @return the list of authorizations of the logbook
      */

@@ -24,6 +24,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Read;
+import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Write;
+import static java.util.Collections.emptyList;
 
 
 @RestController()
@@ -60,12 +62,11 @@ public class LogbooksController {
                     logbookService.getAllLogbook(includeAuthorizations)
             );
         } else {
+            AuthorizationTypeDTO requestAuthorization = authorizationType.orElse(Read);
             // get all the logbook where the user is authorized (all type of authorizations)
             List<AuthorizationDTO> authOnLogbook = authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
                     authentication.getCredentials().toString(),
-                    authorizationType.orElse(
-                            Read
-                    ),
+                    requestAuthorization,
                     "/logbook/",
                     Optional.empty()
             );
@@ -77,7 +78,15 @@ public class LogbooksController {
                     )
                     .toList();
             // add all readAll logbook to care about no duplication
-            List<String> readAllLogbook = logbookService.getAllIdsReadAll();
+            List<String> readAllLogbook = emptyList();
+            if(requestAuthorization == Read) {
+                // for read authorization we need to consider also public readable logbook
+                readAllLogbook = logbookService.getAllIdsReadAll();
+            } else if(requestAuthorization == Write) {
+                // for write authorization we need to consider also public writable logbook
+                readAllLogbook = logbookService.getAllIdsWriteAll();
+            }
+            logbookService.getAllIdsReadAll();
             return ApiResultResponse.of(
                     logbookService.getLogbook(
                             // concat all the logbook and remove duplication

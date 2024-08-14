@@ -69,7 +69,7 @@ public class LogbookService {
      */
     public List<String> getAllIdsReadAll() {
         return wrapCatch(
-                logbookRepository::findAllLogbookIdsReadAllIsTrue,
+                ()->logbookRepository.findAllByReadAllIsTrue().stream().map(Logbook::getId).toList(),
                 -1,
                 "LogbookService:getAllIdsReadAll"
         );
@@ -82,7 +82,7 @@ public class LogbookService {
      */
     public List<String> getAllIdsWriteAll() {
         return wrapCatch(
-                logbookRepository::findAllLogbookIdsWriteAllIsTrue,
+                ()->logbookRepository.findAllByWriteAllIsTrue().stream().map(Logbook::getId).toList(),
                 -1,
                 "LogbookService:getAllIdsWriteAll"
         );
@@ -239,10 +239,14 @@ public class LogbookService {
                 "LogbookService:update"
         );
 
-        lbToUpdated.setReadAll(updateLogbookInfo.getReadAll());
-        lbToUpdated.setWriteAll(updateLogbookInfo.getWriteAll());
 
-        updateLogbookInfo.setWriteAll(logbookDTO.writeAll());
+        lbToUpdated.setReadAll(updateLogbookInfo.isReadAll());
+        lbToUpdated.setWriteAll(updateLogbookInfo.isWriteAll());
+        if(updateLogbookInfo.isWriteAll()) {
+            // force also readAll to true
+            lbToUpdated.setReadAll(true);
+        }
+
         //we can save the logbooks
         var updatedLB = wrapCatch(
                 () -> logbookRepository.save(lbToUpdated),

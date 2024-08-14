@@ -24,12 +24,12 @@ public class Logbook {
      * If true, all users can read the logbook
      */
     @Builder.Default
-    private Boolean readAll = false;
+    private boolean readAll = false;
     /**
      * If true, all users can write the logbook
      */
     @Builder.Default
-    private Boolean writeAll = false;
+    private boolean writeAll = false;
     /**
      * Are all the tag that can be used in this logbook
      */

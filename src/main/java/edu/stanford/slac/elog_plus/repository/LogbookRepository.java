@@ -2,6 +2,7 @@ package edu.stanford.slac.elog_plus.repository;
 
 import edu.stanford.slac.elog_plus.model.Logbook;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
 
 import java.util.List;
 import java.util.Optional;
@@ -55,12 +56,14 @@ public interface LogbookRepository extends MongoRepository<Logbook, String>, Log
      *
      * @return the list of logbook ids
      */
-    List<String> findAllLogbookIdsReadAllIsTrue();
+    @Query(fields = "{id: 1}")
+    List<Logbook> findAllByReadAllIsTrue();
 
     /**
      * Find all logbook ids where writeAll is true
      *
      * @return the list of logbook ids
      */
-    List<String> findAllLogbookIdsWriteAllIsTrue();
+    @Query(fields = "{id: 1}")
+    List<Logbook> findAllByWriteAllIsTrue();
 }
