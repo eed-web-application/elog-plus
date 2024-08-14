@@ -18,7 +18,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Read;
@@ -51,18 +50,25 @@ public class EntryAuthorizationService {
                         .errorDomain("LogbooksController::newEntry")
                         .build(),
                 // can write to all logbook
-                () -> all(
-                        newEntry.logbooks().stream()
-                                .map(
-                                        // return true if the user is authorized on logbook or if the logbook is public writable
-                                        logbookId -> (Supplier<Boolean>) () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                                                authentication,
-                                                Write,
-                                                "/logbook/%s".formatted(logbookId)
-                                        ) || allPublicWritableLogbookIds.contains(logbookId)
-                                )
-                                .toList()
-                )
+                () -> all
+                        (
+                                // this creates a list of supplier that return true if the user is authorized on logbook or if the logbook is public writable
+                                newEntry.logbooks().stream()
+                                        .map
+                                                (
+                                                        // return true if the user is authorized on logbook or if the logbook is public writable
+                                                        logbookId -> (Supplier<Boolean>) () ->
+                                                                any(
+                                                                        () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
+                                                                                authentication,
+                                                                                Write,
+                                                                                "/logbook/%s".formatted(logbookId)
+                                                                        ),
+                                                                        () -> allPublicWritableLogbookIds.contains(logbookId)
+                                                                )
+                                                )
+                                        .toList()
+                        )
         );
         return true;
     }
@@ -88,12 +94,18 @@ public class EntryAuthorizationService {
                         // write
                         newSupersedeEntry.logbooks().stream()
                                 .map(
-                                        // return true if the user is authorized on logbook or if the logbook is public writable
-                                        logbookId -> (Supplier<Boolean>) () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                                                authentication,
-                                                Write,
-                                                "/logbook/%s".formatted(logbookId)
-                                        ) || allPublicWritableLogbookIds.contains(logbookId)
+                                        (
+                                                // return true if the user is authorized on logbook or if the logbook is public writable
+                                                logbookId -> (Supplier<Boolean>) () ->
+                                                        any(
+                                                                () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
+                                                                        authentication,
+                                                                        Write,
+                                                                        "/logbook/%s".formatted(logbookId)
+                                                                ),
+                                                                () -> allPublicWritableLogbookIds.contains(logbookId)
+                                                        )
+                                        )
                                 )
                                 .toList()
                 )
@@ -121,12 +133,18 @@ public class EntryAuthorizationService {
                 () -> all(
                         newFollowUpEntry.logbooks().stream()
                                 .map(
-                                        // return true if the user is authorized on logbook or if the logbook is public writable
-                                        logbookId -> (Supplier<Boolean>) () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                                                authentication,
-                                                Write,
-                                                "/logbook/%s".formatted(logbookId)
-                                        ) || allPublicWritableLogbookIds.contains(logbookId)
+                                        (
+                                                // return true if the user is authorized on logbook or if the logbook is public writable
+                                                logbookId -> (Supplier<Boolean>) () ->
+                                                        any(
+                                                                () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
+                                                                        authentication,
+                                                                        Write,
+                                                                        "/logbook/%s".formatted(logbookId)
+                                                                ),
+                                                                () -> allPublicWritableLogbookIds.contains(logbookId)
+                                                        )
+                                        )
                                 )
                                 .toList()
                 )
@@ -159,23 +177,22 @@ public class EntryAuthorizationService {
         // check for authorizations
         List<String> lbForTheEntry = entryService.getLogbooksForAnEntryId(entryId);
         // contains all logbook that the entry belongs and the user can read
+        Stream<String> authorizedIdStream = lbForTheEntry
+                .stream()
+                .filter
+                        (
+                                // filter only
+                                lbId -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix
+                                        (
+                                                authentication,
+                                                Read,
+                                                "/logbook/%s".formatted(lbId)
+                                        )
+                        );
+
         authorizationCache.setAuthorizedLogbookId(
-                lbForTheEntry
-                        .stream()
-                        .filter
-                                (
-                                        // filter only
-                                        lbId -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix
-                                                (
-                                                        authentication,
-                                                        Read,
-                                                        "/logbook/%s".formatted(lbId)
-                                                )
-                                )
-                        .filter(
-                                // filter out not public readable
-                                allPublicReadableLogbookIds::contains
-                        )
+                Stream.concat(authorizedIdStream, allPublicReadableLogbookIds.stream())
+                        .distinct()
                         .toList()
         );
 
@@ -328,16 +345,16 @@ public class EntryAuthorizationService {
         if (!authService.checkForRoot(authentication)) {
             // if user is not root we need to check for specific authorization
             List<String> allAuthorizedLogbookIds = authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
-                                    authentication.getCredentials().toString(),
-                                    Read,
-                                    "/logbook/",
-                                    Optional.empty()
-                            ).stream().map(
-                                    auth -> auth.resource().substring(
-                                            auth.resource().lastIndexOf("/") + 1
-                                    )
+                            authentication.getCredentials().toString(),
+                            Read,
+                            "/logbook/",
+                            Optional.empty()
+                    ).stream().map(
+                            auth -> auth.resource().substring(
+                                    auth.resource().lastIndexOf("/") + 1
                             )
-                            .toList();
+                    )
+                    .toList();
 
             // set the authorization cache
             authorizationCache.setAuthorizedLogbookId(
