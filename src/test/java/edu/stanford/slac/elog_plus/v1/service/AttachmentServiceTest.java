@@ -235,6 +235,39 @@ public class AttachmentServiceTest {
     }
 
     @Test
+    public void testPSAlternateMimeTypePreview() throws IOException {
+        try (InputStream is = assertDoesNotThrow(
+                () -> documentGenerationService.getTestPS()
+        )) {
+            //save the
+            String attachmentID = attachmentService.createAttachment(
+                    FileObjectDescription
+                            .builder()
+                            .fileName("psFileName")
+                            .contentType("application/postscript")
+                            .is(is)
+                            .build(),
+                    true
+            );
+
+            await()
+                    .atMost(20, SECONDS)
+                    .pollInterval(1, SECONDS)
+                    .until(
+                            () -> {
+                                String state = attachmentService.getPreviewProcessingState(attachmentID);
+                                log.info("state {} for attachment id {}", state, attachmentID);
+                                return state.compareTo(Attachment.PreviewProcessingState.Completed.name()) == 0;
+                            }
+                    );
+
+            AttachmentDTO attachment = assertDoesNotThrow(
+                    () -> attachmentService.getAttachment(attachmentID)
+            );
+            assertThat(attachment.previewState()).isEqualTo(Attachment.PreviewProcessingState.Completed.name());
+        }
+    }
+    @Test
     public void testListObject() throws IOException {
         for (
                 int idx = 0;

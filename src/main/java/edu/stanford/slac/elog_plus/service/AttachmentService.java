@@ -1,5 +1,10 @@
 package edu.stanford.slac.elog_plus.service;
 
+import com.hp.jipp.encoding.IppPacket;
+import com.hp.jipp.model.JobState;
+import com.hp.jipp.model.JobStateReason;
+import com.hp.jipp.model.Status;
+import com.hp.jipp.model.Types;
 import edu.stanford.slac.elog_plus.api.v1.dto.AttachmentDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.ObjectListResultDTO;
 import edu.stanford.slac.elog_plus.api.v1.mapper.AttachmentMapper;
@@ -12,12 +17,18 @@ import edu.stanford.slac.elog_plus.repository.StorageRepository;
 import io.micrometer.core.instrument.Counter;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.apache.tika.config.TikaConfig;
+import org.apache.tika.detect.Detector;
+import org.apache.tika.metadata.Metadata;
 import org.springframework.http.MediaType;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
+import java.net.URI;
+import java.util.Collections;
 
+import static com.hp.jipp.encoding.Tag.operationAttributes;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 
 
@@ -43,6 +54,7 @@ public class AttachmentService {
                 .fileName(attachment.getFileName())
                 .contentType(attachment.getContentType())
                 .build();
+
         Attachment newAttachmentID =
                 wrapCatch(
                         () -> attachmentRepository.insert(

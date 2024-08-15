@@ -14,6 +14,9 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.rendering.PDFRenderer;
+import org.apache.tika.config.TikaConfig;
+import org.apache.tika.detect.Detector;
+import org.apache.tika.metadata.Metadata;
 import org.springframework.http.MediaType;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.annotation.RetryableTopic;
@@ -64,9 +67,12 @@ public class ProcessingPreview {
             attachmentService.setPreviewProcessingState(attachment.getId(), Attachment.PreviewProcessingState.Processing);
             fod = attachmentService.getAttachmentContent(attachment.getId());
             String previewID = String.format("%s-preview", attachment.getId());
+
             if (attachment.getContentType().compareToIgnoreCase("application/pdf") == 0) {
                 imageBytes = getFromPDF(fod.getIs());
-            } else if (attachment.getContentType().compareToIgnoreCase("application/ps") == 0) {
+            } else if (
+                    attachment.getContentType().compareToIgnoreCase("application/ps") == 0 ||
+                            attachment.getContentType().compareToIgnoreCase("application/postscript") == 0) {
                 imageBytes = getFromPS(fod.getIs());
             } else {
                 imageBytes = fod.getIs().readAllBytes();
