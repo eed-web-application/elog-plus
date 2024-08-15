@@ -31,6 +31,10 @@ public class DocumentGenerationService {
         return getClass().getClassLoader().getResourceAsStream("test.ps");
     }
 
+    public InputStream getTestPSAlternateMimeType() throws URISyntaxException {
+        return getClass().getClassLoader().getResourceAsStream("postscript-alternate-mime-type.ps");
+    }
+
     public PDDocument generatePdf() throws IOException {
         Faker faker = new Faker();
         PDDocument doc = new PDDocument();

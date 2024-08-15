@@ -14,6 +14,9 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.rendering.PDFRenderer;
+import org.apache.tika.config.TikaConfig;
+import org.apache.tika.detect.Detector;
+import org.apache.tika.metadata.Metadata;
 import org.springframework.http.MediaType;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.annotation.RetryableTopic;
@@ -64,9 +67,12 @@ public class ProcessingPreview {
             attachmentService.setPreviewProcessingState(attachment.getId(), Attachment.PreviewProcessingState.Processing);
             fod = attachmentService.getAttachmentContent(attachment.getId());
             String previewID = String.format("%s-preview", attachment.getId());
+
             if (attachment.getContentType().compareToIgnoreCase("application/pdf") == 0) {
                 imageBytes = getFromPDF(fod.getIs());
-            } else if (attachment.getContentType().compareToIgnoreCase("application/ps") == 0) {
+            } else if (
+                    attachment.getContentType().compareToIgnoreCase("application/ps") == 0 ||
+                            attachment.getContentType().compareToIgnoreCase("application/postscript") == 0) {
                 imageBytes = getFromPS(fod.getIs());
             } else {
                 imageBytes = fod.getIs().readAllBytes();
@@ -114,6 +120,14 @@ public class ProcessingPreview {
         }
     }
 
+    /**
+     * Get the first page of a PS file as a JPEG image
+     *
+     * @param is the input stream
+     * @return the JPEG image as a byte array
+     * @throws IOException if an error occurs during the conversion
+     * @throws InterruptedException if the process is interrupted
+     */
     private byte[] getFromPS(InputStream is) throws IOException, InterruptedException {
         byte[] imageBytes = null;
         Path tmpPSFilePath = null;
@@ -160,9 +174,9 @@ public class ProcessingPreview {
         byte[] imageBytes = null;
         try (PDDocument document = Loader.loadPDF(is.readAllBytes())) {
             PDFRenderer pdfRenderer = new PDFRenderer(document);
-            for (int page = 0; page < document.getNumberOfPages(); ++page) {
+            if (document.getNumberOfPages()>0) {
                 // Render the page as an image at 300 DPI
-                BufferedImage bufferedImage = pdfRenderer.renderImageWithDPI(page, 300);
+                BufferedImage bufferedImage = pdfRenderer.renderImageWithDPI(0, 300);
                 ByteArrayOutputStream jpegPreviewBAOS = new ByteArrayOutputStream();
                 ImageIO.write(bufferedImage, "JPEG", jpegPreviewBAOS);
                 imageBytes = jpegPreviewBAOS.toByteArray();
