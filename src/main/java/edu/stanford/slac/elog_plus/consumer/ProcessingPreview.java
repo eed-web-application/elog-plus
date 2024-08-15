@@ -9,6 +9,11 @@ import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import net.coobird.thumbnailator.Thumbnails;
 import net.coobird.thumbnailator.tasks.UnsupportedFormatException;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.rendering.PDFRenderer;
 import org.springframework.http.MediaType;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.annotation.RetryableTopic;
@@ -18,9 +23,14 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Component;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.UUID;
 
 @Log4j2
 @Component
@@ -48,12 +58,20 @@ public class ProcessingPreview {
             @Header(KafkaHeaders.OFFSET) long offset
     ) throws RuntimeException, IOException {
         log.info("Process preview for attachment: {} from {} @ {}", attachment, topic, offset);
+        byte[] imageBytes = null;
         FileObjectDescription fod = null;
         try {
             attachmentService.setPreviewProcessingState(attachment.getId(), Attachment.PreviewProcessingState.Processing);
             fod = attachmentService.getAttachmentContent(attachment.getId());
-            byte[] imageBytes = fod.getIs().readAllBytes();
             String previewID = String.format("%s-preview", attachment.getId());
+            if (attachment.getContentType().compareToIgnoreCase("application/pdf") == 0) {
+                imageBytes = getFromPDF(fod.getIs());
+            } else if (attachment.getContentType().compareToIgnoreCase("application/ps") == 0) {
+                imageBytes = getFromPS(fod.getIs());
+            } else {
+                imageBytes = fod.getIs().readAllBytes();
+            }
+            // crete preview
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             Thumbnails.of(new ByteArrayInputStream(imageBytes))
                     .size(1024, 1024)
@@ -68,15 +86,14 @@ public class ProcessingPreview {
                             .is(new ByteArrayInputStream(baos.toByteArray()))
                             .build()
             );
-            attachmentService.setPreviewID(attachment.getId(), previewID);
-
             baos = new ByteArrayOutputStream();
             Thumbnails.of(new ByteArrayInputStream(imageBytes))
                     .size(32, 32)
                     .outputFormat("jpg")
                     .toOutputStream(baos);
             attachmentService.setMiniPreview(attachment.getId(), baos.toByteArray());
-
+            // set preview id and state
+            attachmentService.setPreviewID(attachment.getId(), previewID);
             attachmentService.setPreviewProcessingState(attachment.getId(), Attachment.PreviewProcessingState.Completed);
             previewProcessedCounter.increment();
             acknowledgment.acknowledge();
@@ -91,10 +108,66 @@ public class ProcessingPreview {
             previewErrorsCounter.increment();
             throw new RuntimeException(e);
         } finally {
-            if(fod != null && fod.getIs() != null) {
+            if (fod != null && fod.getIs() != null) {
                 fod.getIs().close();
             }
         }
+    }
 
+    private byte[] getFromPS(InputStream is) throws IOException, InterruptedException {
+        byte[] imageBytes = null;
+        Path tmpPSFilePath = null;
+        Path tmpPDFFilePath = null;
+        try {
+            tmpPSFilePath = Files.createTempFile("psTempFile_%s".formatted(UUID.randomUUID()), ".ps");
+            tmpPDFFilePath = Files.createTempFile("pdfTempFile_%s".formatted(UUID.randomUUID()), ".pdf");
+            Files.write(tmpPSFilePath, is.readAllBytes(), StandardOpenOption.WRITE);
+            ProcessBuilder processBuilder = new ProcessBuilder(
+                    "gs",
+                    "-dNOPAUSE",
+                    "-dBATCH",
+                    "-sDEVICE=pdfwrite",
+                    "-sOutputFile=" + tmpPDFFilePath.toString(),
+                    tmpPSFilePath.toString()
+            );
+
+            Process process = processBuilder.start();
+            int exitCode = process.waitFor();
+
+            if (exitCode != 0) {
+                throw new IOException("Ghostscript failed to convert PS to PDF. Exit code: " + exitCode);
+            }
+            // get pdf file input stream
+            try (InputStream pdfInputStream = Files.newInputStream(tmpPDFFilePath)) {
+                //convert pdf to image
+                imageBytes = getFromPDF(pdfInputStream);
+            }
+        } finally {
+            if (tmpPSFilePath != null) Files.delete(tmpPSFilePath);
+            if (tmpPDFFilePath != null) Files.delete(tmpPDFFilePath);
+        }
+        return imageBytes;
+    }
+
+    /**
+     * Get the first page of a PDF as a JPEG image
+     *
+     * @param is the input stream
+     * @return the JPEG image as a byte array
+     * @throws IOException if an error occurs during the conversion
+     */
+    private byte[] getFromPDF(InputStream is) throws IOException {
+        byte[] imageBytes = null;
+        try (PDDocument document = Loader.loadPDF(is.readAllBytes())) {
+            PDFRenderer pdfRenderer = new PDFRenderer(document);
+            for (int page = 0; page < document.getNumberOfPages(); ++page) {
+                // Render the page as an image at 300 DPI
+                BufferedImage bufferedImage = pdfRenderer.renderImageWithDPI(page, 300);
+                ByteArrayOutputStream jpegPreviewBAOS = new ByteArrayOutputStream();
+                ImageIO.write(bufferedImage, "JPEG", jpegPreviewBAOS);
+                imageBytes = jpegPreviewBAOS.toByteArray();
+            }
+        }
+        return imageBytes;
     }
 }

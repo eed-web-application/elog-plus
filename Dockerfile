@@ -1,4 +1,8 @@
 FROM eclipse-temurin:21-jammy
+RUN apt-get update && \
+    apt-get install -y ghostscript && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 RUN useradd -rm -d /home/app -s /bin/bash -g root -G sudo -u 1001 app
 
 WORKDIR /home/app
