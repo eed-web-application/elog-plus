@@ -120,6 +120,14 @@ public class ProcessingPreview {
         }
     }
 
+    /**
+     * Get the first page of a PS file as a JPEG image
+     *
+     * @param is the input stream
+     * @return the JPEG image as a byte array
+     * @throws IOException if an error occurs during the conversion
+     * @throws InterruptedException if the process is interrupted
+     */
     private byte[] getFromPS(InputStream is) throws IOException, InterruptedException {
         byte[] imageBytes = null;
         Path tmpPSFilePath = null;
@@ -166,9 +174,9 @@ public class ProcessingPreview {
         byte[] imageBytes = null;
         try (PDDocument document = Loader.loadPDF(is.readAllBytes())) {
             PDFRenderer pdfRenderer = new PDFRenderer(document);
-            for (int page = 0; page < document.getNumberOfPages(); ++page) {
+            if (document.getNumberOfPages()>0) {
                 // Render the page as an image at 300 DPI
-                BufferedImage bufferedImage = pdfRenderer.renderImageWithDPI(page, 300);
+                BufferedImage bufferedImage = pdfRenderer.renderImageWithDPI(0, 300);
                 ByteArrayOutputStream jpegPreviewBAOS = new ByteArrayOutputStream();
                 ImageIO.write(bufferedImage, "JPEG", jpegPreviewBAOS);
                 imageBytes = jpegPreviewBAOS.toByteArray();
