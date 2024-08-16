@@ -68,7 +68,7 @@ public abstract class EntryMapper {
     public String getFollowingUp(String id) {
         if (id == null || id.isEmpty()) return null;
         return wrapCatch(
-                () -> entryRepository.findByFollowUpsContains(id)
+                () -> entryRepository.findByFollowUpsContainsAndSupersedeByIsNull(id)
                         .map(
                                 Entry::getId
                         ).orElse(null),

@@ -1,6 +1,5 @@
 package edu.stanford.slac.elog_plus.service;
 
-import com.github.javafaker.Faker;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.PersonDTO;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
@@ -14,7 +13,6 @@ import edu.stanford.slac.elog_plus.utility.StringUtilities;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -60,7 +58,7 @@ public class EntryService {
      * @param queryWithAnchorDTO the parameter for the search operation
      * @return the list of found entries that matches the input parameter
      */
-    public List<EntrySummaryDTO> searchAll(QueryWithAnchorDTO queryWithAnchorDTO) {
+    public List<EntrySummaryDTO> findAll(QueryWithAnchorDTO queryWithAnchorDTO) {
         List<Entry> found = wrapCatch(
                 () -> entryRepository.searchAll(
                         queryParameterMapper.fromDTO(
@@ -148,22 +146,10 @@ public class EntryService {
      */
     @Transactional
     public String createNew(EntryNewDTO entryNewDTO, PersonDTO personDTO) {
-        String firstname = "";
-        String lastName = "";
-        String[] slittedGecos = personDTO.gecos().split(" ");
-        if (slittedGecos.length >= 2) {
-            firstname = slittedGecos[0];
-            lastName = slittedGecos[1];
-        } else if (slittedGecos.length == 1) {
-            firstname = slittedGecos[0];
-        }
-
         return createNew(
-                entryMapper.fromDTO(
+                toModelWithCreator(
                         entryNewDTO,
-                        firstname,
-                        lastName,
-                        personDTO.mail()
+                        personDTO
                 )
         );
     }
@@ -172,15 +158,24 @@ public class EntryService {
      * Create a new log entry
      *
      * @param entryNewDTO is a new log information
+     * @param creator
      * @return the id of the newly created log
      */
-    public Entry toModelWithAuthorization(EntryNewDTO entryNewDTO) {
-        Faker faker = new Faker();
+    public Entry toModelWithCreator(EntryNewDTO entryNewDTO, PersonDTO creator) {
+        String firstname = "";
+        String lastName = "";
+        String[] slittedGecos = creator.gecos().split(" ");
+        if (slittedGecos.length >= 2) {
+            firstname = slittedGecos[0];
+            lastName = slittedGecos[1];
+        } else if (slittedGecos.length == 1) {
+            firstname = slittedGecos[0];
+        }
         return entryMapper.fromDTO(
                 entryNewDTO,
-                faker.name().firstName(),
-                faker.name().lastName(),
-                faker.name().username()
+                firstname,
+                lastName,
+                creator.mail()
 
         );
     }
@@ -438,7 +433,8 @@ public class EntryService {
 
         if (includeFollowingUps.isPresent() && includeFollowingUps.get()) {
             Optional<Entry> followingLog = wrapCatch(
-                    () -> entryRepository.findByFollowUpsContains(id),
+                    // fin followUps only on the last version (superseedBy is null) of the entry
+                    () -> entryRepository.findByFollowUpsContainsAndSupersedeByIsNull(id),
                     -3,
                     "LogService::getFullEntry"
             );
@@ -500,7 +496,7 @@ public class EntryService {
             result = result.toBuilder()
                     .referencedBy(
                             wrapCatch(
-                                    () -> entryRepository.findAllByReferencesContainsAndSupersedeByExists(foundEntry.getId(), false)
+                                    () -> entryRepository.findByFollowUpsContainsAndSupersedeByIsNull(foundEntry.getId())
                                             .stream()
                                             .map(
                                                     entryMapper::toSearchResult
@@ -539,7 +535,7 @@ public class EntryService {
                 wrapCatch(
                         () -> entryRepository.findBySupersedeBy(newestLogID),
                         -1,
-                        "LogService::getLogHistory"
+                        "LogService::getSuperseded"
                 );
         return foundLog.map(entryMapper::fromModelNoAttachment).orElse(null);
     }
@@ -562,12 +558,13 @@ public class EntryService {
     /**
      * Create a new supersede of the log
      *
-     * @param id     the identifier of the log to supersede
-     * @param newLog the content of the new supersede log
+     * @param id      the identifier of the log to supersede
+     * @param newLog  the content of the new supersede log
+     * @param creator the creator of the new supersede log
      * @return the id of the new supersede log
      */
     @Transactional
-    public String createNewSupersede(String id, EntryNewDTO newLog) {
+    public String createNewSupersede(String id, EntryNewDTO newLog, PersonDTO creator) {
         Entry supersededLog =
                 wrapCatch(
                         () -> entryRepository.findById(id),
@@ -590,7 +587,7 @@ public class EntryService {
         );
 
         // create supersede
-        Entry newEntryModel = toModelWithAuthorization(newLog);
+        Entry newEntryModel = toModelWithCreator(newLog, creator);
         // copy followups to the supersede entry
         newEntryModel.setFollowUps(supersededLog.getFollowUps());
         // create entry
@@ -746,6 +743,12 @@ public class EntryService {
         );
     }
 
+    /**
+     * Return the id of the entry from the origin id
+     *
+     * @param originId the origin id
+     * @return the id of the entry
+     */
     public String getIdFromOriginId(String originId) {
         Entry foundEntry = wrapCatch(
                 () -> entryRepository.findByOriginId(originId),

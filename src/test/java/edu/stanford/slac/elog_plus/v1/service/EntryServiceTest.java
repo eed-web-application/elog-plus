@@ -226,7 +226,8 @@ public class EntryServiceTest {
                                 .logbooks(List.of(logbook.id()))
                                 .text("This is a log for test")
                                 .title("A very wonderful log")
-                                .build()
+                                .build(),
+                        sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                 )
         );
 
@@ -258,7 +259,8 @@ public class EntryServiceTest {
                                         .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log updated for supersede")
-                                        .build()
+                                        .build(),
+                                sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                         )
                 );
 
@@ -302,7 +304,8 @@ public class EntryServiceTest {
                                         .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log updated for supersede")
-                                        .build()
+                                        .build(),
+                                sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                         )
                 );
 
@@ -315,7 +318,8 @@ public class EntryServiceTest {
                                         .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log updated for supersede of supersede")
-                                        .build()
+                                        .build(),
+                                sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                         )
                 );
         List<EntryDTO> history = new ArrayList<>();
@@ -352,7 +356,8 @@ public class EntryServiceTest {
                                         .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log updated for supersede")
-                                        .build()
+                                        .build(),
+                                sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                         )
                 );
         assertThat(newLogID).isNotNull();
@@ -367,7 +372,8 @@ public class EntryServiceTest {
                                         .logbooks(List.of(logbook.id()))
                                         .text("This is a log for test")
                                         .title("A very wonderful log updated for supersede one more time")
-                                        .build()
+                                        .build(),
+                                sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                         )
                 );
         assertThat(exception.getErrorCode()).isEqualTo(-3);
@@ -603,7 +609,7 @@ public class EntryServiceTest {
         // check for the attachment are well filled into dto
         var foundLog =
                 assertDoesNotThrow(
-                        () -> entryService.searchAll(
+                        () -> entryService.findAll(
                                 QueryWithAnchorDTO
                                         .builder()
                                         .limit(10)
@@ -645,7 +651,7 @@ public class EntryServiceTest {
 
         // initial search
         List<EntrySummaryDTO> firstPage = assertDoesNotThrow(
-                () -> entryService.searchAll(
+                () -> entryService.findAll(
                         QueryWithAnchorDTO
                                 .builder()
                                 .limit(10)
@@ -669,7 +675,7 @@ public class EntryServiceTest {
         var testAnchorLog = firstPage.get(firstPage.size() - 1);
         // load next page
         List<EntrySummaryDTO> nextPage = assertDoesNotThrow(
-                () -> entryService.searchAll(
+                () -> entryService.findAll(
                         QueryWithAnchorDTO
                                 .builder()
                                 .anchorID(testAnchorLog.id())
@@ -695,7 +701,7 @@ public class EntryServiceTest {
 
         // now get all the record upside and downside
         List<EntrySummaryDTO> prevPageByPin = assertDoesNotThrow(
-                () -> entryService.searchAll(
+                () -> entryService.findAll(
                         QueryWithAnchorDTO
                                 .builder()
                                 .anchorID(testAnchorLog.id())
@@ -709,7 +715,7 @@ public class EntryServiceTest {
         assertThat(prevPageByPin).isEqualTo(firstPage);
 
         List<EntrySummaryDTO> prevAndNextPageByPin = assertDoesNotThrow(
-                () -> entryService.searchAll(
+                () -> entryService.findAll(
                         QueryWithAnchorDTO
                                 .builder()
                                 .anchorID(testAnchorLog.id())
@@ -728,7 +734,7 @@ public class EntryServiceTest {
         // now search in the middle of the data set
         EntryDTO middleAnchorLog = entryService.getFullEntry(anchorID);
         List<EntrySummaryDTO> prevAndNextPageByMiddlePin = assertDoesNotThrow(
-                () -> entryService.searchAll(
+                () -> entryService.findAll(
                         QueryWithAnchorDTO
                                 .builder()
                                 .anchorID(middleAnchorLog.id())
@@ -775,7 +781,7 @@ public class EntryServiceTest {
 
         // initial search
         List<EntrySummaryDTO> firstPage = assertDoesNotThrow(
-                () -> entryService.searchAll(
+                () -> entryService.findAll(
                         QueryWithAnchorDTO
                                 .builder()
                                 .limit(10)
@@ -800,7 +806,7 @@ public class EntryServiceTest {
         var testAnchorLog = firstPage.get(firstPage.size() - 1);
         // load next page
         List<EntrySummaryDTO> nextPage = assertDoesNotThrow(
-                () -> entryService.searchAll(
+                () -> entryService.findAll(
                         QueryWithAnchorDTO
                                 .builder()
                                 .anchorID(testAnchorLog.id())
@@ -827,7 +833,7 @@ public class EntryServiceTest {
 
         // now get all the record upside and downside
         List<EntrySummaryDTO> prevPageByPin = assertDoesNotThrow(
-                () -> entryService.searchAll(
+                () -> entryService.findAll(
                         QueryWithAnchorDTO
                                 .builder()
                                 .anchorID(testAnchorLog.id())
@@ -842,7 +848,7 @@ public class EntryServiceTest {
         assertThat(prevPageByPin).isEqualTo(firstPage);
 
         List<EntrySummaryDTO> prevAndNextPageByPin = assertDoesNotThrow(
-                () -> entryService.searchAll(
+                () -> entryService.findAll(
                         QueryWithAnchorDTO
                                 .builder()
                                 .anchorID(testAnchorLog.id())
@@ -862,7 +868,7 @@ public class EntryServiceTest {
         // now search in the middle of the data set
         EntryDTO middleAnchorLog = entryService.getFullEntry(anchorID);
         List<EntrySummaryDTO> prevAndNextPageByMiddlePin = assertDoesNotThrow(
-                () -> entryService.searchAll(
+                () -> entryService.findAll(
                         QueryWithAnchorDTO
                                 .builder()
                                 .anchorID(middleAnchorLog.id())
@@ -958,7 +964,7 @@ public class EntryServiceTest {
 
         // initial search
         List<EntrySummaryDTO> firstPage = assertDoesNotThrow(
-                () -> entryService.searchAll(
+                () -> entryService.findAll(
                         QueryWithAnchorDTO
                                 .builder()
                                 .limit(30)
@@ -1413,7 +1419,7 @@ public class EntryServiceTest {
         assertThat(entryID).isNotNull().isNotEmpty();
 
         List<EntrySummaryDTO> found = assertDoesNotThrow(
-                () -> entryService.searchAll(
+                () -> entryService.findAll(
                         QueryWithAnchorDTO
                                 .builder()
                                 .limit(10)
@@ -1423,7 +1429,7 @@ public class EntryServiceTest {
         assertThat(found).isNotNull().hasSize(2);
 
         found = assertDoesNotThrow(
-                () -> entryService.searchAll(
+                () -> entryService.findAll(
                         QueryWithAnchorDTO
                                 .builder()
                                 .hideSummaries(true)
@@ -1902,7 +1908,8 @@ public class EntryServiceTest {
                                 .logbooks(List.of(logbook.id()))
                                 .title("New entry that supersede the referencer one")
                                 .text(fragmentRef2.html())
-                                .build()
+                                .build(),
+                        sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                 )
         );
         assertThat(referencerSupersedeEntryId).isNotNull();

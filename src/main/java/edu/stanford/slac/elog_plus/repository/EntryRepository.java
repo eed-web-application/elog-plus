@@ -20,7 +20,7 @@ public interface EntryRepository extends MongoRepository<Entry, String>, EntryRe
      * @param id the id of the followup record
      * @return the following up record
      */
-    Optional<Entry> findByFollowUpsContains(String id);
+    Optional<Entry> findByFollowUpsContainsAndSupersedeByIsNull(String id);
 
     /**
      * Return the summary associated to the shift and date
