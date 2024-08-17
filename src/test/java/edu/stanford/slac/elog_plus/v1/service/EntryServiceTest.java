@@ -1793,7 +1793,7 @@ public class EntryServiceTest {
                                 .builder()
                                 .logbooks(List.of(logbook.id()))
                                 .title("New entry")
-                                .text(fragment.html())
+                                .text(sharedUtilityService.createReferenceHtmlFragment("text for the reference entry", List.of(referencedEntryId)))
                                 .build(),
                         sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                 )
@@ -1812,11 +1812,8 @@ public class EntryServiceTest {
 
                 )
         );
-
         assertThat(referencerEntry.references()).hasSize(1).extracting("id").contains(referencedEntryId);
-        Document document = Jsoup.parseBodyFragment(referencerEntry.text());
-        Elements elements = document.select(ELOG_ENTRY_REF);
-        assertThat(elements).hasSize(1);
+        assertThat(sharedUtilityService.htmlContainsReferenceWithId(referencerEntry.text(), referencedEntryId)).isTrue();
         //fetch referenced
         EntryDTO referencedEntry = assertDoesNotThrow(
                 () -> entryService.getFullEntry(
@@ -1824,7 +1821,7 @@ public class EntryServiceTest {
                         Optional.of(false),
                         Optional.of(false),
                         Optional.of(false),
-                        Optional.of(true),
+                        Optional.of(false),
                         Optional.of(true)
                 )
         );

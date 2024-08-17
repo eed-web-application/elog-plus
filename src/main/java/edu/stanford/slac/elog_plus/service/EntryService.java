@@ -502,7 +502,7 @@ public class EntryService {
             result = result.toBuilder()
                     .referencedBy(
                             wrapCatch(
-                                    () -> entryRepository.findByFollowUpsContainsAndSupersedeByIsNull(foundEntry.getId())
+                                    () -> entryRepository.findAllByReferencesContainsAndSupersedeByExists(foundEntry.getId(), false)
                                             .stream()
                                             .map(
                                                     entryMapper::toSearchResult
