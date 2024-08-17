@@ -564,10 +564,10 @@ public class EntryService {
      * @return the id of the new supersede log
      */
     @Transactional
-    public String createNewSupersede(String id, EntryNewDTO newLog, PersonDTO creator) {
+    public String createNewSupersede(String entryId, EntryNewDTO newLog, PersonDTO creator) {
         Entry supersededLog =
                 wrapCatch(
-                        () -> entryRepository.findById(id),
+                        () -> entryRepository.findById(entryId),
                         -1,
                         "LogService::createNewSupersede"
                 ).orElseThrow(
@@ -588,10 +588,16 @@ public class EntryService {
 
         // create supersede
         Entry newEntryModel = toModelWithCreator(newLog, creator);
+
         // copy followups to the supersede entry
         newEntryModel.setFollowUps(supersededLog.getFollowUps());
+
         // create entry
         String newLogID = createNew(newEntryModel);
+
+        // update all the reference to old entry with the new id
+        updateReferences(entryId, newLogID);
+
         // update supersede
         supersededLog.setSupersedeBy(newLogID);
         //update superseded entry
@@ -602,6 +608,15 @@ public class EntryService {
         );
         log.info("New supersede for '{}' created with id '{}'", supersededLog.getTitle(), newLogID);
         return newLogID;
+    }
+
+    /**
+     * Update the references to the old entry with the new id
+     *
+     * @param entryId  the id of the entry that has been superseded
+     * @param supersededById the id of the new superseded entry
+     */
+    private void updateReferences(String entryId, String supersededById) {
     }
 
     /**

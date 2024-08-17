@@ -81,7 +81,7 @@ public abstract class EntryMapper {
      * Fill the referenced by of an entry
      *
      * @param id the unique id of an entry
-     * @return all the id of the entries that refere the entry
+     * @return all the id of the entries that refer the entry identified by the Id
      */
     public List<String> getReferenceBy(String id) {
         if (id == null || id.isEmpty()) return null;
