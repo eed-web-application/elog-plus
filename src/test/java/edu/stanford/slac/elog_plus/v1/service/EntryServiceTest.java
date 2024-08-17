@@ -40,6 +40,7 @@ import java.util.*;
 import static edu.stanford.slac.elog_plus.api.v1.mapper.EntryMapper.ELOG_ENTRY_REF;
 import static edu.stanford.slac.elog_plus.api.v1.mapper.EntryMapper.ELOG_ENTRY_REF_ID;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.AssertionsForClassTypes.*;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -1877,16 +1878,14 @@ public class EntryServiceTest {
                 )
         );
         assertThat(referencedEntryId).isNotNull();
-        Element fragmentRef1 = new Element("div");
-        fragmentRef1.appendText("This is a text with reference");
-        fragmentRef1.appendElement(ELOG_ENTRY_REF).attr(ELOG_ENTRY_REF_ID, referencedEntryId);
+
         String referencerEntryId = assertDoesNotThrow(
                 () -> entryService.createNew(
                         EntryNewDTO
                                 .builder()
                                 .logbooks(List.of(logbook.id()))
                                 .title("New entry")
-                                .text(fragmentRef1.html())
+                                .text(sharedUtilityService.createReferenceHtmlFragment("This is a text with reference", singletonList(referencedEntryId)))
                                 .build(),
                         sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                 )
@@ -1895,10 +1894,6 @@ public class EntryServiceTest {
 
 
         // now supersede the entry that reference the first one
-        Element fragmentRef2 = new Element("div");
-        fragmentRef2.appendText("This is a text with reference");
-        fragmentRef2.appendElement(ELOG_ENTRY_REF).attr(ELOG_ENTRY_REF_ID, referencedEntryId);
-        fragmentRef2.appendElement(ELOG_ENTRY_REF).attr(ELOG_ENTRY_REF_ID, referencedEntryId);
 
         String referencerSupersedeEntryId = assertDoesNotThrow(
                 () -> entryService.createNewSupersede(
@@ -1907,7 +1902,7 @@ public class EntryServiceTest {
                                 .builder()
                                 .logbooks(List.of(logbook.id()))
                                 .title("New entry that supersede the referencer one")
-                                .text(fragmentRef2.html())
+                                .text(sharedUtilityService.createReferenceHtmlFragment("This is a text with reference", List.of(referencedEntryId, referencedEntryId)))
                                 .build(),
                         sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                 )
