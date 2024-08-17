@@ -40,7 +40,7 @@ public abstract class EntryMapper {
     @Mapping(source = "logbooks", target = "logbooks", qualifiedByName = "mapToLogbookSummary")
     @Mapping(target = "referencedBy", ignore = true)
     @Mapping(target = "references", ignore = true)
-    @Mapping(target = "referencesInBody", expression = "java(entry.getOriginId()==null)")
+    @Mapping(target = "referencesInBody", expression = "java(checkReferenceInBody(entry.getText()))")
     public abstract EntryDTO fromModel(Entry entry);
 
     @Mapping(target = "loggedBy", expression = "java(entry.getFirstName() + \" \" + entry.getLastName())")
@@ -49,7 +49,7 @@ public abstract class EntryMapper {
     @Mapping(source = "logbooks", target = "logbooks", qualifiedByName = "mapToLogbookSummary")
     @Mapping(target = "referencedBy", ignore = true)
     @Mapping(target = "references", ignore = true)
-    @Mapping(target = "referencesInBody", expression = "java(entry.getOriginId()==null)")
+    @Mapping(target = "referencesInBody", expression = "java(checkReferenceInBody(entry.getText()))")
     public abstract EntryDTO fromModelNoAttachment(Entry entry);
 
     @Mapping(target = "loggedBy", expression = "java(entry.getFirstName() + \" \" + entry.getLastName())")
@@ -68,7 +68,7 @@ public abstract class EntryMapper {
     public String getFollowingUp(String id) {
         if (id == null || id.isEmpty()) return null;
         return wrapCatch(
-                () -> entryRepository.findByFollowUpsContains(id)
+                () -> entryRepository.findByFollowUpsContainsAndSupersedeByIsNull(id)
                         .map(
                                 Entry::getId
                         ).orElse(null),
@@ -78,10 +78,22 @@ public abstract class EntryMapper {
     }
 
     /**
+     * Check if the body text contains one or more reference
+     * @param bodyText the text to check
+     * @return true if the text contains a reference
+     */
+    public boolean checkReferenceInBody(String bodyText) {
+        if (bodyText == null || bodyText.isEmpty()) return false;
+        Document document = Jsoup.parseBodyFragment(bodyText);
+        Elements elements = document.select(ELOG_ENTRY_REF);
+        return !elements.isEmpty();
+    }
+
+    /**
      * Fill the referenced by of an entry
      *
      * @param id the unique id of an entry
-     * @return all the id of the entries that refere the entry
+     * @return all the id of the entries that refer the entry identified by the Id
      */
     public List<String> getReferenceBy(String id) {
         if (id == null || id.isEmpty()) return null;

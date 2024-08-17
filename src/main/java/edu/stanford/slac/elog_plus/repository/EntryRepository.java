@@ -20,7 +20,7 @@ public interface EntryRepository extends MongoRepository<Entry, String>, EntryRe
      * @param id the id of the followup record
      * @return the following up record
      */
-    Optional<Entry> findByFollowUpsContains(String id);
+    Optional<Entry> findByFollowUpsContainsAndSupersedeByIsNull(String id);
 
     /**
      * Return the summary associated to the shift and date
@@ -31,6 +31,12 @@ public interface EntryRepository extends MongoRepository<Entry, String>, EntryRe
     @Query(fields = "{'summarizes':1}")
     Optional<Entry> findBySummarizes_ShiftIdAndSummarizes_Date(String summarizesShiftId, LocalDate summarizesDate);
 
+    /**
+     * Return the entries that refer to another entry
+     * @param referencedEntryId the id of the referenced entry
+     * @param exists if false take in consideration only the last superseeded entry
+     * @return the entries that are associated to the logbook
+     */
     List<Entry> findAllByReferencesContainsAndSupersedeByExists(String referencedEntryId, Boolean exists);
 
     /**

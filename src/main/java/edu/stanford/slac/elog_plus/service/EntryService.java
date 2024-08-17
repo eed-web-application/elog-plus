@@ -1,6 +1,5 @@
 package edu.stanford.slac.elog_plus.service;
 
-import com.github.javafaker.Faker;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.PersonDTO;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
@@ -13,8 +12,11 @@ import edu.stanford.slac.elog_plus.repository.EntryRepository;
 import edu.stanford.slac.elog_plus.utility.StringUtilities;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -26,6 +28,8 @@ import java.util.stream.Collectors;
 
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
+import static edu.stanford.slac.elog_plus.api.v1.mapper.EntryMapper.ELOG_ENTRY_REF;
+import static edu.stanford.slac.elog_plus.api.v1.mapper.EntryMapper.ELOG_ENTRY_REF_ID;
 import static java.util.Collections.emptyList;
 
 @Service
@@ -60,7 +64,7 @@ public class EntryService {
      * @param queryWithAnchorDTO the parameter for the search operation
      * @return the list of found entries that matches the input parameter
      */
-    public List<EntrySummaryDTO> searchAll(QueryWithAnchorDTO queryWithAnchorDTO) {
+    public List<EntrySummaryDTO> findAll(QueryWithAnchorDTO queryWithAnchorDTO) {
         List<Entry> found = wrapCatch(
                 () -> entryRepository.searchAll(
                         queryParameterMapper.fromDTO(
@@ -148,22 +152,10 @@ public class EntryService {
      */
     @Transactional
     public String createNew(EntryNewDTO entryNewDTO, PersonDTO personDTO) {
-        String firstname = "";
-        String lastName = "";
-        String[] slittedGecos = personDTO.gecos().split(" ");
-        if (slittedGecos.length >= 2) {
-            firstname = slittedGecos[0];
-            lastName = slittedGecos[1];
-        } else if (slittedGecos.length == 1) {
-            firstname = slittedGecos[0];
-        }
-
         return createNew(
-                entryMapper.fromDTO(
+                toModelWithCreator(
                         entryNewDTO,
-                        firstname,
-                        lastName,
-                        personDTO.mail()
+                        personDTO
                 )
         );
     }
@@ -172,15 +164,24 @@ public class EntryService {
      * Create a new log entry
      *
      * @param entryNewDTO is a new log information
+     * @param creator
      * @return the id of the newly created log
      */
-    public Entry toModelWithAuthorization(EntryNewDTO entryNewDTO) {
-        Faker faker = new Faker();
+    public Entry toModelWithCreator(EntryNewDTO entryNewDTO, PersonDTO creator) {
+        String firstname = "";
+        String lastName = "";
+        String[] slittedGecos = creator.gecos().split(" ");
+        if (slittedGecos.length >= 2) {
+            firstname = slittedGecos[0];
+            lastName = slittedGecos[1];
+        } else if (slittedGecos.length == 1) {
+            firstname = slittedGecos[0];
+        }
         return entryMapper.fromDTO(
                 entryNewDTO,
-                faker.name().firstName(),
-                faker.name().lastName(),
-                faker.name().username()
+                firstname,
+                lastName,
+                creator.mail()
 
         );
     }
@@ -438,7 +439,8 @@ public class EntryService {
 
         if (includeFollowingUps.isPresent() && includeFollowingUps.get()) {
             Optional<Entry> followingLog = wrapCatch(
-                    () -> entryRepository.findByFollowUpsContains(id),
+                    // fin followUps only on the last version (superseedBy is null) of the entry
+                    () -> entryRepository.findByFollowUpsContainsAndSupersedeByIsNull(id),
                     -3,
                     "LogService::getFullEntry"
             );
@@ -539,7 +541,7 @@ public class EntryService {
                 wrapCatch(
                         () -> entryRepository.findBySupersedeBy(newestLogID),
                         -1,
-                        "LogService::getLogHistory"
+                        "LogService::getSuperseded"
                 );
         return foundLog.map(entryMapper::fromModelNoAttachment).orElse(null);
     }
@@ -562,15 +564,16 @@ public class EntryService {
     /**
      * Create a new supersede of the log
      *
-     * @param id     the identifier of the log to supersede
-     * @param newLog the content of the new supersede log
+     * @param entryId the identifier of the log to supersede
+     * @param newLog  the content of the new supersede log
+     * @param creator the creator of the new supersede log
      * @return the id of the new supersede log
      */
     @Transactional
-    public String createNewSupersede(String id, EntryNewDTO newLog) {
+    public String createNewSupersede(String entryId, EntryNewDTO newLog, PersonDTO creator) {
         Entry supersededLog =
                 wrapCatch(
-                        () -> entryRepository.findById(id),
+                        () -> entryRepository.findById(entryId),
                         -1,
                         "LogService::createNewSupersede"
                 ).orElseThrow(
@@ -590,13 +593,20 @@ public class EntryService {
         );
 
         // create supersede
-        Entry newEntryModel = toModelWithAuthorization(newLog);
+        Entry newEntryModel = toModelWithCreator(newLog, creator);
+
         // copy followups to the supersede entry
         newEntryModel.setFollowUps(supersededLog.getFollowUps());
+
         // create entry
         String newLogID = createNew(newEntryModel);
+
+        // update all the reference to old entry with the new id
+        updateReferences(entryId, newLogID);
+
         // update supersede
         supersededLog.setSupersedeBy(newLogID);
+
         //update superseded entry
         wrapCatch(
                 () -> entryRepository.save(supersededLog),
@@ -605,6 +615,58 @@ public class EntryService {
         );
         log.info("New supersede for '{}' created with id '{}'", supersededLog.getTitle(), newLogID);
         return newLogID;
+    }
+
+    /**
+     * Update the references to the old entry with the new id
+     *
+     * @param entryId        the id of the entry that has been superseded
+     * @param supersededById the id of the new superseded entry
+     */
+    private void updateReferences(String entryId, String supersededById) {
+        // find al entry that reference to the original one
+        List<Entry> referenceEntries = wrapCatch(
+                () -> entryRepository.findAllByReferencesContainsAndSupersedeByExists(entryId, false),
+                -1,
+                "LogService::updateReferences"
+        );
+        // now for each one update the reference
+        referenceEntries.forEach(
+                entry -> {
+                    entry.getReferences().remove(entryId);
+                    entry.getReferences().add(supersededById);
+                    entry.setText(updateHtmlReferenceTag(entry.getText(), entryId, supersededById));
+                    wrapCatch(
+                            () -> entryRepository.save(entry),
+                            -2,
+                            "LogService::updateReferences"
+                    );
+                }
+        );
+    }
+
+    /**
+     * Update the reference in the text
+     *
+     * @param text           the text to update
+     * @param entryId        the id to replace
+     * @param supersededById the new id
+     * @return the updated text
+     */
+    private String updateHtmlReferenceTag(String text, String entryId, String supersededById) {
+        // scan document text and update the reference
+        Document document = Jsoup.parseBodyFragment(text);
+        Elements elements = document.select(ELOG_ENTRY_REF);
+        for (Element element : elements) {
+            // Get the 'id' attribute
+            if (!element.hasAttr(ELOG_ENTRY_REF_ID)) continue;
+            String id = element.attr(ELOG_ENTRY_REF_ID);
+            // check if the found id is one that we need to change
+            if (id.isEmpty() || id.compareToIgnoreCase(entryId) != 0) continue;
+            // update id
+            element.attr(ELOG_ENTRY_REF_ID, supersededById);
+        }
+        return document.body().html();
     }
 
     /**
@@ -746,6 +808,12 @@ public class EntryService {
         );
     }
 
+    /**
+     * Return the id of the entry from the origin id
+     *
+     * @param originId the origin id
+     * @return the id of the entry
+     */
     public String getIdFromOriginId(String originId) {
         Entry foundEntry = wrapCatch(
                 () -> entryRepository.findByOriginId(originId),

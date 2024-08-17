@@ -8,21 +8,30 @@ import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService;
 import edu.stanford.slac.elog_plus.api.v1.dto.NewLogbookDTO;
 import edu.stanford.slac.elog_plus.service.LogbookService;
+import jakarta.validation.constraints.NotNull;
 import org.assertj.core.api.AssertionsForClassTypes;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
+import static edu.stanford.slac.elog_plus.api.v1.mapper.EntryMapper.ELOG_ENTRY_REF;
+import static edu.stanford.slac.elog_plus.api.v1.mapper.EntryMapper.ELOG_ENTRY_REF_ID;
 import static edu.stanford.slac.elog_plus.utility.StringUtilities.logbookNameNormalization;
 import static edu.stanford.slac.elog_plus.utility.StringUtilities.tokenNameNormalization;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
+@Validated
 @Service
 public class SharedUtilityService {
     @Autowired
@@ -170,4 +179,27 @@ public class SharedUtilityService {
         };
     }
 
+    public String createReferenceHtmlFragment(String text, @NotNull List<String> referencedEntryId) {
+        Element fragmentRef1 = new Element("div");
+        if(text!=null)fragmentRef1.appendText("This is a text with reference");
+        for (String id : referencedEntryId) {
+            fragmentRef1.appendElement(ELOG_ENTRY_REF).attr(ELOG_ENTRY_REF_ID, id);
+        }
+        return fragmentRef1.html();
+    }
+
+    public boolean htmlContainsReferenceWithId(String text, String newSupersedeEntryId) {
+        boolean found = false;
+        Document document = Jsoup.parseBodyFragment(text);
+        Elements elements = document.select(ELOG_ENTRY_REF);
+        for (Element element : elements) {
+            // Get the 'id' attribute
+            if(!element.hasAttr(ELOG_ENTRY_REF_ID)) continue;
+            String id = element.attr(ELOG_ENTRY_REF_ID);
+            if(id.isEmpty() || id.compareToIgnoreCase(newSupersedeEntryId)!=0) continue;
+            found = true;
+            break;
+        }
+        return found;
+    }
 }

@@ -85,8 +85,19 @@ public class EntriesController {
             @PathVariable @NotNull String entryId,
             @Parameter(description = "Is the new entry that will supersede the entry identified by the entryId", required = true)
             @RequestBody @Valid EntryNewDTO newSupersedeEntry) {
+        PersonDTO creator = null;
+        if (authentication.getCredentials().toString().endsWith(appProperties.getAuthenticationTokenDomain())) {
+            // create fake person for authentication token
+            creator = PersonDTO
+                    .builder()
+                    .gecos("Application Token")
+                    .mail(authentication.getPrincipal().toString())
+                    .build();
+        } else {
+            creator = peopleGroupService.findPerson(authentication);
+        }
         return ApiResultResponse.of(
-                entryService.createNewSupersede(entryId, newSupersedeEntry)
+                entryService.createNewSupersede(entryId, newSupersedeEntry, creator)
         );
     }
 
@@ -226,7 +237,7 @@ public class EntriesController {
             @RequestParam(value = "originId") Optional<String> originId
     ) {
         return ApiResultResponse.of(
-                entryService.searchAll(
+                entryService.findAll(
                         QueryWithAnchorDTO
                                 .builder()
                                 .anchorID(anchorId.orElse(null))
