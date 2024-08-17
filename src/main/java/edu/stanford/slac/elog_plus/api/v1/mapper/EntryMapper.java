@@ -40,7 +40,7 @@ public abstract class EntryMapper {
     @Mapping(source = "logbooks", target = "logbooks", qualifiedByName = "mapToLogbookSummary")
     @Mapping(target = "referencedBy", ignore = true)
     @Mapping(target = "references", ignore = true)
-    @Mapping(target = "referencesInBody", expression = "java(entry.getOriginId()==null)")
+    @Mapping(target = "referencesInBody", expression = "java(checkReferenceInBody(entry.getText()))")
     public abstract EntryDTO fromModel(Entry entry);
 
     @Mapping(target = "loggedBy", expression = "java(entry.getFirstName() + \" \" + entry.getLastName())")
@@ -49,7 +49,7 @@ public abstract class EntryMapper {
     @Mapping(source = "logbooks", target = "logbooks", qualifiedByName = "mapToLogbookSummary")
     @Mapping(target = "referencedBy", ignore = true)
     @Mapping(target = "references", ignore = true)
-    @Mapping(target = "referencesInBody", expression = "java(entry.getOriginId()==null)")
+    @Mapping(target = "referencesInBody", expression = "java(checkReferenceInBody(entry.getText()))")
     public abstract EntryDTO fromModelNoAttachment(Entry entry);
 
     @Mapping(target = "loggedBy", expression = "java(entry.getFirstName() + \" \" + entry.getLastName())")
@@ -75,6 +75,18 @@ public abstract class EntryMapper {
                 -1,
                 "EntryMapper::getFollowingUp"
         );
+    }
+
+    /**
+     * Check if the body text contains one or more reference
+     * @param bodyText the text to check
+     * @return true if the text contains a reference
+     */
+    public boolean checkReferenceInBody(String bodyText) {
+        if (bodyText == null || bodyText.isEmpty()) return false;
+        Document document = Jsoup.parseBodyFragment(bodyText);
+        Elements elements = document.select(ELOG_ENTRY_REF);
+        return !elements.isEmpty();
     }
 
     /**
