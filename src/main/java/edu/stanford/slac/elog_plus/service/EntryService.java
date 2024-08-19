@@ -439,7 +439,7 @@ public class EntryService {
 
         if (includeFollowingUps.isPresent() && includeFollowingUps.get()) {
             Optional<Entry> followingLog = wrapCatch(
-                    // fin followUps only on the last version (superseedBy is null) of the entry
+                    // fin followUps only on the last version (supersededBy is null) of the entry
                     () -> entryRepository.findByFollowUpsContainsAndSupersedeByIsNull(id),
                     -3,
                     "LogService::getFullEntry"
@@ -571,6 +571,7 @@ public class EntryService {
      */
     @Transactional
     public String createNewSupersede(String entryId, EntryNewDTO newLog, PersonDTO creator) {
+        // fetches the log to supersede
         Entry supersededLog =
                 wrapCatch(
                         () -> entryRepository.findById(entryId),
@@ -582,6 +583,7 @@ public class EntryService {
                                 .errorDomain("LogService::createNewSupersede")
                                 .build()
                 );
+        // execute some check
         assertion(
                 () -> (supersededLog.getSupersedeBy() == null ||
                         supersededLog.getSupersedeBy().isEmpty())
@@ -592,28 +594,25 @@ public class EntryService {
                         .build()
         );
 
-        // create supersede
+        // create supersede model
         Entry newEntryModel = toModelWithCreator(newLog, creator);
-
         // copy followups to the supersede entry
         newEntryModel.setFollowUps(supersededLog.getFollowUps());
-
+        // set superseded eventAt to the original eventAt date
+        newEntryModel.setEventAt(supersededLog.getEventAt());
         // create entry
         String newLogID = createNew(newEntryModel);
-
         // update all the reference to old entry with the new id
         updateReferences(entryId, newLogID);
-
         // update supersede
         supersededLog.setSupersedeBy(newLogID);
-
         //update superseded entry
-        wrapCatch(
+        var savedSupersede = wrapCatch(
                 () -> entryRepository.save(supersededLog),
                 -4,
                 "LogService::createNewSupersede"
         );
-        log.info("New supersede for '{}' created with id '{}'", supersededLog.getTitle(), newLogID);
+        log.info("New supersede for '{}' created with id '{}' by '{}'", supersededLog.getTitle(), newLogID, savedSupersede.getLastModifiedBy());
         return newLogID;
     }
 
