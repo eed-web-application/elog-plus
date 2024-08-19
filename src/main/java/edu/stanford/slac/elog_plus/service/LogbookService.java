@@ -19,6 +19,7 @@ import edu.stanford.slac.elog_plus.model.Shift;
 import edu.stanford.slac.elog_plus.model.Tag;
 import edu.stanford.slac.elog_plus.repository.EntryRepository;
 import edu.stanford.slac.elog_plus.repository.LogbookRepository;
+import edu.stanford.slac.elog_plus.utility.DateUtilities;
 import edu.stanford.slac.elog_plus.utility.StringUtilities;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -895,30 +896,31 @@ public class LogbookService {
      * @return the found shift, if eny matches
      */
     public Optional<LogbookShiftDTO> findShiftByLocalTime(String logbookId, LocalTime localTime) {
-        LogbookSummaryDTO summaryDTO = logbookMapper.fromModelToSummaryDTO(
-                getLogbook(logbookId)
+        LogbookDTO logbook = getLogbook(logbookId);
+        // //remove the seconds and nanoseconds to input date
+        localTime = localTime.withSecond(0).withNano(0);
+        LocalTime finalLocalTime = localTime;
+        return logbook.shifts().stream().filter(
+                s -> {
+                    var fromDate = DateUtilities.fromUTCString(s.from());
+                    var toDate = DateUtilities.fromUTCString(s.to());
+                    return DateUtilities.isBetween(
+                            fromDate,
+                            toDate,
+                            finalLocalTime
+                    );
+                }
+        ).findAny().map(
+                s -> LogbookShiftDTO.builder()
+                        .id(s.id())
+                        .name(s.name())
+                        .from(s.from())
+                        .to(s.to())
+                        .logbook(
+                                logbookMapper.fromModelToSummaryDTO(logbook)
+                        )
+                        .build()
         );
-        Optional<LogbookShiftDTO> result = wrapCatch(
-                () -> logbookRepository.findShiftFromLocalTime(
-                        logbookId,
-                        localTime
-                ).map(
-                        shiftMapper::fromModelToLogbookShift
-                ),
-                -1,
-                "LogbookService:getShiftByLocalTime"
-        );
-        if (result.isPresent()) {
-            result = Optional.of(
-                    result.get()
-                            .toBuilder()
-                            .logbook(
-                                    summaryDTO
-                            )
-                            .build()
-            );
-        }
-        return result;
     }
 
     /**
