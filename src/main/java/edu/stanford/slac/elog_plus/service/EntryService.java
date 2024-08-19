@@ -427,11 +427,7 @@ public class EntryService {
         );
 
         if (includeFollowUps.isPresent() && includeFollowUps.get()) {
-            List<EntryDTO> list = new ArrayList<>(foundEntry.getFollowUps().size());
-            for (String fID : foundEntry.getFollowUps()) {
-                list.add(getFullEntry(fID));
-
-            }
+            List<EntrySummaryDTO> list = getAllFollowUpForALog(id);
             result = result.toBuilder()
                     .followUps(list)
                     .build();
@@ -448,7 +444,7 @@ public class EntryService {
                 result = result.toBuilder()
                         .followingUp(
                                 followingLog.map(
-                                        entryMapper::fromModel
+                                        entryMapper::toSearchResult
                                 ).orElse(null)
                         )
                         .build();
@@ -458,7 +454,7 @@ public class EntryService {
         // fill history
         if (followHistory.isPresent() && followHistory.get()) {
             // load all the history
-            List<EntryDTO> logHistory = new ArrayList<>();
+            List<EntrySummaryDTO> logHistory = new ArrayList<>();
             getLogHistory(id, logHistory);
             if (!logHistory.isEmpty()) {
                 result = result.toBuilder()
@@ -536,14 +532,14 @@ public class EntryService {
      * @param newestLogID is the log of the root release for which we want the history
      * @return the log superseded byt the one identified by newestLogID
      */
-    public EntryDTO getSuperseded(String newestLogID) {
+    public EntrySummaryDTO getSuperseded(String newestLogID) {
         Optional<Entry> foundLog =
                 wrapCatch(
                         () -> entryRepository.findBySupersedeBy(newestLogID),
                         -1,
                         "LogService::getSuperseded"
                 );
-        return foundLog.map(entryMapper::fromModelNoAttachment).orElse(null);
+        return foundLog.map(entryMapper::toSearchResult).orElse(null);
     }
 
     /**
@@ -552,9 +548,9 @@ public class EntryService {
      * @param newestLogID the log of the newest id
      * @param history     the list of the log until the last, from the one identified by newestLogID
      */
-    public void getLogHistory(String newestLogID, List<EntryDTO> history) {
+    public void getLogHistory(String newestLogID, List<EntrySummaryDTO> history) {
         if (history == null) return;
-        EntryDTO prevInHistory = getSuperseded(newestLogID);
+        EntrySummaryDTO prevInHistory = getSuperseded(newestLogID);
         if (prevInHistory == null) return;
 
         history.add(prevInHistory);
@@ -718,12 +714,6 @@ public class EntryService {
                                 .errorDomain("LogService::getAllFollowUpForALog")
                                 .build()
                 );
-        assertion(
-                () -> !rootLog.getFollowUps().isEmpty(),
-                -3,
-                "The log has not been found",
-                "LogService::getAllFollowUpForALog"
-        );
         List<Entry> followUp =
                 wrapCatch(
                         () -> entryRepository.findAllByIdIn(rootLog.getFollowUps()),

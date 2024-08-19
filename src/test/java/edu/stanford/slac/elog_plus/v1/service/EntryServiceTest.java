@@ -323,7 +323,7 @@ public class EntryServiceTest {
                                 sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                         )
                 );
-        List<EntryDTO> history = new ArrayList<>();
+        List<EntrySummaryDTO> history = new ArrayList<>();
         assertDoesNotThrow(
                 () -> entryService.getLogHistory(supersededLogIDNewest, history)
         );
