@@ -37,6 +37,8 @@ public record EntrySummaryDTO(
         List<String> referencedBy,
         @Schema(description = "The id of the entry that is followUp for this the current entry is a follow ups")
         String followingUp,
+        @Schema(description = "The list of entries that are follow ups of the current entry")
+        List<String> followUps,
         @Schema(description = "The entry notes")
         String note,
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
