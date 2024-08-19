@@ -34,11 +34,11 @@ public record EntryDTO(
         @Schema(description = "the attachments of the entry")
         List<AttachmentDTO> attachments,
         @Schema(description = "the follow up of the entry")
-        List<EntryDTO> followUps,
+        List<EntrySummaryDTO> followUps,
         @Schema(description = "the entry that this one follow up")
-        EntryDTO followingUp,
+        EntrySummaryDTO followingUp,
         @Schema(description = "the history of the entry")
-        List<EntryDTO> history,
+        List<EntrySummaryDTO> history,
         @Schema(description = "The shift which the entry belong, if any match the event date")
         List<LogbookShiftDTO> shifts,
         Boolean referencesInBody,
