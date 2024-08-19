@@ -30,6 +30,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -368,5 +369,51 @@ public class EntryServiceSupersededTest {
         assertThat(entry2.references()).hasSize(1);
         assertThat(entry2.references().getFirst().id()).isEqualTo(newLogID);
         assertThat(sharedUtilityService.htmlContainsReferenceWithId(entry2.text(), newLogID)).isTrue();
+    }
+
+    @Test
+    public void testForSupersedeSaveEventDateOfOriginal() {
+        var eventAtDate = LocalDateTime.of(2024, 1,1,0,0,0);
+        // create the logbook
+        var logbook = getTestLogbook();
+        // create entry
+        String newLogID = assertDoesNotThrow(
+                () -> entryService.createNew(
+                        EntryNewDTO
+                                .builder()
+                                .logbooks(List.of(logbook.id()))
+                                .title("Log to be superseded")
+                                .text("This is a log for test")
+                                .eventAt(eventAtDate)
+                                .build(),
+                        sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
+                )
+        );
+
+        String newSupersedeEntryId = assertDoesNotThrow(
+                () -> entryService.createNewSupersede(
+                        newLogID,
+                        EntryNewDTO
+                                .builder()
+                                .logbooks(List.of(logbook.id()))
+                                .text("This is a superseded for log for log %s".formatted(newLogID))
+                                .title("A very wonderful superseded log")
+                                .build(),
+                        sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
+                )
+        );
+        // get full supersede entry to check the eventAt
+        var fullSupersedeEntry = assertDoesNotThrow(
+                () -> entryService.getFullEntry(
+                        newSupersedeEntryId,
+                        Optional.of(false),
+                        Optional.of(false),
+                        Optional.of(false),
+                        Optional.of(false),//include references
+                        Optional.of(false)//include referencedBy
+                )
+        );
+        assertThat(fullSupersedeEntry).isNotNull();
+        assertThat(fullSupersedeEntry.eventAt()).isEqualTo(eventAtDate);
     }
 }

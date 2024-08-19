@@ -74,6 +74,20 @@ public class Entry {
      */
     @CreatedBy
     private String createdBy;
+
+    /**
+     * The date and time when the activity was last modified.
+     * This field is automatically populated with the last modification date and time, using @LastModifiedDate annotation.
+     */
+    @LastModifiedDate
+    private LocalDateTime lastModifiedDate;
+    /**
+     * The identifier of the user who last modified the activity.
+     * This field stores the ID of the user who last modified the activity, using @LastModifiedBy annotation.
+     */
+    @LastModifiedBy
+    private String lastModifiedBy;
+
     @Version
     private Integer version;
 }
