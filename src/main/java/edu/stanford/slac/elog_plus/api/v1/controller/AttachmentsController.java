@@ -21,6 +21,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Read;
@@ -78,16 +79,18 @@ public class AttachmentsController {
             @PathVariable @NotNull String attachmentId
     ) throws Exception {
         FileObjectDescription desc = attachmentService.getAttachmentContent(attachmentId);
-        InputStreamResource resource = new InputStreamResource(desc.getIs());
-        MediaType mediaType = MediaType.valueOf(desc.getContentType());
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(mediaType);
-        ContentDisposition disposition = ContentDisposition
-                .inline()
-                .filename(desc.getFileName())
-                .build();
-        headers.setContentDisposition(disposition);
-        return new ResponseEntity<>(resource, headers, HttpStatus.OK);
+        headers.setContentType(MediaType.valueOf(desc.getContentType()));
+        headers.setContentDisposition(
+                ContentDisposition
+                        .inline()
+                        .filename(desc.getFileName(), StandardCharsets.UTF_8)
+                        .build()
+        );
+        return new ResponseEntity<>(new InputStreamResource(desc.getIs()), headers, HttpStatus.OK);
+    }
+
+    private ContentDisposition getDispositionHeader(String fileName) {
     }
 
     @GetMapping(
@@ -102,15 +105,13 @@ public class AttachmentsController {
             @PathVariable String attachmentId
     ) throws Exception {
         FileObjectDescription desc = attachmentService.getPreviewContent(attachmentId);
-        InputStreamResource resource = new InputStreamResource(desc.getIs());
-        MediaType mediaType = MediaType.valueOf(desc.getContentType());
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(mediaType);
-        ContentDisposition disposition = ContentDisposition
-                .inline()
-                .filename(desc.getFileName())
-                .build();
-        headers.setContentDisposition(disposition);
-        return new ResponseEntity<>(resource, headers, HttpStatus.OK);
+        headers.setContentDisposition(
+                ContentDisposition
+                        .inline()
+                        .filename(desc.getFileName(), StandardCharsets.UTF_8)
+                        .build()
+        );
+        return new ResponseEntity<>(new InputStreamResource(desc.getIs()), headers, HttpStatus.OK);
     }
 }
