@@ -31,6 +31,8 @@ public record EntrySummaryDTO(
         List<AttachmentDTO> attachments,
         @Schema(description = "The shift which the entry belong, if any")
         List<LogbookShiftDTO> shifts,
+        @Schema(description = "Whether the entry is empty or not")
+        boolean isEmpty,
         @Schema(description = "The entries referenced by this one")
         List<String> references,
         @Schema(description = "The entries that refer to this one")
