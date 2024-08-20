@@ -47,7 +47,7 @@ public class EntryAuthorizationService {
                 NotAuthorized
                         .notAuthorizedBuilder()
                         .errorCode(-1)
-                        .errorDomain("LogbooksController::newEntry")
+                        .errorDomain("EntryAuthorizationService::canCreateNewEntry")
                         .build(),
                 // can write to all logbook
                 () -> all
@@ -87,7 +87,7 @@ public class EntryAuthorizationService {
                 NotAuthorized
                         .notAuthorizedBuilder()
                         .errorCode(-1)
-                        .errorDomain("LogbooksController::newSupersede")
+                        .errorDomain("EntryAuthorizationService::canCreateSupersede")
                         .build(),
                 // can write to all logbook
                 () -> all(
@@ -127,7 +127,7 @@ public class EntryAuthorizationService {
                 NotAuthorized
                         .notAuthorizedBuilder()
                         .errorCode(-1)
-                        .errorDomain("LogbooksController::newFollowUp")
+                        .errorDomain("EntryAuthorizationService::canCreateFollowUp")
                         .build(),
                 // can write on all logbook
                 () -> all(
@@ -201,7 +201,7 @@ public class EntryAuthorizationService {
                 NotAuthorized
                         .notAuthorizedBuilder()
                         .errorCode(-1)
-                        .errorDomain("LogbooksController::getFull")
+                        .errorDomain("EntryAuthorizationService::canGetFullEntry")
                         .build(),
                 //and
                 () -> any(
@@ -243,44 +243,8 @@ public class EntryAuthorizationService {
      * @return true if the user can create the new follow-up entry
      */
     public boolean canGetAllReferences(Authentication authentication, @NotNull String entryId, AuthorizationCache authorizationCache) {
-        // return all public readable logbook ids
-        List<String> allPublicReadableLogbookIds = logbookService.getAllIdsReadAll();
-        //filter all readable logbook which the entry belongs
-        authorizationCache.setAuthorizedLogbookId(
-                entryService.getLogbooksForAnEntryId(entryId)
-                        .stream()
-                        .filter
-                                (
-                                        // filter out logbook not authorized to the user
-                                        lbId -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix
-                                                (
-                                                        authentication,
-                                                        Read,
-                                                        "/logbook/%s".formatted(lbId)
-                                                )
-                                )
-                        .filter
-                                (
-                                        // filter out logbook not public readable
-                                        allPublicReadableLogbookIds::contains
-                                )
-                        .toList()
-        );
-
-        // check authorization on
-        assertion(
-                NotAuthorized.notAuthorizedBuilder()
-                        .errorCode(-1)
-                        .errorDomain("EntriesController::getAllTheReferences")
-                        .build(),
-                () -> any(
-                        // is root
-                        () -> authService.checkForRoot(authentication),
-                        // or is authorized at least in on e logbook to read
-                        () -> !authorizationCache.getAuthorizedLogbookId().isEmpty()
-                )
-        );
-        return true;
+        // the rule is the same as to get a full entry
+        return canGetFullEntry(authentication, entryId, authorizationCache);
     }
 
     /**
@@ -336,7 +300,7 @@ public class EntryAuthorizationService {
         assertion(
                 NotAuthorized.notAuthorizedBuilder()
                         .errorCode(-1)
-                        .errorDomain("EntriesController::search")
+                        .errorDomain("EntryAuthorizationService::canSearchEntry")
                         .build(),
                 // need to be authenticated
                 () -> authService.checkAuthentication(authentication)
