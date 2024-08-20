@@ -103,6 +103,7 @@ public class AttachmentsController {
     ) throws Exception {
         FileObjectDescription desc = attachmentService.getPreviewContent(attachmentId);
         HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.valueOf(desc.getContentType()));
         headers.setContentDisposition(
                 ContentDisposition
                         .inline()
