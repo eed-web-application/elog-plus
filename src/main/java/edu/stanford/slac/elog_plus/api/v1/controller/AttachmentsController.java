@@ -90,9 +90,6 @@ public class AttachmentsController {
         return new ResponseEntity<>(new InputStreamResource(desc.getIs()), headers, HttpStatus.OK);
     }
 
-    private ContentDisposition getDispositionHeader(String fileName) {
-    }
-
     @GetMapping(
             path = "/{attachmentId}/preview.jpg"
             //produces = {MediaType.APPLICATION_OCTET_STREAM_VALUE}
