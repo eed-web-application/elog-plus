@@ -126,8 +126,7 @@ public class LogbooksController {
                     parameter that is optiona
                     """)
     @PreAuthorize(
-            "@baseAuthorizationService.checkAuthenticated(#authentication) and " +
-                    "@logbookAuthorizationService.authorizedReadOnLogbook(#authentication, #logbookId)")
+            "@baseAuthorizationService.checkAuthenticated(#authentication) and @logbookAuthorizationService.authorizedReadOnLogbook(#authentication, #logbookId)")
     public ApiResultResponse<LogbookDTO> getLogbook(
             @Parameter(name = "logbookId", required = true, description = "Is the logbook id")
             @PathVariable @NotNull String logbookId,
@@ -147,8 +146,7 @@ public class LogbooksController {
     )
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize(
-            "@baseAuthorizationService.checkAuthenticated(#authentication) and " +
-                    "@logbookAuthorizationService.authorizedUpdateOnLogbook(#authentication, #logbookId, #updateLogbookDTO)")
+            "@baseAuthorizationService.checkAuthenticated(#authentication) and @logbookAuthorizationService.authorizedUpdateOnLogbook(#authentication, #logbookId, #updateLogbookDTO)")
     public ApiResultResponse<Boolean> updateLogbook(
             Authentication authentication,
             @PathVariable @NotNull String logbookId,

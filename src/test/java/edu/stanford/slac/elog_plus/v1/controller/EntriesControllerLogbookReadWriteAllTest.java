@@ -9,6 +9,7 @@ import edu.stanford.slac.ad.eed.baselib.model.LocalGroup;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.exception.LogbookNotAuthorized;
+import edu.stanford.slac.elog_plus.exception.ResourceNotFound;
 import edu.stanford.slac.elog_plus.model.Attachment;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
@@ -291,10 +292,10 @@ public class EntriesControllerLogbookReadWriteAllTest {
         // start search on both logbook 1 and 3 with user 2, only entry form logbook 3 should be found
         // giving thew logbook 1 need to get the error for not authorized
         var exceptionForUser3 = assertThrows(
-                LogbookNotAuthorized.class,
+                ResourceNotFound.class,
                 () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
-                        status().isUnauthorized(),
+                        status().isNotFound(),
                         Optional.of(
                                 "user2@slac.stanford.edu"
                         ),

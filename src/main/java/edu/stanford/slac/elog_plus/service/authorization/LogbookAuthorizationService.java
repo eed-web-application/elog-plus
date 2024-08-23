@@ -6,6 +6,7 @@ import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
+import edu.stanford.slac.elog_plus.exception.ResourceNotFound;
 import edu.stanford.slac.elog_plus.service.AuthorizationServices;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import jakarta.validation.Valid;
@@ -45,9 +46,10 @@ public class LogbookAuthorizationService {
         // return all public readable logbook ids
         List<String> allPublicReadableLogbookIds = logbookService.getAllIdsReadAll();
         assertion(
-                NotAuthorized
-                        .notAuthorizedBuilder()
+                ResourceNotFound
+                        .notFoundByTypeName()
                         .errorCode(-1)
+                        .resourceName("logbook")
                         .errorDomain("LogbookAuthorizationService::authorizedReadOnLogbook")
                         .build(),
                 // needs be authenticated
@@ -159,10 +161,11 @@ public class LogbookAuthorizationService {
         } else if (authorizationFound.resource().startsWith("/logbook/")) {
             // check if current user is an admin for the logbook identified by the resourceType id
             assertion(
-                    ControllerLogicException
-                            .builder()
+                    ResourceNotFound
+                            .notFoundByTypeNameAndValue()
                             .errorCode(-1)
-                            .errorMessage("User not authorize on logbook %s".formatted(authorizationFound.resource().substring(9)))
+                            .resourceName("logbook")
+                            .resourceValue(authorizationFound.resource().substring(9))
                             .errorDomain("AuthorizationServices::canUpdateAuthorization")
                             .build(),
                     () -> any(
@@ -222,11 +225,12 @@ public class LogbookAuthorizationService {
         } else if (authorizationFound.resource().startsWith("/logbook/")) {
             // check if current user is an admin for the logbook identified by the resourceType id
             assertion(
-                    ControllerLogicException
-                            .builder()
+                    ResourceNotFound
+                            .notFoundByTypeNameAndValue()
                             .errorCode(-1)
-                            .errorMessage("User not authorize on logbook %s".formatted(authorizationFound.resource().substring(9)))
-                            .errorDomain("AuthorizationServices::canUpdateAuthorization")
+                            .resourceName("logbook")
+                            .resourceValue(authorizationFound.resource().substring(9))
+                            .errorDomain("AuthorizationServices::canCreateNewAuthorization")
                             .build(),
                     () -> any(
                             // or is root
@@ -263,10 +267,12 @@ public class LogbookAuthorizationService {
     ) {
         // check authorizations
         assertion(
-                NotAuthorized
-                        .notAuthorizedBuilder()
+                ResourceNotFound
+                        .notFoundByTypeNameAndValue()
                         .errorCode(-1)
-                        .errorDomain("LogbookAuthorizationService::authorizedUpdateOnLogbook")
+                        .resourceName("logbook")
+                        .resourceValue(logbookId)
+                        .errorDomain("AuthorizationServices::authorizedUpdateOnLogbook")
                         .build(),
                 // needs be authenticated
                 // and or can write or administer the logbook
@@ -293,10 +299,12 @@ public class LogbookAuthorizationService {
             NewTagDTO newTagDTO
     ) {
         assertion(
-                NotAuthorized
-                        .notAuthorizedBuilder()
+                ResourceNotFound
+                        .notFoundByTypeNameAndValue()
                         .errorCode(-1)
-                        .errorDomain("LogbookAuthorizationService::authorizedOnCreateNewTag")
+                        .resourceName("logbook")
+                        .resourceValue(logbookId)
+                        .errorDomain("AuthorizationServices::authorizedOnCreateNewTag")
                         .build(),
                 // and or can write or administer the logbook
                 () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
@@ -320,10 +328,12 @@ public class LogbookAuthorizationService {
             String logbookId
     ) {
         assertion(
-                NotAuthorized
-                        .notAuthorizedBuilder()
+                ResourceNotFound
+                        .notFoundByTypeNameAndValue()
                         .errorCode(-1)
-                        .errorDomain("LogbookAuthorizationService::authorizedOnGetAllTag")
+                        .resourceName("logbook")
+                        .resourceValue(logbookId)
+                        .errorDomain("AuthorizationServices::authorizedOnGetAllTag")
                         .build(),
                 // and can read, write or administer the logbook
                 () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
@@ -342,10 +352,12 @@ public class LogbookAuthorizationService {
     ) {
         // check authenticated
         assertion(
-                NotAuthorized
-                        .notAuthorizedBuilder()
+                ResourceNotFound
+                        .notFoundByTypeNameAndValue()
                         .errorCode(-1)
-                        .errorDomain("LogbookAuthorizationService::authorizedOnReplaceShift")
+                        .resourceName("logbook")
+                        .resourceValue(logbookId)
+                        .errorDomain("AuthorizationServices::authorizedOnReplaceShift")
                         .build(),
                 // and can write or administer the logbook
                 () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
@@ -411,11 +423,6 @@ public class LogbookAuthorizationService {
                                 authorizationDTO -> {
                                     switch (authorizationDTO.resourceType()) {
                                         case Logbook:
-//                                            return authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-//                                                    authentication,
-//                                                    Admin,
-//                                                    "/logbook/%s".formatted(authorizationDTO.resourceId())
-//                                            );
                                             return true;
                                         case All:
                                             return true;
