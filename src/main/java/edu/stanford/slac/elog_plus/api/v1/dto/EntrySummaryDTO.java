@@ -29,6 +29,8 @@ public record EntrySummaryDTO(
         List<TagDTO> tags,
         @Schema(description = "The attachment list of the entry")
         List<AttachmentDTO> attachments,
+        @Schema(description = "Whether the entry is empty or not")
+        Boolean isEmpty,
         @Schema(description = "The shift which the entry belong, if any")
         List<LogbookShiftDTO> shifts,
         @Schema(description = "The entries referenced by this one")

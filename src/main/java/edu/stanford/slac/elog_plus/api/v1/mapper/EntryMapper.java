@@ -56,6 +56,7 @@ public abstract class EntryMapper {
     @Mapping(source = "logbooks", target = "logbooks", qualifiedByName = "mapToLogbookSummary")
     @Mapping(target = "followingUp", expression = "java(getFollowingUp(entry.getId()))")
     @Mapping(target = "referencedBy", expression = "java(getReferenceBy(entry.getId()))")
+    @Mapping(target = "isEmpty", expression = "java(entry.getText()==null || entry.getText().isEmpty())")
     public abstract EntrySummaryDTO toSearchResult(Entry entry);
 
     @Mapping(target = "references", expression = "java(createReferences(entryNewDTO.text()))")

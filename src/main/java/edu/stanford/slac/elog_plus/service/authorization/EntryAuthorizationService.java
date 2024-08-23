@@ -5,6 +5,7 @@ import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.exception.LogbookNotAuthorized;
+import edu.stanford.slac.elog_plus.exception.ResourceNotFound;
 import edu.stanford.slac.elog_plus.service.EntryService;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import jakarta.validation.Valid;
@@ -84,8 +85,8 @@ public class EntryAuthorizationService {
     public boolean canCreateSupersede(Authentication authentication, @NotNull String entryId, @Valid EntryNewDTO newSupersedeEntry) {
         List<String> allPublicWritableLogbookIds = logbookService.getAllIdsWriteAll();
         assertion(
-                NotAuthorized
-                        .notAuthorizedBuilder()
+                ResourceNotFound
+                        .genericBuilder()
                         .errorCode(-1)
                         .errorDomain("EntryAuthorizationService::canCreateSupersede")
                         .build(),
@@ -124,10 +125,10 @@ public class EntryAuthorizationService {
     public boolean canCreateNewFollowUp(Authentication authentication, @NotNull String entryId, @Valid EntryNewDTO newFollowUpEntry) {
         List<String> allPublicWritableLogbookIds = logbookService.getAllIdsWriteAll();
         assertion(
-                NotAuthorized
-                        .notAuthorizedBuilder()
+                ResourceNotFound
+                        .genericBuilder()
                         .errorCode(-1)
-                        .errorDomain("EntryAuthorizationService::canCreateFollowUp")
+                        .errorDomain("EntryAuthorizationService::canCreateNewFollowUp")
                         .build(),
                 // can write on all logbook
                 () -> all(
@@ -198,8 +199,8 @@ public class EntryAuthorizationService {
 
         // check among all others authorizations
         assertion(
-                NotAuthorized
-                        .notAuthorizedBuilder()
+                ResourceNotFound
+                        .genericBuilder()
                         .errorCode(-1)
                         .errorDomain("EntryAuthorizationService::canGetFullEntry")
                         .build(),
@@ -336,13 +337,13 @@ public class EntryAuthorizationService {
                             if (!authorizationCache.getAuthorizedLogbookId().contains(lId)) {
                                 // notify the error on logbook authorization
                                 var logbook = logbookService.getLogbook(lId);
-                                throw LogbookNotAuthorized.logbookAuthorizedBuilder()
+                                throw ResourceNotFound.notFoundByTypeNameAndValue()
                                         .errorCode(-1)
-                                        .logbookName(logbook.name())
+                                        .resourceName("logbook")
+                                        .resourceValue(logbook.name())
                                         .errorDomain("EntriesController::search")
                                         .build();
                             }
-
                         }
                 );
             }
