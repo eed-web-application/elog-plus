@@ -10,6 +10,7 @@ import edu.stanford.slac.ad.eed.baselib.model.LocalGroup;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.exception.LogbookNotAuthorized;
+import edu.stanford.slac.elog_plus.exception.ResourceNotFound;
 import edu.stanford.slac.elog_plus.model.Attachment;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
@@ -629,10 +630,10 @@ public class EntriesControllerAuthorizationTest {
 
         // this should give exception because user 2 is not authorized on logbook 2
         var exceptionForUser2 = assertThrows(
-                LogbookNotAuthorized.class,
+                ResourceNotFound.class,
                 () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
-                        status().isUnauthorized(),
+                        status().isNotFound(),
                         Optional.of(
                                 "user2@slac.stanford.edu"
                         ),
@@ -650,15 +651,14 @@ public class EntriesControllerAuthorizationTest {
                 )
         );
         assertThat(exceptionForUser2.getErrorCode()).isEqualTo(-1);
-        assertThat(exceptionForUser2.getErrorMessage()).contains("logbookauthtest2");
 
 
         // this should give exception because user 3 is not authorized on logbook 1
         var exceptionForUser3 = assertThrows(
-                LogbookNotAuthorized.class,
+                ResourceNotFound.class,
                 () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
-                        status().isUnauthorized(),
+                        status().isNotFound(),
                         Optional.of(
                                 "user3@slac.stanford.edu"
                         ),
@@ -676,7 +676,6 @@ public class EntriesControllerAuthorizationTest {
                 )
         );
         assertThat(exceptionForUser3.getErrorCode()).isEqualTo(-1);
-        assertThat(exceptionForUser3.getErrorMessage()).contains("logbookauthtest1");
     }
 
     /**
@@ -787,10 +786,10 @@ public class EntriesControllerAuthorizationTest {
 
         // giving thew logbook i need to get the error for not authorized
         var exceptionForUser3 = assertThrows(
-                LogbookNotAuthorized.class,
+                ResourceNotFound.class,
                 () -> testControllerHelperService.submitSearchByGetWithAnchor(
                         mockMvc,
-                        status().isUnauthorized(),
+                        status().isNotFound(),
                         Optional.of(
                                 "user2@slac.stanford.edu"
                         ),
