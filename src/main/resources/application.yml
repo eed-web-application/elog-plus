@@ -15,6 +15,8 @@ spring:
   ldap:
     urls: ${ELOG_PLUS_LDAP_URI:ldap://localhost:8389}
     base: ${ELOG_PLUS_LDAP_BASE:dc=win,dc=slac,dc=stanford,dc=edu}
+    username: ${BASE_APP_LDAP_USER}
+    password: ${BASE_APP_LDAP_PASSWORD}
   data:
     mongodb:
       uri: ${ELOG_PLUS_MONGODB_URI:mongodb://elogs:elogs@localhost:27017/elogs?authSource=elogs}
