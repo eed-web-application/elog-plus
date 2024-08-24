@@ -1,262 +1,389 @@
-dn: dc=sdf,dc=slac,dc=stanford,dc=edu
-objectclass: top
-objectclass: domain
-objectclass: extensibleObject
-dc: kpn
+# Root Domain
+dn: dc=win,dc=slac,dc=stanford,dc=edu
+objectClass: top
+objectClass: domain
+objectClass: extensibleObject
+dc: win
 
-# Create the Groups organizational unit
-dn: ou=Group,dc=sdf,dc=slac,dc=stanford,dc=edu
+# Create Organizational Units
+dn: ou=Windows Infrastructure Group,dc=win,dc=slac,dc=stanford,dc=edu
 objectClass: top
 objectClass: organizationalUnit
-ou: Group
+ou: Windows Infrastructure Group
 
-# Create the People organizational unit
-dn: ou=People,dc=sdf,dc=slac,dc=stanford,dc=edu
+dn: ou=SCS,dc=win,dc=slac,dc=stanford,dc=edu
 objectClass: top
 objectClass: organizationalUnit
-ou: People
+ou: SCS
 
+dn: ou=LCLS,dc=win,dc=slac,dc=stanford,dc=edu
+objectClass: top
+objectClass: organizationalUnit
+ou: LCLS
 
-# Create People
-dn: uid=user1,ou=People,dc=sdf,dc=slac,dc=stanford,dc=edu
+dn: ou=Users,ou=Windows Infrastructure Group,dc=win,dc=slac,dc=stanford,dc=edu
+objectClass: top
+objectClass: organizationalUnit
+ou: Users
+
+dn: ou=Users,ou=SCS,dc=win,dc=slac,dc=stanford,dc=edu
+objectClass: top
+objectClass: organizationalUnit
+ou: Users
+
+dn: ou=Users,ou=LCLS,dc=win,dc=slac,dc=stanford,dc=edu
+objectClass: top
+objectClass: organizationalUnit
+ou: Users
+
+# User 1
+dn: uid=user1,ou=Users,ou=Windows Infrastructure Group,dc=win,dc=slac,dc=stanford,dc=edu
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: user
+company: SLAC
 uid: user1
-objectclass: top
-objectclass: person
-objectclass: organizationalPerson
-objectclass: inetOrgPerson
-gecos: Name1 Surname1
-cn: Surname1
-sn: Surname1
 mail: user1@slac.stanford.edu
+name: Name1 Surname1
+cn: Surname1, Name1
+sn: Surname1
+givenName: Name1
+distinguishedName: CN=Surname1\, Name1,OU=Users,OU=Windows Infrastructure Group,DC=win,DC=slac,DC=stanford,DC=edu
 
-dn: uid=user2,ou=People,dc=sdf,dc=slac,dc=stanford,dc=edu
+# User 2
+dn: uid=user2,ou=Users,ou=SCS,dc=win,dc=slac,dc=stanford,dc=edu
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: user
+company: SLAC
 uid: user2
-objectclass: top
-objectclass: person
-objectclass: organizationalPerson
-objectclass: inetOrgPerson
-gecos: Name2 Surname2
-cn: Surname2
-sn: Surname2
 mail: user2@slac.stanford.edu
+name: Name2 Surname2
+cn: Surname2, Name2
+sn: Surname2
+givenName: Name2
+distinguishedName: CN=Surname2\, Name2,OU=Users,OU=SCS,DC=win,DC=slac,DC=stanford,DC=edu
 
-dn: uid=user3,ou=People,dc=sdf,dc=slac,dc=stanford,dc=edu
+# User 3
+dn: uid=user3,ou=Users,ou=LCLS,dc=win,dc=slac,dc=stanford,dc=edu
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: user
+company: SLAC
 uid: user3
-objectclass: top
-objectclass: person
-objectclass: organizationalPerson
-objectclass: inetOrgPerson
-gecos: Name3 Surname3
-cn: Surname3
-sn: Surname3
 mail: user3@slac.stanford.edu
+name: Name3 Surname3
+cn: Surname3, Name3
+sn: Surname3
+givenName: Name3
+distinguishedName: CN=Surname3\, Name3,OU=Users,OU=LCLS,DC=win,DC=slac,DC=stanford,DC=edu
 
-dn: uid=user4,ou=People,dc=sdf,dc=slac,dc=stanford,dc=edu
+# User 4
+dn: uid=user4,ou=Users,ou=Windows Infrastructure Group,dc=win,dc=slac,dc=stanford,dc=edu
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: user
+company: SLAC
 uid: user4
-objectclass: top
-objectclass: person
-objectclass: organizationalPerson
-objectclass: inetOrgPerson
-gecos: Name4 Surname4
-cn: Surname4
-sn: Surname4
 mail: user4@slac.stanford.edu
+name: Name4 Surname4
+cn: Surname4, Name4
+sn: Surname4
+givenName: Name4
+distinguishedName: CN=Surname4\, Name4,OU=Users,OU=Windows Infrastructure Group,DC=win,DC=slac,DC=stanford,DC=edu
 
-dn: uid=user5,ou=People,dc=sdf,dc=slac,dc=stanford,dc=edu
+# User 5
+dn: uid=user5,ou=Users,ou=SCS,dc=win,dc=slac,dc=stanford,dc=edu
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: user
+company: SLAC
 uid: user5
-objectclass: top
-objectclass: person
-objectclass: organizationalPerson
-objectclass: inetOrgPerson
-gecos: Name5 Surname5
-cn: Surname5
-sn: Surname5
 mail: user5@slac.stanford.edu
+name: Name5 Surname5
+cn: Surname5, Name5
+sn: Surname5
+givenName: Name5
+distinguishedName: CN=Surname5\, Name5,OU=Users,OU=SCS,DC=win,DC=slac,DC=stanford,DC=edu
 
-dn: uid=user6,ou=People,dc=sdf,dc=slac,dc=stanford,dc=edu
+# User 6
+dn: uid=user6,ou=Users,ou=LCLS,dc=win,dc=slac,dc=stanford,dc=edu
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: user
+company: SLAC
 uid: user6
-objectclass: top
-objectclass: person
-objectclass: organizationalPerson
-objectclass: inetOrgPerson
-gecos: Name6 Surname6
-cn: Surname6
-sn: Surname6
 mail: user6@slac.stanford.edu
+name: Name6 Surname6
+cn: Surname6, Name6
+sn: Surname6
+givenName: Name6
+distinguishedName: CN=Surname6\, Name6,OU=Users,OU=LCLS,DC=win,DC=slac,DC=stanford,DC=edu
 
-dn: uid=user7,ou=People,dc=sdf,dc=slac,dc=stanford,dc=edu
+# User 7
+dn: uid=user7,ou=Users,ou=Windows Infrastructure Group,dc=win,dc=slac,dc=stanford,dc=edu
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: user
+company: SLAC
 uid: user7
-objectclass: top
-objectclass: person
-objectclass: organizationalPerson
-objectclass: inetOrgPerson
-gecos: Name7 Surname7
-cn: Surname7
-sn: Surname7
 mail: user7@slac.stanford.edu
+name: Name7 Surname7
+cn: Surname7, Name7
+sn: Surname7
+givenName: Name7
+distinguishedName: CN=Surname7\, Name7,OU=Users,OU=Windows Infrastructure Group,DC=win,DC=slac,DC=stanford,DC=edu
 
-dn: uid=user8,ou=People,dc=sdf,dc=slac,dc=stanford,dc=edu
+# User 8
+dn: uid=user8,ou=Users,ou=SCS,dc=win,dc=slac,dc=stanford,dc=edu
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: user
+company: SLAC
 uid: user8
-objectclass: top
-objectclass: person
-objectclass: organizationalPerson
-objectclass: inetOrgPerson
-gecos: Name8 Surname8
-cn: Surname8
-sn: Surname8
 mail: user8@slac.stanford.edu
+name: Name8 Surname8
+cn: Surname8, Name8
+sn: Surname8
+givenName: Name8
+distinguishedName: CN=Surname8\, Name8,OU=Users,OU=SCS,DC=win,DC=slac,DC=stanford,DC=edu
 
-dn: uid=user9,ou=People,dc=sdf,dc=slac,dc=stanford,dc=edu
+# User 9
+dn: uid=user9,ou=Users,ou=LCLS,dc=win,dc=slac,dc=stanford,dc=edu
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: user
+company: SLAC
 uid: user9
-objectclass: top
-objectclass: person
-objectclass: organizationalPerson
-objectclass: inetOrgPerson
-gecos: Name9 Surname9
-cn: Surname9
-sn: Surname9
 mail: user9@slac.stanford.edu
+name: Name9 Surname9
+cn: Surname9, Name9
+sn: Surname9
+givenName: Name9
+distinguishedName: CN=Surname9\, Name9,OU=Users,OU=LCLS,DC=win,DC=slac,DC=stanford,DC=edu
 
-dn: uid=user10,ou=People,dc=sdf,dc=slac,dc=stanford,dc=edu
+# User 10
+dn: uid=user10,ou=Users,ou=Windows Infrastructure Group,dc=win,dc=slac,dc=stanford,dc=edu
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: user
+company: SLAC
 uid: user10
-objectclass: top
-objectclass: person
-objectclass: organizationalPerson
-objectclass: inetOrgPerson
-gecos: Name10 Surname10
-cn: Surname10
-sn: Surname10
 mail: user10@slac.stanford.edu
+name: Name10 Surname10
+cn: Surname10, Name10
+sn: Surname10
+givenName: Name10
+distinguishedName: CN=Surname10\, Name10,OU=Users,OU=Windows Infrastructure Group,DC=win,DC=slac,DC=stanford,DC=edu
 
-dn: uid=user11,ou=People,dc=sdf,dc=slac,dc=stanford,dc=edu
+# User 11
+dn: uid=user11,ou=Users,ou=SCS,dc=win,dc=slac,dc=stanford,dc=edu
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: user
+company: SLAC
 uid: user11
-objectclass: top
-objectclass: person
-objectclass: organizationalPerson
-objectclass: inetOrgPerson
-gecos: Name11 Surname11
-cn: Surname11
-sn: Surname11
 mail: user11@slac.stanford.edu
+name: Name11 Surname11
+cn: Surname11, Name11
+sn: Surname11
+givenName: Name11
+distinguishedName: CN=Surname11\, Name11,OU=Users,OU=SCS,DC=win,DC=slac,DC=stanford,DC=edu
 
-dn: uid=user12,ou=People,dc=sdf,dc=slac,dc=stanford,dc=edu
+# User 12
+dn: uid=user12,ou=Users,ou=LCLS,dc=win,dc=slac,dc=stanford,dc=edu
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: user
+company: SLAC
 uid: user12
-objectclass: top
-objectclass: person
-objectclass: organizationalPerson
-objectclass: inetOrgPerson
-gecos: Name12 Surname12
-cn: Surname12
-sn: Surname12
 mail: user12@slac.stanford.edu
+name: Name12 Surname12
+cn: Surname12, Name12
+sn: Surname12
+givenName: Name12
+distinguishedName: CN=Surname12\, Name12,OU=Users,OU=LCLS,DC=win,DC=slac,DC=stanford,DC=edu
 
-dn: uid=user13,ou=People,dc=sdf,dc=slac,dc=stanford,dc=edu
+# User 13
+dn: uid=user13,ou=Users,ou=Windows Infrastructure Group,dc=win,dc=slac,dc=stanford,dc=edu
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: user
+company: SLAC
 uid: user13
-objectclass: top
-objectclass: person
-objectclass: organizationalPerson
-objectclass: inetOrgPerson
-gecos: Name13 Surname13
-cn: Surname13
-sn: Surname13
 mail: user13@slac.stanford.edu
+name: Name13 Surname13
+cn: Surname13, Name13
+sn: Surname13
+givenName: Name13
+distinguishedName: CN=Surname13\, Name13,OU=Users,OU=Windows Infrastructure Group,DC=win,DC=slac,DC=stanford,DC=edu
 
-dn: uid=user14,ou=People,dc=sdf,dc=slac,dc=stanford,dc=edu
+# User 14
+dn: uid=user14,ou=Users,ou=Windows Infrastructure Group,dc=win,dc=slac,dc=stanford,dc=edu
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: user
+company: SLAC
 uid: user14
-objectclass: top
-objectclass: person
-objectclass: organizationalPerson
-objectclass: inetOrgPerson
-gecos: Name14 Surname14
-cn: Surname14
-sn: Surname14
 mail: user14@slac.stanford.edu
+name: Name14 Surname14
+cn: Surname14, Name14
+sn: Surname14
+givenName: Name14
+distinguishedName: CN=Surname14\, Name14,OU=Users,OU=Windows Infrastructure Group,DC=win,DC=slac,DC=stanford,DC=edu
 
-dn: uid=user15,ou=People,dc=sdf,dc=slac,dc=stanford,dc=edu
+# User 15
+dn: uid=user15,ou=Users,ou=SCS,dc=win,dc=slac,dc=stanford,dc=edu
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: user
+company: SLAC
 uid: user15
-objectclass: top
-objectclass: person
-objectclass: organizationalPerson
-objectclass: inetOrgPerson
-gecos: Name15 Surname15
-cn: Surname15
-sn: Surname15
 mail: user15@slac.stanford.edu
+name: Name15 Surname15
+cn: Surname15, Name15
+sn: Surname15
+givenName: Name15
+distinguishedName: CN=Surname15\, Name15,OU=Users,OU=SCS,DC=win,DC=slac,DC=stanford,DC=edu
 
-dn: uid=user16,ou=People,dc=sdf,dc=slac,dc=stanford,dc=edu
+# User 16
+dn: uid=user16,ou=Users,ou=LCLS,dc=win,dc=slac,dc=stanford,dc=edu
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: user
+company: SLAC
 uid: user16
-objectclass: top
-objectclass: person
-objectclass: organizationalPerson
-objectclass: inetOrgPerson
-gecos: Name16 Surname16
-cn: Surname16
-sn: Surname16
 mail: user16@slac.stanford.edu
+name: Name16 Surname16
+cn: Surname16, Name16
+sn: Surname16
+givenName: Name16
+distinguishedName: CN=Surname16\, Name16,OU=Users,OU=LCLS,DC=win,DC=slac,DC=stanford,DC=edu
 
-dn: uid=user17,ou=People,dc=sdf,dc=slac,dc=stanford,dc=edu
+# User 17
+dn: uid=user17,ou=Users,ou=Windows Infrastructure Group,dc=win,dc=slac,dc=stanford,dc=edu
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: user
+company: SLAC
 uid: user17
-objectclass: top
-objectclass: person
-objectclass: organizationalPerson
-objectclass: inetOrgPerson
-gecos: Name17 Surname17
-cn: Surname17
-sn: Surname17
 mail: user17@slac.stanford.edu
+name: Name17 Surname17
+cn: Surname17, Name17
+sn: Surname17
+givenName: Name17
+distinguishedName: CN=Surname17\, Name17,OU=Users,OU=Windows Infrastructure Group,DC=win,DC=slac,DC=stanford,DC=edu
 
-dn: uid=user18,ou=People,dc=sdf,dc=slac,dc=stanford,dc=edu
+# User 18
+dn: uid=user18,ou=Users,ou=SCS,dc=win,dc=slac,dc=stanford,dc=edu
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: user
+company: SLAC
 uid: user18
-objectclass: top
-objectclass: person
-objectclass: organizationalPerson
-objectclass: inetOrgPerson
-gecos: Name18 Surname18
-cn: Surname18
-sn: Surname18
 mail: user18@slac.stanford.edu
+name: Name18 Surname18
+cn: Surname18, Name18
+sn: Surname18
+givenName: Name18
+distinguishedName: CN=Surname18\, Name18,OU=Users,OU=SCS,DC=win,DC=slac,DC=stanford,DC=edu
 
-dn: uid=user19,ou=People,dc=sdf,dc=slac,dc=stanford,dc=edu
+# User 19
+dn: uid=user19,ou=Users,ou=LCLS,dc=win,dc=slac,dc=stanford,dc=edu
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: user
+company: SLAC
 uid: user19
-objectclass: top
-objectclass: person
-objectclass: organizationalPerson
-objectclass: inetOrgPerson
-gecos: Name19 Surname19
-cn: Surname19
-sn: Surname19
 mail: user19@slac.stanford.edu
+name: Name19 Surname19
+cn: Surname19, Name19
+sn: Surname19
+givenName: Name19
+distinguishedName: CN=Surname19\, Name19,OU=Users,OU=LCLS,DC=win,DC=slac,DC=stanford,DC=edu
 
-dn: uid=user20,ou=People,dc=sdf,dc=slac,dc=stanford,dc=edu
+# User 20
+dn: uid=user20,ou=Users,ou=Windows Infrastructure Group,dc=win,dc=slac,dc=stanford,dc=edu
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: user
+company: SLAC
 uid: user20
-objectclass: top
-objectclass: person
-objectclass: organizationalPerson
-objectclass: inetOrgPerson
-gecos: Name20 Surname20
-cn: Surname20
-sn: Surname20
 mail: user20@slac.stanford.edu
+name: Name20 Surname20
+cn: Surname20, Name20
+sn: Surname20
+givenName: Name20
+distinguishedName: CN=Surname20\, Name20,OU=Users,OU=Windows Infrastructure Group,DC=win,DC=slac,DC=stanford,DC=edu
 
-dn: uid=user21,ou=People,dc=sdf,dc=slac,dc=stanford,dc=edu
+# User 21
+dn: uid=user21,ou=Users,ou=SCS,dc=win,dc=slac,dc=stanford,dc=edu
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: user
+company: SLAC
 uid: user21
-objectclass: top
-objectclass: person
-objectclass: organizationalPerson
-objectclass: inetOrgPerson
-gecos: Name21 Surname21
-cn: Surname21
-sn: Surname21
 mail: user21@slac.stanford.edu
+name: Name21 Surname21
+cn: Surname21, Name21
+sn: Surname21
+givenName: Name21
+distinguishedName: CN=Surname21\, Name21,OU=Users,OU=SCS,DC=win,DC=slac,DC=stanford,DC=edu
 
-dn: uid=user22,ou=People,dc=sdf,dc=slac,dc=stanford,dc=edu
+# User 22
+dn: uid=user22,ou=Users,ou=LCLS,dc=win,dc=slac,dc=stanford,dc=edu
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: user
+company: SLAC
 uid: user22
-objectclass: top
-objectclass: person
-objectclass: organizationalPerson
-objectclass: inetOrgPerson
-gecos: Name22 Surname22
-cn: Surname22
-sn: Surname22
 mail: user22@slac.stanford.edu
-
+name: Name22 Surname22
+cn: Surname22, Name22
+sn: Surname22
+givenName: Name22
+distinguishedName: CN=Surname22\, Name22,OU=Users,OU=LCLS,DC=win,DC=slac,DC=stanford,DC=edu

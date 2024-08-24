@@ -887,14 +887,14 @@ public class TestControllerHelperService {
             Optional<Integer> limit,
             Optional<Integer> context,
             Optional<String> anchor,
-            Optional<String> searchFilter,
+            Optional<String> search,
             Optional<Boolean> includeAuthorizations,
             Optional<Boolean> includeInheritance) throws Exception {
         MockHttpServletRequestBuilder requestBuilder =
                 get("/v1/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON);
-        searchFilter.ifPresent(filter -> requestBuilder.param("searchFilter", filter));
+        search.ifPresent(filter -> requestBuilder.param("search", filter));
         limit.ifPresent(l -> requestBuilder.param("limit", String.valueOf(l)));
         context.ifPresent(c -> requestBuilder.param("context", String.valueOf(c)));
         anchor.ifPresent(a -> requestBuilder.param("anchor", a));

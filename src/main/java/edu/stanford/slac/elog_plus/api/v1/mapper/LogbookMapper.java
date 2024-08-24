@@ -108,17 +108,17 @@ public abstract class LogbookMapper {
     }
 
     /**
-     * Return all the authorizations for a logbook
+     * Return an DetailsAuthorizationDTO from an AuthorizationDTO
      *
      * @param authorization standard authorization
-     * @return the list of ownerId authorizations
+     * @return the DetailsAuthorizationDTO
      */
     public DetailsAuthorizationDTO fromAuthorizationDTO(AuthorizationDTO authorization) {
         String ownerLabel = authorization.owner();
         switch(authorization.ownerType()){
             case User: {
                 PersonDTO person = peopleGroupService.findPersonByEMail(authorization.owner());
-                ownerLabel = person != null ? person.gecos() : null;
+                ownerLabel = person != null ? "%s(%s)".formatted(person.gecos(), person.mail()) : null;
                 break;
             }
             case Group: {

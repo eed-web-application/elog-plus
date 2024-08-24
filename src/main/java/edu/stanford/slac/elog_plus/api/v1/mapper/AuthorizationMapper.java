@@ -44,7 +44,7 @@ public abstract class AuthorizationMapper {
         return UserDetailsDTO.builder()
                 .id(personDTO.uid())
                 .name(personDTO.commonName())
-                .surname(personDTO.surname())
+                .surname(personDTO.lastName())
                 .gecos(personDTO.gecos())
                 .email(personDTO.mail())
                 .isRoot(authService.checkForRoot(personDTO.mail()))
