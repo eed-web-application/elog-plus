@@ -162,7 +162,7 @@ public class EntriesController {
             @RequestParam("includeFollowingUps") Optional<Boolean> includeFollowingUps,
             @Parameter(name = "includeHistory", description = "If true the API return all the entry updates history")
             @RequestParam("includeHistory") Optional<Boolean> includeHistory,
-            @Parameter(name = "includeReferenceBy", description = "If true the API return all the entries that are referenced by this one")
+            @Parameter(name = "includeReferences", description = "If true the API return all the entries that are reference to this one")
             @RequestParam("includeReferences") Optional<Boolean> includeReferences,
             @Parameter(name = "includeReferencedBy", description = "If true the API return all the entries that are referenced byt this one")
             @RequestParam("includeReferencedBy") Optional<Boolean> includeReferencedBy
