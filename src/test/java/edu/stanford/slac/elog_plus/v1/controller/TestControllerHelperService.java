@@ -560,6 +560,41 @@ public class TestControllerHelperService {
             Optional<List<String>> logBook,
             Optional<Boolean> sortByLogDate,
             Optional<String> originId) throws Exception {
+        return  submitSearchByGetWithAnchor(
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                Optional.empty(),
+                anchor,
+                startDate,
+                endDate,
+                contextSize,
+                limit,
+                search,
+                tags,
+                requireAllTags,
+                logBook,
+                sortByLogDate,
+                originId
+        );
+    }
+
+    public ApiResultResponse<List<EntrySummaryDTO>> submitSearchByGetWithAnchor(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            Optional<String> impersonateUserInfo,
+            Optional<String> anchor,
+            Optional<LocalDateTime> startDate,
+            Optional<LocalDateTime> endDate,
+            Optional<Integer> contextSize,
+            Optional<Integer> limit,
+            Optional<String> search,
+            Optional<List<String>> tags,
+            Optional<Boolean> requireAllTags,
+            Optional<List<String>> logBook,
+            Optional<Boolean> sortByLogDate,
+            Optional<String> originId) throws Exception {
 
         MockHttpServletRequestBuilder getBuilder =
                 get("/v1/entries")
@@ -583,6 +618,7 @@ public class TestControllerHelperService {
             getBuilder.param("logbooks", lbArray);
         });
         userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
+        impersonateUserInfo.ifPresent(impersonateUserId -> getBuilder.header(appProperties.getImpersonateHeaderName(), impersonateUserId));
         originId.ifPresent(id -> getBuilder.param("originId", id));
         MvcResult result = mockMvc.perform(
                         getBuilder

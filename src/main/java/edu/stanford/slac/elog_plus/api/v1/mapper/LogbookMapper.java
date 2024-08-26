@@ -56,6 +56,8 @@ public abstract class LogbookMapper {
     @Mapping(target = "authorizations", expression = "java(getAuthorizations(logbook, includeAuthorizations))")
     public abstract LogbookDTO fromModel(Logbook logbook, boolean includeAuthorizations);
 
+    @Mapping(target = "readAll", expression = "java(true)")
+    @Mapping(target = "writeAll", expression = "java(true)")
     public abstract Logbook fromDTO(NewLogbookDTO logbookDTO);
 
     public abstract Logbook fromDTO(LogbookDTO logbookDTO);

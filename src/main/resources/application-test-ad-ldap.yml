@@ -1,0 +1,22 @@
+spring:
+  ldap:
+    urls: ${BASE_APP_LDAP_URI:ldap://localhost:3389}
+    base: ${BASE_APP_LDAP_BASE:dc=win,dc=slac,dc=stanford,dc=edu}
+    username: ${BASE_APP_LDAP_USER:cn=adeedweb,ou=Service-Accounts,ou=SCS,dc=win,dc=slac,dc=stanford,dc=edu}
+    password: ${BASE_APP_LDAP_PASSWORD:7kP@qZ9#d3N$w2V!xL}
+  cache:
+    type: none
+edu:
+  stanford:
+    slac:
+      ad:
+        eed:
+          baselib:
+            app-token-jwt-key: dabd148ddd89bf64236b3c2563a54921d95c959dbe6a872be3eefaa2f284a4cb
+            root-authentication-token-list-json: '[{"name":"root-token-1","expiration":"2025-12-31"}]'
+#          - name: test
+#            expiration: '2023-12-31'
+# Set the logging level for the entire MongoDB package
+#logging:
+#    level:
+#      org.springframework.data.mongodb: DEBUG

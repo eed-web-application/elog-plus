@@ -65,6 +65,11 @@ public class EntryService {
      * @return the list of found entries that matches the input parameter
      */
     public List<EntrySummaryDTO> findAll(QueryWithAnchorDTO queryWithAnchorDTO) {
+        // check if there is some authorized logbook
+        if (queryWithAnchorDTO.logbooks() == null) {
+            // in this case user is not authorize on any logbook
+            return emptyList();
+        }
         List<Entry> found = wrapCatch(
                 () -> entryRepository.searchAll(
                         queryParameterMapper.fromDTO(

@@ -346,6 +346,9 @@ public class EntryAuthorizationService {
                             }
                         }
                 );
+            } else {
+                // if no logbook is authorized we can't search so the list is null
+                authorizationCache.setAuthorizedLogbookId(null);
             }
         } else {
             // if user is root we can use all logbook

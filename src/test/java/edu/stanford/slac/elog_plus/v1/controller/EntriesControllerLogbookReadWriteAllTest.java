@@ -1,24 +1,23 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
-import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.model.LocalGroup;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
-import edu.stanford.slac.elog_plus.api.v1.dto.*;
-import edu.stanford.slac.elog_plus.exception.LogbookNotAuthorized;
+import edu.stanford.slac.elog_plus.api.v1.dto.EntryNewDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.UpdateLogbookDTO;
 import edu.stanford.slac.elog_plus.exception.ResourceNotFound;
 import edu.stanford.slac.elog_plus.model.Attachment;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
+import edu.stanford.slac.elog_plus.repository.LogbookRepository;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import edu.stanford.slac.elog_plus.v1.service.DocumentGenerationService;
 import edu.stanford.slac.elog_plus.v1.service.SharedUtilityService;
 import org.assertj.core.api.AssertionsForClassTypes;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,6 +27,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -37,8 +37,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Read;
-import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Write;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -57,9 +55,10 @@ public class EntriesControllerLogbookReadWriteAllTest {
 
     @Autowired
     private LogbookService logbookService;
-
     @Autowired
-    AppProperties appProperties;
+    private LogbookRepository logbookRepository;
+    @Autowired
+    private AppProperties appProperties;
 
     @Autowired
     private AuthService authService;
@@ -78,13 +77,13 @@ public class EntriesControllerLogbookReadWriteAllTest {
     private ApiResultResponse<String> newLogbookApiResultOne = null;
     private ApiResultResponse<String> newLogbookApiResultTwoWriteAll = null;
     private ApiResultResponse<String> newLogbookApiResultThreeReadAll = null;
-    private List<String> groupIds = null;
 
-    @BeforeAll
-    public void initLogbook() {
+
+    @BeforeEach
+    public void preTest() {
         mongoTemplate.remove(new Query(), Attachment.class);
         mongoTemplate.remove(new Query(), Logbook.class);
-
+        mongoTemplate.remove(new Query(), Entry.class);
         //reset authorizations
         mongoTemplate.remove(new Query(), Authorization.class);
         mongoTemplate.remove(new Query(), LocalGroup.class);
@@ -92,8 +91,6 @@ public class EntriesControllerLogbookReadWriteAllTest {
         appProperties.getRootUserList().clear();
         appProperties.getRootUserList().add("user1@slac.stanford.edu");
         authService.updateRootUser();
-        // create default group-1 and group-2
-        groupIds = sharedUtilityService.createDefaultGroup();
 
         newLogbookApiResultOne = testControllerHelperService.getNewLogbookWithNameWithAuthorization(
                 mockMvc,
@@ -161,12 +158,6 @@ public class EntriesControllerLogbookReadWriteAllTest {
         );
         assertThat(updateLogbook3ReadAll).isNotNull();
         assertThat(updateLogbook3ReadAll.getPayload()).isTrue();
-    }
-
-    @BeforeEach
-    public void preTest() {
-        mongoTemplate.remove(new Query(), Entry.class);
-
     }
 
     @Test
@@ -338,4 +329,87 @@ public class EntriesControllerLogbookReadWriteAllTest {
         assertThat(foundOnLogbook3.getPayload().size()).isEqualTo(idForLogbook3.size());
     }
 
+    @Test
+    @DisplayName("Test bug https://github.com/eed-web-application/elog-plus/issues/276")
+    public void simulateBug276() throws Exception {
+        // remove all readAll and writeAll
+        Update u = new Update();
+        u.unset("readAll");
+        u.unset("writeAll");
+        mongoTemplate.updateMulti(
+                new Query(),
+                u,
+                Logbook.class
+        );
+
+        for (int i = 0; i < 10; i++) {
+            int finalI = i;
+            var entryCreationResult =
+                    assertDoesNotThrow(
+                            () -> testControllerHelperService.createNewLog(
+                                    mockMvc,
+                                    status().isCreated(),
+                                    Optional.of(
+                                            "user1@slac.stanford.edu"
+                                    ),
+                                    EntryNewDTO
+                                            .builder()
+                                            .logbooks(
+                                                    List.of(
+                                                            newLogbookApiResultOne.getPayload()
+                                                    )
+                                            )
+                                            .tags(emptyList())
+                                            .text(String.format("This is a log for test %d in logbook %s", finalI,  newLogbookApiResultOne.getPayload()))
+                                            .title("Another very wonderful logbook 1 and 2")
+                                            .build()
+                            )
+                    );
+            assertThat(entryCreationResult.getErrorCode()).isEqualTo(0);
+        }
+
+        var emptyListWithUnauthorizedUser = assertDoesNotThrow(
+                () -> testControllerHelperService.submitSearchByGetWithAnchor(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of(
+                                "user2@slac.stanford.edu"
+                        ),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(10),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty()
+                )
+        );
+        assertThat(emptyListWithUnauthorizedUser.getErrorCode()).isEqualTo(0);
+
+        // also impersonating give empty list
+        var emptyListWithUserAndImpersonatingNonAuthUser = assertDoesNotThrow(
+                () -> testControllerHelperService.submitSearchByGetWithAnchor(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        Optional.of("user2@slac.stanford.edu"),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(10),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty()
+                )
+        );
+        assertThat(emptyListWithUserAndImpersonatingNonAuthUser.getErrorCode()).isEqualTo(0);
+    }
 }

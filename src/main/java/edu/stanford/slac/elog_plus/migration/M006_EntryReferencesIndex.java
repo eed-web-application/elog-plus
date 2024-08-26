@@ -13,7 +13,7 @@ import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 
 @AllArgsConstructor
 @ChangeUnit(id = "entry-references-index", order = "6", author = "bisegni")
-public class EntryReferencesIndex {
+public class M006_EntryReferencesIndex {
     private final MongoTemplate mongoTemplate;
     private final MongoMappingContext mongoMappingContext;
 

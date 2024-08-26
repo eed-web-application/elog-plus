@@ -14,7 +14,7 @@ import lombok.AllArgsConstructor;
  */
 @AllArgsConstructor
 @ChangeUnit(id = "manage-root-user-token-auth", order = "10000", author = "bisegni", runAlways = true)
-public class ManageRootUserAndAuth {
+public class MRA10000_ManageRootUserAndAuth {
     private final AuthService authService;
     @Execution
     public void changeSet() {
