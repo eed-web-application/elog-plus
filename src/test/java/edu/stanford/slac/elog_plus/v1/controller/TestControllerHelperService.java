@@ -219,6 +219,15 @@ public class TestControllerHelperService {
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
             EntryNewDTO newLog) throws Exception {
+        return createNewLog(mockMvc, resultMatcher, userInfo, Optional.empty(), newLog);
+    }
+
+    public ApiResultResponse<String> createNewLog(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            Optional<String> impersonateUserInfo,
+            EntryNewDTO newLog) throws Exception {
         var postBuilder = post("/v1/entries")
                 .content(
                         new ObjectMapper().writeValueAsString(
@@ -228,12 +237,8 @@ public class TestControllerHelperService {
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON);
 
-//        if(userInfo.isPresent() && userInfo.get().toLowerCase().compareTo("service")==0) {
-//            postBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateServiceToken());
-//        } else {
         userInfo.ifPresent(login -> postBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
-//        }
-
+        impersonateUserInfo.ifPresent(impersonateUserId -> postBuilder.header(appProperties.getImpersonateHeaderName(), impersonateUserId));
         MvcResult result = mockMvc.perform(postBuilder)
                 .andExpect(resultMatcher)
                 .andReturn();
@@ -560,7 +565,7 @@ public class TestControllerHelperService {
             Optional<List<String>> logBook,
             Optional<Boolean> sortByLogDate,
             Optional<String> originId) throws Exception {
-        return  submitSearchByGetWithAnchor(
+        return submitSearchByGetWithAnchor(
                 mockMvc,
                 resultMatcher,
                 userInfo,
@@ -673,11 +678,23 @@ public class TestControllerHelperService {
             Optional<Boolean> includeAuthorizations,
             Optional<String> filterForAuthorizationTypes
     ) throws Exception {
+        return getAllLogbook(mockMvc, resultMatcher, userInfo, Optional.empty(), includeAuthorizations, filterForAuthorizationTypes);
+    }
+
+    public ApiResultResponse<List<LogbookDTO>> getAllLogbook(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            Optional<String> impersonatingUserInfo,
+            Optional<Boolean> includeAuthorizations,
+            Optional<String> filterForAuthorizationTypes
+    ) throws Exception {
 
         MockHttpServletRequestBuilder getBuilder =
                 get("/v1/logbooks")
                         .accept(MediaType.APPLICATION_JSON);
         userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
+        impersonatingUserInfo.ifPresent(impersonatingUser -> getBuilder.header(appProperties.getImpersonateHeaderName(), impersonatingUser));
         includeAuthorizations.ifPresent(b -> getBuilder.param("includeAuthorizations", String.valueOf(b)));
         filterForAuthorizationTypes.ifPresent(authType -> getBuilder.param("filterForAuthorizationTypes", authType));
         MvcResult result = mockMvc.perform(
@@ -972,9 +989,9 @@ public class TestControllerHelperService {
     /**
      * Find current user details
      *
-     * @param mockMvc               MockMvc
-     * @param resultMatcher         ResultMatcher
-     * @param userInfo              Optional<String>
+     * @param mockMvc       MockMvc
+     * @param resultMatcher ResultMatcher
+     * @param userInfo      Optional<String>
      * @return ApiResultResponse<UserDetailsDTO>
      * @throws Exception Exception
      */
@@ -1000,10 +1017,10 @@ public class TestControllerHelperService {
     /**
      * Find current user details
      *
-     * @param mockMvc               MockMvc
-     * @param resultMatcher         ResultMatcher
-     * @param userInfo              Optional<String>
-     * @param newAuthorizationDTO   NewAuthorizationDTO
+     * @param mockMvc             MockMvc
+     * @param resultMatcher       ResultMatcher
+     * @param userInfo            Optional<String>
+     * @param newAuthorizationDTO NewAuthorizationDTO
      * @return ApiResultResponse<UserDetailsDTO> ApiResultResponse<UserDetailsDTO>
      * @throws Exception Exception
      */

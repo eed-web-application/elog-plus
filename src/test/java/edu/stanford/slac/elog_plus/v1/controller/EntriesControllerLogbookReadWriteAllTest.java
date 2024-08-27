@@ -1,11 +1,14 @@
 package edu.stanford.slac.elog_plus.v1.controller;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
+import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.model.LocalGroup;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.elog_plus.api.v1.dto.EntryNewDTO;
+import edu.stanford.slac.elog_plus.api.v1.dto.LogbookDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.UpdateLogbookDTO;
 import edu.stanford.slac.elog_plus.exception.ResourceNotFound;
 import edu.stanford.slac.elog_plus.model.Attachment;
@@ -37,7 +40,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static com.google.common.base.Optional.of;
 import static java.util.Collections.emptyList;
+import static java.util.Optional.empty;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -94,9 +99,7 @@ public class EntriesControllerLogbookReadWriteAllTest {
 
         newLogbookApiResultOne = testControllerHelperService.getNewLogbookWithNameWithAuthorization(
                 mockMvc,
-                Optional.of(
-                        "user1@slac.stanford.edu"
-                ),
+                Optional.of("user1@slac.stanford.edu"),
                 "new logbook",
                 emptyList()
         );
@@ -111,6 +114,26 @@ public class EntriesControllerLogbookReadWriteAllTest {
                 emptyList()
         );
         assertThat(newLogbookApiResultTwoWriteAll.getErrorCode()).isEqualTo(0);
+
+        // make logbook 2 writable to all
+        var updateLogbook1 = assertDoesNotThrow(
+                () -> testControllerHelperService.updateLogbook(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        newLogbookApiResultOne.getPayload(),
+                        UpdateLogbookDTO
+                                .builder()
+                                .name("new-logbook")
+                                .tags(emptyList())
+                                .shifts(emptyList())
+                                .readAll(false)
+                                .writeAll(false)
+                                .build()
+                )
+        );
+        assertThat(updateLogbook1).isNotNull();
+        assertThat(updateLogbook1.getPayload()).isTrue();
 
         // make logbook 2 writable to all
         var updateLogbook2WriteAll = assertDoesNotThrow(
@@ -290,17 +313,17 @@ public class EntriesControllerLogbookReadWriteAllTest {
                         Optional.of(
                                 "user2@slac.stanford.edu"
                         ),
-                        Optional.empty(),
-                        Optional.empty(),
-                        Optional.empty(),
-                        Optional.empty(),
+                        empty(),
+                        empty(),
+                        empty(),
+                        empty(),
                         Optional.of(entry_size),
-                        Optional.empty(),
-                        Optional.empty(),
-                        Optional.empty(),
+                        empty(),
+                        empty(),
+                        empty(),
                         Optional.of(List.of(newLogbookApiResultOne.getPayload(), newLogbookApiResultThreeReadAll.getPayload())),
-                        Optional.empty(),
-                        Optional.empty()
+                        empty(),
+                        empty()
                 )
         );
         AssertionsForClassTypes.assertThat(exceptionForUser3.getErrorCode()).isEqualTo(-1);
@@ -312,17 +335,17 @@ public class EntriesControllerLogbookReadWriteAllTest {
                         Optional.of(
                                 "user2@slac.stanford.edu"
                         ),
-                        Optional.empty(),
-                        Optional.empty(),
-                        Optional.empty(),
-                        Optional.empty(),
+                        empty(),
+                        empty(),
+                        empty(),
+                        empty(),
                         Optional.of(entry_size),
-                        Optional.empty(),
-                        Optional.empty(),
-                        Optional.empty(),
+                        empty(),
+                        empty(),
+                        empty(),
                         Optional.of(List.of(newLogbookApiResultThreeReadAll.getPayload())),
-                        Optional.empty(),
-                        Optional.empty()
+                        empty(),
+                        empty()
                 )
         );
         assertThat(foundOnLogbook3.getErrorCode()).isEqualTo(0);
@@ -360,7 +383,7 @@ public class EntriesControllerLogbookReadWriteAllTest {
                                                     )
                                             )
                                             .tags(emptyList())
-                                            .text(String.format("This is a log for test %d in logbook %s", finalI,  newLogbookApiResultOne.getPayload()))
+                                            .text(String.format("This is a log for test %d in logbook %s", finalI, newLogbookApiResultOne.getPayload()))
                                             .title("Another very wonderful logbook 1 and 2")
                                             .build()
                             )
@@ -375,17 +398,17 @@ public class EntriesControllerLogbookReadWriteAllTest {
                         Optional.of(
                                 "user2@slac.stanford.edu"
                         ),
-                        Optional.empty(),
-                        Optional.empty(),
-                        Optional.empty(),
-                        Optional.empty(),
+                        empty(),
+                        empty(),
+                        empty(),
+                        empty(),
                         Optional.of(10),
-                        Optional.empty(),
-                        Optional.empty(),
-                        Optional.empty(),
-                        Optional.empty(),
-                        Optional.empty(),
-                        Optional.empty()
+                        empty(),
+                        empty(),
+                        empty(),
+                        empty(),
+                        empty(),
+                        empty()
                 )
         );
         assertThat(emptyListWithUnauthorizedUser.getErrorCode()).isEqualTo(0);
@@ -397,19 +420,85 @@ public class EntriesControllerLogbookReadWriteAllTest {
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
                         Optional.of("user2@slac.stanford.edu"),
-                        Optional.empty(),
-                        Optional.empty(),
-                        Optional.empty(),
-                        Optional.empty(),
+                        empty(),
+                        empty(),
+                        empty(),
+                        empty(),
                         Optional.of(10),
-                        Optional.empty(),
-                        Optional.empty(),
-                        Optional.empty(),
-                        Optional.empty(),
-                        Optional.empty(),
-                        Optional.empty()
+                        empty(),
+                        empty(),
+                        empty(),
+                        empty(),
+                        empty(),
+                        empty()
                 )
         );
         assertThat(emptyListWithUserAndImpersonatingNonAuthUser.getErrorCode()).isEqualTo(0);
+    }
+
+    @Test
+    public void getAllAuthorizedLogbookFromReadAllTrue() throws Exception {
+        ApiResultResponse<List<LogbookDTO>> listOfAllReadableLogbook = assertDoesNotThrow(
+                () -> testControllerHelperService.getAllLogbook(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user2@slac.stanford.edu"),
+                        Optional.empty(),
+                        Optional.of(AuthorizationTypeDTO.Read.name())
+                )
+        );
+        assertThat(listOfAllReadableLogbook.getErrorCode()).isEqualTo(0);
+        assertThat(listOfAllReadableLogbook.getPayload().size()).isEqualTo(2);
+        assertThat(listOfAllReadableLogbook.getPayload().stream().map(LogbookDTO::id).toList()).containsExactlyInAnyOrder(
+                newLogbookApiResultTwoWriteAll.getPayload(),
+                newLogbookApiResultThreeReadAll.getPayload()
+        );
+    }
+
+    @Test
+    public void getAllAuthorizedLogbookFromReadAllTrueUsingImpersonation() throws Exception {
+        ApiResultResponse<List<LogbookDTO>> listOfAllReadableLogbook = assertDoesNotThrow(
+                () -> testControllerHelperService.getAllLogbook(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        Optional.of("user2@slac.stanford.edu"),
+                        Optional.empty(),
+                        Optional.of(AuthorizationTypeDTO.Read.name())
+                )
+        );
+        assertThat(listOfAllReadableLogbook.getErrorCode()).isEqualTo(0);
+        assertThat(listOfAllReadableLogbook.getPayload().size()).isEqualTo(2);
+        assertThat(listOfAllReadableLogbook.getPayload().stream().map(LogbookDTO::id).toList()).containsExactlyInAnyOrder(
+                newLogbookApiResultTwoWriteAll.getPayload(),
+                newLogbookApiResultThreeReadAll.getPayload()
+        );
+    }
+
+    @Test
+    public void failWriteOnNonWriteAllLogbook() throws Exception {
+        // try to create to a write all logbook 2
+        NotAuthorized unauthorizedWriteOnLogbookByReader =
+                assertThrows(
+                        NotAuthorized.class,
+                        () -> testControllerHelperService.createNewLog(
+                                mockMvc,
+                                status().isUnauthorized(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                Optional.of("user2@slac.stanford.edu"),
+                                EntryNewDTO
+                                        .builder()
+                                        .logbooks(
+                                                List.of(
+                                                        newLogbookApiResultOne.getPayload()
+                                                )
+                                        )
+                                        .text("This is a log for test")
+                                        .title("A very wonderful log")
+                                        .build()
+                        )
+                );
+
+        AssertionsForClassTypes.assertThat(unauthorizedWriteOnLogbookByReader.getErrorCode()).isEqualTo(-1);
     }
 }

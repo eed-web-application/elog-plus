@@ -86,7 +86,6 @@ public class LogbooksController {
                 // for write authorization we need to consider also public writable logbook
                 readAllLogbook = logbookService.getAllIdsWriteAll();
             }
-            logbookService.getAllIdsReadAll();
             return ApiResultResponse.of(
                     logbookService.getLogbook(
                             // concat all the logbook and remove duplication
