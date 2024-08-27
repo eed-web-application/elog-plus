@@ -613,6 +613,7 @@ public class EntryServiceTest {
                                 QueryWithAnchorDTO
                                         .builder()
                                         .limit(10)
+                                        .logbooks(emptyList())
                                         .build()
                         )
                 );
@@ -655,6 +656,7 @@ public class EntryServiceTest {
                         QueryWithAnchorDTO
                                 .builder()
                                 .limit(10)
+                                .logbooks(emptyList())
                                 .build()
                 )
         );
@@ -680,6 +682,7 @@ public class EntryServiceTest {
                                 .builder()
                                 .anchorID(testAnchorLog.id())
                                 .limit(10)
+                                .logbooks(emptyList())
                                 .build()
                 )
         );
@@ -706,6 +709,7 @@ public class EntryServiceTest {
                                 .builder()
                                 .anchorID(testAnchorLog.id())
                                 .contextSize(10)
+                                .logbooks(emptyList())
                                 .limit(0)
                                 .build()
                 )
@@ -718,6 +722,7 @@ public class EntryServiceTest {
                 () -> entryService.findAll(
                         QueryWithAnchorDTO
                                 .builder()
+                                .logbooks(emptyList())
                                 .anchorID(testAnchorLog.id())
                                 .contextSize(10)
                                 .limit(10)
@@ -737,6 +742,7 @@ public class EntryServiceTest {
                 () -> entryService.findAll(
                         QueryWithAnchorDTO
                                 .builder()
+                                .logbooks(emptyList())
                                 .anchorID(middleAnchorLog.id())
                                 .contextSize(10)
                                 .limit(10)
@@ -785,6 +791,7 @@ public class EntryServiceTest {
                         QueryWithAnchorDTO
                                 .builder()
                                 .limit(10)
+                                .logbooks(emptyList())
                                 .sortByLogDate(true)
                                 .build()
                 )
@@ -811,6 +818,7 @@ public class EntryServiceTest {
                                 .builder()
                                 .anchorID(testAnchorLog.id())
                                 .limit(10)
+                                .logbooks(emptyList())
                                 .sortByLogDate(true)
                                 .build()
                 )
@@ -836,6 +844,7 @@ public class EntryServiceTest {
                 () -> entryService.findAll(
                         QueryWithAnchorDTO
                                 .builder()
+                                .logbooks(emptyList())
                                 .anchorID(testAnchorLog.id())
                                 .contextSize(10)
                                 .limit(0)
@@ -851,6 +860,7 @@ public class EntryServiceTest {
                 () -> entryService.findAll(
                         QueryWithAnchorDTO
                                 .builder()
+                                .logbooks(emptyList())
                                 .anchorID(testAnchorLog.id())
                                 .contextSize(10)
                                 .limit(10)
@@ -871,6 +881,7 @@ public class EntryServiceTest {
                 () -> entryService.findAll(
                         QueryWithAnchorDTO
                                 .builder()
+                                .logbooks(emptyList())
                                 .anchorID(middleAnchorLog.id())
                                 .contextSize(10)
                                 .limit(10)
@@ -968,6 +979,7 @@ public class EntryServiceTest {
                         QueryWithAnchorDTO
                                 .builder()
                                 .limit(30)
+                                .logbooks(emptyList())
                                 .build()
                 )
         );
@@ -1423,6 +1435,7 @@ public class EntryServiceTest {
                         QueryWithAnchorDTO
                                 .builder()
                                 .limit(10)
+                                .logbooks(emptyList())
                                 .build()
                 )
         );
@@ -1434,6 +1447,7 @@ public class EntryServiceTest {
                                 .builder()
                                 .hideSummaries(true)
                                 .limit(10)
+                                .logbooks(emptyList())
                                 .build()
                 )
         );
