@@ -63,8 +63,36 @@ public class LogbookServiceTest {
     @Test
     public void createNew() {
         String newID = sharedUtilityService.getTestLogbook();
-
         assertThat(newID).isNotNull().isNotEmpty();
+        var fullLogbook = assertDoesNotThrow(
+                () -> logbookService.getLogbook(newID)
+        );
+
+        AssertionsForClassTypes.assertThat(fullLogbook.readAll()).isFalse();
+        AssertionsForClassTypes.assertThat(fullLogbook.writeAll()).isFalse();
+    }
+
+    @Test
+    public void createNewCheckReadWriteAllFlag() {
+        String newLogbookID = assertDoesNotThrow(
+                () -> logbookService.createNew(
+                        NewLogbookDTO
+                                .builder()
+                                .name("logbookName")
+                                .readAll(true)
+                                .writeAll(true)
+                                .build()
+                )
+        );
+        AssertionsForClassTypes.assertThat(newLogbookID).isNotNull().isNotEmpty();
+
+        var fullLogbook = assertDoesNotThrow(
+                () -> logbookService.getLogbook(newLogbookID)
+        );
+
+        assertThat(fullLogbook).isNotNull();
+        assertThat(fullLogbook.readAll()).isTrue();
+        assertThat(fullLogbook.writeAll()).isTrue();
     }
 
     @Test
@@ -110,6 +138,7 @@ public class LogbookServiceTest {
 
         assertThat(fullLogbook.tags()).usingRecursiveFieldByFieldElementComparatorIgnoringFields("logbook").containsAll(allTags);
     }
+
 
     @Test
     public void ensureTag() {

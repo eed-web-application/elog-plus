@@ -1,7 +1,7 @@
 package edu.stanford.slac.elog_plus.v1.service;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.LogbookDTO;
-import edu.stanford.slac.elog_plus.migration.InitLogbook;
+import edu.stanford.slac.elog_plus.migration.M004_InitLogbook;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,12 +44,12 @@ public class LogbookDefaultInitTest {
 
     @Test
     public void checkDefaultLogbookCreation() {
-        InitLogbook initLogbook = new InitLogbook(logbookService, mongoTemplate, mongoMappingContext);
+        M004_InitLogbook initLogbook = new M004_InitLogbook(logbookService, mongoTemplate, mongoMappingContext);
         initLogbook.changeSet();
         List<LogbookDTO> allDefault = assertDoesNotThrow(
                 () -> logbookService.getAllLogbook()
         );
         assertThat(allDefault).isNotNull();
-        assertThat(allDefault.size()).isEqualTo(InitLogbook.logbookNames.size());
+        assertThat(allDefault.size()).isEqualTo(M004_InitLogbook.logbookNames.size());
     }
 }

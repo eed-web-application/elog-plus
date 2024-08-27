@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -140,6 +141,7 @@ public class EntryServiceSupersededTest {
                         QueryWithAnchorDTO
                                 .builder()
                                 .limit(20)
+                                .logbooks(emptyList())
                                 .build()
                 )
         );

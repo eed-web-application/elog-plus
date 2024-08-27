@@ -6,3 +6,4 @@ dump.zip
 dump/elogs/entry.bson
 dump/elogs/entry.metadata.json
 /gradle.properties
+src/main/resources/application-test-ad-ldap.yml

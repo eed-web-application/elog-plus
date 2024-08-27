@@ -14,6 +14,11 @@ import lombok.Builder;
 public record NewLogbookDTO(
         @NotNull
         @NotEmpty
-        String name
+        @Schema(description = "The name of the logbook")
+        String name,
+        @Schema(description = "The read all open authorization of the logbook")
+        Boolean readAll,
+        @Schema(description = "The write all open authorization of the logbook")
+        Boolean writeAll
 ) {
 }

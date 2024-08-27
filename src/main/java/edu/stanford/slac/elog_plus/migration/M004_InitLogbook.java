@@ -1,7 +1,6 @@
 package edu.stanford.slac.elog_plus.migration;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.NewLogbookDTO;
-import edu.stanford.slac.elog_plus.model.Logbook;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import io.mongock.api.annotations.ChangeUnit;
 import io.mongock.api.annotations.Execution;
@@ -20,7 +19,7 @@ import static java.util.Arrays.asList;
 @Profile("init-logbook")
 @AllArgsConstructor
 @ChangeUnit(id = "logbooks-initializer", order = "4", author = "bisegni")
-public class InitLogbook {
+public class M004_InitLogbook {
     private final LogbookService logbookService;
     private final MongoTemplate mongoTemplate;
     private final MongoMappingContext mongoMappingContext;

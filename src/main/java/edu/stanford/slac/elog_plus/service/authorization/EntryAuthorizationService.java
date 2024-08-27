@@ -322,19 +322,19 @@ public class EntryAuthorizationService {
                     .toList();
 
             // set the authorization cache
-            authorizationCache.setAuthorizedLogbookId(
+            var authorizedLogbook =
                     // join without duplicates all authorized and all public readable logbook
                     Stream.concat(allAuthorizedLogbookIds.stream(), allPublicReadableLogbookIds.stream())
                             .distinct()
-                            .toList()
-            );
+                            .toList();
 
             // Check if the user has specified some logbooks
             if (logBooks.isPresent() && !logBooks.get().isEmpty()) {
                 // give error if one of the logbook is not authorized
+                List<String> finalAuthorizedLogbook = authorizedLogbook;
                 logBooks.get().forEach(
                         lId -> {
-                            if (!authorizationCache.getAuthorizedLogbookId().contains(lId)) {
+                            if (!finalAuthorizedLogbook.contains(lId)) {
                                 // notify the error on logbook authorization
                                 var logbook = logbookService.getLogbook(lId);
                                 throw ResourceNotFound.notFoundByTypeNameAndValue()
@@ -346,6 +346,14 @@ public class EntryAuthorizationService {
                             }
                         }
                 );
+                // at this time all logbook in logBooks are authorized
+                authorizedLogbook = Stream.concat(authorizedLogbook.stream(), logBooks.get().stream())
+                        .distinct()
+                        .toList();
+            }
+            if(!authorizedLogbook.isEmpty()) {
+                // cache the found authorized logbook
+                authorizationCache.setAuthorizedLogbookId(authorizedLogbook);
             }
         } else {
             // if user is root we can use all logbook
