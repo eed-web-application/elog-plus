@@ -1,6 +1,6 @@
 package edu.stanford.slac.elog_plus.v1.migration;
 
-import edu.stanford.slac.elog_plus.migration.M006_FixNullOnLogbookReadAWriteAll;
+import edu.stanford.slac.elog_plus.migration.M007_FixNullOnLogbookReadAWriteAll;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import edu.stanford.slac.elog_plus.repository.LogbookRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -59,7 +59,7 @@ public class LogbookMigrationTest {
         );
 
         // run sanitization migration task
-        var sanitizationTask = new M006_FixNullOnLogbookReadAWriteAll(mongoTemplate);
+        var sanitizationTask = new M007_FixNullOnLogbookReadAWriteAll(mongoTemplate);
         assertDoesNotThrow(sanitizationTask::changeSet);
 
         // check with default value
