@@ -63,17 +63,24 @@ public class LogbookServiceTest {
     @Test
     public void createNew() {
         String newID = sharedUtilityService.getTestLogbook();
-
         assertThat(newID).isNotNull().isNotEmpty();
+        var fullLogbook = assertDoesNotThrow(
+                () -> logbookService.getLogbook(newID)
+        );
+
+        AssertionsForClassTypes.assertThat(fullLogbook.readAll()).isFalse();
+        AssertionsForClassTypes.assertThat(fullLogbook.writeAll()).isFalse();
     }
 
     @Test
-    public void createNewCheckDefaultReadWriteAllFlag() {
+    public void createNewCheckReadWriteAllFlag() {
         String newLogbookID = assertDoesNotThrow(
                 () -> logbookService.createNew(
                         NewLogbookDTO
                                 .builder()
                                 .name("logbookName")
+                                .readAll(true)
+                                .writeAll(true)
                                 .build()
                 )
         );
