@@ -24,29 +24,6 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 public class LogbookRepositoryImpl implements LogbookRepositoryCustom {
     final private MongoTemplate mongoTemplate;
 
-//    @Override
-//    public String createNewTag(String logbookId, Tag newTag) {
-//        newTag.setId(
-//                UUID.randomUUID().toString()
-//        );
-//        Query q = new Query();
-//        q.addCriteria(
-//                Criteria.where("id").is(logbookId)
-//        );
-//
-//        Update u = new Update();
-//        u.addToSet(
-//                "tags",
-//                newTag
-//        );
-//        UpdateResult ur = mongoTemplate.updateFirst(
-//                q,
-//                u,
-//                Logbook.class
-//        );
-//        return ur.getModifiedCount() == 1 ? newTag.getId() : null;
-//    }
-
     @Override
     public String ensureTag(String logbookId, Tag newTag) throws UnsupportedEncodingException, NoSuchAlgorithmException {
         String newID = UUID.randomUUID().toString();
