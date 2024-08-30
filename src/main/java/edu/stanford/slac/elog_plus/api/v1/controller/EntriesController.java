@@ -165,7 +165,9 @@ public class EntriesController {
             @Parameter(name = "includeReferences", description = "If true the API return all the entries that are reference to this one")
             @RequestParam("includeReferences") Optional<Boolean> includeReferences,
             @Parameter(name = "includeReferencedBy", description = "If true the API return all the entries that are referenced byt this one")
-            @RequestParam("includeReferencedBy") Optional<Boolean> includeReferencedBy
+            @RequestParam("includeReferencedBy") Optional<Boolean> includeReferencedBy,
+            @Parameter(name = "includeSupersededBy", description = "If true the API return the entry that supersede this one")
+            @RequestParam("includeSupersededBy") Optional<Boolean> includeSupersededBy
     ) {
         EntryDTO foundEntry = entryService.getFullEntry(
                 entryId,
@@ -173,7 +175,8 @@ public class EntriesController {
                 includeFollowingUps,
                 includeHistory,
                 includeReferences,
-                includeReferencedBy
+                includeReferencedBy,
+                includeSupersededBy
         );
         // return entry with authorized only logbook summary
         return ApiResultResponse.of(foundEntry);

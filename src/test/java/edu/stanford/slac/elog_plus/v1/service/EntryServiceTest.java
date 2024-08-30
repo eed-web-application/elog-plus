@@ -263,13 +263,21 @@ public class EntryServiceTest {
                                 sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                         )
                 );
-
+        // todo test
         EntryDTO supersededLog = assertDoesNotThrow(
-                () -> entryService.getFullEntry(supersededLogID)
+                () -> entryService.getFullEntry(
+                        supersededLogID,
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(true)
+                )
         );
 
         assertThat(supersededLog).isNotNull();
-        assertThat(supersededLog.supersedeBy()).isEqualTo(newLogID);
+        assertThat(supersededLog.supersededBy().id()).isEqualTo(newLogID);
 
         EntryDTO fullLog = assertDoesNotThrow(
                 () -> entryService.getFullEntry(newLogID)
@@ -499,7 +507,8 @@ public class EntryServiceTest {
                                 Optional.of(true),
                                 Optional.empty(),
                                 Optional.of(true),
-                                Optional.of(true)
+                                Optional.of(true),
+                                Optional.empty()
                         )
                 );
 
@@ -1821,6 +1830,7 @@ public class EntryServiceTest {
                         Optional.of(false),
                         Optional.of(false),
                         Optional.of(true),
+                        Optional.of(true),
                         Optional.of(true)
 
                 )
@@ -1835,6 +1845,7 @@ public class EntryServiceTest {
                         Optional.of(false),
                         Optional.of(false),
                         Optional.of(false),
+                        Optional.of(true),
                         Optional.of(true)
                 )
         );
@@ -1865,6 +1876,7 @@ public class EntryServiceTest {
                         Optional.of(false),
                         Optional.of(false),
                         Optional.of(false),
+                        Optional.of(true),
                         Optional.of(true),
                         Optional.of(true)
                 )
@@ -1927,6 +1939,7 @@ public class EntryServiceTest {
                         Optional.of(false),
                         Optional.of(false),
                         Optional.of(true),
+                        Optional.of(true),
                         Optional.of(true)
                 )
         );
@@ -1937,6 +1950,7 @@ public class EntryServiceTest {
                         Optional.of(false),
                         Optional.of(false),
                         Optional.of(false),
+                        Optional.of(true),
                         Optional.of(true),
                         Optional.of(true)
                 )

@@ -114,12 +114,12 @@ public class ImportService {
             log.info("[import {}] update to be supersede by {}", entryToUpload.title(), entryToUpload.supersedeOfByOriginId());
             // check for supersede
 
-            if (supersededEntry.getSupersedeBy() != null) {
+            if (supersededEntry.getSupersededBy() != null) {
                 Entry finalSupersededEntry = supersededEntry;
                 assertion(
-                        () -> finalSupersededEntry.getSupersedeBy().compareTo(entryToUpload.supersedeOfByOriginId()) == 0,
+                        () -> finalSupersededEntry.getSupersededBy().compareTo(entryToUpload.supersedeOfByOriginId()) == 0,
                         -3,
-                        "The entry is already superseded by %s".formatted(finalSupersededEntry.getSupersedeBy()),
+                        "The entry is already superseded by %s".formatted(finalSupersededEntry.getSupersededBy()),
                         "ImportService::importSingleEntry"
                 );
             } else {

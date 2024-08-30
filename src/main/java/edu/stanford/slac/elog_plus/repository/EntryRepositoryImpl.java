@@ -88,7 +88,7 @@ public class EntryRepositoryImpl implements EntryRepositoryCustom {
         }
         // supersede criteria
         allCriteria.add(
-                Criteria.where("supersedeBy").exists(false)
+                Criteria.where("supersededBy").exists(false)
         );
 
         List<Entry> logsBeforeAnchor = new ArrayList<>();
@@ -169,7 +169,7 @@ public class EntryRepositoryImpl implements EntryRepositoryCustom {
                 Criteria.where("id").is(id)
         );
         Update u = new Update();
-        u.set("supersedeBy", supersededById);
+        u.set("supersededBy", supersededById);
         mongoTemplate.updateFirst(q, u, Entry.class);
     }
 

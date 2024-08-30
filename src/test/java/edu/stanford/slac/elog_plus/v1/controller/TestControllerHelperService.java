@@ -476,7 +476,7 @@ public class TestControllerHelperService {
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
             String id, boolean includeFollowUps, boolean includeFollowingUps, boolean includeHistory) throws Exception {
-        return getFullLog(mockMvc, resultMatcher, userInfo, id, includeFollowUps, includeFollowingUps, includeHistory, false, false);
+        return getFullLog(mockMvc, resultMatcher, userInfo, id, includeFollowUps, includeFollowingUps, includeHistory, false, false, false);
     }
 
     public ApiResultResponse<EntryDTO> getFullLog(
@@ -488,7 +488,8 @@ public class TestControllerHelperService {
             boolean includeFollowingUps,
             boolean includeHistory,
             boolean includeReferences,
-            boolean includeReferencedBy) throws Exception {
+            boolean includeReferencedBy,
+            boolean includeSupersededBy) throws Exception {
         MockHttpServletRequestBuilder getBuilder = get("/v1/entries/{id}", id)
                 .accept(MediaType.APPLICATION_JSON);
         userInfo.ifPresent(login -> getBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
@@ -506,6 +507,9 @@ public class TestControllerHelperService {
         }
         if (includeReferencedBy) {
             getBuilder.param("includeReferencedBy", String.valueOf(true));
+        }
+        if(includeSupersededBy) {
+            getBuilder.param("includeSupersededBy", String.valueOf(true));
         }
         MvcResult result = mockMvc.perform(
                         getBuilder

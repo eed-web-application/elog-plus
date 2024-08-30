@@ -393,6 +393,7 @@ public class EntryService {
                 Optional.of(false),
                 Optional.of(false),
                 Optional.of(false),
+                Optional.of(false),
                 Optional.of(false)
         );
     }
@@ -412,7 +413,8 @@ public class EntryService {
             Optional<Boolean> includeFollowingUps,
             Optional<Boolean> followHistory,
             Optional<Boolean> includeReferences,
-            Optional<Boolean> includeReferencedBy) {
+            Optional<Boolean> includeReferencedBy,
+            Optional<Boolean> includeSupersededBy) {
         EntryDTO result = null;
         Entry foundEntry =
                 wrapCatch(
@@ -441,7 +443,7 @@ public class EntryService {
         if (includeFollowingUps.isPresent() && includeFollowingUps.get()) {
             Optional<Entry> followingLog = wrapCatch(
                     // fin followUps only on the last version (supersededBy is null) of the entry
-                    () -> entryRepository.findByFollowUpsContainsAndSupersedeByIsNull(id),
+                    () -> entryRepository.findByFollowUpsContainsAndSupersededByIsNull(id),
                     -3,
                     "LogService::getFullEntry"
             );
@@ -503,7 +505,7 @@ public class EntryService {
             result = result.toBuilder()
                     .referencedBy(
                             wrapCatch(
-                                    () -> entryRepository.findAllByReferencesContainsAndSupersedeByExists(foundEntry.getId(), false)
+                                    () -> entryRepository.findAllByReferencesContainsAndSupersededByExists(foundEntry.getId(), false)
                                             .stream()
                                             .map(
                                                     entryMapper::toSearchResult
@@ -517,6 +519,21 @@ public class EntryService {
         } else {
             result = result.toBuilder()
                     .referencedBy(emptyList())
+                    .build();
+        }
+
+        if (includeSupersededBy.orElse(false) && foundEntry.getSupersededBy() != null) {
+            // fill the referencedBy field
+            result = result.toBuilder()
+                    .supersededBy(
+                            wrapCatch(
+                                    () -> entryRepository.findById(foundEntry.getSupersededBy())
+                                            .map(entryMapper::toSearchResult)
+                                            .orElse(null),
+                                    -7,
+                                    "EntryMapper::getFullEntry"
+                            )
+                    )
                     .build();
         }
 
@@ -540,7 +557,7 @@ public class EntryService {
     public EntrySummaryDTO getSuperseded(String newestLogID) {
         Optional<Entry> foundLog =
                 wrapCatch(
-                        () -> entryRepository.findBySupersedeBy(newestLogID),
+                        () -> entryRepository.findBySupersededBy(newestLogID),
                         -1,
                         "LogService::getSuperseded"
                 );
@@ -586,8 +603,8 @@ public class EntryService {
                 );
         // execute some check
         assertion(
-                () -> (supersededLog.getSupersedeBy() == null ||
-                        supersededLog.getSupersedeBy().isEmpty())
+                () -> (supersededLog.getSupersededBy() == null ||
+                        supersededLog.getSupersededBy().isEmpty())
                 ,
                 SupersedeAlreadyCreated.supersedeAlreadyCreatedBuilder()
                         .errorCode(-3)
@@ -606,7 +623,7 @@ public class EntryService {
         // update all the reference to old entry with the new id
         updateReferences(entryId, newLogID);
         // update supersede
-        supersededLog.setSupersedeBy(newLogID);
+        supersededLog.setSupersededBy(newLogID);
         //update superseded entry
         var savedSupersede = wrapCatch(
                 () -> entryRepository.save(supersededLog),
@@ -626,7 +643,7 @@ public class EntryService {
     private void updateReferences(String entryId, String supersededById) {
         // find al entry that reference to the original one
         List<Entry> referenceEntries = wrapCatch(
-                () -> entryRepository.findAllByReferencesContainsAndSupersedeByExists(entryId, false),
+                () -> entryRepository.findAllByReferencesContainsAndSupersededByExists(entryId, false),
                 -1,
                 "LogService::updateReferences"
         );

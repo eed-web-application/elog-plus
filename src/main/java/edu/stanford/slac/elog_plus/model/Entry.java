@@ -26,7 +26,7 @@ public class Entry {
     @Id
     private String id;
     private String originId;
-    private String supersedeBy;
+    private String supersededBy;
     private String entryType;
     @Indexed
     private List<String> logbooks;
