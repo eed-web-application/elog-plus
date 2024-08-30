@@ -18,7 +18,8 @@ import java.util.List;
 public record EntryDTO(
         @Schema(description = "record primary key")
         String id,
-        String supersedeBy,
+        @Schema(description = "the entry that supersede this one")
+        EntrySummaryDTO supersededBy,
         @Schema(description = "the type of the entry")
         String entryType,
         @Schema(description = "the logbooks where the entry belong")

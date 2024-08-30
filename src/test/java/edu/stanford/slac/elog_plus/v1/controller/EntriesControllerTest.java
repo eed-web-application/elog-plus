@@ -418,12 +418,20 @@ public class EntriesControllerTest {
                                 Optional.of(
                                         "user1@slac.stanford.edu"
                                 ),
-                                newLogIDResult.getPayload()
+                                newLogIDResult.getPayload(),
+                                false,
+                                false,
+                                false,
+                                false,
+                                false,
+                                true
+
                         )
         );
 
         assertThat(oldFull.getErrorCode()).isEqualTo(0);
-        assertThat(oldFull.getPayload().supersedeBy()).isEqualTo(newSupersedeLogIDResult.getPayload());
+        assertThat(oldFull.getPayload().supersededBy()).isNotNull();
+        assertThat(oldFull.getPayload().supersededBy().id()).isEqualTo(newSupersedeLogIDResult.getPayload());
 
         // the search api now should return only the new log and not the superseded on
         var queryResult = testControllerHelperService.submitSearchByGetWithAnchor(
@@ -609,12 +617,17 @@ public class EntriesControllerTest {
                                         "user1@slac.stanford.edu"
                                 ),
                                 newLogIDResult.getPayload(),
+                                true,
+                                false,
+                                false,
+                                false,
+                                false,
                                 true
                         )
         );
 
         assertThat(supersededFull.getErrorCode()).isEqualTo(0);
-        assertThat(supersededFull.getPayload().supersedeBy()).isEqualTo(newSupersedeLogIDResult.getPayload());
+        assertThat(supersededFull.getPayload().supersededBy().id()).isEqualTo(newSupersedeLogIDResult.getPayload());
         assertThat(supersededFull.getPayload().followUps()).isNotNull().isNotEmpty();
 
         //check new supersede log and check follow-ups
@@ -627,12 +640,17 @@ public class EntriesControllerTest {
                                         "user1@slac.stanford.edu"
                                 ),
                                 newSupersedeLogIDResult.getPayload(),
+                                true,
+                                false,
+                                false,
+                                false,
+                                false,
                                 true
                         )
         );
 
         assertThat(supersedeFull.getErrorCode()).isEqualTo(0);
-        assertThat(supersedeFull.getPayload().supersedeBy()).isNull();
+        assertThat(supersedeFull.getPayload().supersededBy()).isNull();
 
         assertThat(
                 supersedeFull.getPayload().followUps()
@@ -2167,7 +2185,8 @@ public class EntriesControllerTest {
                                 true,
                                 true,
                                 true,
-                                true
+                                true,
+                                false
                         )
         );
         assertThat(referencerEntry).isNotNull();
@@ -2190,7 +2209,8 @@ public class EntriesControllerTest {
                                 true,
                                 true,
                                 true,
-                                true
+                                true,
+                                false
                         )
         );
         assertThat(referenceOne).isNotNull();
@@ -2211,7 +2231,8 @@ public class EntriesControllerTest {
                                 true,
                                 true,
                                 true,
-                                true
+                                true,
+                                false
                         )
         );
         assertThat(referenceTwo).isNotNull();

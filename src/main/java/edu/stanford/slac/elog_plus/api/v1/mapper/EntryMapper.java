@@ -41,6 +41,7 @@ public abstract class EntryMapper {
     @Mapping(target = "referencedBy", ignore = true)
     @Mapping(target = "references", ignore = true)
     @Mapping(target = "referencesInBody", expression = "java(checkReferenceInBody(entry.getText()))")
+    @Mapping(target = "supersededBy", ignore = true)
     public abstract EntryDTO fromModel(Entry entry);
 
     @Mapping(target = "loggedBy", expression = "java(entry.getFirstName() + \" \" + entry.getLastName())")
@@ -50,6 +51,7 @@ public abstract class EntryMapper {
     @Mapping(target = "referencedBy", ignore = true)
     @Mapping(target = "references", ignore = true)
     @Mapping(target = "referencesInBody", expression = "java(checkReferenceInBody(entry.getText()))")
+    @Mapping(target = "supersededBy", ignore = true)
     public abstract EntryDTO fromModelNoAttachment(Entry entry);
 
     @Mapping(target = "loggedBy", expression = "java(entry.getFirstName() + \" \" + entry.getLastName())")
@@ -69,7 +71,7 @@ public abstract class EntryMapper {
     public String getFollowingUp(String id) {
         if (id == null || id.isEmpty()) return null;
         return wrapCatch(
-                () -> entryRepository.findByFollowUpsContainsAndSupersedeByIsNull(id)
+                () -> entryRepository.findByFollowUpsContainsAndSupersededByIsNull(id)
                         .map(
                                 Entry::getId
                         ).orElse(null),
@@ -99,7 +101,7 @@ public abstract class EntryMapper {
     public List<String> getReferenceBy(String id) {
         if (id == null || id.isEmpty()) return null;
         return wrapCatch(
-                () -> entryRepository.findAllByReferencesContainsAndSupersedeByExists(id, false)
+                () -> entryRepository.findAllByReferencesContainsAndSupersededByExists(id, false)
                         .stream()
                         .map(
                                 Entry::getId

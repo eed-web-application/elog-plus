@@ -32,6 +32,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -216,7 +217,8 @@ public class EntryServiceSupersededTest {
                         Optional.of(false),
                         Optional.of(false),
                         Optional.of(true),//include references
-                        Optional.of(false)//include referencedBy
+                        Optional.of(false),//include referencedBy
+                        Optional.of(false)//include includeSuperseded
                 )
         );
         assertThat(entry1).isNotNull();
@@ -231,7 +233,8 @@ public class EntryServiceSupersededTest {
                         Optional.of(false),
                         Optional.of(false),
                         Optional.of(true),//include references
-                        Optional.of(false)//include referencedBy
+                        Optional.of(false),//include referencedBy
+                        Optional.of(false)//include includeSuperseded
                 )
         );
         assertThat(entry2).isNotNull();
@@ -247,7 +250,8 @@ public class EntryServiceSupersededTest {
                         Optional.of(false),
                         Optional.of(true), //include history
                         Optional.of(false),//include references
-                        Optional.of(false)//include referencedBy
+                        Optional.of(false),//include referencedBy
+                        Optional.of(false)//include includeSuperseded
                 )
         );
         assertThat(supersedeEntry).isNotNull();
@@ -334,12 +338,13 @@ public class EntryServiceSupersededTest {
                         Optional.of(false),
                         Optional.of(false),
                         Optional.of(true),//include references
-                        Optional.of(false)//include referencedBy
+                        Optional.of(false),//include referencedBy
+                        Optional.of(true)//include includeSuperseded
                 )
         );
         assertThat(originalEntry).isNotNull();
         // supersede operation has failed, so the original entry should not have been superseded
-        assertThat(originalEntry.supersedeBy()).isNull();
+        assertThat(originalEntry.supersededBy()).isNull();
 
         //now the entries with id referenceEntry1 and referenceEntry2 should not have been updated
         var entry1 = assertDoesNotThrow(
@@ -349,7 +354,8 @@ public class EntryServiceSupersededTest {
                         Optional.of(false),
                         Optional.of(false),
                         Optional.of(true),//include references
-                        Optional.of(false)//include referencedBy
+                        Optional.of(false),//include referencedBy
+                        Optional.of(true)//include includeSuperseded
                 )
         );
         assertThat(entry1).isNotNull();
@@ -364,7 +370,8 @@ public class EntryServiceSupersededTest {
                         Optional.of(false),
                         Optional.of(false),
                         Optional.of(true),//include references
-                        Optional.of(false)//include referencedBy
+                        Optional.of(false),//include referencedBy
+                        Optional.of(false)//include includeSuperseded
                 )
         );
         assertThat(entry2).isNotNull();
@@ -412,7 +419,8 @@ public class EntryServiceSupersededTest {
                         Optional.of(false),
                         Optional.of(false),
                         Optional.of(false),//include references
-                        Optional.of(false)//include referencedBy
+                        Optional.of(false),//include referencedBy
+                        Optional.of(false)//include includeSuperseded
                 )
         );
         assertThat(fullSupersedeEntry).isNotNull();

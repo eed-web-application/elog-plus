@@ -13,14 +13,14 @@ import java.util.Optional;
 public interface EntryRepository extends MongoRepository<Entry, String>, EntryRepositoryCustom {
     List<Entry> findAllByIdIn(List<String> ids);
 
-    Optional<Entry> findBySupersedeBy(String id);
+    Optional<Entry> findBySupersededBy(String id);
 
     /**
      * Return the log that the one identified by id is his followUps
      * @param id the id of the followup record
      * @return the following up record
      */
-    Optional<Entry> findByFollowUpsContainsAndSupersedeByIsNull(String id);
+    Optional<Entry> findByFollowUpsContainsAndSupersededByIsNull(String id);
 
     /**
      * Return the summary associated to the shift and date
@@ -37,7 +37,7 @@ public interface EntryRepository extends MongoRepository<Entry, String>, EntryRe
      * @param exists if false take in consideration only the last superseeded entry
      * @return the entries that are associated to the logbook
      */
-    List<Entry> findAllByReferencesContainsAndSupersedeByExists(String referencedEntryId, Boolean exists);
+    List<Entry> findAllByReferencesContainsAndSupersededByExists(String referencedEntryId, Boolean exists);
 
     /**
      * Return the number of the summary associated to a shift
