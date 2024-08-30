@@ -263,7 +263,7 @@ public class EntryServiceTest {
                                 sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                         )
                 );
-        // todo test
+
         EntryDTO supersededLog = assertDoesNotThrow(
                 () -> entryService.getFullEntry(
                         supersededLogID,
