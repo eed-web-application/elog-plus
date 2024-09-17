@@ -103,6 +103,29 @@ public class EntryServiceTest {
     }
 
     @Test
+    public void testLogCreationWithUserWithMultipleName() {
+        var logbook = getTestLogbook();
+        String newLogID = entryService.createNew(
+                EntryNewDTO
+                        .builder()
+                        .logbooks(List.of(logbook.id()))
+                        .text("This is a log for test")
+                        .title("A very wonderful log")
+                        .build(),
+                sharedUtilityService.getPersonForEmail("user2@slac.stanford.edu")
+        );
+
+        assertThat(newLogID).isNotNull();
+
+        // get the full entry
+        EntryDTO fullLog = assertDoesNotThrow(
+                () -> entryService.getFullEntry(newLogID)
+        );
+        assertThat(fullLog).isNotNull();
+        assertThat(fullLog.loggedBy()).isEqualTo("Name2 Name 2.1 Surname2");
+    }
+
+    @Test
     public void testFailBadAttachmentID() {
         var logbook = getTestLogbook();
         ControllerLogicException ex =

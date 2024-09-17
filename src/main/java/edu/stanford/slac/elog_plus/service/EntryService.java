@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -169,25 +170,27 @@ public class EntryService {
      * Create a new log entry
      *
      * @param entryNewDTO is a new log information
-     * @param creator
+     * @param creator    the creator of the new log
      * @return the id of the newly created log
      */
     public Entry toModelWithCreator(EntryNewDTO entryNewDTO, PersonDTO creator) {
         String firstname = "";
         String lastName = "";
-        String[] slittedGecos = creator.gecos().split(" ");
-        if (slittedGecos.length >= 2) {
-            firstname = slittedGecos[0];
-            lastName = slittedGecos[1];
-        } else if (slittedGecos.length == 1) {
-            firstname = slittedGecos[0];
+        String[] splittedGecos = creator.gecos().split(" ");
+        if (splittedGecos.length >= 2) {
+            // Join all parts except the last one as the first name
+            firstname = String.join(" ", Arrays.copyOfRange(splittedGecos, 0, splittedGecos.length - 1));
+            // The last element is the last name
+            lastName = splittedGecos[splittedGecos.length - 1];
+        } else if (splittedGecos.length == 1) {
+            // If there's only one element, treat it as the first name
+            firstname = splittedGecos[0];
         }
         return entryMapper.fromDTO(
                 entryNewDTO,
                 firstname,
                 lastName,
                 creator.mail()
-
         );
     }
 
