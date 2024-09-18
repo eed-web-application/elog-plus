@@ -1,11 +1,5 @@
 package edu.stanford.slac.elog_plus.service;
 
-import com.hp.jipp.encoding.IppPacket;
-import com.hp.jipp.model.JobState;
-import com.hp.jipp.model.JobStateReason;
-import com.hp.jipp.model.Status;
-import com.hp.jipp.model.Types;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
 import edu.stanford.slac.elog_plus.api.v1.dto.AttachmentDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.ObjectListResultDTO;
 import edu.stanford.slac.elog_plus.api.v1.mapper.AttachmentMapper;
@@ -18,21 +12,16 @@ import edu.stanford.slac.elog_plus.repository.StorageRepository;
 import io.micrometer.core.instrument.Counter;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.apache.tika.config.TikaConfig;
-import org.apache.tika.detect.Detector;
-import org.apache.tika.metadata.Metadata;
 import org.springframework.http.MediaType;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayInputStream;
-import java.net.URI;
-import java.util.Collections;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static com.hp.jipp.encoding.Tag.operationAttributes;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 
 
@@ -109,7 +98,11 @@ public class AttachmentService {
         return newAttachmentID.getId();
     }
 
-    boolean exists(String id) {
+    /**
+     * Return the attachment raw content file
+     * @param id the unique id of the attachment
+     */
+    public boolean exists(String id) {
         return wrapCatch(
                 () -> attachmentRepository.existsById(
                         id
@@ -399,5 +392,36 @@ public class AttachmentService {
         ).stream().map(
                 attachmentMapper::fromModel
         ).toList();
+    }
+
+    /**
+     * Delete all expired attachment
+     * @param expirationMinutes the expiration time in minutes
+     */
+    public void deleteAllExpired(Integer expirationMinutes) {
+        // calculate expiration date
+        LocalDateTime expirationTime = LocalDateTime.now().minusMinutes(expirationMinutes);
+        log.info("Delete all expired attachment since {}", expirationTime);
+        wrapCatch(
+                ()->{
+                    attachmentRepository.deleteByCreatedDateLessThanAndInUseIsFalse(
+                            expirationTime
+                    );
+                    return null;
+                },
+                -1,
+                "AttachmentService::deleteAllExpired"
+        );
+
+        // remove all reference for queued attachment that are expired
+        log.info("Remove reference info form expired and in use attachment since {}", expirationTime);
+        wrapCatch(
+                ()->{
+                    attachmentRepository.removeReferenceInfoOnALlInUseAndExpired(ATTACHMENT_QUEUED_REFERENCE, expirationTime);
+                    return null;
+                },
+                -2,
+                "AttachmentService::deleteAllExpired"
+        );
     }
 }

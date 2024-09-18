@@ -10,10 +10,14 @@ import lombok.Builder;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "Is the description fo an attachment")
 public record AttachmentDTO (
+        @Schema(description = "The id of the attachment")
     String id,
+    @Schema(description = "The name of the file")
     String fileName,
+    @Schema(description = "The content type of the file")
     String contentType,
+    @Schema(description = "The state of the preview processing")
     String previewState,
-
+    @Schema(description = "The mini preview of the file")
     byte[] miniPreview
     ){}

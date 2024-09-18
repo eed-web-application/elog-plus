@@ -10,6 +10,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 
@@ -78,5 +79,23 @@ public class AttachmentRepositoryImpl implements AttachmentRepositoryCustom{
 
         UpdateResult ur = mongoTemplate.updateFirst(q, u, Attachment.class);
         log.debug("Set 'in use' state update operation {}", ur.getModifiedCount()==1);
+    }
+
+    @Override
+    public void removeReferenceInfoOnALlInUseAndExpired(String referenceInfo, LocalDateTime expirationTime) {
+        Query q = new Query();
+        q.addCriteria(
+                Criteria.where("referenceInfo").is(referenceInfo)
+        );
+        q.addCriteria(
+                Criteria.where("inUse").is(true)
+        );
+        q.addCriteria(
+                Criteria.where("createdDate").lt(expirationTime)
+        );
+        Update u = new Update();
+        u.unset("referenceInfo");
+        UpdateResult ur = mongoTemplate.updateMulti(q, u, Attachment.class);
+        log.debug("Remove reference info update operation {}", ur.getModifiedCount());
     }
 }

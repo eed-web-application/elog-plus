@@ -30,6 +30,14 @@ public class M009_CreateAttachmentReferenceInfoIndex {
                         Sort.Direction.ASC
                 )
         );
+
+        // rename a file on attachment collection
+        Query q = new Query();
+        Update u = new Update();
+        u.rename("creationData", "createdDate");
+        log.info("[rename creationData to createdDate on attachment collection]  start renaming");
+        var updateResult = mongoTemplate.updateMulti(q, u, Attachment.class);
+        log.info("[rename creationData to createdDate on attachment collection] updated entries: {}", updateResult.getModifiedCount());
     }
 
     @RollbackExecution

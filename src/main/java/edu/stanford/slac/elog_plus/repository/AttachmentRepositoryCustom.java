@@ -2,6 +2,8 @@ package edu.stanford.slac.elog_plus.repository;
 
 import edu.stanford.slac.elog_plus.model.Attachment;
 
+import java.time.LocalDateTime;
+
 public interface AttachmentRepositoryCustom {
     /**
      * Set the storage id for the preview of an attachment
@@ -41,4 +43,10 @@ public interface AttachmentRepositoryCustom {
      * @param inUse if true meaning that the attachment is used by some entry
      */
     void setInUseState(String id, Boolean inUse);
+
+    /**
+     * Remove the reference information from all the attachments that are in use
+     * @param referenceInfo the reference information to remove
+     */
+    void removeReferenceInfoOnALlInUseAndExpired(String referenceInfo, LocalDateTime expirationTime);
 }

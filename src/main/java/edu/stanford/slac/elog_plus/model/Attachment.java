@@ -35,5 +35,5 @@ public class Attachment {
     @Builder.Default
     private PreviewProcessingState previewState = PreviewProcessingState.Waiting;
     @CreatedDate
-    private LocalDateTime creationData;
+    private LocalDateTime createdDate;
 }
