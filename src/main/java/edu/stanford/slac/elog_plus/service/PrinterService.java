@@ -30,6 +30,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static com.hp.jipp.encoding.Tag.*;
 import static io.jsonwebtoken.lang.Collections.emptyList;
@@ -94,6 +95,22 @@ public class PrinterService {
 
         return new IppPacketData(responsePacket, null);
     }
+
+
+    public IppPacketData handleIppPacketForAttachmentQueue(String printerURI, IppPacketData inputData) {
+        IppPacket requestPacket = inputData.getPacket();
+        log.info("Processing IPP request: " + requestPacket);
+
+        IppPacket responsePacket;
+        responsePacket = switch (getPrintCommand(inputData)) {
+            case Operation.Code.printJob -> handleAttachmentQueue(printerURI, requestPacket, inputData.getData());
+            case Operation.Code.getPrinterAttributes -> handleGetPrinterAttributes(requestPacket);
+            default -> createErrorResponsePacket(requestPacket, Status.clientErrorNotFetchable);
+        };
+
+        return new IppPacketData(responsePacket, null);
+    }
+
 
     /**
      * Create an error response packet
@@ -172,6 +189,76 @@ public class PrinterService {
     }
 
     /**
+     * Handle the attachment queue
+     *
+     * @param requestPacket The IPP request packet
+     * @return The IPP response packet
+     */
+    private IppPacket handleAttachmentQueue(String printerURI, IppPacket requestPacket, InputStream documentStream) {
+        IppPacket responsePacket = null;
+        log.info("Received Print-Job request for attachment queue");
+        TikaConfig config = TikaConfig.getDefaultConfig();
+        Detector detector = config.getDetector();
+        Metadata metadata = new Metadata();
+        try {
+            if (documentStream == null) {
+                // return error
+                return IppPacket.jobResponse(
+                                Status.clientErrorBadRequest,
+                                requestPacket.getRequestId(),
+                                URI.create("%s/jobs/1".formatted(printerURI)),
+                                JobState.aborted,
+                                Collections.singletonList(JobStateReason.jobQueued))
+                        .putAttributes(operationAttributes, Types.printerUri.of(URI.create(printerURI)))
+                        .build();
+            }
+            MediaType mediaType = detector.detect(documentStream, metadata);
+            if (mediaType == null) {
+                // return error
+                return IppPacket.jobResponse(
+                                Status.clientErrorBadRequest,
+                                requestPacket.getRequestId(),
+                                URI.create("%s/jobs/1".formatted(printerURI)),
+                                JobState.aborted,
+                                Collections.singletonList(JobStateReason.jobQueued))
+                        .putAttributes(operationAttributes, Types.printerUri.of(URI.create(printerURI)))
+                        .build();
+            }
+
+            switch (mediaType.getBaseType().getType()) {
+                case "image", "application" -> {
+                    String attachmentId = crateAttachmentAttachmentQueueElement(requestPacket, mediaType, documentStream);
+
+                    // if all is gone as it should at this point we can create the entry
+                    if (attachmentId == null) {
+                        throw ControllerLogicException.builder()
+                                .errorCode(-1)
+                                .errorMessage("Error creating attachment")
+                                .errorDomain("PrinterService::handleApplicationBaseType")
+                                .build();
+                    }
+                }
+                default -> {
+                    return new IppPacket(Status.clientErrorBadRequest, requestPacket.getRequestId());
+                }
+            }
+
+            responsePacket = IppPacket.jobResponse(
+                            Status.successfulOk,
+                            requestPacket.getRequestId(),
+                            URI.create("%s/jobs/1".formatted(printerURI)),
+                            JobState.pending,
+                            Collections.singletonList(JobStateReason.jobQueued))
+                    .putAttributes(operationAttributes, Types.printerUri.of(URI.create(printerURI)))
+                    .build();
+        } catch (IOException e) {
+            log.error("Error processing print job {}", e.toString());
+            responsePacket = new IppPacket(Status.clientErrorBadRequest, requestPacket.getRequestId());
+        }
+        return responsePacket;
+    }
+
+    /**
      * Handle an application base type
      *
      * @param requestPacket  The IPP request packet
@@ -230,6 +317,7 @@ public class PrinterService {
         createEntry(requestPacket, logbookDTO, null, List.of(attachmentId));
     }
 
+
     /**
      * Handle a text base type
      *
@@ -249,6 +337,7 @@ public class PrinterService {
         }
         createEntry(requestPacket, logbookDTO, documentContent, emptyList());
     }
+
 
     /**
      * Create an entry
@@ -306,6 +395,27 @@ public class PrinterService {
     }
 
     /**
+     * Create an attachment
+     *
+     * @param requestPacket  The IPP request packet
+     * @param type           The media type
+     * @param documentStream The document stream
+     */
+    private String crateAttachmentAttachmentQueueElement(IppPacket requestPacket, MediaType type, InputStream documentStream) {
+        log.info("Create attachment for attachmentQueue from image print request for subtype: {}", type.getSubtype());
+        String documentFileName = getFileName(requestPacket);
+        return attachmentService.createAttachment(
+                FileObjectDescription.builder()
+                        .contentType(type.toString())
+                        .fileName(documentFileName == null ? "Printed Document" : documentFileName)
+                        .is(documentStream)
+                        .build(),
+                true,
+                Optional.of(AttachmentService.ATTACHMENT_QUEUED_REFERENCE)
+        );
+    }
+
+    /**
      * Handle a Get-Printer-Attributes request
      *
      * @param requestPacket The IPP request packet
@@ -354,4 +464,5 @@ public class PrinterService {
     private URI getPrinterUri(String postfix) {
         return URI.create("%s/v1/printers/default/%s".formatted(elogAppProperties.getIppUriPrefix(), postfix));
     }
+
 }

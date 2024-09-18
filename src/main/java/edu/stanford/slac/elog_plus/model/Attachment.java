@@ -28,11 +28,12 @@ public class Attachment {
     private String contentType;
     private String hasPreview;
     private String previewID;
+    private String referenceInfo;
     private byte[] miniPreview;
     @Builder.Default
     private Boolean inUse = false;
     @Builder.Default
     private PreviewProcessingState previewState = PreviewProcessingState.Waiting;
     @CreatedDate
-    private LocalDateTime creationData;
+    private LocalDateTime createdDate;
 }

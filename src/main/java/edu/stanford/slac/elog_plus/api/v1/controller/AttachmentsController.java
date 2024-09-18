@@ -3,11 +3,13 @@ package edu.stanford.slac.elog_plus.api.v1.controller;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
 import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
+import edu.stanford.slac.elog_plus.api.v1.dto.AttachmentDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.EntrySummaryDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.LogbookSummaryDTO;
 import edu.stanford.slac.elog_plus.model.FileObjectDescription;
 import edu.stanford.slac.elog_plus.service.AttachmentService;
 import edu.stanford.slac.elog_plus.service.EntryService;
+import edu.stanford.slac.elog_plus.service.PrinterService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -111,5 +113,17 @@ public class AttachmentsController {
                         .build()
         );
         return new ResponseEntity<>(new InputStreamResource(desc.getIs()), headers, HttpStatus.OK);
+    }
+
+    @GetMapping(
+            value = "/queued",
+            produces = {"application/json"}
+    )
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
+    public ApiResultResponse<List<AttachmentDTO>> findAllQueuedAttachments(
+            Authentication authentication
+    ) {
+        return ApiResultResponse.of(attachmentService.findAllByReferenceInfo(AttachmentService.ATTACHMENT_QUEUED_REFERENCE));
     }
 }

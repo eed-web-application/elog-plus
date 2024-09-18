@@ -214,6 +214,24 @@ public class TestControllerHelperService {
         AssertionsForClassTypes.assertThat(result.getResponse().getContentType()).isEqualTo(mediaType);
     }
 
+
+    public ApiResultResponse<List<AttachmentDTO>> attachmentControllerFindAllQueued(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo) throws Exception {
+        MockHttpServletRequestBuilder requestBuilder =
+                get("/v1/attachment/queued")
+                        .accept(MediaType.APPLICATION_JSON);
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
     public ApiResultResponse<String> createNewLog(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,

@@ -1,10 +1,12 @@
 package edu.stanford.slac.elog_plus.v1.service;
 
 import com.github.javafaker.Faker;
+import edu.stanford.slac.ad.eed.baselib.config.SecurityAuditorAware;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.exception.EntryNotFound;
 import edu.stanford.slac.elog_plus.exception.ShiftNotFound;
+import edu.stanford.slac.elog_plus.model.Attachment;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.FileObjectDescription;
 import edu.stanford.slac.elog_plus.model.Logbook;
@@ -13,6 +15,7 @@ import edu.stanford.slac.elog_plus.service.AttachmentService;
 import edu.stanford.slac.elog_plus.service.EntryService;
 import edu.stanford.slac.elog_plus.service.LogbookService;
 import edu.stanford.slac.elog_plus.utility.DateUtilities;
+import org.apache.kafka.clients.admin.AdminClient;
 import org.assertj.core.api.Condition;
 import org.jsoup.nodes.Element;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,11 +24,13 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.MediaType;
+import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -40,8 +45,10 @@ import static edu.stanford.slac.elog_plus.api.v1.mapper.EntryMapper.ELOG_ENTRY_R
 import static edu.stanford.slac.elog_plus.api.v1.mapper.EntryMapper.ELOG_ENTRY_REF_ID;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.AssertionsForClassTypes.not;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -64,11 +71,39 @@ public class EntryServiceTest {
     private SharedUtilityService sharedUtilityService;
     @Autowired
     MongoTemplate mongoTemplate;
-
+    @Autowired
+    private SecurityAuditorAware securityAuditorAware;
+    @Value("${edu.stanford.slac.elog-plus.image-preview-topic}")
+    private String imagePreviewTopic;
+    @Autowired
+    private KafkaAdmin kafkaAdmin;
     @BeforeEach
     public void preTest() {
         mongoTemplate.remove(new Query(), Entry.class);
         mongoTemplate.remove(new Query(), Logbook.class);
+        mongoTemplate.remove(new Query(), Attachment.class);
+
+        try (AdminClient adminClient = AdminClient.create(kafkaAdmin.getConfigurationProperties())) {
+            Set<String> existingTopics = adminClient.listTopics().names().get();
+            List<String> topicsToDelete = List.of(
+                    imagePreviewTopic,
+                    String.format("%s-retry-2000", imagePreviewTopic),
+                    String.format("%s-retry-4000", imagePreviewTopic)
+            );
+
+            // Delete topics that actually exist
+            topicsToDelete.stream()
+                    .filter(existingTopics::contains)
+                    .forEach(topic -> {
+                        try {
+                            adminClient.deleteTopics(Collections.singletonList(topic)).all().get();
+                        } catch (Exception e) {
+                            System.err.println("Failed to delete topic " + topic + ": " + e.getMessage());
+                        }
+                    });
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to recreate Kafka topic", e);
+        }
     }
 
     private LogbookDTO getTestLogbook() {
@@ -596,6 +631,86 @@ public class EntryServiceTest {
         assertThat(attachmentModel.isPresent()).isTrue();
         assertThat(attachmentModel.get().getInUse()).isTrue();
     }
+
+    @Test
+    public void testLogAttachmentExpiration() {
+        var logbook = getTestLogbook();
+        Faker f = new Faker();
+        String fileName = f.file().fileName(
+                null,
+                null,
+                "pdf",
+                null
+        );
+        String attachmentIDThatWillExpires =
+                assertDoesNotThrow(
+                        () -> attachmentService.createAttachment(
+                                FileObjectDescription
+                                        .builder()
+                                        .fileName(fileName)
+                                        .contentType(MediaType.APPLICATION_PDF_VALUE)
+                                        .is(
+                                                new ByteArrayInputStream(
+                                                        "<<pdf data>>".getBytes(StandardCharsets.UTF_8)
+                                                )
+                                        )
+                                        .build(),
+                                false,
+                                Optional.of(AttachmentService.ATTACHMENT_QUEUED_REFERENCE)
+                        )
+                );
+        assertThat(attachmentIDThatWillExpires).isNotNull();
+        String attachmentID =
+                assertDoesNotThrow(
+                        () -> attachmentService.createAttachment(
+                                FileObjectDescription
+                                        .builder()
+                                        .fileName(fileName)
+                                        .contentType(MediaType.APPLICATION_PDF_VALUE)
+                                        .is(
+                                                new ByteArrayInputStream(
+                                                        "<<pdf data>>".getBytes(StandardCharsets.UTF_8)
+                                                )
+                                        )
+                                        .build(),
+                                false,
+                                Optional.of(AttachmentService.ATTACHMENT_QUEUED_REFERENCE)
+                        )
+                );
+        assertThat(attachmentID).isNotNull();
+        //wait 10 seconds before create the entry
+        assertDoesNotThrow(()->Thread.sleep(10000));
+
+        // create entry so the attachment id with attachmentID will be in use and will not be cancelled
+        String newLogID =
+                assertDoesNotThrow(
+                        () -> entryService.createNew(
+                                EntryNewDTO
+                                        .builder()
+                                        .logbooks(List.of(logbook.id()))
+                                        .text("This is a log for test")
+                                        .title("A very wonderful log")
+                                        .attachments(List.of(attachmentID))
+                                        .build(),
+                                sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
+                        )
+                );
+
+        await()
+                .atMost(90, SECONDS)
+                .pollInterval(1, SECONDS)
+                .until(
+                        () -> {
+                            var exists = attachmentService.exists(attachmentIDThatWillExpires);
+                            System.out.println("Attachment exists: " + exists);
+                            return !exists;
+                        }
+                );
+
+        // the attachment with id attachmentID will exist
+        assertThat(attachmentService.exists(attachmentID)).isTrue();
+    }
+
 
     @Test
     public void testLogAttachmentOnSearchDTO() {
