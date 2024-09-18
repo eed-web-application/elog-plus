@@ -35,7 +35,7 @@ objectclass: top
 objectclass: person
 objectclass: organizationalPerson
 objectclass: inetOrgPerson
-gecos: Name2 Surname2
+gecos: Name2 Name 2.1 Surname2
 cn: Surname2
 sn: Surname2
 mail: user2@slac.stanford.edu
