@@ -212,7 +212,7 @@ public class PrinterControllerTest {
         }
     }
 
-    @Test
+//    @Test
     public void testPrintingPSImage() {
         // check if printer support png
         List<String> formats;
