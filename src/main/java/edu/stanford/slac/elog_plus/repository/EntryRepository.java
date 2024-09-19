@@ -73,4 +73,11 @@ public interface EntryRepository extends MongoRepository<Entry, String>, EntryRe
      * @return all the entries that refer to the attachment
      */
     List<Entry> findAllByAttachmentsContains(String attachmentId);
+
+    /**
+     * Check if an entry exists using an attachment
+     * @param attachmentId the attachment id
+     * @return true if the entry exists
+     */
+    boolean existsByAttachmentsContains(String attachmentId);
 }

@@ -395,29 +395,18 @@ public class AttachmentService {
     }
 
     /**
-     * Delete all expired attachment
+     * remove from queue all expired attachment
      * @param expirationMinutes the expiration time in minutes
      */
-    public void deleteAllExpired(Integer expirationMinutes) {
+    public void enqueueAllExpired(Integer expirationMinutes) {
         // calculate expiration date
         LocalDateTime expirationTime = LocalDateTime.now().minusMinutes(expirationMinutes);
-        log.info("Delete all expired attachment since {}", expirationTime);
-        wrapCatch(
-                ()->{
-                    attachmentRepository.deleteByCreatedDateLessThanAndInUseIsFalse(
-                            expirationTime
-                    );
-                    return null;
-                },
-                -1,
-                "AttachmentService::deleteAllExpired"
-        );
 
         // remove all reference for queued attachment that are expired
         log.info("Remove reference info form expired and in use attachment since {}", expirationTime);
         wrapCatch(
                 ()->{
-                    attachmentRepository.removeReferenceInfoOnALlInUseAndExpired(ATTACHMENT_QUEUED_REFERENCE, expirationTime);
+                    attachmentRepository.removeReferenceInfoOnAllInUseAndExpired(ATTACHMENT_QUEUED_REFERENCE, expirationTime);
                     return null;
                 },
                 -2,

@@ -28,7 +28,7 @@ public class M009_CreateAttachmentReferenceInfoIndex {
                 new Index().on(
                         "referenceInfo",
                         Sort.Direction.ASC
-                )
+                ).sparse()
         );
 
         // rename a file on attachment collection

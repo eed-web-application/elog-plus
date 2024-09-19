@@ -48,5 +48,11 @@ public interface AttachmentRepositoryCustom {
      * Remove the reference information from all the attachments that are in use
      * @param referenceInfo the reference information to remove
      */
-    void removeReferenceInfoOnALlInUseAndExpired(String referenceInfo, LocalDateTime expirationTime);
+    void removeReferenceInfoOnAllInUseAndExpired(String referenceInfo, LocalDateTime expirationTime);
+
+    /**
+     * Find the next available model to process
+     * @return the next available model to process
+     */
+    Attachment findAndUpdateNextAvailableModel(Integer expirationMinutes, Integer processingTimeoutMinutes);
 }
