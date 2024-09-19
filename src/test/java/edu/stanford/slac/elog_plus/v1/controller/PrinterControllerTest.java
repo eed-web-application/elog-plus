@@ -48,6 +48,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.util.MimeTypeUtils;
+import org.springframework.web.util.NestedServletException;
 
 import java.io.*;
 import java.net.URI;
@@ -63,6 +64,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -274,7 +276,7 @@ public class PrinterControllerTest {
         int numberOfDocument = 10;
 
         // creates some attachments to be sure that those are not included on the attachment queue
-        for(int idx =0; idx < numberOfDocument ; idx++) {
+        for (int idx = 0; idx < numberOfDocument; idx++) {
             try (InputStream is = assertDoesNotThrow(
                     () -> documentGenerationService.getTestPng()
             )) {
@@ -467,10 +469,17 @@ public class PrinterControllerTest {
         var postBuilder = post(httpURI)
                 .contentType("application/ipp")
                 .content(outputStream.toByteArray());
-//        userInfo.ifPresent(login -> postBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
+
         MvcResult result = mockMvc.perform(postBuilder)
-                .andExpect(resultMatcher)
                 .andReturn();
+        Exception resolvedException = result.getResolvedException();
+        if (resolvedException != null) {
+            // Print the stack trace of the exception
+            resolvedException.printStackTrace();
+            throw resolvedException;
+        }
+        // check fi ti matches the expected result
+        resultMatcher.match(result);
         // Parse it back into an IPP packet
         IppInputStream responseInput = new IppInputStream(new ByteArrayInputStream(result.getResponse().getContentAsByteArray()));
         return new IppPacketData(responseInput.readPacket(), responseInput);
