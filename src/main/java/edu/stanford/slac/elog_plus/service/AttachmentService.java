@@ -12,8 +12,12 @@ import edu.stanford.slac.elog_plus.repository.StorageRepository;
 import io.micrometer.core.instrument.Counter;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.data.mongodb.MongoTransactionException;
+import org.springframework.data.mongodb.UncategorizedMongoDbException;
 import org.springframework.http.MediaType;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -364,7 +368,12 @@ public class AttachmentService {
      * @param inUse the 'in use' flag
      * @return true
      */
-    public Boolean setInUse(String attachmentID, boolean inUse) {
+    @Retryable(
+            value = {MongoTransactionException.class, UncategorizedMongoDbException.class},
+            maxAttempts = 5,
+            backoff = @Backoff(delay = 100, multiplier = 2)
+    )
+    public void setInUse(String attachmentID, boolean inUse) {
         wrapCatch(
                 () -> {
                     attachmentRepository.setInUseState(
@@ -376,7 +385,6 @@ public class AttachmentService {
                 -1,
                 "AttachmentService::setInUse"
         );
-        return true;
     }
 
     /**

@@ -2,6 +2,7 @@ package edu.stanford.slac.elog_plus.consumer;
 
 import edu.stanford.slac.elog_plus.model.Attachment;
 import edu.stanford.slac.elog_plus.model.FileObjectDescription;
+import edu.stanford.slac.elog_plus.repository.EntryRepository;
 import edu.stanford.slac.elog_plus.repository.StorageRepository;
 import edu.stanford.slac.elog_plus.service.AttachmentService;
 import io.micrometer.core.instrument.Counter;
@@ -39,6 +40,7 @@ import java.util.UUID;
 @Component
 @AllArgsConstructor
 public class ProcessingPreview {
+    final private EntryRepository   entryRepository;
     final private AttachmentService attachmentService;
     final private StorageRepository storageRepository;
     final private Counter previewProcessedCounter;
@@ -98,9 +100,11 @@ public class ProcessingPreview {
                     .outputFormat("jpg")
                     .toOutputStream(baos);
             attachmentService.setMiniPreview(attachment.getId(), baos.toByteArray());
-            // set preview id and state
+            // set in use, preview id and state
+            attachmentService.setInUse(attachment.getId(), entryRepository.existsByAttachmentsContains(attachment.getId()));
             attachmentService.setPreviewID(attachment.getId(), previewID);
             attachmentService.setPreviewProcessingState(attachment.getId(), Attachment.PreviewProcessingState.Completed);
+
             previewProcessedCounter.increment();
             acknowledgment.acknowledge();
         } catch (UnsupportedFormatException e) {
