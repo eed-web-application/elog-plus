@@ -74,7 +74,7 @@ public class AttachmentsController {
             //produces = {MediaType.APPLICATION_OCTET_STREAM_VALUE}
     )
     @Operation(summary = "Load an attachment using an unique attachment id")
-    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @attachmentAuthorizationService.canRead(#authentication, #attachmentId)")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")// and @attachmentAuthorizationService.canRead(#authentication, #attachmentId)
     public ResponseEntity<Resource> download(
             Authentication authentication,
             @Parameter(name = "attachmentId", description = "The unique id of the attachment", required = true)
@@ -97,7 +97,7 @@ public class AttachmentsController {
             //produces = {MediaType.APPLICATION_OCTET_STREAM_VALUE}
     )
     @Operation(summary = "Load an attachment preview using an unique attachment id")
-    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @attachmentAuthorizationService.canRead(#authentication, #attachmentId)")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")// and @attachmentAuthorizationService.canRead(#authentication, #attachmentId)
     public ResponseEntity<Resource> downloadPreview(
             Authentication authentication,
             @Parameter(name = "attachmentId", description = "The unique id of the attachment", required = true)
