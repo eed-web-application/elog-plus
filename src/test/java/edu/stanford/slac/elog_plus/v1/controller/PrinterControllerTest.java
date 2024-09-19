@@ -156,7 +156,7 @@ public class PrinterControllerTest {
         }
     }
 
-//    @Test
+    @Test
     public void testPrinterAttribute() {
         var uri = URI.create("/v1/printers/defaults");
         IppPacket attributeRequestResponse = IppPacket.getPrinterAttributes(uri)
@@ -177,7 +177,7 @@ public class PrinterControllerTest {
 
     }
 
-//    @Test
+    @Test
     public void failPrintingWithNoAuth() {
         // check if printer support png
         try (InputStream is = assertDoesNotThrow(() -> documentGenerationService.getTestPng())) {
@@ -190,7 +190,7 @@ public class PrinterControllerTest {
         }
     }
 
-//    @Test
+    @Test
     public void testPrintingPNGImage() {
         // check if printer support png
         List<String> formats;
@@ -212,7 +212,7 @@ public class PrinterControllerTest {
         }
     }
 
-//    @Test
+    @Test
     public void testPrintingPSImage() {
         // check if printer support png
         List<String> formats;
@@ -234,7 +234,7 @@ public class PrinterControllerTest {
         }
     }
 
-//    @Test
+    @Test
     public void testPrintingPDFImage() {
         // check if printer support png
         List<String> formats;
@@ -260,7 +260,7 @@ public class PrinterControllerTest {
         );
     }
 
-//    @Test
+    @Test
     public void testPrintingText() {
         try (var responsePacket = assertDoesNotThrow(() -> print(Optional.of("user1@slac.stanford.edu"), new ByteArrayInputStream("hello world".getBytes(StandardCharsets.UTF_8)), fullLogbook.name(), status().isOk()))) {
             assertThat(responsePacket).isNotNull();
@@ -268,7 +268,7 @@ public class PrinterControllerTest {
         }
     }
 
-//    @Test
+    @Test
     public void testAttachmentQueue() {
         // check if printer support png
         int numberOfDocument = 10;
