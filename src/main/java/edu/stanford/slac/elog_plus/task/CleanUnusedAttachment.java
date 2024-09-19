@@ -15,6 +15,6 @@ public class CleanUnusedAttachment {
     @Scheduled(cron = "${edu.stanford.slac.elog-plus.attachment-clean-expired-cron}")
     public void cleanExpiredNonUsedAttachments(){
         // This method will run every hour
-        attachmentService.deleteAllExpired(elogAppProperties.getAttachmentExpirationMinutes());
+        //attachmentService.deleteAllExpired(elogAppProperties.getAttachmentExpirationMinutes());
     }
 }
