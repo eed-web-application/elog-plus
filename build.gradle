@@ -171,9 +171,11 @@ testlogger {
     showSkipped true
     showFailed true
     showOnlySlow false
-    showStandardStreams false
-    showPassedStandardStreams true
-    showSkippedStandardStreams true
-    showFailedStandardStreams true
+    // Remove or comment out the following line
+    // showStandardStreams false
+    // Configure standard streams for individual test outcomes
+    showPassedStandardStreams false  // Set to false to avoid logs for passed tests
+    showSkippedStandardStreams false // Set to false to avoid logs for skipped tests
+    showFailedStandardStreams true   // Set to true to get logs for failed tests
     logLevel 'lifecycle'
 }
