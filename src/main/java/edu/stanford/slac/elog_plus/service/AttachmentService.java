@@ -366,10 +366,9 @@ public class AttachmentService {
      * Set the in use flag of an attachment
      * @param attachmentID the attachment id
      * @param inUse the 'in use' flag
-     * @return true
      */
     @Retryable(
-            value = {MongoTransactionException.class, UncategorizedMongoDbException.class},
+            retryFor = {MongoTransactionException.class, UncategorizedMongoDbException.class},
             maxAttempts = 5,
             backoff = @Backoff(delay = 100, multiplier = 2)
     )
