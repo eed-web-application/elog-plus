@@ -126,7 +126,7 @@ public class ProcessLogImportTest {
                         EntryImportDTO
                                 .builder()
                                 .logbooks(List.of("new-logbook"))
-                                .title(faker.book().title())
+                                .title("book title")
                                 .text(faker.lorem().paragraph())
                                 .originId("my-original-id")
                                 .build()
