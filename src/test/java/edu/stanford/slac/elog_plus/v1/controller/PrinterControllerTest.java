@@ -48,6 +48,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.util.MimeTypeUtils;
+import org.springframework.web.util.NestedServletException;
 
 import java.io.*;
 import java.net.URI;
@@ -63,6 +64,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -156,7 +158,7 @@ public class PrinterControllerTest {
         }
     }
 
-//    @Test
+    @Test
     public void testPrinterAttribute() {
         var uri = URI.create("/v1/printers/defaults");
         IppPacket attributeRequestResponse = IppPacket.getPrinterAttributes(uri)
@@ -177,7 +179,7 @@ public class PrinterControllerTest {
 
     }
 
-//    @Test
+    @Test
     public void failPrintingWithNoAuth() {
         // check if printer support png
         try (InputStream is = assertDoesNotThrow(() -> documentGenerationService.getTestPng())) {
@@ -190,7 +192,7 @@ public class PrinterControllerTest {
         }
     }
 
-//    @Test
+    @Test
     public void testPrintingPNGImage() {
         // check if printer support png
         List<String> formats;
@@ -212,7 +214,7 @@ public class PrinterControllerTest {
         }
     }
 
-//    @Test
+    @Test
     public void testPrintingPSImage() {
         // check if printer support png
         List<String> formats;
@@ -234,7 +236,7 @@ public class PrinterControllerTest {
         }
     }
 
-//    @Test
+    @Test
     public void testPrintingPDFImage() {
         // check if printer support png
         List<String> formats;
@@ -260,7 +262,7 @@ public class PrinterControllerTest {
         );
     }
 
-//    @Test
+    @Test
     public void testPrintingText() {
         try (var responsePacket = assertDoesNotThrow(() -> print(Optional.of("user1@slac.stanford.edu"), new ByteArrayInputStream("hello world".getBytes(StandardCharsets.UTF_8)), fullLogbook.name(), status().isOk()))) {
             assertThat(responsePacket).isNotNull();
@@ -268,13 +270,13 @@ public class PrinterControllerTest {
         }
     }
 
-//    @Test
+    @Test
     public void testAttachmentQueue() {
         // check if printer support png
         int numberOfDocument = 10;
 
         // creates some attachments to be sure that those are not included on the attachment queue
-        for(int idx =0; idx < numberOfDocument ; idx++) {
+        for (int idx = 0; idx < numberOfDocument; idx++) {
             try (InputStream is = assertDoesNotThrow(
                     () -> documentGenerationService.getTestPng()
             )) {
@@ -467,10 +469,17 @@ public class PrinterControllerTest {
         var postBuilder = post(httpURI)
                 .contentType("application/ipp")
                 .content(outputStream.toByteArray());
-//        userInfo.ifPresent(login -> postBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
+
         MvcResult result = mockMvc.perform(postBuilder)
-                .andExpect(resultMatcher)
                 .andReturn();
+        Exception resolvedException = result.getResolvedException();
+        if (resolvedException != null) {
+            // Print the stack trace of the exception
+            resolvedException.printStackTrace();
+            throw resolvedException;
+        }
+        // check fi ti matches the expected result
+        resultMatcher.match(result);
         // Parse it back into an IPP packet
         IppInputStream responseInput = new IppInputStream(new ByteArrayInputStream(result.getResponse().getContentAsByteArray()));
         return new IppPacketData(responseInput.readPacket(), responseInput);

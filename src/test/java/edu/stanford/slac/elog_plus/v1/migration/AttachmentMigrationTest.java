@@ -45,7 +45,7 @@ public class AttachmentMigrationTest {
     }
 
     @Test
-    public void testRenameSupersedeBy() {
+    public void testRenameOfCreationDataToCreatedDate() {
         Vector<String> entryIdWithSupersedeBy = new Vector<>();
         // create 100 fake entry some with supersedeBy
         for (int i = 0; i < 100; i++) {

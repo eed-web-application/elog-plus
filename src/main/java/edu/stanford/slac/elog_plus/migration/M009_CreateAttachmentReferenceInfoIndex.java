@@ -25,10 +25,13 @@ public class M009_CreateAttachmentReferenceInfoIndex {
         MongoDDLOps.createIndex(
                 Attachment.class,
                 mongoTemplate,
-                new Index().on(
-                        "referenceInfo",
-                        Sort.Direction.ASC
-                )
+                new Index()
+                        .on(
+                                "referenceInfo",
+                                Sort.Direction.ASC
+                        )
+                        .sparse()
+                        .named("referenceInfo")
         );
 
         // rename a file on attachment collection
@@ -41,6 +44,7 @@ public class M009_CreateAttachmentReferenceInfoIndex {
     }
 
     @RollbackExecution
-    public void rollback() {}
+    public void rollback() {
+    }
 
 }

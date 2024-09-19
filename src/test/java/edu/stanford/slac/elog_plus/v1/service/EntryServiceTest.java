@@ -14,6 +14,7 @@ import edu.stanford.slac.elog_plus.repository.AttachmentRepository;
 import edu.stanford.slac.elog_plus.service.AttachmentService;
 import edu.stanford.slac.elog_plus.service.EntryService;
 import edu.stanford.slac.elog_plus.service.LogbookService;
+import edu.stanford.slac.elog_plus.task.CleanUnusedAttachment;
 import edu.stanford.slac.elog_plus.utility.DateUtilities;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.assertj.core.api.Condition;
@@ -60,6 +61,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class EntryServiceTest {
     @Autowired
+    private CleanUnusedAttachment cleanUnusedAttachment;
+    @Autowired
     private EntryService entryService;
     @Autowired
     private LogbookService logbookService;
@@ -77,6 +80,7 @@ public class EntryServiceTest {
     private String imagePreviewTopic;
     @Autowired
     private KafkaAdmin kafkaAdmin;
+
     @BeforeEach
     public void preTest() {
         mongoTemplate.remove(new Query(), Entry.class);
@@ -632,8 +636,7 @@ public class EntryServiceTest {
         assertThat(attachmentModel.get().getInUse()).isTrue();
     }
 
-//    @Test
-    //TODO: Fix this test
+    @Test
     public void testLogAttachmentExpiration() {
         var logbook = getTestLogbook();
         Faker f = new Faker();
@@ -680,7 +683,7 @@ public class EntryServiceTest {
                 );
         assertThat(attachmentID).isNotNull();
         //wait 10 seconds before create the entry
-        assertDoesNotThrow(()->Thread.sleep(10000));
+        assertDoesNotThrow(() -> Thread.sleep(10000));
 
         // create entry so the attachment id with attachmentID will be in use and will not be cancelled
         String newLogID =
@@ -696,15 +699,19 @@ public class EntryServiceTest {
                                 sharedUtilityService.getPersonForEmail("user1@slac.stanford.edu")
                         )
                 );
+        // call directly the method to clean the attachment
 
         await()
                 .atMost(90, SECONDS)
                 .pollInterval(1, SECONDS)
                 .until(
                         () -> {
-                            var exists = attachmentService.exists(attachmentIDThatWillExpires);
-                            System.out.println("Attachment exists: " + exists);
-                            return !exists;
+                            // process to remove until it expires
+                            assertDoesNotThrow(() -> cleanUnusedAttachment.cleanExpiredNonUsedAttachments());
+                            var attachmentToBeRemoved = attachmentRepository.findById(attachmentIDThatWillExpires);
+                            assertThat(attachmentToBeRemoved.isPresent()).isTrue();
+                            System.out.println("Attachment canBeDeleted: " + attachmentToBeRemoved.get().getCanBeDeleted());
+                            return attachmentToBeRemoved.get().getCanBeDeleted();
                         }
                 );
 
