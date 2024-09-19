@@ -100,11 +100,9 @@ public class ProcessingPreview {
                     .outputFormat("jpg")
                     .toOutputStream(baos);
             attachmentService.setMiniPreview(attachment.getId(), baos.toByteArray());
-            // set in use, preview id and state
-            attachmentService.setInUse(attachment.getId(), entryRepository.existsByAttachmentsContains(attachment.getId()));
+            // set in preview id and state
             attachmentService.setPreviewID(attachment.getId(), previewID);
             attachmentService.setPreviewProcessingState(attachment.getId(), Attachment.PreviewProcessingState.Completed);
-
             previewProcessedCounter.increment();
             acknowledgment.acknowledge();
         } catch (UnsupportedFormatException e) {
