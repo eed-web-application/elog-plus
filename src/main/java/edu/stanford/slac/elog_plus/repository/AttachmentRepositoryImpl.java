@@ -80,10 +80,6 @@ public class AttachmentRepositoryImpl implements AttachmentRepositoryCustom {
         return a.orElseThrow().getPreviewState();
     }
 
-    @Retryable(
-            maxAttempts = 5,
-            backoff = @Backoff(delay = 100, multiplier = 2)
-    )
     @Override
     public void setInUseState(String id, Boolean inUse) {
         Query q = new Query();

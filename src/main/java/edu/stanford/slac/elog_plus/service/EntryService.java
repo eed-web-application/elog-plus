@@ -263,8 +263,6 @@ public class EntryService {
                                             .build(),
                                     () -> attachmentService.exists(attachmentID)
                             );
-
-                            attachmentService.setInUse(attachmentID, true);
                         }
                 );
         // check for tags
