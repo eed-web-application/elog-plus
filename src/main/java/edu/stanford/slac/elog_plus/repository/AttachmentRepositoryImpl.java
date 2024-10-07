@@ -81,7 +81,6 @@ public class AttachmentRepositoryImpl implements AttachmentRepositoryCustom {
     }
 
     @Retryable(
-            retryFor = {MongoTransactionException.class, UncategorizedMongoDbException.class},
             maxAttempts = 5,
             backoff = @Backoff(delay = 100, multiplier = 2)
     )
