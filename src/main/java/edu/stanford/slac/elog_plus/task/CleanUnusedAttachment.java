@@ -29,6 +29,7 @@ public class CleanUnusedAttachment {
     public void cleanExpiredNonUsedAttachments(){
         Attachment attachment = null;
         // the expiration data is calculated in minuted form now depending on the configuration
+        log.debug("Cleaning unused attachments");
         var expirationAttachmentDate = LocalDateTime.now(clock).minusMinutes(elogAppProperties.getAttachmentExpirationMinutes());
         while ((attachment = attachmentRepository.findAndUpdateNextAvailableModel(expirationAttachmentDate, expirationAttachmentDate.minusSeconds(30))) != null) {
             try {
@@ -52,5 +53,6 @@ public class CleanUnusedAttachment {
                 attachmentRepository.save(attachment);
             }
         }
+        log.debug("Cleaning unused attachments done");
     }
 }
