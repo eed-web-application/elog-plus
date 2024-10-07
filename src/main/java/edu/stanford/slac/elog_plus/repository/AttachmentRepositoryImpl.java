@@ -4,12 +4,16 @@ import com.mongodb.client.result.UpdateResult;
 import edu.stanford.slac.elog_plus.model.Attachment;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.data.mongodb.MongoTransactionException;
+import org.springframework.data.mongodb.UncategorizedMongoDbException;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.BooleanOperators;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
@@ -76,6 +80,11 @@ public class AttachmentRepositoryImpl implements AttachmentRepositoryCustom {
         return a.orElseThrow().getPreviewState();
     }
 
+    @Retryable(
+            retryFor = {MongoTransactionException.class, UncategorizedMongoDbException.class},
+            maxAttempts = 5,
+            backoff = @Backoff(delay = 100, multiplier = 2)
+    )
     @Override
     public void setInUseState(String id, Boolean inUse) {
         Query q = new Query();
