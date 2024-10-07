@@ -367,6 +367,10 @@ public class AttachmentService {
      * @param attachmentID the attachment id
      * @param inUse the 'in use' flag
      */
+    @Retryable(
+            maxAttempts = 5,
+            backoff = @Backoff(delay = 100, multiplier = 2)
+    )
     public void setInUse(String attachmentID, boolean inUse) {
         wrapCatch(
                 () -> {
