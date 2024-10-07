@@ -1,9 +1,11 @@
 package edu.stanford.slac.elog_plus.task;
 
 
+import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.api.v1.dto.EntryNewDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.NewLogbookDTO;
 import edu.stanford.slac.elog_plus.config.ELOGAppProperties;
+import edu.stanford.slac.elog_plus.exception.AttachmentNotFound;
 import edu.stanford.slac.elog_plus.migration.M010_CreateIndexForAttachmentProcessing;
 import edu.stanford.slac.elog_plus.model.Attachment;
 import edu.stanford.slac.elog_plus.model.Entry;
@@ -38,6 +40,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 @AutoConfigureMockMvc
@@ -178,7 +181,7 @@ public class TaskTest {
         assertThat(attachmentCreated.getInUse()).isFalse();
 
         // associate entry to the attachment
-        createEntryWithAttachment(finalAttachmentId);
+        assertDoesNotThrow(() -> createEntryWithAttachment(finalAttachmentId));
         // checks
         attachmentCreated = assertDoesNotThrow(()->attachmentRepository.findById(finalAttachmentId).orElseThrow(()->new RuntimeException("Attachment not found")));
         assertThat(attachmentCreated.getReferenceInfo()).isNotNull();
@@ -200,20 +203,65 @@ public class TaskTest {
         assertThat(attachment.getInUse()).isTrue();
     }
 
+    @Test
+    public void entryWithAttachmentThatIsInDeleteStateFails() throws IOException {
+        String attachmentId = null;
+        try (InputStream is = assertDoesNotThrow(
+                () -> documentGenerationService.getTestJpeg()
+        )) {
+            // create an attachment that will not be used
+            attachmentId = assertDoesNotThrow(() -> attachmentService.createAttachment(
+                            FileObjectDescription
+                                    .builder()
+                                    .fileName("jpegFileName")
+                                    .contentType(MediaType.IMAGE_JPEG_VALUE)
+                                    .is(is)
+                                    .build(),
+                            // we do not need to preview for this test
+                            false,
+                            Optional.of("test") // this attachment has optional info, that should expire as well
+                    )
+            );
+        }
+        // the attachment should dbe flagged as to delete
+        String finalAttachmentId = attachmentId;
+        var attachmentCreated = assertDoesNotThrow(()->attachmentRepository.findById(finalAttachmentId).orElseThrow(()->new RuntimeException("Attachment not found")));
+        assertThat(attachmentCreated.getReferenceInfo()).isNotNull();
+        assertThat(attachmentCreated.getCanBeDeleted()).isFalse();
+        assertThat(attachmentCreated.getInUse()).isFalse();
+
+        // jmp to expiration date
+        LocalDateTime now = LocalDateTime.now();
+        when(clock.instant()).thenReturn(now.plusMinutes(elogAppProperties.getAttachmentExpirationMinutes()).atZone(ZoneId.systemDefault()).toInstant());
+        when(clock.getZone()).thenReturn(ZoneId.systemDefault());
+        // run the task has it is supposed to do in future
+        assertDoesNotThrow(() -> cleanUnusedAttachment.cleanExpiredNonUsedAttachments());
+
+        var attachment = assertDoesNotThrow(()->attachmentRepository.findById(finalAttachmentId).orElseThrow(()->new RuntimeException("Attachment not found")));
+        assertThat(attachment.getCanBeDeleted()).isTrue();
+        assertThat(attachment.getReferenceInfo()).isNull();
+        assertThat(attachment.getInUse()).isFalse();
+
+        // associate entry to the attachment
+        var attachmentNotFound = assertThrows(
+                AttachmentNotFound.class,
+                ()->createEntryWithAttachment(finalAttachmentId)
+        );
+        assertThat(attachmentNotFound).isNotNull();
+    }
+
+
     /**
      * Create an entry with the attachment
      * @param finalAttachmentId the attachment id
      */
     private void createEntryWithAttachment(String finalAttachmentId) {
-        String logbookId =
-                assertDoesNotThrow(
-                        () -> logbookService.createNew(
+        String logbookId = logbookService.createNew(
                                 NewLogbookDTO
                                         .builder()
                                         .name(UUID.randomUUID().toString())
                                         .build()
-                        )
-                );
+                        );
         assertThat(logbookId).isNotNull();
 
         String newLogID = entryService.createNew(

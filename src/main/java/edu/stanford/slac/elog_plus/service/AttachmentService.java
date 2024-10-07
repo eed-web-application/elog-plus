@@ -108,7 +108,8 @@ public class AttachmentService {
      */
     public boolean exists(String id) {
         return wrapCatch(
-                () -> attachmentRepository.existsById(
+                // the attachment exist only if it exists and cannot be deleted
+                () -> attachmentRepository.existsByIdAndCanBeDeletedIsFalse(
                         id
                 ),
                 0,
