@@ -4,6 +4,7 @@ import com.github.javafaker.Faker;
 import edu.stanford.slac.ad.eed.baselib.config.SecurityAuditorAware;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
+import edu.stanford.slac.elog_plus.config.ELOGAppProperties;
 import edu.stanford.slac.elog_plus.exception.EntryNotFound;
 import edu.stanford.slac.elog_plus.exception.ShiftNotFound;
 import edu.stanford.slac.elog_plus.model.Attachment;
@@ -20,11 +21,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.MediaType;
@@ -34,9 +37,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.*;
 import java.util.*;
 
 import static edu.stanford.slac.elog_plus.api.v1.mapper.EntryMapper.ELOG_ENTRY_REF;
@@ -49,6 +50,7 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.when;
 
 @AutoConfigureMockMvc
 @SpringBootTest()
@@ -77,13 +79,17 @@ public class EntryServiceTest {
     private String imagePreviewTopic;
     @Autowired
     private KafkaAdmin kafkaAdmin;
+    @Autowired
+    private ELOGAppProperties elogAppProperties;
+    @SpyBean
+    private Clock clock; // Mock the Clock bean
 
     @BeforeEach
     public void preTest() {
         mongoTemplate.remove(new Query(), Entry.class);
         mongoTemplate.remove(new Query(), Logbook.class);
         mongoTemplate.remove(new Query(), Attachment.class);
-
+        Mockito.reset(clock);
         try (AdminClient adminClient = AdminClient.create(kafkaAdmin.getConfigurationProperties())) {
             Set<String> existingTopics = adminClient.listTopics().names().get();
             List<String> topicsToDelete = List.of(
@@ -626,11 +632,6 @@ public class EntryServiceTest {
         assertThat(foundLog.attachments().size()).isEqualTo(1);
         assertThat(foundLog.attachments().get(0).fileName()).isEqualTo(fileName);
         assertThat(foundLog.attachments().get(0).contentType()).isEqualTo(MediaType.APPLICATION_PDF_VALUE);
-
-        // verify that attachment is in use
-        var attachmentModel = attachmentRepository.findById(attachmentID);
-        assertThat(attachmentModel.isPresent()).isTrue();
-        assertThat(attachmentModel.get().getInUse()).isTrue();
     }
 
     @Test
@@ -679,8 +680,6 @@ public class EntryServiceTest {
                         )
                 );
         assertThat(attachmentID).isNotNull();
-        //wait 10 seconds before create the entry
-        assertDoesNotThrow(() -> Thread.sleep(10000));
 
         // create entry so the attachment id with attachmentID will be in use and will not be cancelled
         String newLogID =
@@ -697,20 +696,16 @@ public class EntryServiceTest {
                         )
                 );
         // call directly the method to clean the attachment
+        // jmp to expiration date
+        LocalDateTime now = LocalDateTime.now();
+        when(clock.instant()).thenReturn(now.plusMinutes(elogAppProperties.getAttachmentExpirationMinutes()).atZone(ZoneId.systemDefault()).toInstant());
+        when(clock.getZone()).thenReturn(ZoneId.systemDefault());
+        // run the task has it is supposed to do in future
+        assertDoesNotThrow(() -> cleanUnusedAttachment.cleanExpiredNonUsedAttachments());
 
-        await()
-                .atMost(90, SECONDS)
-                .pollInterval(1, SECONDS)
-                .until(
-                        () -> {
-                            // process to remove until it expires
-                            assertDoesNotThrow(() -> cleanUnusedAttachment.cleanExpiredNonUsedAttachments());
-                            var attachmentToBeRemoved = attachmentRepository.findById(attachmentIDThatWillExpires);
-                            assertThat(attachmentToBeRemoved.isPresent()).isTrue();
-                            System.out.println("Attachment canBeDeleted: " + attachmentToBeRemoved.get().getCanBeDeleted());
-                            return attachmentToBeRemoved.get().getCanBeDeleted();
-                        }
-                );
+        var attachmentToBeRemoved = attachmentRepository.findById(attachmentIDThatWillExpires);
+        assertThat(attachmentToBeRemoved.isPresent()).isTrue();
+        assertThat(attachmentToBeRemoved.get().getCanBeDeleted()).isTrue();
 
         // the attachment with id attachmentID will exist
         assertThat(attachmentService.exists(attachmentID)).isTrue();

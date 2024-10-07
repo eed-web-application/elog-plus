@@ -177,13 +177,14 @@ public class TaskTest {
         assertThat(attachmentCreated.getCanBeDeleted()).isFalse();
         assertThat(attachmentCreated.getInUse()).isFalse();
 
-        // simulate th ein use of the attachment
+        // associate entry to the attachment
         createEntryWithAttachment(finalAttachmentId);
         // checks
         attachmentCreated = assertDoesNotThrow(()->attachmentRepository.findById(finalAttachmentId).orElseThrow(()->new RuntimeException("Attachment not found")));
         assertThat(attachmentCreated.getReferenceInfo()).isNotNull();
         assertThat(attachmentCreated.getCanBeDeleted()).isFalse();
-        assertThat(attachmentCreated.getInUse()).isTrue();
+        // now the in use is set byt the repetitive task
+        assertThat(attachmentCreated.getInUse()).isFalse();
 
         // jmp to expiration date
         LocalDateTime now = LocalDateTime.now();
@@ -196,6 +197,7 @@ public class TaskTest {
         var attachment = assertDoesNotThrow(()->attachmentRepository.findById(finalAttachmentId).orElseThrow(()->new RuntimeException("Attachment not found")));
         assertThat(attachment.getCanBeDeleted()).isFalse();
         assertThat(attachment.getReferenceInfo()).isNull();
+        assertThat(attachment.getInUse()).isTrue();
     }
 
     /**
