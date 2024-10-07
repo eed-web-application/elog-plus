@@ -1,16 +1,12 @@
-package edu.stanford.slac.elog_plus.v1.service;
+package edu.stanford.slac.elog_plus.service;
 
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthenticationTokenDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.NewAuthenticationTokenDTO;
-import edu.stanford.slac.ad.eed.baselib.exception.AuthenticationTokenMalformed;
-import edu.stanford.slac.ad.eed.baselib.exception.AuthenticationTokenNotFound;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.model.AuthenticationToken;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.exception.*;
 import edu.stanford.slac.elog_plus.model.Logbook;
-import edu.stanford.slac.elog_plus.service.LogbookService;
 import edu.stanford.slac.elog_plus.utility.DateUtilities;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;

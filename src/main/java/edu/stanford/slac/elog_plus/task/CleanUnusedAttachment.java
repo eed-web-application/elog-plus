@@ -10,6 +10,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
@@ -19,14 +20,17 @@ import static edu.stanford.slac.elog_plus.service.AttachmentService.ATTACHMENT_Q
 @Component
 @AllArgsConstructor
 public class CleanUnusedAttachment {
-    EntryRepository entryRepository;
-    AttachmentRepository attachmentRepository;
-    ELOGAppProperties elogAppProperties;
+    private final Clock clock;
+    private final EntryRepository entryRepository;
+    private final AttachmentRepository attachmentRepository;
+    private final ELOGAppProperties elogAppProperties;
 
     @Scheduled(cron = "${edu.stanford.slac.elog-plus.attachment-clean-expired-cron}")
     public void cleanExpiredNonUsedAttachments(){
         Attachment attachment = null;
-        while ((attachment = attachmentRepository.findAndUpdateNextAvailableModel(elogAppProperties.getAttachmentExpirationMinutes(), 1)) != null) {
+        // the expiration data is calculated in minuted form now depending on the configuration
+        var expirationAttachmentDate = LocalDateTime.now(clock).minusMinutes(elogAppProperties.getAttachmentExpirationMinutes());
+        while ((attachment = attachmentRepository.findAndUpdateNextAvailableModel(expirationAttachmentDate, expirationAttachmentDate.minusSeconds(30))) != null) {
             try {
                 log.info("Processing attachment {}", attachment.getId());
                 var attachmentIsUsed = entryRepository.existsByAttachmentsContains(attachment.getId());
@@ -36,10 +40,10 @@ public class CleanUnusedAttachment {
                 } else {
                     // set that can be deleted
                     attachment.setCanBeDeleted(true);
-                    // remove reference to so in case it was enqueued, it is also removed from the attachment queue
-                    attachment.setReferenceInfo(null);
                     log.info("Attachment {} is not used and is tagged as to be deleted", attachment.getId());
                 }
+                // remove reference to so in case it was enqueued, it is also removed from the attachment queue
+                attachment.setReferenceInfo(null);
             } catch (Exception e) {
                 log.error("Error processing attachment {}", attachment.getId(), e);
             } finally {

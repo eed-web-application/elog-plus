@@ -18,7 +18,6 @@ edu:
             root-authentication-token-list-json: '[{"name":"root-token-1","expiration":"2025-12-31"}]'
       elog-plus:
         attachment-clean-expired-cron: 0/10 * * ? * *
-        attachment-expiration-minutes: 1
 #          - name: test
 #            expiration: '2023-12-31'
 # Set the logging level for the entire MongoDB package

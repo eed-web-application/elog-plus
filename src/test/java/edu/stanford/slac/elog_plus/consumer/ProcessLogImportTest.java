@@ -1,4 +1,4 @@
-package edu.stanford.slac.elog_plus.v1.consumer;
+package edu.stanford.slac.elog_plus.consumer;
 
 import com.github.javafaker.Faker;
 import edu.stanford.slac.ad.eed.baselib.auth.JWTHelper;

@@ -1,11 +1,10 @@
-package edu.stanford.slac.elog_plus.v1.service;
+package edu.stanford.slac.elog_plus.service;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.AttachmentDTO;
 import edu.stanford.slac.elog_plus.config.ELOGAppProperties;
 import edu.stanford.slac.elog_plus.model.Attachment;
 import edu.stanford.slac.elog_plus.model.FileObjectDescription;
 import edu.stanford.slac.elog_plus.repository.AttachmentRepository;
-import edu.stanford.slac.elog_plus.service.AttachmentService;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

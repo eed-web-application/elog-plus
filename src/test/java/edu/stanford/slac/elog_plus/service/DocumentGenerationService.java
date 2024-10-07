@@ -1,4 +1,4 @@
-package edu.stanford.slac.elog_plus.v1.service;
+package edu.stanford.slac.elog_plus.service;
 
 import com.github.javafaker.Faker;
 import org.apache.pdfbox.pdmodel.PDDocument;

@@ -1,4 +1,4 @@
-package edu.stanford.slac.elog_plus.v1.migration;
+package edu.stanford.slac.elog_plus.migration;
 
 import edu.stanford.slac.elog_plus.migration.M008_RenameSupersedeBy;
 import edu.stanford.slac.elog_plus.model.Entry;

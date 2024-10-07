@@ -108,19 +108,14 @@ public class AttachmentRepositoryImpl implements AttachmentRepositoryCustom {
     }
 
     @Override
-    public Attachment findAndUpdateNextAvailableModel(Integer expirationMinutes, Integer processingTimeoutMinutes) {
-        // Calculate the expiration date for createdDate
-        Instant expirationInstant = Instant.now().minus(expirationMinutes, ChronoUnit.MINUTES);
-        Date expirationDate = Date.from(expirationInstant);
-
-        // Calculate the timeout threshold for processingTimestamp
-        Instant timeoutInstant = Instant.now().minus(processingTimeoutMinutes, ChronoUnit.MINUTES);
-        Date timeoutDate = Date.from(timeoutInstant);
-
+    public Attachment findAndUpdateNextAvailableModel(LocalDateTime expirationDate, LocalDateTime timeoutDate) {
         // Build the criteria
         Criteria criteria = new Criteria().andOperator(
                 Criteria.where("createdDate").lte(expirationDate),
-                Criteria.where("inUse").is(false),
+                new Criteria().orOperator(
+                        Criteria.where("referenceInfo").exists(true),
+                        Criteria.where("inUse").is(false)
+                ),
                 new Criteria().orOperator(
                         Criteria.where("processingId").exists(false),
                         Criteria.where("processingId").is(null),

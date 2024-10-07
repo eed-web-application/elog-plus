@@ -1,4 +1,4 @@
-package edu.stanford.slac.elog_plus.v1.service;
+package edu.stanford.slac.elog_plus.service;
 
 import com.github.javafaker.Faker;
 import edu.stanford.slac.ad.eed.baselib.config.SecurityAuditorAware;
@@ -11,9 +11,6 @@ import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.FileObjectDescription;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import edu.stanford.slac.elog_plus.repository.AttachmentRepository;
-import edu.stanford.slac.elog_plus.service.AttachmentService;
-import edu.stanford.slac.elog_plus.service.EntryService;
-import edu.stanford.slac.elog_plus.service.LogbookService;
 import edu.stanford.slac.elog_plus.task.CleanUnusedAttachment;
 import edu.stanford.slac.elog_plus.utility.DateUtilities;
 import org.apache.kafka.clients.admin.AdminClient;
