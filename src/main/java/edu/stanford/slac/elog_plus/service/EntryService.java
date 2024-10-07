@@ -256,15 +256,13 @@ public class EntryService {
                         attachmentID -> {
                             // check for presence of the attachment
                             assertion(
-                                    ControllerLogicException.builder()
+                                    AttachmentNotFound.attachmentNotFoundBuilder()
                                             .errorCode(-3)
-                                            .errorMessage("The attachment id '%s' has not been found".formatted(attachmentID))
+                                            .attachmentID(attachmentID)
                                             .errorDomain("LogService::createNew")
                                             .build(),
                                     () -> attachmentService.exists(attachmentID)
                             );
-
-                            attachmentService.setInUse(attachmentID, true);
                         }
                 );
         // check for tags
@@ -314,10 +312,6 @@ public class EntryService {
                         .errorDomain("LogService::createNew")
                         .build()
         );
-        // no more sanitization on text we get all
-//        newEntry.setText(
-//                StringUtilities.sanitizeEntryText(newEntry.getText())
-//        );
 
         // remove the invalid references
         filterOutInvalidReference(newEntry);

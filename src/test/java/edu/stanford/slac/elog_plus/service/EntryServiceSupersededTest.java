@@ -1,6 +1,5 @@
-package edu.stanford.slac.elog_plus.v1.service;
+package edu.stanford.slac.elog_plus.service;
 
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.PersonDTO;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.elog_plus.api.v1.dto.EntryNewDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.LogbookDTO;
@@ -8,22 +7,15 @@ import edu.stanford.slac.elog_plus.api.v1.dto.NewLogbookDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.QueryWithAnchorDTO;
 import edu.stanford.slac.elog_plus.model.Entry;
 import edu.stanford.slac.elog_plus.model.Logbook;
-import edu.stanford.slac.elog_plus.repository.AttachmentRepository;
 import edu.stanford.slac.elog_plus.repository.EntryRepository;
-import edu.stanford.slac.elog_plus.service.AttachmentService;
-import edu.stanford.slac.elog_plus.service.EntryService;
-import edu.stanford.slac.elog_plus.service.LogbookService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
@@ -32,7 +24,6 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 

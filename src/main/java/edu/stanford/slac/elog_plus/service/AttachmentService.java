@@ -108,7 +108,8 @@ public class AttachmentService {
      */
     public boolean exists(String id) {
         return wrapCatch(
-                () -> attachmentRepository.existsById(
+                // the attachment exist only if it exists and cannot be deleted
+                () -> attachmentRepository.existsByIdAndCanBeDeletedIsFalse(
                         id
                 ),
                 0,
@@ -367,11 +368,6 @@ public class AttachmentService {
      * @param attachmentID the attachment id
      * @param inUse the 'in use' flag
      */
-    @Retryable(
-            retryFor = {MongoTransactionException.class, UncategorizedMongoDbException.class},
-            maxAttempts = 5,
-            backoff = @Backoff(delay = 100, multiplier = 2)
-    )
     public void setInUse(String attachmentID, boolean inUse) {
         wrapCatch(
                 () -> {

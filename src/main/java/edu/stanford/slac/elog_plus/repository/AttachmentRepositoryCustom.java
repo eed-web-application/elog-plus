@@ -54,5 +54,5 @@ public interface AttachmentRepositoryCustom {
      * Find the next available model to process
      * @return the next available model to process
      */
-    Attachment findAndUpdateNextAvailableModel(Integer expirationMinutes, Integer processingTimeoutMinutes);
+    Attachment findAndUpdateNextAvailableModel(LocalDateTime expirationDate, LocalDateTime processingTimeoutDate);
 }

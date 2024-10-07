@@ -1,6 +1,5 @@
-package edu.stanford.slac.elog_plus.v1.migration;
+package edu.stanford.slac.elog_plus.repository;
 
-import edu.stanford.slac.elog_plus.migration.M007_FixNullOnLogbookReadAWriteAll;
 import edu.stanford.slac.elog_plus.model.Logbook;
 import edu.stanford.slac.elog_plus.repository.LogbookRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,13 +19,12 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
-
 @AutoConfigureMockMvc
 @SpringBootTest()
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles(profiles = "test")
-public class LogbookMigrationTest {
+public class LogbookRepositoryTest {
     @Autowired
     private MongoTemplate mongoTemplate;
     @Autowired
@@ -38,7 +36,7 @@ public class LogbookMigrationTest {
     }
 
     @Test
-    public void sanitizeNullReadWriteAll() {
+    public void testReadAndWriteAllNull() {
         var newLogbook = assertDoesNotThrow(
                 () -> logbookRepository.save(
                         Logbook
@@ -58,14 +56,9 @@ public class LogbookMigrationTest {
                 Logbook.class
         );
 
-        // run sanitization migration task
-        var sanitizationTask = new M007_FixNullOnLogbookReadAWriteAll(mongoTemplate);
-        assertDoesNotThrow(sanitizationTask::changeSet);
-
-        // check with default value
         var writeALLShouldBeEmpty = logbookRepository.findAllByWriteAllIsTrue();
-        assertThat(writeALLShouldBeEmpty).isNotEmpty();
+        assertThat(writeALLShouldBeEmpty).isEmpty();
         var readAllShouldBeEmpty = logbookRepository.findAllByReadAllIsTrue();
-        assertThat(readAllShouldBeEmpty).isNotEmpty();
+        assertThat(readAllShouldBeEmpty).isEmpty();
     }
 }

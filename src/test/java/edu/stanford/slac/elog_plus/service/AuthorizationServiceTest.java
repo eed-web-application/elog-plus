@@ -1,4 +1,4 @@
-package edu.stanford.slac.elog_plus.v1.service;
+package edu.stanford.slac.elog_plus.service;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
@@ -6,11 +6,7 @@ import edu.stanford.slac.ad.eed.baselib.model.AuthenticationToken;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.elog_plus.api.v1.dto.NewAuthorizationDTO;
 import edu.stanford.slac.elog_plus.api.v1.dto.ResourceTypeDTO;
-import edu.stanford.slac.elog_plus.exception.ResourceAlreadyAuthorized;
 import edu.stanford.slac.elog_plus.model.Logbook;
-import edu.stanford.slac.elog_plus.service.AuthorizationServices;
-import edu.stanford.slac.elog_plus.service.LogbookService;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;

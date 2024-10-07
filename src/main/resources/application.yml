@@ -1,7 +1,7 @@
 logging:
   level:
-    edu.stanford.slac.elog_plus: ${ELOG_PLUS_LOG_LEVEL:DEBUG}
-
+    edu.stanford.slac.elog_plus: ${ELOG_PLUS_LOG_LEVEL:debug}
+    org.springframework.data.mongodb.core.MongoTemplate: ${ELOG_PLUS_LOG_LEVEL:debug}
 server:
   tomcat:
     mbeanregistry:
@@ -48,7 +48,7 @@ edu:
         import-entry-topic: ${ELOG_PLUS_IMPORT_ENTRY_TOPIC:elog-plus-import-entry}
         kafka-consumer-concurrency: ${ELOG_PLUS_KAFKA_CONSUMER_CONCURENCY:1}
         ipp-uri-prefix: ${ELOG_PLUS_IPP_URI_PREFIX:ipp://localhost}
-        attachment-clean-expired-cron: 0 0 0 * * *
+        attachment-clean-expired-cron: 0 0 * * * *
         attachment-expiration-minutes: 2880
         storage:
           url: ${ELOG_PLUS_MINIO_URL:http://localhost:9000}

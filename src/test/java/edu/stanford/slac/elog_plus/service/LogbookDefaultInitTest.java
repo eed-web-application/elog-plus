@@ -1,4 +1,4 @@
-package edu.stanford.slac.elog_plus.v1.service;
+package edu.stanford.slac.elog_plus.service;
 
 import edu.stanford.slac.elog_plus.api.v1.dto.LogbookDTO;
 import edu.stanford.slac.elog_plus.migration.M004_InitLogbook;

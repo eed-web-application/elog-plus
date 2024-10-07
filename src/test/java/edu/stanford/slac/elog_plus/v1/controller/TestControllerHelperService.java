@@ -13,7 +13,7 @@ import edu.stanford.slac.elog_plus.api.v1.dto.*;
 import edu.stanford.slac.elog_plus.api.v1.dto.NewAuthorizationDTO;
 import edu.stanford.slac.elog_plus.api.v2.dto.ImportEntryDTO;
 import edu.stanford.slac.elog_plus.service.LogbookService;
-import edu.stanford.slac.elog_plus.v1.service.SharedUtilityService;
+import edu.stanford.slac.elog_plus.service.SharedUtilityService;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.springframework.http.MediaType;

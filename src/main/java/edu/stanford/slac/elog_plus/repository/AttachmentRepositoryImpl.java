@@ -4,12 +4,16 @@ import com.mongodb.client.result.UpdateResult;
 import edu.stanford.slac.elog_plus.model.Attachment;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.data.mongodb.MongoTransactionException;
+import org.springframework.data.mongodb.UncategorizedMongoDbException;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.BooleanOperators;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
@@ -108,19 +112,14 @@ public class AttachmentRepositoryImpl implements AttachmentRepositoryCustom {
     }
 
     @Override
-    public Attachment findAndUpdateNextAvailableModel(Integer expirationMinutes, Integer processingTimeoutMinutes) {
-        // Calculate the expiration date for createdDate
-        Instant expirationInstant = Instant.now().minus(expirationMinutes, ChronoUnit.MINUTES);
-        Date expirationDate = Date.from(expirationInstant);
-
-        // Calculate the timeout threshold for processingTimestamp
-        Instant timeoutInstant = Instant.now().minus(processingTimeoutMinutes, ChronoUnit.MINUTES);
-        Date timeoutDate = Date.from(timeoutInstant);
-
+    public Attachment findAndUpdateNextAvailableModel(LocalDateTime expirationDate, LocalDateTime timeoutDate) {
         // Build the criteria
         Criteria criteria = new Criteria().andOperator(
                 Criteria.where("createdDate").lte(expirationDate),
-                Criteria.where("inUse").is(false),
+                new Criteria().orOperator(
+                        Criteria.where("referenceInfo").exists(true),
+                        Criteria.where("inUse").is(false)
+                ),
                 new Criteria().orOperator(
                         Criteria.where("processingId").exists(false),
                         Criteria.where("processingId").is(null),
