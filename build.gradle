@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.1.5'
+    id 'org.springframework.boot' version '3.3.4'
     id 'io.spring.dependency-management' version '1.1.0'
     id 'com.adarshr.test-logger' version '4.0.0'
     id 'jacoco'
@@ -11,8 +11,8 @@ group = 'edu.stanford.slac'
 version = '1.0.0'
 
 ext {
-    ad_eed_baselib_version = "0.1.84"
-    ad_eed_base_mongodb_lib_version = "1.0.8"
+    ad_eed_baselib_version = "0.1.85"
+    ad_eed_base_mongodb_lib_version = "1.0.9"
     javaSourceCompatibility = JavaVersion.VERSION_21
     javaTargetCompatibility = JavaVersion.VERSION_21
 }
@@ -43,8 +43,6 @@ configurations {
 
 repositories {
     mavenCentral()
-//    maven { url 'https://repo.spring.io/milestone' }
-//    maven { url 'https://repo.spring.io/snapshot' }
     maven {
         url = uri("https://maven.pkg.github.com/eed-web-application/slac-ad-eed-baselib")
         credentials {
