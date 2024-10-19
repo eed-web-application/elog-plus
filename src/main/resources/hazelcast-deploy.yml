@@ -20,3 +20,9 @@ hazelcast:
         size: 1000
         max-size-policy: ENTRY_COUNT
         eviction-policy: LFU
+  network:
+    join:
+      multicast:
+        enabled: false
+      kubernetes:
+        enabled: true

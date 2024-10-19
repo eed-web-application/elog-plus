@@ -8,6 +8,8 @@ spring:
         enabled: false
   cache:
     type: none
+  hazelcast:
+    config: classpath:hazelcast.yaml
 edu:
   stanford:
     slac:
