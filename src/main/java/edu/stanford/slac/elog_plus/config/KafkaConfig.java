@@ -52,13 +52,13 @@ public class KafkaConfig {
 
     @Bean
     public AdminClient admin() {
-        Map<String, Object> props = kafkaProperties.buildAdminProperties();
+        Map<String, Object> props = kafkaProperties.buildAdminProperties(null);
         return  AdminClient.create(props);
     }
 
     @Bean
     public ConsumerFactory<String, Attachment> attachmentKafkaListenerConsumerFactory() {
-        Map<String, Object> props = kafkaProperties.buildConsumerProperties();
+        Map<String, Object> props = kafkaProperties.buildConsumerProperties(null);
 
         // Calculate max poll records based on concurrency level
         props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 2 * concurrencyLevel);
@@ -77,7 +77,7 @@ public class KafkaConfig {
 
     @Bean
     public ConsumerFactory<String, ImportEntryDTO> importEntryKafkaListenerConsumerFactory() {
-        Map<String, Object> props = kafkaProperties.buildConsumerProperties();
+        Map<String, Object> props = kafkaProperties.buildConsumerProperties(null);
 
         // Calculate max poll records based on concurrency level
         props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 2 * concurrencyLevel);
@@ -116,7 +116,7 @@ public class KafkaConfig {
 
     @Bean
     public ProducerFactory<String, Attachment> attachementProducerFactory() {
-        Map<String, Object> props = kafkaProperties.buildProducerProperties();
+        Map<String, Object> props = kafkaProperties.buildProducerProperties(null);
         DefaultKafkaProducerFactory<String, Attachment> pf = new DefaultKafkaProducerFactory<>(props);
         pf.addListener(new MicrometerProducerListener<>(meterRegistry));
         return pf;
@@ -124,7 +124,7 @@ public class KafkaConfig {
 
     @Bean
     public ProducerFactory<String, ImportEntryDTO> importEntryProducerFactory() {
-        Map<String, Object> props = kafkaProperties.buildProducerProperties();
+        Map<String, Object> props = kafkaProperties.buildProducerProperties(null);
         DefaultKafkaProducerFactory<String, ImportEntryDTO> pf = new DefaultKafkaProducerFactory<>(props);
         pf.addListener(new MicrometerProducerListener<>(meterRegistry));
         return pf;
