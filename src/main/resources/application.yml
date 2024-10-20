@@ -13,7 +13,7 @@ spring:
   cache:
     type: hazelcast
   hazelcast:
-    config: ${ELOG_PLUS_HAZELCAST_CONFIG_PATH:classpath:hazelcast-deploy.yaml}
+    config: ${ELOG_PLUS_HAZELCAST_CONFIG_PATH:classpath:hazelcast.yaml}
   ldap:
     urls: ${ELOG_PLUS_LDAP_URI:ldap://localhost:8389}
     base: ${ELOG_PLUS_LDAP_BASE:dc=sdf,dc=slac,dc=stanford,dc=edu}
