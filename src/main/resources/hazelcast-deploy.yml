@@ -23,6 +23,4 @@ hazelcast:
   network:
     join:
       multicast:
-        enabled: false
-      kubernetes:
         enabled: true
