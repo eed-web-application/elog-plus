@@ -100,8 +100,8 @@ dependencies {
     implementation 'io.github.ollama4j:ollama4j:1.0.79'
 
     //eed library
-    implementation "edu.stanford.slac:slac-ad-eed-baselib:$project.ext.ad_eed_baselib_version",
-            "edu.stanford.slac:slac-ad-eed-base-mongodb-lib:$project.ext.ad_eed_base_mongodb_lib_version"
+    implementation  "edu.stanford.slac:slac-ad-eed-baselib:$project.ext.ad_eed_baselib_version",
+                    "edu.stanford.slac:slac-ad-eed-base-mongodb-lib:$project.ext.ad_eed_base_mongodb_lib_version"
 
     // hazelcast
     implementation 'com.hazelcast:hazelcast-spring:5.3.8'
