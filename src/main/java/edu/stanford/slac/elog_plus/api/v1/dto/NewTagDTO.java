@@ -14,6 +14,7 @@ import lombok.Builder;
 public record NewTagDTO(
         @NotNull
         @NotEmpty
-        String name
+        String name,
+        String description
 ) {
 }

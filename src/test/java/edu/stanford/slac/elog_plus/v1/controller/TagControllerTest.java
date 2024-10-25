@@ -218,4 +218,164 @@ public class TagControllerTest {
         AssertionsForInterfaceTypes.assertThat(allTagResultForUser2OnLogbook2.getPayload()).hasSize(1);
         AssertionsForInterfaceTypes.assertThat(allTagResultForUser2OnLogbook2.getPayload()).extracting("name").contains("new-tag-2");
     }
+
+    @Test
+    public void checkTagsFromReadableFromAllLogbook() {
+        ApiResultResponse<String> creationResult1 = assertDoesNotThrow(
+                () -> testControllerHelperService.createNewLogbook(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewLogbookDTO.builder()
+                                .name("new-logbook")
+                                .readAll(true)
+                                .build()
+                )
+        );
+
+        assertThat(creationResult1).isNotNull();
+        assertThat(creationResult1.getErrorCode()).isEqualTo(0);
+        assertThat(creationResult1.getPayload()).isNotEmpty();
+
+        ApiResultResponse<String> newTagResult1 = assertDoesNotThrow(
+                () -> testControllerHelperService.createNewLogbookTags(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        creationResult1.getPayload(),
+                        NewTagDTO
+                                .builder()
+                                .name("new-tag-1")
+                                .build()
+                )
+        );
+        assertThat(newTagResult1).isNotNull();
+        assertThat(newTagResult1.getErrorCode()).isEqualTo(0);
+        assertThat(newTagResult1.getPayload()).isNotEmpty();
+
+        ApiResultResponse<String> creationResult2 = assertDoesNotThrow(
+                () -> testControllerHelperService.createNewLogbook(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewLogbookDTO.builder()
+                                .name("new-logbook-2")
+                                .writeAll(true)
+                                .build()
+                )
+        );
+
+        assertThat(creationResult2).isNotNull();
+        assertThat(creationResult2.getErrorCode()).isEqualTo(0);
+        assertThat(creationResult2.getPayload()).isNotEmpty();
+
+        ApiResultResponse<String> newTagResult2 = assertDoesNotThrow(
+                () -> testControllerHelperService.createNewLogbookTags(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        creationResult2.getPayload(),
+                        NewTagDTO
+                                .builder()
+                                .name("new-tag-2")
+                                .build()
+                )
+        );
+        assertThat(newTagResult2).isNotNull();
+        assertThat(newTagResult2.getErrorCode()).isEqualTo(0);
+        assertThat(newTagResult2.getPayload()).isNotEmpty();
+
+        // with user 2 need to return all tags
+        ApiResultResponse<List<TagDTO>> allTagResultForUser2 = assertDoesNotThrow(
+                () -> testControllerHelperService.tagControllerGetAllTags(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user2@slac.stanford.edu"),
+                        Optional.empty()
+                )
+        );
+
+        assertThat(allTagResultForUser2).isNotNull();
+        assertThat(allTagResultForUser2.getErrorCode()).isEqualTo(0);
+        AssertionsForInterfaceTypes.assertThat(allTagResultForUser2.getPayload()).hasSize(2);
+        AssertionsForInterfaceTypes.assertThat(allTagResultForUser2.getPayload()).extracting("name").contains("new-tag-1","new-tag-2");
+
+        // add a new logbook and tag that is not readable from all and not writable from all
+        ApiResultResponse<String> notReadableLogbook = assertDoesNotThrow(
+                () -> testControllerHelperService.createNewLogbook(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewLogbookDTO.builder()
+                                .name("new-logbook-not-readable")
+                                .build()
+                )
+        );
+
+        assertThat(creationResult1).isNotNull();
+        assertThat(creationResult1.getErrorCode()).isEqualTo(0);
+        assertThat(creationResult1.getPayload()).isNotEmpty();
+
+        ApiResultResponse<String> newTagResultOnNotReadable = assertDoesNotThrow(
+                () -> testControllerHelperService.createNewLogbookTags(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        notReadableLogbook.getPayload(),
+                        NewTagDTO
+                                .builder()
+                                .name("new-tag-1-on-not-readable")
+                                .build()
+                )
+        );
+        assertThat(newTagResult1).isNotNull();
+        assertThat(newTagResult1.getErrorCode()).isEqualTo(0);
+        assertThat(newTagResult1.getPayload()).isNotEmpty();
+
+        // authorize user 2 to new-logbook-not-readable
+        assertDoesNotThrow(
+                () -> testControllerHelperService.authorizationControllerCreateNewAuthorization(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewAuthorizationDTO
+                                .builder()
+                                .resourceType(ResourceTypeDTO.Logbook)
+                                .resourceId(notReadableLogbook.getPayload())
+                                .ownerId("user2@slac.stanford.edu")
+                                .ownerType(AuthorizationOwnerTypeDTO.User)
+                                .permission(AuthorizationTypeDTO.Read)
+                                .build()
+                )
+        );
+
+        // now user 2 should see all tags again
+        allTagResultForUser2 = assertDoesNotThrow(
+                () -> testControllerHelperService.tagControllerGetAllTags(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user2@slac.stanford.edu"),
+                        Optional.empty()
+                )
+        );
+
+        assertThat(allTagResultForUser2).isNotNull();
+        assertThat(allTagResultForUser2.getErrorCode()).isEqualTo(0);
+        AssertionsForInterfaceTypes.assertThat(allTagResultForUser2.getPayload()).hasSize(3);
+        AssertionsForInterfaceTypes.assertThat(allTagResultForUser2.getPayload()).extracting("name").contains("new-tag-1","new-tag-2", "new-tag-1-on-not-readable");
+
+        // user 3 now should see only readable from all logbook
+        ApiResultResponse<List<TagDTO>> allTagResultForUser3 = assertDoesNotThrow(
+                () -> testControllerHelperService.tagControllerGetAllTags(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user3@slac.stanford.edu"),
+                        Optional.empty()
+                )
+        );
+        assertThat(allTagResultForUser3).isNotNull();
+        assertThat(allTagResultForUser3.getErrorCode()).isEqualTo(0);
+        AssertionsForInterfaceTypes.assertThat(allTagResultForUser3.getPayload()).hasSize(2);
+        AssertionsForInterfaceTypes.assertThat(allTagResultForUser3.getPayload()).extracting("name").contains("new-tag-1","new-tag-2");
+    }
 }
