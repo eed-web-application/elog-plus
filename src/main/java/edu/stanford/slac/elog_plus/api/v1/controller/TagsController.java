@@ -19,10 +19,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Read;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
@@ -47,9 +45,10 @@ public class TagsController {
             Authentication authentication
     ) {
         // filter all readable
-        List<String> filteredLogbook = new ArrayList<>(logbooks.orElse(new ArrayList<>()));
+        Set<String> filteredLogbook = new HashSet<>(logbooks.orElse(new ArrayList<>()));
+
         if (!authService.checkForRoot(authentication)) {
-            // get al authorized logbook authorizations
+            // get all authorized logbook authorizations
             List<AuthorizationDTO> authOnLogbook = authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
                     authentication.getCredentials().toString(),
                     Read,
@@ -60,20 +59,28 @@ public class TagsController {
             var authorizedLogbook = authOnLogbook.stream()
                     .map(AuthorizationDTO::resource)
                     .map(s -> s.replace("/logbook/", ""))
-                    .toList();
+                    .collect(Collectors.toCollection(HashSet::new));
+
+            // add all readable-from-all logbook
+            List<String> allPublicReadableLogbookIds = logbookService.getAllIdsReadAll();
+            authorizedLogbook.addAll(allPublicReadableLogbookIds);
+
             // remove all logbook that are not in the list
             if(filteredLogbook.isEmpty()) {
                 filteredLogbook.addAll(authorizedLogbook);
             } else {
                 filteredLogbook.retainAll(authorizedLogbook);
             }
+
+            // return all public readable logbook ids
+            filteredLogbook.addAll(allPublicReadableLogbookIds);
             return ApiResultResponse.of(
                     // if the list is empty return an empty list because no one of the logbook wanted is authorized
-                    filteredLogbook.isEmpty()?emptyList():logbookService.getAllTagsByLogbooksIds(filteredLogbook)
+                    filteredLogbook.isEmpty()?emptyList():logbookService.getAllTagsByLogbooksIds(filteredLogbook.stream().toList())
             );
         } else {
             return ApiResultResponse.of(
-                    logbookService.getAllTagsByLogbooksIds(filteredLogbook)
+                    logbookService.getAllTagsByLogbooksIds(filteredLogbook.stream().toList())
             );
         }
 

@@ -143,7 +143,6 @@ public class LogbookService {
         newLogbookDTO = newLogbookDTO.toBuilder()
                 .name(StringUtilities.tagNameNormalization(newLogbookDTO.name()))
                 .build();
-
         // check for logbooks with the same name
         NewLogbookDTO finalNewLogbookDTO = newLogbookDTO;
 
@@ -159,11 +158,15 @@ public class LogbookService {
                         .errorDomain("LogbookService::createNew")
                         .build()
         );
+
+        var toSave = logbookMapper.fromDTO(finalNewLogbookDTO);
+        if(toSave.isWriteAll()) {
+            // force also readAll to true
+            toSave.setReadAll(true);
+        }
         // create new logbook
         Logbook newLogbook = wrapCatch(
-                () -> logbookRepository.save(
-                        logbookMapper.fromDTO(finalNewLogbookDTO)
-                ),
+                () -> logbookRepository.save(toSave),
                 -3,
                 "LogbookService::createNew");
         log.info("New logbooks '{}' created", newLogbook.getName());
