@@ -153,7 +153,7 @@ public class LogbooksControllerTest {
     }
 
     @Test
-    public void createAndGetLogbookTags() throws Exception {
+    public void createAndGetLogbookTagsWithNoDescription() throws Exception {
         ApiResultResponse<String> creationResult = assertDoesNotThrow(
                 () -> testControllerHelperService.createNewLogbook(
                         mockMvc,
@@ -204,6 +204,63 @@ public class LogbooksControllerTest {
         assertThat(allTagResult.getErrorCode()).isEqualTo(0);
         assertThat(allTagResult.getPayload()).hasSize(1);
         assertThat(allTagResult.getPayload()).extracting("name").contains("new-tag");
+        assertThat(allTagResult.getPayload().getFirst().description()).isNull();
+    }
+
+    @Test
+    public void createAndGetLogbookTags() throws Exception {
+        ApiResultResponse<String> creationResult = assertDoesNotThrow(
+                () -> testControllerHelperService.createNewLogbook(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
+                        NewLogbookDTO.builder()
+                                .name("new-logbooks")
+                                .build()
+                )
+        );
+
+        assertThat(creationResult).isNotNull();
+        assertThat(creationResult.getErrorCode()).isEqualTo(0);
+        assertThat(creationResult.getPayload()).isNotEmpty();
+
+        ApiResultResponse<String> newTagResult = assertDoesNotThrow(
+                () -> testControllerHelperService.createNewLogbookTags(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
+                        creationResult.getPayload(),
+                        NewTagDTO
+                                .builder()
+                                .name("new-tag")
+                                .description("new-tag-description")
+                                .build()
+                )
+        );
+        assertThat(newTagResult).isNotNull();
+        assertThat(newTagResult.getErrorCode()).isEqualTo(0);
+        assertThat(newTagResult.getPayload()).isNotEmpty();
+
+        ApiResultResponse<List<TagDTO>> allTagResult = assertDoesNotThrow(
+                () -> testControllerHelperService.getLogbookTags(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of(
+                                "user1@slac.stanford.edu"
+                        ),
+                        creationResult.getPayload()
+                )
+        );
+
+        assertThat(allTagResult).isNotNull();
+        assertThat(allTagResult.getErrorCode()).isEqualTo(0);
+        assertThat(allTagResult.getPayload()).hasSize(1);
+        assertThat(allTagResult.getPayload()).extracting("name").contains("new-tag");
+        assertThat(allTagResult.getPayload()).extracting("description").contains("new-tag-description");
     }
 
 
